@@ -1,0 +1,73 @@
+{
+ "schema_version": 1,
+ "module_id": "c1-r108",
+ "marks": [
+  {
+   "page_index": 2,
+   "page_digest": "1c904e2f25c67b4a3ddc1319db1072c9625b329d5821fa597e317dbc7c0e6e0d",
+   "classification_digest": "e07a2a656f620e49f8df6ed86e5728eb0f658739562e93e4b98ea3cfabf08b28",
+   "kind": "trat",
+   "source": "user-mark",
+   "answer": "Team test",
+   "evidence_seen": [],
+   "at": "2000-01-01T00:00:00Z"
+  },
+  {
+   "page_index": 3,
+   "page_digest": "8bbbf0e33dd2fda6dcc541b4bc49b95c9456ccf0e2f43e3cad57d703cdbe4221",
+   "classification_digest": "b0a4f754036bd2ef99d30677b0036ac610a044b4c30704a72a22746cd35283f7",
+   "kind": "not-rat",
+   "source": "user-mark",
+   "answer": "Not a test",
+   "evidence_seen": [],
+   "at": "2000-01-01T00:00:00Z"
+  }
+ ],
+ "choices": [],
+ "scan": {
+  "roots": [],
+  "read": {
+   "irat": false,
+   "trat": false,
+   "why": "no kind allows reading"
+  },
+  "roots_digest": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+  "made_at": "2000-01-01T00:00:00Z",
+  "policy": {
+   "irat": "skip",
+   "trat": "ask",
+   "markers": "e9da8ecd81d0dcb247830f08b9e5544e340ba191001561798003fc16674c7a49"
+  },
+  "answers_sha256": "e368c813722ca118022eba5ff9efc3bf7012226aeb88e9b3686dbc007aabe5fd",
+  "pages": [
+   {
+    "page_index": 2,
+    "page_digest": "1c904e2f25c67b4a3ddc1319db1072c9625b329d5821fa597e317dbc7c0e6e0d",
+    "classification_digest": "e07a2a656f620e49f8df6ed86e5728eb0f658739562e93e4b98ea3cfabf08b28",
+    "text_kind": null,
+    "answer_kind": null,
+    "drafted": 0,
+    "sources": []
+   },
+   {
+    "page_index": 3,
+    "page_digest": "8bbbf0e33dd2fda6dcc541b4bc49b95c9456ccf0e2f43e3cad57d703cdbe4221",
+    "classification_digest": "b0a4f754036bd2ef99d30677b0036ac610a044b4c30704a72a22746cd35283f7",
+    "text_kind": null,
+    "answer_kind": null,
+    "drafted": 3,
+    "sources": []
+   },
+   {
+    "page_index": 4,
+    "page_digest": "13cb711b707ccf8014cadbd40f9b4391297a83f581bc8be4656e2fd0d3a5409b",
+    "classification_digest": "03ea200b4ad5ac53515e593126c4e2776ec2611d54e3c18b8a482f6acba8e5ae",
+    "text_kind": null,
+    "answer_kind": null,
+    "drafted": 0,
+    "sources": []
+   }
+  ]
+ },
+ "matches": []
+}

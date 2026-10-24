@@ -7,6 +7,7 @@ import json
 import re
 import struct
 import sys
+import tomllib
 from pathlib import Path
 
 import pytest
@@ -46,8 +47,8 @@ def test_the_set_is_the_agreed_one():
         f"module-{s}.json" for s in STEMS.values())
     assert sorted(p.name for p in (FIX / "viewmodels").glob("*.json")) == sorted(
         f"{m}.json" for m in STEMS)
-    assert len(list((FIX / "answers").glob("answers-*.json"))) == 7
-    assert len(list((FIX / "references").glob("reference-*.json"))) == 7
+    assert len(list((FIX / "answers").glob("answers-*.json"))) == 9
+    assert len(list((FIX / "references").glob("reference-*.json"))) == 9
     assert len(list((FIX / "fill-reports").glob("fill-report-*.json"))) == len(FILL_REPORT_IDS)
 
 
@@ -197,7 +198,7 @@ def test_exported_page_is_14_lines_and_its_image_exists():
 def test_course_folder_has_both_naming_styles_and_one_ambiguous_week():
     cur = FIX / "curriculum"
     assert (cur / "ILO.md").is_file()
-    weeks = sorted(p.relative_to(cur).as_posix() for p in cur.glob("*/*") if p.is_dir())
+    weeks = sorted(p.relative_to(cur).as_posix() for p in cur.glob("*/*") if p.is_dir() and p.name != "RATs")
     assert weeks == ["Block A/1.2 Demo", "Block A/Week 1.1 Demo", "Block A/Week 1.3 Alpha",
                      "Block B/1.3 Beta"]
     for w in weeks:
@@ -205,9 +206,10 @@ def test_course_folder_has_both_naming_styles_and_one_ambiguous_week():
 
 
 def test_run_records_name_the_unit_and_the_tool():
+    release = tomllib.loads((Path(__file__).resolve().parents[2] / 'pyproject.toml').read_text())['project']['version']
     for mid in ("c1-r101", "c1-r102", "c1-r103", "c1-r104", "c1-r106", "c1-r107"):
         r = read_json(f"runs/{mid}/run.json")
-        assert (r["unit_code"], r["institution_profile"], r["tool_version"]) == ("X101", "generic", "0.1.0")
+        assert (r["unit_code"], r["institution_profile"], r["tool_version"]) == ("X101", "generic", release)
         assert re.fullmatch(r"[0-9a-f]{64}", r["config_digest"])
 
 

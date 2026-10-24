@@ -996,3 +996,47 @@ test('rendered end to end: ltjs.py wraps the body with the guard and the save wa
   await check(t, 'rendered: nothing lost', nav.lost, 0);
   fs.rmSync(tmp, { recursive: true, force: true });
 });
+
+// T30: use the emitted RAT body against an already answered team panel.
+test('rail RAT sheet occupancy: generated page 3 keeps an existing team selection', async t => {
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'ltfill-rat-'));
+  try {
+    const fix = path.join(F.REPO, 'tests', 'fixtures');
+    fs.mkdirSync(path.join(tmp, 'sheets'));
+    fs.copyFileSync(path.join(fix, 'curriculum', 'Block A', 'RATs', '1.2-team.md'), path.join(tmp, 'sheets', '1.2-team.md'));
+    const mod = JSON.parse(fs.readFileSync(path.join(fix, 'modules', 'module-c1-r109.json')));
+    const ans = JSON.parse(fs.readFileSync(path.join(fix, 'answers', 'answers-c1-r109.json')));
+    fs.writeFileSync(path.join(tmp, 'module.json'), JSON.stringify(mod));
+    fs.writeFileSync(path.join(tmp, 'answers.json'), JSON.stringify(ans));
+    fs.writeFileSync(path.join(tmp, 'lt-suite.toml'), `[rat]\nanswers_dir = "sheets"\ntrat = "from_dir"\n`);
+    const py = (script, args) => cp.spawnSync('python3', [path.join(F.SKILL, 'scripts', script), ...args], { encoding: 'utf8', cwd: tmp, env: Object.assign(pyEnv(tmp), { LT_SUITE_CONFIG: path.join(tmp, 'lt-suite.toml') }) });
+    const classified = py('page_kinds.py', ['classify', '--module', 'module.json', '--answers', 'answers.json']);
+    assert.equal(classified.status, 1, classified.stderr); // practice pages still ask
+    const payload = py('emit_fill.py', ['payload', '--module', 'module.json', '--answers', 'answers.json', '--out', 'out']);
+    assert.equal(payload.status, 0, payload.stdout + payload.stderr + classified.stdout);
+    const scripts = py('emit_fill.py', ['scripts', '--out', 'out', '--no-render']);
+    assert.equal(scripts.status, 0, scripts.stderr);
+    const target = mod.pages.find(p => p.page_index === 3);
+    const env = makeEnv(e => [page(1, 'Orientation', []), page(2, 'Individual', []), page(3, target.title,
+      target.items.map(it => selectPanel(e, it.panel_key, it.options.map(o => o.text), [0], { content: { multiselect: true } })))],
+      { location: { pathname: '/i/inst0001/student/courses/1/runs/109/run/page/3' }, page: 3 });
+    const body = fs.readFileSync(path.join(tmp, 'out', '_fill-c1-r109-rat-p3.js'), 'utf8');
+    const result = await F.runBody(body, env.sandbox);
+    assert.equal(result.ok, true);
+    assert.equal(env.writes, 0);
+    assert.equal(env.clicks, 0);
+    assert.ok(result.items.every(i => ['occupied-skipped', 'already-new'].includes(i.result)));
+  } finally {
+    fs.rmSync(tmp, { recursive: true, force: true });
+  }
+});
+
+test('RAT receipts echo the executed payload identity', async t => {
+  const pin = 'a'.repeat(64);
+  const env = makeEnv(e => fourPages(e, [textPanel(e, '10', '')]));
+  const filled = await run(env, { source_payload_sha256: pin }, [textJob('10', '<p>ours</p>')]);
+  await check(t, 'fill echoes payload hash', filled.source_payload_sha256, pin);
+  const fresh = makeEnv(e => fourPages(e, [textPanel(e, '10', '<p>ours</p>')]));
+  const verified = await fresh.L.verify(CFG({ source_payload_sha256: pin }), { 4: [textJob('10', '<p>ours</p>')] });
+  await check(t, 'fresh verification echoes payload hash', verified.source_payload_sha256, pin);
+});

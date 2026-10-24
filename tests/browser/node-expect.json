@@ -1,8 +1,8 @@
 {
-  "groups": {
-    "lt_net": 54,
-    "lt_guard": 30
-  },
-  "files": 2,
-  "min_tests": 84
+ "groups": {
+  "lt_net": 54,
+  "lt_guard": 36
+ },
+ "files": 2,
+ "min_tests": 90
 }

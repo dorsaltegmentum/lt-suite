@@ -99,7 +99,7 @@ def _call_resolve(role: str, weight: int, italic: bool, cfg):
     italic flag (a variable font is cut into a static instance). Returns a path string,
     or None when italic was asked for and the family has no italic file."""
     from ltcore import fonts
-    path, font = fonts.face_file(role, cfg, weight=weight, italic=italic)
+    path, font = fonts.face_file(role, cfg, weight=weight, italic=italic, output="pdf", os_fallback=True)
     if italic and not getattr(font, "italic", False):
         return None
     return str(path)
@@ -122,7 +122,16 @@ def resolve_faces(cfg=None) -> tuple[dict[str, tuple[str, int]], list[str]]:
         except Exception as exc:         # any resolver failure: try the fallback face
             path, errors[face] = None, f"{type(exc).__name__}: {exc}"
         if path and _readable(path):
-            found[face] = (path, 0)
+            allowed, reason = fonts.pdf_embeddable(path)
+            if allowed:
+                found[face] = (path, 0)
+                resolved = fonts.find(role, cfg, weight=weight, italic=italic, output="pdf", os_fallback=True)
+                if resolved.fallback or resolved.os_fallback:
+                    notes.append(f"{face}: {resolved.source}")
+                if resolved.variable and fonts.licence_class(resolved) != "modify":
+                    notes.append(f"{face}: variable font used as is; default weight for every face")
+            else:
+                errors[face] = reason
         elif path:
             errors[face] = f"{path} has no TrueType outlines"
     for face in FACE_SPEC:
@@ -137,7 +146,7 @@ def resolve_faces(cfg=None) -> tuple[dict[str, tuple[str, int]], list[str]]:
         if face not in found:
             raise FontUnavailable(
                 f"no usable {FACE_SPEC[face][0]} font for PDF export ({errors.get(face, 'not found')}). "
-                f"Set fonts.{FACE_SPEC[face][0]} or fonts.{FACE_SPEC[face][0]}_path in the config, "
+                f"Set fonts.pdf.{FACE_SPEC[face][0]} in the config, "
                 f"or run the lt-suite-setup skill.")
     return found, notes
 
@@ -159,8 +168,20 @@ def register_fonts(faces: dict[str, tuple[str, int]] | None = None, cfg=None) ->
     notes: list[str] = []
     if faces is None:
         faces, notes = resolve_faces(cfg)
+    from ltcore import fonts
+    registrations = {}
     for name, (path, idx) in faces.items():
-        pdfmetrics.registerFont(TTFont(name, path, subfontIndex=idx))
+        allowed, reason = fonts.pdf_embeddable(path)
+        if not allowed:
+            raise FontUnavailable(f"{name}: {reason}")
+        registrations[name] = TTFont(name, path, subfontIndex=idx)
+    # ReportLab ignores a dynamic registration when its alias already exists.
+    # A second export in this process must use its own config and source bytes.
+    for name, font in registrations.items():
+        pdfmetrics._fonts.pop(name, None)
+        pdfmetrics._dynFaceNames.pop(font.face.name, None)
+    for font in registrations.values():
+        pdfmetrics.registerFont(font)
     pdfmetrics.registerFontFamily(SANS, normal=SANS, bold=SANS_B, italic=SANS_I, boldItalic=SANS_BI)
     pdfmetrics.registerFontFamily(MONO, normal=MONO, bold=MONO_B, italic=MONO_I, boldItalic=MONO_I)
     for face in (SANS_B, SANS_SB, SANS_I, SANS_BI):
@@ -175,7 +196,7 @@ def register_fonts(faces: dict[str, tuple[str, int]] | None = None, cfg=None) ->
 # plan is global because Paragraph markup is built far from where fonts are registered.
 SYMBOL = "Sym"
 SUBSTITUTES = {"⚠": "!", "→": "->", "←": "<-", "↔": "<->", "↑": "^", "↓": "v", "▲": "^",
-               "●": "*", "✓": "ok"}
+               "●": "*", "✓": "ok", "⇄": "<->", "⇌": "<=>", "⇒": "=>"}
 SYMBOL_FAMILIES = ("Noto Sans Symbols 2", "DejaVu Sans")
 GLYPH_RUNS: dict[str, str] = {}      # character -> face that draws it
 GLYPH_SUBS: dict[str, str] = {}      # character -> replacement text
@@ -194,7 +215,7 @@ def find_symbol_font(chars: set[str], cfg=None) -> str | None:
     for family in SYMBOL_FAMILIES:
         try:
             path = str(fonts.resolve("sans", cfg=cfg, family=family, fallback=False))
-            if _readable(path) and all(ord(c) in _cmap(path) for c in chars):
+            if fonts.pdf_embeddable(path)[0] and _readable(path) and all(ord(c) in _cmap(path) for c in chars):
                 return path
         except (fonts.FontError, OSError):
             continue
@@ -389,12 +410,8 @@ def _theme_from_palette(palette_id: str, cfg):
 
 
 def print_variant(theme: dict) -> dict:
-    """The print copy of a light theme: a white page, the palette's own page colour as
-    the banded-row colour. A dark theme is returned unchanged."""
-    t = dict(theme)
-    if not t["dark"] and t["base"].lower() != "#ffffff":
-        t["mantle"], t["base"] = t["base"], "#ffffff"
-    return t
+    from ltcore.palettes import print_variant as variant
+    return variant(theme)
 
 
 def pdf_themes(cfg) -> tuple[list[tuple[str, str, dict]], list[str]]:
@@ -402,10 +419,9 @@ def pdf_themes(cfg) -> tuple[list[tuple[str, str, dict]], list[str]]:
     first, plus notes. The set is ``style.palettes`` plus ``style.print_palette``.
     Without ltcore.palettes the built-in light (print) and dark (screen) themes are used."""
     get = (lambda k, d=None: cfg.get(k, d)) if cfg is not None else (lambda k, d=None: d)
-    ids = [p for p in (get("style.palettes", []) or []) if p]
+    from ltcore.palettes import pdf_palette_ids
+    ids = pdf_palette_ids(cfg)
     printp = get("style.print_palette", "") or ""
-    if printp and printp not in ids:
-        ids.insert(0, printp)
     notes: list[str] = []
     out: list[tuple[str, str, dict]] = []
     if ids:

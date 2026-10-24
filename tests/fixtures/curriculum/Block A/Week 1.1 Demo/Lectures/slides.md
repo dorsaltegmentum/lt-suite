@@ -5,6 +5,7 @@ Vorlase is an enzyme of the fictional quillen pathway.
 
 ## Slide 2
 Vorlase turns tessin into quillic acid.
+The Oram and Tessin labels belong in the Cap category.
 
 ## Slide 3
 Without vorlase, tessin builds up and quillic acid falls.

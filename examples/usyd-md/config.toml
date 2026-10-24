@@ -51,9 +51,10 @@ ilo_kind = '^\*(.+?)\s*·\s*(.+?)\*\s*$'
 [rat]
 # Individual RATs are out of scope; team RAT answers come from a folder you supply.
 irat = "skip"
-trat = "from_dir"
+trat = "ask"
 # Placeholder: the folder that holds your team RAT answers.
-answers_dir = "~/Notes/RATs"
+answers_dir = "" # Set a folder of your own sheets before choosing from_dir.
+answers_dirs = []
 
 [model_answer]
 read = true

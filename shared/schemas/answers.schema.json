@@ -1,7 +1,7 @@
 {
  "$schema": "https://json-schema.org/draft/2020-12/schema",
  "$id": "https://github.com/dorsaltegmentum/lt-suite/schemas/answers.schema.json",
- "title": "answers.json: lt-module-answer → lt-module-fill / mechanistic-diagram / lt-module-export",
+ "title": "answers.json: lt-module-answer \u2192 lt-module-fill / mechanistic-diagram / lt-module-export",
  "description": "Drafted answers with per-segment provenance. Represent each draft as segments so every sentence is structurally traceable to a tag.",
  "type": "object",
  "additionalProperties": false,
@@ -118,7 +118,7 @@
     },
     "skip_reason": {
      "type": "string",
-     "description": "Required when status is 'skipped'. Include every skipped item and its reason in the review packet to prevent silent omissions. 'already-answered' and 'course-feedback' record those skips. 'irat-policy' and 'trat-answers-unavailable' distinguish permanently excluded closed-book work from a tRAT awaiting an answers file. See docs/design-notes.md for applicable policies. 'read-only-mirror' records a panel flagged by item.mirror_of. Such panels accept no writes and may appear empty, so 'already-answered' does not describe them. Drafting their cells wastes answer content.",
+     "description": "Held by scope or filled from your RAT sheet; sheets never feed drafting. See docs/rat-answers.md.",
      "enum": [
       "irat-policy",
       "trat-answers-unavailable",
@@ -128,7 +128,8 @@
       "user-excluded",
       "already-answered",
       "course-feedback",
-      "read-only-mirror"
+      "read-only-mirror",
+      "rat-sheet"
      ]
     },
     "segments": {
@@ -234,7 +235,7 @@
        "source_id": {
         "type": "string",
         "minLength": 1,
-        "description": "Tier 4 MUST be a resolvable DOI (10.x/…) or PMID:<digits>. An unresolvable identifier is a fabrication and is deleted, not softened."
+        "description": "Tier 4 MUST be a resolvable DOI (10.x/\u2026) or PMID:<digits>. An unresolvable identifier is a fabrication and is deleted, not softened."
        },
        "locator": {
         "type": "string",
@@ -340,7 +341,7 @@
     },
     "conflicts": {
      "type": "array",
-     "description": "Surface conflicts without silently reconciling them. Renders as ⚠ Conflict in the export.",
+     "description": "Surface conflicts without silently reconciling them. Renders as \u26a0 Conflict in the export.",
      "items": {
       "type": "object",
       "additionalProperties": false,
@@ -442,7 +443,7 @@
       "approved_by",
       "approval_id"
      ],
-     "description": "Records approval to type this single-attempt item's draft into Lt. Store the approval in <data>/runs/<module_id>/approvals.json with an approval_id matching ^A-[0-9a-f]{8}$. emit_fill.py requires approval for single-attempt items and rejects it on items the capture does not mark single-attempt. Approval covers only writing through the model. Fill scripts never click Submit or Check Answer. The human submits.",
+     "description": "Records approval to type this single-attempt item's draft into Lt. Store the approval in <data>/runs/<module_id>/approvals.json with an approval_id matching ^A-[0-9a-f]{8}$. emit_fill.py requires approval for single-attempt items and rejects it on items the capture does not mark single-attempt. Approval covers only writing through the model. Fill scripts never click Submit. Single-attempt items are never pressed by Check Answer scripts. The human submits.",
      "properties": {
       "approved_by": {
        "const": "user"

@@ -51,7 +51,7 @@ These caps detect bulk relabelling. They cannot prove that a connective segment 
 
 Record both sources when tiers conflict. Name the disagreement and identify the higher tier.
 
-Do not silently reconcile incompatible statements or replace a supported answer solely because Check Answer reports a different result.
+With Check Answer retries off, keep a supported answer and record the disagreement. With retries on, the page may move to Lt’s key; answers.json keeps the cited draft, the report keeps every press, and reconciled.json identifies each segment’s origin.
 
 A Check Answer verdict is evidence for review.
 
@@ -90,3 +90,5 @@ Answer skips retain a schema-defined reason, including `irat-policy`, `trat-answ
 The fill plan preserves those skips. A skipped item cannot become a write target during handoff.
 
 See [architecture](architecture.md), [academic integrity](academic-integrity.md) and [design notes](design-notes.md).
+
+RAT sheets and answer-bearing run files never serve as drafting or reconciliation sources. The `rat-root-quarantine` rail checks corpus paths, source ids and locators. Sheet-filled items use the supported `rat-sheet` skip. Report pages stay held by the fill plan. See [RAT answers](rat-answers.md).

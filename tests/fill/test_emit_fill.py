@@ -189,6 +189,11 @@ def test_committed_capture_fills_only_the_team_quiz(kit):
                       ("answers.json", FIX / "answers/answers-c1-r104.json"),
                       ("approvals.json", FIX / "approvals/approvals-c1-r104.json")):
         shutil.copy(src, kit.tmp / name)
+    for extra in ([], ["--mark", "9=trat", "--answer", "Team test"]):
+        r = kit.run("page_kinds.py", "mark" if extra else "classify", "--module", "module.json", "--answers", "answers.json", *extra)
+        assert r.returncode in (0, 1), r.stdout + r.stderr
+    r = kit.run("page_kinds.py", "choose", "--module", "module.json", "--answers", "answers.json", "--page", "9", "--fill", "draft", "--answer", "Draft the team page")
+    assert r.returncode == 0, r.stdout + r.stderr
     r = kit.emit("payload", "--module", "module.json", "--answers", "answers.json", "--out", "out",
                  "--approvals", "approvals.json")
     assert r.returncode == 0, r.stdout + r.stderr

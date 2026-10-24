@@ -87,3 +87,8 @@ Header geometry, missing cells and unresolved placement pools must not be bypass
 
 A local read-back cannot prove persistence. Verify from a second tab with a fresh run load.
 See [failure-modes.md](failure-modes.md) for save signals that require verification before navigation.
+
+
+## Check Answer
+
+Check Answer retry writes reuse LtFillLib.write after strict live ownership and shape checks. Only rendered `_check-` scripts with the opt-in may press. Single-attempt, graded, container, unverified, occupied, RAT and unknown pages refuse. Index hashes distinguish identical labels; every retry waits for a calibrated save and reads back its full state.

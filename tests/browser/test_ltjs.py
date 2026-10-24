@@ -632,3 +632,22 @@ def test_check_url_checks_second_checkpoint_after_first_is_behind(run_py, tmp_pa
     # Directly landing on the second checkpoint is forbidden too.
     plan["flow_pages"].append({"page_index": 7, "page_no": 5})
     assert ltjs.check_url(f"{RUN}/page/5", plan)[1]["reason"] == "checkpoint"
+
+
+@pytest.mark.parametrize('name',['check_answer','_check-demo'])
+def test_check_render_opt_in_exit_five_and_net(tmp_path,name):
+    from ltcore import config
+    source=tmp_path/(name+'.js');source.write_text('return {ok:true};')
+    with pytest.raises(ltjs.RenderRefused) as exc:
+        ltjs.render(str(source),cfg=config.load(),out_dir=tmp_path/'off')
+    assert exc.value.code==5
+    p=tmp_path/'yes.toml';p.write_text('[fill.check_answer]\nenabled=true\n')
+    rendered=ltjs.render(str(source),cfg=config.load(p),out_dir=tmp_path/'on',stub=False)
+    assert ltjs.wants_net(source,name)
+    assert 'lt_net.js' in Path(rendered['path']).read_text()
+
+
+def test_check_grants_depend_on_setting():
+    plan={'check_answer_keys':[[4,'K']]}
+    assert 'check_answer_keys' not in ltjs.policy_from_plan(plan)
+    assert ltjs.policy_from_plan(plan,check_answer_enabled=True)['check_answer_keys']==[[4,'K']]

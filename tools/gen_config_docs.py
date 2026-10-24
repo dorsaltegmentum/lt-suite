@@ -104,6 +104,8 @@ Linux `${XDG_DATA_HOME:-~/.local/share}/lt-suite`, macOS
 <data>/captures/            module-<id>.json, reference-<id>.json, media/
 <data>/incoming/            the capture sink writes here; stamp_capture.py moves files on
 <data>/runs/<module_id>/    run.json, logs/, fill-js/, fill-report.json, approvals.json,
+                            page-kinds.json, check-answer.json, reconcile-worklist.json,
+                            fill-report-pre-rat.json, reconciled.json,
                             model-answer.json
 <data>/state/               calibration.json, ledger.json, applied.json
 <data>/lexicon/             lexicon entries proposed by run review

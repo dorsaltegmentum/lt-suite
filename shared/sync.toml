@@ -14,7 +14,7 @@ references = ["references/safety.md", "references/browser-adapters.md"]
 
 [skill.lt-suite-setup]
 references = ["lexicon/README.md", "lexicon/recurring-corrections.md"]
-scripts = ["fonts/", "style.defaults.toml"]
+scripts = ["fonts/", "style.defaults.toml", "lt_chrome/"]
 
 [skill.lt-module-capture]
 references = ["lexicon/lt-client-vocabulary.md"]

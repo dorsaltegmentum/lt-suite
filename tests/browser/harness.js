@@ -107,6 +107,7 @@ class FakeEvent {
   constructor(type, init) {
     const i = init || {};
     this.type = type;
+    this.isTrusted = i.isTrusted === true;
     this.bubbles = i.bubbles !== false;
     this.cancelable = i.cancelable !== false;
     this.key = i.key;

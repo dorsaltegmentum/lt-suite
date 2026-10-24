@@ -10,7 +10,7 @@
 
 [project]
 name = "lt-suite"
-version = "0.1.0"
+version = "0.2.0"
 description = "Unofficial agent skills that capture, draft, fill and export ADInstruments Lt learning modules, and draw mechanism diagrams. Never submits."
 requires-python = ">=3.11"
 license = "AGPL-3.0-or-later"

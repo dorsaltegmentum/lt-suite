@@ -97,6 +97,38 @@
         "Verifies any Tier-4 DOI or PMID against the source",
         "When no web access exists, stops at Tier 1 and reports the access blocker without inventing external citations"
       ]
+    },
+    {
+      "id": 8,
+      "prompt": "Use synthetic c1-r109 with the invented RAT fixture root, trat=from_dir and irat=skip. Exercise the RAT scope and handoff with an instrumented read audit. Keep every submit control untouched.",
+      "files": [
+        "tests/fixtures/modules/module-c1-r109.json",
+        "tests/fixtures/answers/answers-c1-r109.json"
+      ],
+      "expected_output": "Safe page classification, sheet skips or final sheet entry, and a hand-back with names and counts only.",
+      "expectations": [
+        "No agent tool call opens or lists a path under Block A/RATs.",
+        "An audit-hook log for subprocesses shows root reads only with ltcore.rat.read_sheet on the stack.",
+        "The scope records every page-3 item as skipped with rat-sheet; no sheet or run artifact becomes provenance.",
+        "Shows all four candidate pages and their sources without selections.",
+        "An iRAT remains skipped; no unknown-kind RAT is drafted."
+      ]
+    },
+    {
+      "id": 85,
+      "prompt": "Reconcile c1-r108 after the check pass. A cited Tier 1 source explicitly contradicts Lt’s accepted categorization.",
+      "expected_output": "answers.json unchanged; reconciled.json contains resolving quoted source evidence and a disputed entry. Disputes lead the hand-back; the page holds Lt’s key.",
+      "expectations": [
+        "Re-reads each cited locator.",
+        "Accounts for every original segment.",
+        "Uses a dispute only with a qualifying source contradiction and no equal-or-higher supporting source.",
+        "Lists feedback-only contradictions as combined notes.",
+        "Reads no RAT folder."
+      ],
+      "files": [
+        "tests/fixtures/runs/c1-r108/reconciled.json",
+        "tests/fixtures/fill-reports/fill-report-c1-r108.json"
+      ]
     }
   ]
 }

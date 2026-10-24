@@ -76,6 +76,8 @@ Linux `${XDG_DATA_HOME:-~/.local/share}/lt-suite`, macOS
 <data>/captures/            module-<id>.json, reference-<id>.json, media/
 <data>/incoming/            the capture sink writes here; stamp_capture.py moves files on
 <data>/runs/<module_id>/    run.json, logs/, fill-js/, fill-report.json, approvals.json,
+                            page-kinds.json, check-answer.json, reconcile-worklist.json,
+                            fill-report-pre-rat.json, reconciled.json,
                             model-answer.json
 <data>/state/               calibration.json, ledger.json, applied.json
 <data>/lexicon/             lexicon entries proposed by run review
@@ -200,9 +202,12 @@ Readiness assurance tests (individual iRAT and team tRAT).
 
 | Key | Type | Default | Meaning |
 |---|---|---|---|
-| `rat.answers_dir` | str | `""` | Folder with team-RAT answers the user supplies. Empty means ask. Path; relative to the config file's folder. |
-| `rat.irat` | str | `"skip"` | Individual RAT pages: skip or ask. One of: `skip`, `ask`. |
-| `rat.trat` | str | `"ask"` | Team RAT pages: from_dir, ask or skip. One of: `from_dir`, `ask`, `skip`. |
+| `rat.answers_dir` | str | `""` | A folder of your RAT sheets. Only page_kinds.py and fill read immediate files when policy or a current choice allows it. Empty means no folder. Path; relative to the config file's folder. |
+| `rat.irat` | str | `"skip"` | Individual RAT: skip, ask each time, or enter your own sheet with from_dir. Never drafted. One of: `skip`, `ask`, `from_dir`. |
+| `rat.trat` | str | `"ask"` | Team RAT: from_dir enters your sheets, ask requests a choice, skip leaves the page. One of: `from_dir`, `ask`, `skip`. |
+| `rat.answers_dirs` | list[str] | `[]` | More RAT answer-sheet folders with the same read and quarantine rules. Path; relative to the config file's folder. |
+| `rat.kind_markers.trat` | str | `'(?i)\b[tg]-?RAT\b\|\b(?:team\|group) readiness\b'` | Marks a trat from content text only. Must compile as a Python regular expression. |
+| `rat.kind_markers.irat` | str | `'(?i)\bi-?RAT\b\|\bindividual readiness\b'` | Marks a irat from content text only. Must compile as a Python regular expression. |
 
 ### `model_answer`
 
@@ -306,18 +311,24 @@ Palettes. Defaults live in shared/style.defaults.toml.
 
 ### `fonts`
 
-Fonts. Defaults live in shared/style.defaults.toml.
+Fonts. Base keys apply to every output. Per-output keys replace the base family and file keys for that role. Empty labels inherit PDF sans, then base sans.
 
 | Key | Type | Default | Meaning |
 |---|---|---|---|
-| `fonts.sans` | str | `"Noto Sans"` | Sans family name from the font catalog, or a file path. |
-| `fonts.mono` | str | `"Noto Sans Mono"` | Mono family name from the font catalog, or a file path. |
-| `fonts.sans_path` | str | `""` | Explicit sans font file. Empty means resolve fonts.sans. Path; relative to the config file's folder. |
-| `fonts.mono_path` | str | `""` | Explicit mono font file. Empty means resolve fonts.mono. Path; relative to the config file's folder. |
-| `fonts.mono_bold_path` | str | `""` | Explicit bold mono font file. Empty means resolve fonts.mono. Path; relative to the config file's folder. |
+| `fonts.sans` | str | `"Noto Sans"` | Sans family name from the font catalog, or a file path. Overridden by nonempty fonts.pdf.sans or fonts.diagram.sans or fonts.labels.sans. |
+| `fonts.mono` | str | `"Noto Sans Mono"` | Mono family name from the font catalog, or a file path. Overridden by nonempty fonts.pdf.mono or fonts.diagram.mono. |
+| `fonts.sans_path` | str | `""` | Explicit sans font file. Empty means resolve fonts.sans. Ignored when the output sets this role. Path; relative to the config file's folder. |
+| `fonts.mono_path` | str | `""` | Explicit mono font file. Empty means resolve fonts.mono. Ignored when the output sets this role. Path; relative to the config file's folder. |
+| `fonts.mono_bold_path` | str | `""` | Explicit bold mono font file. Empty means resolve fonts.mono. Ignored when the output sets this role. Path; relative to the config file's folder. |
 | `fonts.text_px` | int | `14` | Diagram node text size in px. |
 | `fonts.allow_download` | bool | `true` | Setup may fetch catalog fonts into the data folder, after the user says yes. |
-| `fonts.page_fonts` | str | `"local"` | local embeds fonts in HTML and drawio files; google keeps the Google Fonts link. One of: `local`, `google`. |
+| `fonts.page_fonts` | str | `"local"` | local embeds fonts in HTML and drawio files; google keeps the Google Fonts link. google needs Google-hosted families; doctor warns about others. One of: `local`, `google`. |
+| `fonts.system_fallback` | bool | `true` | Use SF Pro / SF Mono on macOS, Segoe UI / Cascadia Mono on Windows, or DejaVu on Linux after Noto fails, for page PDFs and labels. System fonts are never bundled, cut or web-embedded. |
+| `fonts.pdf.sans` | str | `""` | Sans family or font file for pdf. Set values replace base family and path keys for this role. Empty inherits base keys. |
+| `fonts.pdf.mono` | str | `""` | Mono family or font file for pdf. Set values replace base family and path keys for this role. Empty inherits base keys. |
+| `fonts.diagram.sans` | str | `""` | Sans family or font file for diagram. Set values replace base family and path keys for this role. Empty inherits base keys. |
+| `fonts.diagram.mono` | str | `""` | Mono family or font file for diagram. Set values replace base family and path keys for this role. Empty inherits base keys. |
+| `fonts.labels.sans` | str | `""` | Sans family or font file for labels. Set values replace base family and path keys for this role. Empty inherits PDF sans, then base sans. annotate.font_path wins. |
 
 ### `browser`
 
@@ -325,12 +336,15 @@ How skills reach the signed-in browser.
 
 | Key | Type | Default | Meaning |
 |---|---|---|---|
-| `browser.adapter` | str | `"auto"` | Browser tool used to run page scripts. One of: `auto`, `claude-in-chrome`, `chrome-devtools-mcp`, `playwright-mcp`, `antigravity`, `manual-paste`. |
+| `browser.adapter` | str | `"auto"` | Browser tool used to run page scripts. auto, chrome-devtools-mcp and antigravity start lt-chrome; claude-in-chrome, playwright-mcp and manual-paste make lt-chrome serve no tools. A workspace lt-suite.toml cannot start lt-chrome when the platform config chose a quiet adapter. Restart the agent after a change. One of: `auto`, `claude-in-chrome`, `chrome-devtools-mcp`, `playwright-mcp`, `antigravity`, `manual-paste`. |
 | `browser.transport` | str | `"sink"` | Capture output route: sink (loopback POST) or download. One of: `sink`, `download`. |
 | `browser.sink_port` | int | `8731` | Loopback port of the capture sink. |
 | `browser.lib_mode` | str | `"inline"` | Fill scripts carry the library inline or load it from the loopback server. One of: `inline`, `served`. |
 | `browser.lib_port` | int | `8733` | Loopback port of the fill library server. |
 | `browser.js_tmp_dir` | str | `""` | Folder for rendered page scripts. Empty means the OS temp folder's lt-suite-js-<uid>/ (mode 0700, checked on every render). Setup records the folder that worked. Path; relative to the config file's folder. |
+| `browser.chromium` | str | `"chrome"` | Chromium browser lt-chrome attaches to with auto-connect. Chrome channels use Chrome's own profile folder; the others use the folder listed in docs/browser-adapters.md; other needs browser.chromium_user_data_dir. One of: `chrome`, `chrome-beta`, `chrome-dev`, `chrome-canary`, `chromium`, `edge`, `brave`, `vivaldi`, `other`. |
+| `browser.chromium_user_data_dir` | str | `""` | The browser's user data folder: the parent of the Profile Path shown at chrome://version. Empty means the folder for browser.chromium. Used by auto-connect only. Relative paths resolve against the config file; ~ expands. Control characters, double quotes, percent and exclamation marks are refused. Path; relative to the config file's folder. |
+| `browser.devtools_url` | str | `""` | Empty: lt-chrome auto-connects after you turn on remote debugging at chrome://inspect/#remote-debugging. Set: lt-chrome attaches to a browser you started with --remote-debugging-port and its own --user-data-dir. Only http://127.0.0.1:<port> or http://[::1]:<port>, with port 1 to 65535, is accepted. |
 
 ### `fill`
 
@@ -346,6 +360,7 @@ Fill skill behaviour.
 | `fill.save_wait.render_wait_ms` | int | `5000` | Categories panel render wait. |
 | `fill.dialog.max_ms` | int | `15000` | Confirm-dialog cap. |
 | `fill.dialog.fallback_ms` | int | `6000` | Confirm-dialog wait when uncalibrated. |
+| `fill.check_answer.enabled` | bool | `false` | Press Lt's Check Answer on eligible multi-attempt items after their drafts are written and verified, and change each answer until Lt marks it correct or locks it, or no untried answer remains. Never on single-attempt items or on pages classified as team or individual tests. Setup asks. |
 
 ### `text_cleaners`
 
@@ -365,11 +380,12 @@ Micrograph label drawing.
 
 | Key | Type | Default | Meaning |
 |---|---|---|---|
-| `annotate.casing` | str | `"#101010"` | Label casing colour. |
-| `annotate.ink` | str | `"#FFD400"` | Label ink colour. |
-| `annotate.margin_fill` | str | `"#101010"` | Margin fill colour. |
-| `annotate.font_path` | str | `""` | Label font file. Empty means fonts.sans, then Pillow's default. Path; relative to the config file's folder. |
+| `annotate.casing` | str | `"#101010"` | Lt upload: Label casing colour. Palette copies use the palette colours. |
+| `annotate.ink` | str | `"#FFD400"` | Lt upload: Label ink colour. Palette copies use the palette colours. |
+| `annotate.margin_fill` | str | `"#101010"` | Lt upload: Margin fill colour. Palette copies use the palette colours. |
+| `annotate.font_path` | str | `""` | Label font file. Wins over fonts.labels.sans; a missing file warns and continues. Empty follows fonts.labels.sans, PDF sans, then base sans. Path; relative to the config file's folder. |
 | `annotate.naming_rules` | list[str] | `[]` | Label style rules shown to the agent. |
+| `annotate.palette_copies` | bool | `true` | Write one labelled image per PDF palette, bound by sha256 in <stem>.copies.json. false writes only the Lt upload and an empty manifest. |
 
 ### `diagram`
 

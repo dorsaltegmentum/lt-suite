@@ -379,11 +379,16 @@ _ID_RE = re.compile(r"^[a-z0-9][a-z0-9-]*$")
 _ROLE_RE = re.compile(r"^(background|surface|text|text_muted|border|positive|negative|accent_[1-9][0-9]?)$")
 
 
+def valid_palette_id(value) -> bool:
+    """Accept the catalog's filename-safe palette identifier syntax."""
+    return isinstance(value, str) and _ID_RE.fullmatch(value) is not None
+
+
 def _validate_entry(e: Mapping, where: str) -> dict:
     if not isinstance(e, Mapping):
         raise PaletteError(f"{where}: a palette must be a table")
     pid = e.get("id")
-    if not isinstance(pid, str) or not _ID_RE.match(pid):
+    if not valid_palette_id(pid):
         raise PaletteError(f"{where}: id {pid!r} must match {_ID_RE.pattern}")
     roles = e.get("roles")
     override = e.get("override")
@@ -910,6 +915,13 @@ def _cache_dir(cfg: Any, cache_dir: str | os.PathLike | None) -> Path | None:
         return None
 
 
+def _override_for(entry):
+    ov = entry.get("override")
+    if ov is None and entry.get("origin") == "catalog":
+        ov = load_override(entry["id"])
+    return ov
+
+
 def derive_theme(palette: str | Mapping, cfg: Any = None, *, cache_dir: str | os.PathLike | None = None,
                  use_cache: bool = True) -> dict:
     """The engine theme for a palette id or entry. An explicit ``override`` table in
@@ -918,9 +930,7 @@ def derive_theme(palette: str | Mapping, cfg: Any = None, *, cache_dir: str | os
     own roles. Raises PaletteError when a check fails. Results are cached under
     <cache>/themes/."""
     entry = get(palette, cfg) if isinstance(palette, str) else _validate_entry(palette, "palette")
-    ov = entry.get("override")
-    if ov is None and entry.get("origin") == "catalog":
-        ov = load_override(entry["id"])
+    ov = _override_for(entry)
     gate = _effective_gate(entry, ov)
     digest = _roles_digest(entry, ov, gate)
     cdir = _cache_dir(cfg, cache_dir) if use_cache else None
@@ -1029,6 +1039,129 @@ def pdf_theme(palette_id: str | Mapping, *, cfg: Any = None, **kw: Any) -> dict:
         raise PaletteError(f"palette {th['id']}: PDF {k} colour {out[k]} reaches only "
                            f"{min(contrast(out[k], g) for g in grounds):.2f}:1 on {base} or {mantle}")
     return out
+
+
+MICROGRAPH_KINDS = {"point": "blue", "ring": "peach", "bracket": "green", "inset": "teal"}
+
+
+def print_variant(theme: dict) -> dict:
+    """White paper with the light palette's canvas as its mantle."""
+    out = dict(theme)
+    if not out["dark"] and out["base"].lower() != "#ffffff":
+        out["mantle"], out["base"] = out["base"], "#ffffff"
+    return out
+
+
+def pdf_palette_ids(cfg=None):
+    """Print palette first, then configured screen palettes, without duplicates."""
+    ids = [p for p in (_cfg_get(cfg, "style.palettes", []) or []) if p]
+    printp = _cfg_get(cfg, "style.print_palette", "") or (ids[0] if ids else "")
+    return list(dict.fromkeys(([printp] if printp else []) + ids))
+
+
+def micrograph_colours(palette_id, cfg=None, *, print_copy=False):
+    """Palette marks and text reach 4.5:1 on margin and casing; shape repeats kind."""
+    entry = get(palette_id, cfg) if isinstance(palette_id, str) else palette_id
+    theme = derive_theme(entry, cfg)
+    base, mantle, text = theme["canvas"], theme["cl_fill"], theme["ink"]
+    dark = luminance(base) < 0.4
+    # Match pdf_base.ensure_legible's body-text decision before print_variant.
+    if min(contrast(text, base), contrast(text, mantle)) < TEXT_MIN:
+        text = "#000000" if luminance(base) > 0.4 else "#ffffff"
+    page = dict(base=base, mantle=mantle, dark=dark)
+    if print_copy:
+        page = print_variant(page)
+    base, mantle = page["base"], page["mantle"]
+    if not dark:
+        casing = "#ffffff"
+    else:
+        L, C, h = oklch(min((base, mantle), key=luminance))
+        casing = oklch_hex(max(0, L - 0.03), C, h)
+    ok = lambda c: all(contrast(c, g) >= TEXT_MIN - 1e-9 for g in (mantle, casing))
+    text = text if ok(text) else (_step_until(text, ok, darker=not dark) or text)
+    if not ok(text):
+        raise PaletteError(f"palette {entry['id']}: micrograph caption cannot reach 4.5:1")
+    named = (_override_for(entry) or {}).get("accents") or {}
+    candidates = [hx for _, hx in accents_of(entry.get("roles") or {}) if oklch(hx)[1] >= 0.04]
+    out = {"margin": mantle, "casing": casing, "caption": text}
+    used = set()
+    for kind, name in MICROGRAPH_KINDS.items():
+        pool = [c for c in candidates if c not in used] or candidates
+        if name in named:
+            colour = norm_hex(named[name])
+        elif pool:
+            colour = min(pool, key=lambda c: (hue_gap(oklch(c)[2], ACCENT_NAME_HUES[name]), -oklch(c)[1]))
+        else:
+            colour = text
+        used.add(colour)
+        out[kind] = colour if ok(colour) else (_step_until(colour, ok, darker=not dark) or text)
+    return out
+
+
+def copies_manifest(linked):
+    """Manifest path beside a rendered upload or captured media file."""
+    return Path(linked).with_suffix(".copies.json")
+
+
+def file_sha256(path):
+    return hashlib.sha256(Path(path).read_bytes()).hexdigest()
+
+
+def read_copies(linked):
+    """Accept only manifests whose nested records have the generated field types."""
+    def image_record(record):
+        return (isinstance(record, dict) and isinstance(record.get("file"), str)
+                and bool(record["file"]) and isinstance(record.get("sha256"), str)
+                and re.fullmatch(r"[0-9a-f]{64}", record["sha256"]) is not None)
+
+    try:
+        value = json.loads(copies_manifest(linked).read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+    if not isinstance(value, dict) or not image_record(value.get("upload")):
+        return None
+    media_hash = value.get("media_sha256")
+    if media_hash is not None and (not isinstance(media_hash, str)
+                                  or re.fullmatch(r"[0-9a-f]{64}", media_hash) is None):
+        return None
+    copies = value.get("copies")
+    if not isinstance(copies, dict):
+        return None
+    if any(not image_record(record) or not isinstance(record.get("print"), bool)
+           for record in copies.values()):
+        return None
+    return value
+
+
+def bound_copy(linked, palette_id):
+    """Return only a sibling whose bytes and linked upload match the manifest."""
+    linked = Path(linked)
+    manifest = read_copies(linked)
+    if not manifest:
+        return None
+    try:
+        record = manifest["copies"][palette_id]
+        name = record["file"]
+        if not isinstance(name, str) or Path(name).name != name or "\\" in name:
+            return None
+        sibling = linked.parent / name
+        if sibling.is_symlink() or sibling == linked:
+            return None
+        upload = manifest.get("upload") or {}
+        if file_sha256(linked) not in (upload.get("sha256"), manifest.get("media_sha256")):
+            return None
+        return sibling if file_sha256(sibling) == record["sha256"] else None
+    except (OSError, KeyError, TypeError):
+        return None
+
+
+def micrograph_audit(colours):
+    import itertools
+    pairs = [{"kinds": [a, b], "simulation": sim, "distance": de_ok(colours[a], colours[b], sim)}
+             for a, b in itertools.combinations(MICROGRAPH_KINDS, 2) for sim in SIMS]
+    return {"colours": colours, "contrast": {k: {g: contrast(colours[k], colours[g])
+            for g in ("margin", "casing")} for k in ("caption", *MICROGRAPH_KINDS)},
+            "pairs": pairs, "close_pairs": [p for p in pairs if p["distance"] < 0.05]}
 
 
 def default_palette() -> str:
@@ -1241,6 +1374,23 @@ def _load_cfg(path: str | None):
 
 
 def main(argv: list[str] | None = None) -> int:
+    args = sys.argv[1:] if argv is None else argv
+    if args and args[0] == "micrograph":
+        parser = argparse.ArgumentParser(prog="python3 -m ltcore.palettes micrograph")
+        parser.add_argument("id")
+        parser.add_argument("--print", dest="print_copy", action="store_true")
+        parser.add_argument("--config")
+        options = parser.parse_args(args[1:])
+        from ltcore import config
+        try:
+            cfg = config.load(options.config)
+            print(json.dumps(micrograph_audit(micrograph_colours(options.id, cfg,
+                  print_copy=options.print_copy)), indent=2))
+            return 0
+        except (PaletteError, config.ConfigError) as exc:
+            print(f"error: {exc}", file=sys.stderr)
+            return 1
+
     ap = argparse.ArgumentParser(prog="python3 -m ltcore.palettes", description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = ap.add_subparsers(dest="cmd", required=True)

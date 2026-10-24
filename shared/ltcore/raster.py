@@ -76,7 +76,7 @@ def _families(svg: str) -> list[str]:
     found += [m.group(1) for m in _FAMILY_CSS.finditer(svg)]
     out: list[str] = []
     for value in found:
-        first = value.split(",")[0].strip().strip("'\"").strip()
+        first = value.strip()
         if first and first.lower() not in _GENERIC and first not in out:
             out.append(first)
     return out
@@ -111,38 +111,61 @@ def prepare(svg_text: str, cfg: Any = None, *, cache_dir: str | os.PathLike | No
     italic_used = "italic" in svg_text
     dirs: set[str] = set()
     for fam in _families(svg_text):
-        role = _role_for(fam)
-        try:
-            base = fonts.find(role, cfg, family=fam, use_system=use_system, fallback=False)
-        except fonts.FontError:
-            out.warnings.append(f"font {fam!r} not found; rsvg-convert picks a substitute")
-            continue
+        stack = fam
+        names = [v.strip().strip("'\"").strip() for v in stack.split(",")]
+        role = _role_for(names[0])
+        base = None
+        for name in names:
+            if name.lower() in _GENERIC:
+                continue
+            try:
+                base = fonts.find(role, cfg, family=name, use_system=use_system, fallback=False)
+                fam = name
+                break
+            except fonts.FontError:
+                continue
+        if base is None:
+            base = fonts.find(role, cfg, family=fonts.default_family(role), use_system=use_system)
+            fam = base.family
+            out.warnings.append(f"font {stack!r} not found; drawn in {fam}")
+        def replace_stack(match):
+            value = match.group(1) if match.group(1) is not None else match.group(2)
+            return 'font-family="' + fam + '"' if value.strip() == stack else match.group(0)
+        out.svg = _FAMILY_ATTR.sub(replace_stack, out.svg)
+        out.svg = _FAMILY_CSS.sub(lambda m: "font-family:" + fam if m.group(1).strip() == stack else m.group(0), out.svg)
         if base.source in ("fc-match", "platform font folder") and not base.variable:
             continue                       # installed static fonts need nothing
-        if not base.variable or not static or fonts.reserved_font_names(fonts.find_entry(fam)):
+        # Resolve the entire required face set before modifying any family member.
+        # Renaming only the regular face would also hide an unmodifiable italic.
+        required = []
+        try:
             for w in weights:
-                try:
-                    dirs.add(str(fonts.find(role, cfg, family=fam, weight=w,
-                                            use_system=use_system, fallback=False).path.parent))
-                except fonts.FontError:
-                    pass
-            if base.variable:
-                out.warnings.append(f"{fam}: variable font used as it is; PDF text may lose its weight")
+                for it in ((False, True) if italic_used else (False,)):
+                    face = fonts.find(role, cfg, family=fam, weight=w, italic=it,
+                                      use_system=use_system, fallback=False)
+                    if it and not face.italic:
+                        continue           # cairo slants the upright face when no italic exists
+                    required.append(face)
+        except fonts.FontError as exc:
+            out.warnings.append(f"{fam}: {exc}; original family used as it is")
+            dirs.add(str(base.path.parent))
+            continue
+        may_modify = all(fonts.licence_class(face) == "modify" for face in required)
+        if not base.variable or not static or not may_modify:
+            dirs.update(str(face.path.parent) for face in required)
+            if any(face.variable for face in required):
+                reason = "font licence prevents modification; " if not may_modify else ""
+                out.warnings.append(f"{fam}: {reason}variable font used as it is; PDF text may lose its weight")
             continue
         try:
             new_family = fonts.static_family_name(base.family)
-            for w in weights:
-                for it in ((False, True) if italic_used else (False,)):
-                    f = fonts.find(role, cfg, family=fam, weight=w, italic=it,
-                                   use_system=use_system, fallback=False)
-                    if it and not f.italic:
-                        continue           # no italic file: cairo slants the upright face
-                    p = fonts.static_instance(f.path, weight=w, italic=f.italic, family=base.family,
-                                              cache_dir=cdir)
-                    dirs.add(str(p.parent))
+            for face in required:
+                p = fonts.static_instance(face.path, weight=face.weight, italic=face.italic,
+                                          family=base.family, cache_dir=cdir)
+                dirs.add(str(p.parent))
         except fonts.FontError as exc:
             out.warnings.append(f"{fam}: {exc}; variable font used as it is")
-            dirs.add(str(base.path.parent))
+            dirs.update(str(face.path.parent) for face in required)
             continue
         out.families[fam] = new_family
         pat = re.compile(r"(font-family\s*[=:]\s*[\"']?\s*)(['\"]?)" + re.escape(fam) + r"\2(?=\s*[,\"';}]|\s*$)")

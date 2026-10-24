@@ -1,0 +1,36 @@
+{
+ "save_waits": [
+  {
+   "receipt": "fill-result-1.json",
+   "receipt_sha256": "bc69ed9b7915718c354b7a6c014b1f921e414560057dcc359acfa5554552ba12",
+   "pages": [
+    1
+   ],
+   "save_signal": "net",
+   "waited_ms": 420,
+   "keys_total": 7,
+   "keys_saved": 7,
+   "keys_pending": 0,
+   "save_errors": 0,
+   "calibrated": true,
+   "ok": true,
+   "fatal": null
+  },
+  {
+   "receipt": "fill-result-2.json",
+   "receipt_sha256": "a601de72223e772527289d1a3483e1a042fd05caddd830909cd4e2aca0178c4f",
+   "pages": [
+    3
+   ],
+   "save_signal": "net",
+   "waited_ms": 420,
+   "keys_total": 3,
+   "keys_saved": 3,
+   "keys_pending": 0,
+   "save_errors": 0,
+   "calibrated": true,
+   "ok": true,
+   "fatal": null
+  }
+ ]
+}

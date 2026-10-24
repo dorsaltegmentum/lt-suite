@@ -29,14 +29,9 @@ An unmapped item is a gap in this suite, not a door: not writing it is a complet
 defence, so it skips one item and the run continues. A Checkpoint is crossed by
 navigating, and skipping cannot protect against a door one walks through.
 
-A RAT page (`rat_candidate` in the capture) is classified from answers.json, never from a
-capture field and never from its title: any drafted item means a team RAT, every item
-skipped as `irat-policy` means an individual RAT, every item skipped as
-`trat-answers-unavailable` means in scope but not answerable yet. Config `rat.irat`
-(`skip` or `ask`) and `rat.trat` (`from_dir`, `ask` or `skip`) decide what each verdict
-does; `rat.answers_dir` is where the team's agreed answers come from. Team answers are
-never invented. `--include-rat` treats an unclassified RAT page as a confirmed team RAT
-for a run with no answers.json.
+Every candidate page is decided by the shared page-kinds.json store. Missing or
+stale evidence holds the page. Sheet pages accept rat-sheet skips; tRAT drafts
+need a recorded draft choice. --include-rat is deprecated and changes no decision.
 
 Occupancy is not decided here. A non-empty target is a question for the user, settled
 against the live page at fill time, never against the captured `answered` flag.
@@ -56,9 +51,10 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent / "_shared"))
 import ltcore  # noqa: E402
 ltcore.bootstrap([])
-from ltcore import boundaries, config  # noqa: E402
+from ltcore import boundaries, config, rat as rat_mod, page_kinds  # noqa: E402
 
 import argparse  # noqa: E402
+import hashlib  # noqa: E402
 import json  # noqa: E402
 import re  # noqa: E402
 
@@ -76,7 +72,6 @@ SEVERITY = boundaries.SEVERITY
 # run that stopped on an unmapped item stopped for a reason that is no longer a stop.
 STOPPING_CLASSES = {c for c, sev in SEVERITY.items() if sev == "stop"}
 
-DEFAULT_RAT = {"irat": "skip", "trat": "ask", "answers_dir": ""}
 
 
 def fatal(msg: str) -> int:
@@ -107,51 +102,7 @@ def _first_stop(module: dict) -> dict | None:
 
 
 def rat_policy(cfg) -> dict:
-    """rat.* from the config, with the built-in defaults when no config is given."""
-    out = dict(DEFAULT_RAT)
-    if cfg is not None:
-        for k in out:
-            v = cfg.get(f"rat.{k}", None)
-            if v is not None:
-                out[k] = v
-    return out
-
-
-def _rat_page(p: dict, drafted: dict, include_rat: bool, rat: dict) -> dict | None:
-    """A skipped_pages entry for a RAT page the run must not fill, or None to plan it."""
-    rc = p.get("rat_candidate")
-    if not rc:
-        return None
-    idx = p.get("page_index")
-    seen = [drafted[i["item_id"]] for i in p.get("items", []) if i["item_id"] in drafted]
-    reasons = {a.get("skip_reason") for a in seen if a.get("status") == "skipped"}
-    if any(a.get("status") == "drafted" for a in seen):
-        verdict = "trat"
-    elif seen and reasons == {"irat-policy"}:
-        verdict = "irat"
-    elif seen and reasons == {"trat-answers-unavailable"}:
-        verdict = "trat-answers-unavailable"
-    else:
-        verdict = "trat" if include_rat else None
-    where = rat.get("answers_dir") or "rat.answers_dir (not set)"
-    if verdict == "irat":
-        # An individual RAT is the student's own closed-book work.
-        why = ("individual RAT; rat.irat = ask: ask the user before any write"
-               if rat.get("irat") == "ask" else "individual RAT; rat.irat = skip")
-        return {"page_index": idx, "reason": "irat-policy", "detail": why,
-                "basis": rc.get("basis")}
-    if verdict == "trat-answers-unavailable":
-        return {"page_index": idx, "reason": "trat-answers-unavailable",
-                "detail": f"team RAT in scope, but the team's answers are not in {where} yet"}
-    if verdict == "trat":
-        if rat.get("trat") == "skip":
-            return {"page_index": idx, "reason": "trat-policy-skip",
-                    "detail": "team RAT; rat.trat = skip"}
-        return None
-    return {"page_index": idx, "reason": "rat-unclassified",
-            "detail": f"a RAT page; answers.json does not say whether it is a team or an "
-                      f"individual RAT. Ask the user. Team answers come from {where}.",
-            "basis": rc.get("basis")}
+    return rat_mod.policy_from_config(cfg)
 
 
 def _skip_entries(it: dict, p: dict, idx: int, entry: dict, state: str, lock: dict | None) -> None:
@@ -229,7 +180,7 @@ def _skip_entries(it: dict, p: dict, idx: int, entry: dict, state: str, lock: di
         entry["occupancy"] = "not-applicable"
 
 
-def plan(mod: dict, answers: dict | None, include_rat: bool, cfg=None) -> dict:
+def plan(mod: dict, answers: dict | None, include_rat: bool, cfg=None, *, record=None, data_dir=None, page_kinds_path=None, answers_sha256=None) -> dict:
     bm = boundaries.boundary_map(mod)
     # Only a stop-severity door truncates the run. Per-item doors are handled item by item
     # below, and never-navigate doors by skipped_pages.
@@ -238,6 +189,15 @@ def plan(mod: dict, answers: dict | None, include_rat: bool, cfg=None) -> dict:
                         if p.get("is_report_page") and p.get("page_index") is not None)
     stop_before = first["page_index"] if first else None
     rat = rat_policy(cfg)
+    if include_rat:
+        print("warning: --include-rat is decided by page-kinds.json", file=sys.stderr)
+    if record is None:
+        record = page_kinds.load_current(mod, cfg, answers, path=page_kinds_path, data_dir=data_dir, answers_sha256=answers_sha256)
+    elif not page_kinds.current(mod, record, rat, answers, answers_sha256=answers_sha256):
+        record = None
+    rat_pages = [rat_mod.decide(p, rat, record, answers) for p in mod.get("pages", [])
+                 if page_kinds.is_candidate(p, rat)]
+    decisions = {d["page_index"]: d for d in rat_pages}
 
     drafted = {a["item_id"]: a for a in (answers or {}).get("items", [])}
     # A subpage child is reached as a raw Backbone model, so its read_only is null even on
@@ -257,9 +217,14 @@ def plan(mod: dict, answers: dict | None, include_rat: bool, cfg=None) -> dict:
             skipped_pages.append({"page_index": idx, "reason": "policy-skip",
                                   "detail": p["policy_skip"].get("reason")})
             continue
-        rs = _rat_page(p, drafted, include_rat, rat)
-        if rs is not None:
-            skipped_pages.append({k: v for k, v in rs.items() if v is not None})
+        rd = decisions.get(idx, {"decision": "not-rat"})
+        if rd["decision"] not in {"not-rat", "fill-from-draft", "fill-from-sheet"}:
+            skipped_pages.append({"page_index": idx, "reason": rd["decision"],
+                                  "detail": rd.get("question", rd["decision"])})
+            continue
+        if rd.get("rat") and rd.get("kind") != "trat" and any(
+                drafted.get(i["item_id"], {}).get("status") == "drafted" for i in p.get("items", [])):
+            skipped_pages.append({"page_index": idx, "reason": "rat-irat-drafted"})
             continue
 
         items = []
@@ -277,6 +242,11 @@ def plan(mod: dict, answers: dict | None, include_rat: bool, cfg=None) -> dict:
                 state = "drafted"
             else:
                 state = "answers-not-supplied"
+            from_sheet = rd["decision"] == "fill-from-sheet" and a and (
+                a.get("status") == "drafted" or a.get("status") == "skipped" and
+                a.get("skip_reason") in {"rat-sheet", "trat-answers-unavailable"})
+            if from_sheet:
+                state = "rat-sheet"
             unmapped = it["type"] == "unmapped"
             # A deliberate skip by the answerer is not a target. `already-answered` matters
             # most: that item holds the student's own work.
@@ -330,6 +300,8 @@ def plan(mod: dict, answers: dict | None, include_rat: bool, cfg=None) -> dict:
                         f"writing. A version-2 draft states the mapping directly.")
                 else:
                     entry["placements_source"] = None
+            if from_sheet:
+                entry["answer_source"] = "rat-sheet"
             _skip_entries(it, p, idx, entry, state, lock)
             items.append(entry)
         if items:
@@ -346,7 +318,7 @@ def plan(mod: dict, answers: dict | None, include_rat: bool, cfg=None) -> dict:
                                if p["is_checkpoint"] and isinstance(p["page_index"], int)}
                               | {i for i in ((mod.get("commit_boundaries") or {}).get("checkpoint_pages") or [])
                                  if isinstance(i, int)})
-    return {
+    result = {
         "module_id": mod.get("module_id"),
         "origin": origin_of(mod.get("source_url")),
         "instance": mod.get("instance"),
@@ -359,7 +331,8 @@ def plan(mod: dict, answers: dict | None, include_rat: bool, cfg=None) -> dict:
         "report_pages": report_idx,
         "checkpoint_pages": checkpoint_pages,
         "flow_pages": flow_pages,
-        "rat_policy": {k: rat[k] for k in ("irat", "trat")},
+        "rat_policy": dict({k: rat[k] for k in ("irat", "trat")}, record_sha256=page_kinds.record_hash(record)),
+        "rat_pages": rat_pages,
         "pages": pages_out,
         "skipped_pages": skipped_pages,
         "fillable_items": sum(1 for p in pages_out for i in p["items"] if i["fillable"]),
@@ -380,9 +353,23 @@ def plan(mod: dict, answers: dict | None, include_rat: bool, cfg=None) -> dict:
         },
     }
 
+    if cfg is not None and cfg.get('fill.check_answer.enabled',False) is True:
+        from ltcore import check_answer as ca
+        statuses={r['page_index']:r for r in page_kinds.page_status(mod,record,policy=rat)}
+        candidate_items=[]
+        for page in mod['pages']:
+            for item in page['items']:
+                reason=ca.eligibility(item,page,result,statuses[page['page_index']],written=True,verified=True,calibrated=True)
+                if reason is None:candidate_items.append({'item_id':item['item_id'],'page':page['page_index']})
+        result['check_answer']={'items':candidate_items,'requires_written_verified_calibrated':True}
+    return result
+
 
 def render(pl: dict) -> None:
     print(f"module {pl['module_id']}")
+    if pl.get('check_answer'):
+        rows=pl['check_answer']['items']
+        print('Check Answer: '+str(len(rows))+' items on pages '+', '.join(map(str,sorted({r['page'] for r in rows})))+'; written, verified drafts and origin calibration required')
     doors = pl["boundary_map"]["doors"]
     stops = [d for d in doors if d["severity"] == "stop"]
     peritem = [d for d in doors if d["severity"] == "per-item"]
@@ -495,10 +482,9 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--json", action="store_true", help="print the plan as JSON")
     ap.add_argument("--out", help="also write the JSON plan here (for ltjs.py check-url --plan)")
     ap.add_argument("--include-rat", action="store_true",
-                    help="treat an unclassified RAT page as a confirmed team RAT, for a run with "
-                         "no answers.json. Only when the user has said so in this session and "
-                         "has supplied the team's answers (rat.answers_dir); never reaches an "
-                         "individual RAT.")
+                    help="deprecated; decisions come from page-kinds.json")
+    ap.add_argument("--data-dir")
+    ap.add_argument("--page-kinds")
     ap.add_argument("--config", help="config file (default: the lt-suite lookup order)")
     args = ap.parse_args(argv)
 
@@ -523,7 +509,7 @@ def main(argv: list[str] | None = None) -> int:
             return fatal(f"answers.json is for module {answers.get('module_id')!r}, "
                          f"module.json is {mod.get('module_id')!r}")
 
-    pl = plan(mod, answers, args.include_rat, cfg)
+    pl = plan(mod, answers, args.include_rat, cfg, data_dir=args.data_dir, page_kinds_path=args.page_kinds, answers_sha256=hashlib.sha256(Path(args.answers).read_bytes()).hexdigest() if args.answers else None)
     if args.out:
         out = Path(args.out)
         out.parent.mkdir(parents=True, exist_ok=True)

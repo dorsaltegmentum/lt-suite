@@ -17,7 +17,7 @@ import sys
 
 from .requirements import requirement_applies
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 
 NEEDS = []  # type: list
 

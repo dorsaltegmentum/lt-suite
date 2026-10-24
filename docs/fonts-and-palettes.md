@@ -210,11 +210,99 @@ No dyslexia font is recommended. Controlled studies and a 2026 meta-analysis fou
 2. the bundled copy in `shared/fonts/<id>/`
 3. a downloaded copy in `<data>/fonts/<id>/`
 4. an installed font: `fc-match`, accepted only when it returns the requested family, else a scan of the platform font folders
-5. the bundled default of the role, marked as a fallback (`doctor` reports it)
+5. Noto from bundled, fetched or installed files, marked as a fallback (`doctor` reports it)
+6. for page PDFs and labels, the OS font when `fonts.system_fallback = true`
 
 Bundled and downloaded copies come before installed ones, so a diagram renders the same on every machine.
 
-An italic request that no file serves (the bundled Noto files are upright only) returns the upright file with `.italic` False and a `.source` that names the missing face. Renderers then slant the upright outlines. `static_instance()` refuses to label an upright file italic.
+An italic request that no file serves (the bundled Noto files are upright only) returns the upright file with `.italic` False and a `.source` that names the missing face. Diagrams and raster renderers slant the upright outlines; page PDFs use upright text. `static_instance()` refuses to label an upright file italic.
+
+### Fonts per output
+
+`fonts.sans` and `fonts.mono` remain the base pair. Each nonempty output key replaces
+both the base family and its explicit file keys for that role:
+
+```toml
+[fonts.pdf]
+sans = "Noto Sans"
+mono = "Noto Sans Mono"
+
+[fonts.diagram]
+sans = "Noto Sans"
+mono = "Noto Sans Mono"
+
+[fonts.labels]
+sans = ""  # inherit PDF sans, then base sans
+```
+
+Each key accepts a family name or a font file path relative to the config file.
+`annotate.font_path` still wins over label settings. Missing explicit files raise an
+error; label tools report the reason and use Pillow's default. A missing family
+falls through Noto before trying OS files.
+
+The OS chain uses SF Pro and SF Mono on macOS, Segoe UI and Cascadia Mono on
+Windows, and DejaVu Sans and DejaVu Sans Mono on Linux. These files stay on their
+host: lt-suite never bundles, fetches, cuts or embeds them in HTML or draw.io.
+Set `fonts.system_fallback = false` to disable that step and remove OS names from
+CSS stacks. Diagrams require a font with a recognised libre licence, with Noto
+as the fallback. HTML pages and copied SVGs name viewer-side CSS fallback families.
+Developer-download Apple fonts outside `/System/Library/Fonts` are refused.
+
+`python3 -m ltcore.fonts resolve sans --output pdf` reports the resolved file.
+`python3 -m ltcore.fonts stack mono --output diagram` prints its CSS stack.
+Doctor reports PDF sans and mono, diagram sans and mono, and label sans separately.
+Google mode warns about diagram families Google Fonts does not host.
+
+New output tables and `annotate.palette_copies` require the updated loader.
+v0.1.0 rejects these keys. Three licence changes affect existing configs:
+
+1. Page PDFs refuse fsType-restricted, preview-and-print, no-subsetting and bitmap-only fonts.
+2. Diagrams keep Reserved Font Name variable fonts whole, so PDF weights may flatten.
+3. Diagrams replace fonts with unreadable or restricted licences with Noto.
+
+`pdf_embeddable` accepts installable fsType 0 or editable bit 0x0008, except
+no-subsetting bit 0x0100 and bitmap-only bit 0x0200. All PDF body and symbol faces
+pass this check before ReportLab registration. SVG figure glyph fallback still
+uses system fontconfig; cairo's enforcement of fsType remains unverified.
+`licence_class` separates modification (`modify`), whole-file embedding (`whole`)
+and refused redistribution (`none`). Only `modify` fonts may be cut or subset.
+
+### Micrograph palette copies
+
+The Lt upload stays yellow on black with the configured upload colours.
+`annotate.palette_copies = true` also writes `<stem>-<palette id>` images for every
+PDF palette, including print. Each copy uses the PDF mantle for its margin and
+the PDF text colour for its caption. Point, ring, bracket and inset marks use blue,
+peach, green and teal accents. Named overrides win; other palettes choose chromatic
+accents by hue, without reuse until candidates run out. Oklch lightness steps
+reach 4.5:1 on margin and casing; gamut mapping may reduce chroma.
+
+| Palette | Print | Margin | Casing | Point | Ring | Bracket | Inset |
+|---|---|---|---|---|---|---|---|
+| Tol Bright | yes | #f3f3f3 | #ffffff | #3e71a4 | #c43f54 | #137f2a | #007793 |
+| Petroff dark | no | #151b23 | #000104 | #3f90da | #e76300 | #b9ac70 | #92dadd |
+| Catppuccin Latte | yes | #eff1f5 | #ffffff | #1b63f1 | #bd4700 | #1f7d00 | #00787f |
+| Catppuccin Frappé | no | #292c3c | #222534 | #8caaee | #ef9f76 | #a6d189 | #81c8be |
+| Everforest Dark Medium | no | #232a2e | #1c2327 | #7fbbb3 | #e69875 | #a7c080 | #83c092 |
+
+Colours can converge under colour-vision simulation. Mark shapes and a key repeat
+the distinction. `python3 -m ltcore.palettes micrograph tol-bright --print` reports
+contrast and all simulated pair distances. Copies alone carry the key for 2 or more
+mark kinds. Their long side is capped at 1920 pixels; `--copy-max 0` removes the cap.
+`--palette lt` or `annotate.palette_copies = false` writes only the upload.
+
+Every render rewrites `<stem>.copies.json`, binding upload and copy sha256 values.
+After a verified upload and media capture, file the copies beside captured media:
+
+```sh
+python3 "$SKILL_DIR/scripts/annotate_micrograph.py" rendered.jpg media/lt-demo-u5.jpg --file-copies
+```
+
+Filing renders nothing and leaves the captured upload untouched. Additional paths
+are replaced only when the previous manifest owns their current bytes, or with
+`--overwrite`. PDF and asset export accept a copy only while its own hash and the
+linked upload hash match the manifest. Changed uploads, edited copies and disabled
+copies invalidate older siblings. A warning names `--file-copies` when binding fails.
 
 ### Downloads
 

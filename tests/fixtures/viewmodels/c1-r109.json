@@ -1,0 +1,573 @@
+{
+ "module_id": "c1-r109",
+ "location": {
+  "origin": "https://lt.example.invalid",
+  "pathname": "/i/inst0001/student/courses/1/runs/109/run/page/1"
+ },
+ "globals": {
+  "pageLessonId": 1,
+  "pageCourseLongName": "Example Course 2000 (X101)"
+ },
+ "root": {
+  "lessonTitleDisplay": "1.2 Demo: readiness tests",
+  "hasCompletionPage": true,
+  "runLocked": false,
+  "showPageMenuPageRemaining": false,
+  "remainingFlowPagesWithoutCheckpoints": 0,
+  "checkpointPageContainer": {
+   "pages": []
+  }
+ },
+ "pages": [
+  {
+   "title": "Orientation",
+   "allPanels": [
+    {
+     "pluginKey": "kcTextArea",
+     "panelKey": "1",
+     "panelState": {
+      "content": {
+       "theText": "Invented readiness exercise."
+      }
+     }
+    }
+   ],
+   "rows": []
+  },
+  {
+   "title": "Readiness test (individual)",
+   "allPanels": [
+    {
+     "pluginKey": "kcTextArea",
+     "panelKey": "1",
+     "panelState": {
+      "content": {
+       "theText": "Individual Readiness Assurance Test (iRAT)"
+      }
+     }
+    },
+    {
+     "pluginKey": "select",
+     "panelKey": "81",
+     "panelState": {
+      "content": {
+       "question": "Choose a fictional object in group 1.",
+       "answers": [
+        {
+         "answer": "A. Amber spindle"
+        },
+        {
+         "answer": "B. Cobalt rotor"
+        },
+        {
+         "answer": "C. Silver helix"
+        },
+        {
+         "answer": "D. Bronze vessel"
+        }
+       ],
+       "multiselect": false,
+       "singleAttempt": false,
+       "assessmentType": "noAssessment"
+      },
+      "input": {
+       "selectedAnswers": []
+      },
+      "isReadOnly": false
+     }
+    },
+    {
+     "pluginKey": "select",
+     "panelKey": "82",
+     "panelState": {
+      "content": {
+       "question": "Choose a fictional object in group 2.",
+       "answers": [
+        {
+         "answer": "A. River delta"
+        },
+        {
+         "answer": "B. Mountain summit"
+        },
+        {
+         "answer": "C. Ocean trench"
+        },
+        {
+         "answer": "D. Desert oasis"
+        }
+       ],
+       "multiselect": false,
+       "singleAttempt": false,
+       "assessmentType": "noAssessment"
+      },
+      "input": {
+       "selectedAnswers": []
+      },
+      "isReadOnly": false
+     }
+    },
+    {
+     "pluginKey": "select",
+     "panelKey": "83",
+     "panelState": {
+      "content": {
+       "question": "Choose a fictional object in group 3.",
+       "answers": [
+        {
+         "answer": "A. Glass prism"
+        },
+        {
+         "answer": "B. Velvet curtain"
+        },
+        {
+         "answer": "C. Paper lantern"
+        },
+        {
+         "answer": "D. Marble column"
+        }
+       ],
+       "multiselect": true,
+       "singleAttempt": false,
+       "assessmentType": "noAssessment"
+      },
+      "input": {
+       "selectedAnswers": []
+      },
+      "isReadOnly": false
+     }
+    },
+    {
+     "pluginKey": "select",
+     "panelKey": "84",
+     "panelState": {
+      "content": {
+       "question": "Choose a fictional object in group 4.",
+       "answers": [
+        {
+         "answer": "A. Winter snowfall"
+        },
+        {
+         "answer": "B. Summer sunshine"
+        },
+        {
+         "answer": "C. Autumn foliage"
+        },
+        {
+         "answer": "D. Spring blossom"
+        }
+       ],
+       "multiselect": false,
+       "singleAttempt": false,
+       "assessmentType": "noAssessment"
+      },
+      "input": {
+       "selectedAnswers": []
+      },
+      "isReadOnly": false
+     }
+    },
+    {
+     "pluginKey": "select",
+     "panelKey": "85",
+     "panelState": {
+      "content": {
+       "question": "Choose a fictional object in group 5.",
+       "answers": [
+        {
+         "answer": "A. Copper wire"
+        },
+        {
+         "answer": "B. Rubber gasket"
+        },
+        {
+         "answer": "C. Wooden axle"
+        },
+        {
+         "answer": "D. Ceramic nozzle"
+        }
+       ],
+       "multiselect": false,
+       "singleAttempt": false,
+       "assessmentType": "noAssessment"
+      },
+      "input": {
+       "selectedAnswers": []
+      },
+      "isReadOnly": false
+     }
+    }
+   ],
+   "rows": []
+  },
+  {
+   "title": "Readiness test (team)",
+   "allPanels": [
+    {
+     "pluginKey": "kcTextArea",
+     "panelKey": "1",
+     "panelState": {
+      "content": {
+       "theText": "Team Readiness Assurance Test (tRAT)"
+      }
+     }
+    },
+    {
+     "pluginKey": "select",
+     "panelKey": "81",
+     "panelState": {
+      "content": {
+       "question": "Choose a fictional object in group 1.",
+       "answers": [
+        {
+         "answer": "A. Amber spindle"
+        },
+        {
+         "answer": "B. Cobalt rotor"
+        },
+        {
+         "answer": "C. Silver helix"
+        },
+        {
+         "answer": "D. Bronze vessel"
+        }
+       ],
+       "multiselect": false,
+       "singleAttempt": false,
+       "assessmentType": "noAssessment"
+      },
+      "input": {
+       "selectedAnswers": []
+      },
+      "isReadOnly": false
+     }
+    },
+    {
+     "pluginKey": "select",
+     "panelKey": "82",
+     "panelState": {
+      "content": {
+       "question": "Choose a fictional object in group 2.",
+       "answers": [
+        {
+         "answer": "A. River delta"
+        },
+        {
+         "answer": "B. Mountain summit"
+        },
+        {
+         "answer": "C. Ocean trench"
+        },
+        {
+         "answer": "D. Desert oasis"
+        }
+       ],
+       "multiselect": false,
+       "singleAttempt": false,
+       "assessmentType": "noAssessment"
+      },
+      "input": {
+       "selectedAnswers": []
+      },
+      "isReadOnly": false
+     }
+    },
+    {
+     "pluginKey": "select",
+     "panelKey": "83",
+     "panelState": {
+      "content": {
+       "question": "Choose a fictional object in group 3.",
+       "answers": [
+        {
+         "answer": "A. Glass prism"
+        },
+        {
+         "answer": "B. Velvet curtain"
+        },
+        {
+         "answer": "C. Paper lantern"
+        },
+        {
+         "answer": "D. Marble column"
+        }
+       ],
+       "multiselect": true,
+       "singleAttempt": false,
+       "assessmentType": "noAssessment"
+      },
+      "input": {
+       "selectedAnswers": []
+      },
+      "isReadOnly": false
+     }
+    },
+    {
+     "pluginKey": "select",
+     "panelKey": "84",
+     "panelState": {
+      "content": {
+       "question": "Choose a fictional object in group 4.",
+       "answers": [
+        {
+         "answer": "A. Winter snowfall"
+        },
+        {
+         "answer": "B. Summer sunshine"
+        },
+        {
+         "answer": "C. Autumn foliage"
+        },
+        {
+         "answer": "D. Spring blossom"
+        }
+       ],
+       "multiselect": false,
+       "singleAttempt": false,
+       "assessmentType": "noAssessment"
+      },
+      "input": {
+       "selectedAnswers": []
+      },
+      "isReadOnly": false
+     }
+    },
+    {
+     "pluginKey": "select",
+     "panelKey": "85",
+     "panelState": {
+      "content": {
+       "question": "Choose a fictional object in group 5.",
+       "answers": [
+        {
+         "answer": "A. Copper wire"
+        },
+        {
+         "answer": "B. Rubber gasket"
+        },
+        {
+         "answer": "C. Wooden axle"
+        },
+        {
+         "answer": "D. Ceramic nozzle"
+        }
+       ],
+       "multiselect": false,
+       "singleAttempt": false,
+       "assessmentType": "noAssessment"
+      },
+      "input": {
+       "selectedAnswers": []
+      },
+      "isReadOnly": false
+     }
+    }
+   ],
+   "rows": []
+  },
+  {
+   "title": "Case",
+   "allPanels": [
+    {
+     "pluginKey": "text-question",
+     "panelKey": "11",
+     "panelState": {
+      "content": {
+       "question": "Describe the fictional case.",
+       "singleAttempt": false,
+       "assessmentType": "noAssessment"
+      },
+      "input": {
+       "answer": ""
+      },
+      "isReadOnly": false
+     }
+    }
+   ],
+   "rows": []
+  },
+  {
+   "title": "Practice",
+   "allPanels": [
+    {
+     "pluginKey": "select",
+     "panelKey": "1",
+     "panelState": {
+      "content": {
+       "question": "Practice number 1",
+       "answers": [
+        {
+         "answer": "Odd pebble"
+        },
+        {
+         "answer": "Even stone"
+        }
+       ],
+       "multiselect": false,
+       "singleAttempt": false,
+       "assessmentType": "instantFeedback"
+      },
+      "input": {
+       "selectedAnswers": []
+      },
+      "isReadOnly": false
+     }
+    },
+    {
+     "pluginKey": "select",
+     "panelKey": "2",
+     "panelState": {
+      "content": {
+       "question": "Practice number 2",
+       "answers": [
+        {
+         "answer": "Odd pebble"
+        },
+        {
+         "answer": "Even stone"
+        }
+       ],
+       "multiselect": false,
+       "singleAttempt": false,
+       "assessmentType": "instantFeedback"
+      },
+      "input": {
+       "selectedAnswers": []
+      },
+      "isReadOnly": false
+     }
+    },
+    {
+     "pluginKey": "select",
+     "panelKey": "3",
+     "panelState": {
+      "content": {
+       "question": "Practice number 3",
+       "answers": [
+        {
+         "answer": "Odd pebble"
+        },
+        {
+         "answer": "Even stone"
+        }
+       ],
+       "multiselect": false,
+       "singleAttempt": false,
+       "assessmentType": "instantFeedback"
+      },
+      "input": {
+       "selectedAnswers": []
+      },
+      "isReadOnly": false
+     }
+    }
+   ],
+   "rows": []
+  },
+  {
+   "title": "True or false",
+   "allPanels": [
+    {
+     "pluginKey": "select",
+     "panelKey": "1",
+     "panelState": {
+      "content": {
+       "question": "Fictional assertion 1",
+       "answers": [
+        {
+         "answer": "True"
+        },
+        {
+         "answer": "False"
+        }
+       ],
+       "multiselect": false,
+       "singleAttempt": false,
+       "assessmentType": "noAssessment"
+      },
+      "input": {
+       "selectedAnswers": []
+      },
+      "isReadOnly": false
+     }
+    },
+    {
+     "pluginKey": "select",
+     "panelKey": "2",
+     "panelState": {
+      "content": {
+       "question": "Fictional assertion 2",
+       "answers": [
+        {
+         "answer": "True"
+        },
+        {
+         "answer": "False"
+        }
+       ],
+       "multiselect": false,
+       "singleAttempt": false,
+       "assessmentType": "noAssessment"
+      },
+      "input": {
+       "selectedAnswers": []
+      },
+      "isReadOnly": false
+     }
+    },
+    {
+     "pluginKey": "select",
+     "panelKey": "3",
+     "panelState": {
+      "content": {
+       "question": "Fictional assertion 3",
+       "answers": [
+        {
+         "answer": "True"
+        },
+        {
+         "answer": "False"
+        }
+       ],
+       "multiselect": false,
+       "singleAttempt": false,
+       "assessmentType": "noAssessment"
+      },
+      "input": {
+       "selectedAnswers": []
+      },
+      "isReadOnly": false
+     }
+    },
+    {
+     "pluginKey": "select",
+     "panelKey": "4",
+     "panelState": {
+      "content": {
+       "question": "Fictional assertion 4",
+       "answers": [
+        {
+         "answer": "True"
+        },
+        {
+         "answer": "False"
+        }
+       ],
+       "multiselect": false,
+       "singleAttempt": false,
+       "assessmentType": "noAssessment"
+      },
+      "input": {
+       "selectedAnswers": []
+      },
+      "isReadOnly": false
+     }
+    }
+   ],
+   "rows": []
+  },
+  {
+   "title": "Report",
+   "reportInfoPanels": []
+  }
+ ]
+}

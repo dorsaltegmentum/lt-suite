@@ -21,8 +21,8 @@ if str(SHARED) not in sys.path:
 
 # module id -> file stem (the demo run c1-r107 is stored as module-demo.json)
 STEMS = {"c1-r101": "c1-r101", "c1-r102": "c1-r102", "c1-r103": "c1-r103", "c1-r104": "c1-r104",
-         "c1-r105": "c1-r105", "c1-r106": "c1-r106", "c1-r107": "demo"}
-FILL_REPORT_IDS = ("c1-r101", "c1-r102", "c1-r103", "c1-r104", "c1-r106", "c1-r107")
+         "c1-r105": "c1-r105", "c1-r106": "c1-r106", "c1-r107": "demo", "c1-r108": "c1-r108", "c1-r109": "c1-r109"}
+FILL_REPORT_IDS = ("c1-r101", "c1-r102", "c1-r103", "c1-r104", "c1-r106", "c1-r107", "c1-r108", "c1-r109")
 
 
 def read_json(rel: str):

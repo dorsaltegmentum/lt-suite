@@ -17,7 +17,10 @@
 | Every re-export blocks on the page | Something edits the page between runs. Read the kept diff first. |
 | A page shows `%2F` or `___` in its name | The file-name format differs from the graph's. The page still carries `title::`, which Logseq uses. Set `notes.file_name_format`. |
 | Image keys reported as not found | The media step has not run on the pages that hold them. Run it, then export again. |
-| `no usable sans font for PDF export` | `fonts.sans` does not resolve to a TrueType file. Run the setup skill, or set `fonts.sans_path`. |
-| `no installed font has these characters` | The page uses characters no font covers. Set `fonts.sans` to a font that has them. |
+| `no usable sans font for PDF export` | `fonts.pdf.sans` does not resolve to a TrueType file. Run the setup skill, or set `fonts.pdf.sans_path`. |
+| `no installed font has these characters` | The page uses characters no font covers. Set `fonts.pdf.sans` to a font that has them. |
 | The final pass fails | `pdf.strip_metadata` is on and no strip tool is installed, a cleaner failed, or cleaning changed a page. Read `.final.json`. Rebuild before handing any PDF over. |
 | QC lists defects | Read each `DEFECT` line. Render the page with `--render` and look at it. |
+
+Page PDF body and symbol fonts must permit editable or installable embedding.
+Restricted fsType, preview-and-print, no-subsetting and bitmap-only files are refused.

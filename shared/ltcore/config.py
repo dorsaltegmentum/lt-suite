@@ -255,10 +255,12 @@ def defaults(*, with_style: bool = True) -> tuple[dict, dict]:
 
 # --------------------------------------------------------------------------- validate
 
-_TYPES = {"object": dict, "array": list, "string": str, "boolean": bool}
+_TYPES = {"object": dict, "array": list, "string": str, "boolean": bool, "null": type(None)}
 
 
 def _type_ok(v: Any, t: str) -> bool:
+    if isinstance(t, list):
+        return any(_type_ok(v, x) for x in t)
     if t == "integer":
         return isinstance(v, int) and not isinstance(v, bool)
     if t == "number":
@@ -293,20 +295,21 @@ def _check_regex(value: str, mode: Any, where: str, errors: list[str]) -> None:
 
 
 def _validate(v: Any, sch: dict, where: str, errors: list[str]) -> None:
+    shown = "value hidden" if sch.get("x-redact") else repr(v)
     t = sch.get("type")
     if t and not _type_ok(v, t):
-        want = {"object": "table", "array": "array"}.get(t, t)
-        errors.append(f"{where}: expected {want}, got {_tname(v)} {v!r}"[:300])
+        want = {"object": "table", "array": "array"}.get(t, t) if isinstance(t, str) else str(t)
+        errors.append(f"{where}: expected {want}, got {_tname(v)} {shown}"[:300])
         return
     if "enum" in sch and v not in sch["enum"]:
-        errors.append(f"{where}: {v!r} is not one of {', '.join(map(repr, sch['enum']))}")
+        errors.append(f"{where}: {shown} is not one of {', '.join(map(repr, sch['enum']))}")
     if "const" in sch and v != sch["const"]:
         errors.append(f"{where}: must be {sch['const']!r}")
     if isinstance(v, str):
         if len(v) < sch.get("minLength", 0):
             errors.append(f"{where}: must not be empty")
         if "pattern" in sch and not re.search(sch["pattern"], v):
-            errors.append(f"{where}: {v!r} does not match {sch['pattern']}")
+            errors.append(f"{where}: {shown} does not match {sch['pattern']}")
         if sch.get("x-regex"):
             _check_regex(v, sch["x-regex"], where, errors)
     if isinstance(v, int) and not isinstance(v, bool):
@@ -347,6 +350,20 @@ def _validate(v: Any, sch: dict, where: str, errors: list[str]) -> None:
 
 
 def _semantic(doc: dict, errors: list[str], warnings: list[str]) -> None:
+    browser = doc.get("browser") or {}
+    url = browser.get("devtools_url", "")
+    folder = browser.get("chromium_user_data_dir", "")
+    if url:
+        match = re.fullmatch(r"http://(127\.0\.0\.1|\[::1\]):([0-9]{1,5})/?", url)
+        if (not match or re.search(r"[\x00-\x1f\x7f-\x9f]", url)
+                or not 1 <= int(match[2]) <= 65535):
+            errors.append("browser.devtools_url: value hidden; use a loopback http address with port 1 to 65535")
+    if re.search(r'[\x00-\x1f\x7f-\x9f"%!]', folder):
+        errors.append("browser.chromium_user_data_dir: unsupported folder characters")
+    if browser.get("chromium") == "other" and not url and not folder:
+        errors.append("browser.chromium_user_data_dir: required for browser.chromium other")
+    if url and folder:
+        warnings.append("browser.chromium_user_data_dir is ignored when browser.devtools_url is set")
     for i, c in enumerate(doc.get("text_cleaners") or []):
         if not isinstance(c, dict):
             continue
@@ -363,9 +380,11 @@ def _semantic(doc: dict, errors: list[str], warnings: list[str]) -> None:
     if out.get("notes_graph") and not (doc.get("notes") or {}).get("graph_path"):
         warnings.append("export.outputs.notes_graph is on but notes.graph_path is empty; "
                         "no notes page is written")
-    rat = doc.get("rat") or {}
-    if rat.get("trat") == "from_dir" and not rat.get("answers_dir"):
-        warnings.append("rat.trat = \"from_dir\" but rat.answers_dir is empty; team-RAT pages are asked")
+    rat_cfg = doc.get("rat") or {}
+    if not rat_cfg.get("answers_dir") and not rat_cfg.get("answers_dirs"):
+        for kind in ("irat", "trat"):
+            if rat_cfg.get(kind) == "from_dir":
+                warnings.append(f'rat.{kind} = "from_dir" but rat.answers_dir is empty; RAT pages are asked')
 
 
 def check(doc: dict) -> tuple[list[str], list[str]]:
@@ -406,6 +425,8 @@ def _resolve_paths(doc: dict, sch: dict, base: Path, curriculum_root: str) -> No
         v = doc[k]
         if isinstance(v, dict) and s.get("type") == "object":
             _resolve_paths(v, s, base, curriculum_root)
+        elif isinstance(v, list) and s.get("x-path"):
+            doc[k] = [paths.expand(x, base) if isinstance(x, str) and x else x for x in v]
         elif isinstance(v, str) and v:
             mode = s.get("x-path")
             if mode == "config":
@@ -478,6 +499,33 @@ class Config:
         return tomlw.dumps(self.values)
 
 
+def _rat_roots_check(doc, errors, warnings):
+    # Import lazily so config remains usable before consumers load RAT helpers.
+    from ltcore import rat
+    policy = doc.get("rat") or {}
+    pairs = [("rat.answers_dir", policy.get("answers_dir"))]
+    pairs += [(f"rat.answers_dirs[{i}]", p) for i, p in enumerate(policy.get("answers_dirs") or [])]
+    seen = []
+    for key, value in pairs:
+        if not value:
+            continue
+        root = Path(value).resolve()
+        if root.exists() and not root.is_dir():
+            errors.append(f"{key}: root must be a directory")
+        if not root.exists():
+            warnings.append(f"{key}: root does not exist")
+        if any(rat.within(root, p) and rat.within(p, root) for p in seen):
+            warnings.append(f"{key}: duplicate real root")
+        seen.append(root)
+        for label, other, symmetric in (
+            ("notes.graph_path", (doc.get("notes") or {}).get("graph_path"), True),
+            ("curriculum.root", (doc.get("curriculum") or {}).get("root"), False),
+            ("paths.data_dir", os.environ.get(ENV_DATA) or (doc.get("paths") or {}).get("data_dir") or paths.data_dir(), True),
+        ):
+            if other and (rat.within(other, root) or (symmetric and rat.within(root, other))):
+                errors.append(f"{key}: root overlaps {label}")
+
+
 def build(user: dict, location: Location, *, validate: bool = True,
           cwd: str | os.PathLike | None = None) -> Config:
     """Merge ``user`` over the defaults, validate, resolve paths."""
@@ -495,6 +543,10 @@ def build(user: dict, location: Location, *, validate: bool = True,
     croot = cur.get("root", "") if isinstance(cur, dict) else ""
     croot = paths.expand(croot, base) if isinstance(croot, str) and croot else ""
     _resolve_paths(merged, sch, base, croot)
+    if not errors:
+        _rat_roots_check(merged, errors, warnings)
+    if errors and validate:
+        raise ConfigError("invalid RAT roots: " + "; ".join(errors))
     return Config(merged, raw=user, location=location, origins=origins, warnings=warnings,
                   errors=errors)
 

@@ -65,6 +65,8 @@ def source(tmp_path):
             f"assert sys.argv[1:] == {['--check', '--strict'] if tool == 'sync_shared' else ['--check']!r}\n"
             f"Path('{tool}.checked').write_text('checked')\n"
         ))
+    put(root, "shared/fonts/catalog.json", json.dumps({"fonts": [{"bundled": {"files": [
+        {"file": "example/font.ttf", "sha256": hashlib.sha256(b"example font").hexdigest()}]}}]}))
     approve_files(root)
     return root
 
@@ -387,3 +389,84 @@ def test_unapproved_license_directory_file_cannot_bypass_allowlist(source, tmp_p
     put(source, 'LICENSES/unreviewed.txt', 'Synthetic unreviewed material.')
     result = run(source, tmp_path / 'dist')
     assert result.returncode == 1 and 'unreviewed.txt' in result.stderr
+
+
+@pytest.mark.parametrize('kind',['foreign','replacement','otc'])
+def test_font_pins_reject_unapproved_bytes(source,tmp_path,kind):
+    if kind=='foreign':
+        put(source,'skills/sample/scripts/_shared/fonts/foreign/font.ttf',b'foreign')
+        put(source,'skills/sample/scripts/_shared/fonts/foreign/OFL.txt','A licence')
+    elif kind=='otc':
+        put(source,'skills/sample/scripts/_shared/fonts/example/font.otc',b'collection')
+    else:
+        put(source,'skills/sample/scripts/_shared/fonts/example/font.ttf',b'replacement')
+    approve_files(source)
+    result=run(source,tmp_path/'dist')
+    assert result.returncode != 0 and 'unapproved font or sha256 mismatch' in result.stderr
+
+
+def test_fill_palette_runtime_files_are_approved():
+    prefix='skills/lt-module-fill/scripts/_shared/'
+    names=set(json.loads((REPO/'packaging/runtime-files.json').read_text()))
+    for name in ['ltcore/palettes.py','palettes/catalog.json','palettes/ATTRIBUTION.md',
+                 'palettes/overrides/catppuccin-latte.toml','palettes/overrides/catppuccin-frappe.toml',
+                 'palettes/overrides/everforest-dark-medium.toml']:
+        assert prefix+name in names and (REPO/(prefix+name)).is_file()
+    notice=(REPO/'skills/lt-module-fill/NOTICE.txt').read_text()
+    assert 'Catppuccin' in notice and 'sainnhe' in notice and 'MIT' in notice
+
+
+def test_archives_keep_launcher_without_bootstrap(source, tmp_path):
+    # A missing allowlist entry must not silently remove the standalone launcher.
+    launcher = 'scripts/_shared/lt_chrome/lt-chrome.cjs'
+    put(source, 'skills/sample/' + launcher, '// synthetic launcher\n')
+    put(source, 'packaging/lt-chrome-bootstrap.cjs', '// generation input only\n')
+    approve_files(source)
+    out = tmp_path/'dist'
+    result = run(source,out)
+    assert result.returncode == 0, result.stderr
+    for target in TARGETS:
+        with zipfile.ZipFile(archive(out,target)) as z:
+            assert any(name.endswith(launcher) for name in z.namelist())
+            assert not any('bootstrap.cjs' in name for name in z.namelist())
+    with zipfile.ZipFile(out/'lt-suite-plugin-0.1.0.zip') as z:
+        assert any(name.endswith(launcher) for name in z.namelist())
+        assert not any('bootstrap.cjs' in name for name in z.namelist())
+
+
+@pytest.mark.parametrize('skill,script',[
+    ('lt-module-fill','scripts/browser/check_answer.js'),
+    ('lt-module-answer','scripts/reconcile.py')])
+def test_check_and_reconcile_standalone_assets(source,tmp_path,skill,script):
+    shutil.copytree(REPO/'skills'/skill,source/'skills'/skill,ignore=shutil.ignore_patterns('__pycache__','*.pyc'))
+    include_runtime_font_pins(source)
+    p=source/'packaging/plugin.toml';p.write_text(p.read_text().replace('["sample"]',json.dumps(['sample',skill])))
+    approve_files(source);out=tmp_path/'dist';result=run(source,out)
+    assert result.returncode==0,result.stderr
+    with zipfile.ZipFile(out/f'claude-ai/{skill}-claude-ai-0.1.0.zip') as archive:
+        for member in (script,'scripts/_shared/schemas/reconciled.schema.json'):
+            assert archive.read(skill+'/'+member)==(source/'skills'/skill/member).read_bytes()
+
+
+@pytest.mark.parametrize('skill,member',[
+    ('lt-module-fill','scripts/browser/check_answer.js'),
+    ('lt-module-answer','scripts/reconcile.py'),
+    ('lt-module-fill','scripts/_shared/schemas/reconciled.schema.json'),
+    ('lt-module-answer','scripts/_shared/schemas/reconciled.schema.json')])
+def test_unallowlisted_check_asset_blocks_build(source,tmp_path,skill,member):
+    shutil.copytree(REPO/'skills'/skill,source/'skills'/skill,ignore=shutil.ignore_patterns('__pycache__','*.pyc'))
+    include_runtime_font_pins(source)
+    p=source/'packaging/plugin.toml';p.write_text(p.read_text().replace('["sample"]',json.dumps(['sample',skill])))
+    approve_files(source);manifest=source/'packaging/runtime-files.json'
+    files=json.loads(manifest.read_text());files.remove('skills/'+skill+'/'+member);manifest.write_text(json.dumps(files))
+    result=run(source,tmp_path/'dist');assert result.returncode==1
+    assert 'unapproved distribution file: skills/'+skill+'/'+member in result.stderr
+
+
+def include_runtime_font_pins(source):
+    """Copied runtime skills need their reviewed Noto pins beside the synthetic font."""
+    path = source/'shared/fonts/catalog.json'
+    catalog = json.loads(path.read_text())
+    runtime = json.loads((REPO/'shared/fonts/catalog.json').read_text())
+    catalog['fonts'].extend(entry for entry in runtime['fonts'] if entry.get('bundled'))
+    path.write_text(json.dumps(catalog))

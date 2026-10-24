@@ -50,7 +50,7 @@ class Model {
 }
 class LabelInput extends Model {
   constructor(env, links) { super(env, { linkedLabels: coll(links || []) }); this.calls = []; }
-  addAnswer(li, lo) { this.calls.push([li, lo]); this.env.writes++; this.attributes.linkedLabels.models.push(mdl({ labelIndex: li, locationIndex: lo })); this.env.save(); }
+  addAnswer(li, lo) { this.calls.push([li, lo]); this.env.writes++; if (this.env.moveMode) this.attributes.linkedLabels.models = this.attributes.linkedLabels.models.filter(x => x.attributes.labelIndex !== li && x.attributes.locationIndex !== lo); this.attributes.linkedLabels.models.push(mdl({ labelIndex: li, locationIndex: lo })); this.env.save(); }
 }
 class CatInput extends Model {
   constructor(env, nCats, o) {
@@ -69,6 +69,7 @@ class CatInput extends Model {
     // Lt's categories addAnswer throws without its third argument, after the write.
     if (arguments.length < 3 || analytics === undefined) throw new Error('analytics required');
     this.calls.push([li, ci]); this.env.writes++;
+    if (this.env.moveMode) for (const e of this.entries) e.attributes.labelAnswerItems.models = e.attributes.labelAnswerItems.models.filter(x => x.attributes.labelIndex !== li);
     if (!this.silent) this.entries[ci].attributes.labelAnswerItems.models.push(mdl({ labelIndex: li }));
     this.env.save();
   }

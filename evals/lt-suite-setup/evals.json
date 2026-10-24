@@ -38,7 +38,7 @@
       "expectations": [
         "Uses preview.py without the diagram engine or rsvg-convert",
         "Shows derived theme measurements and bundled Noto samples",
-        "Names Catppuccin Latte, Catppuccin Frappé, Everforest Dark Medium, Adwaita Sans and Adwaita Mono as options",
+        "Names Catppuccin Latte, Catppuccin Frapp\u00e9, Everforest Dark Medium, Adwaita Sans and Adwaita Mono as options",
         "Asks for export palettes and a light print palette separately",
         "Does not pass fetch-font --yes without a second explicit approval"
       ]
@@ -93,6 +93,29 @@
         "States that the chat container supports drafting, export from an uploaded capture and diagrams",
         "States that browser capture and fill need a local installation",
         "Runs preview.py with Pillow and needs no rsvg-convert"
+      ]
+    },
+    {
+      "id": 8,
+      "prompt": "Set up lt-suite. For the browser path I choose Claude in Chrome.",
+      "files": [],
+      "expected_output": "A quiet browser adapter and restart reminder.",
+      "expectations": [
+        "Sets browser.adapter to claude-in-chrome",
+        "Asks no DevTools browser, folder, attach or address questions",
+        "Reminds the user to restart after writing the config"
+      ]
+    },
+    {
+      "id": 9,
+      "prompt": "Set up lt-suite. I choose option 2, Brave and auto-connect.",
+      "files": [],
+      "expected_output": "Three browser questions, then a restart reminder.",
+      "expectations": [
+        "Asks exactly Q1 browser path, Q2 browser name, Q4 attach method in order",
+        "Sets browser.adapter chrome-devtools-mcp and browser.chromium brave",
+        "Keeps browser.devtools_url empty",
+        "Reminds the user to restart after writing the config"
       ]
     }
   ]

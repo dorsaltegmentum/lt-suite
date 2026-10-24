@@ -103,3 +103,17 @@ Use `notes.assets_dir` for the asset destination.
 
 Choose a descriptive filename for the annotated image.
 Leave notes filing disabled when `notes.graph_path` is empty.
+
+Labels follow `--font`, `annotate.font_path`, `fonts.labels.sans`, `fonts.pdf.sans`,
+then base sans. Missing families fall through Noto to the OS font. Missing files
+print a reason before Pillow's default. The Lt upload stays yellow on black.
+
+Palette copies follow the selected PDF palettes, including print. Each uses the
+palette mantle, caption text and distinct mark shapes with a colour key. Copies
+alone gain key rows and a 1920 pixel cap. `--palette lt` disables copies for one
+render; `annotate.palette_copies = false` sets that choice in config.
+
+After verified upload and capture, run `annotate_micrograph.py rendered.jpg
+media/lt-demo-u5.jpg --file-copies`. This files copies and `<stem>.copies.json`
+without touching the captured upload. Export checks sha256 binding for the linked
+upload and each copy. Existing unowned or edited copies require `--overwrite`.

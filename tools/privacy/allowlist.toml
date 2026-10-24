@@ -70,3 +70,15 @@ pattern = "f-id"
 match = '^F\d{3}$'
 line_match = '#\s*noqa:'
 reason = "Lint rule codes such as F401 in noqa comments are not finding ids."
+
+[[allow]]
+path = ["shared/lt_chrome/lt-chrome.cjs", "skills/lt-suite-setup/scripts/_shared/lt_chrome/lt-chrome.cjs", "tests/packaging/test_lt_chrome.py", "tests/packaging/test_lt_chrome_launcher.py"]
+pattern = "study-date"
+match = '^(2024-11-05|2025-03-26|2025-06-18|2025-11-25|2099-01-01)$'
+reason = "MCP protocol versions and the synthetic unknown-version negotiation case."
+
+[[allow]]
+path = "tests/packaging/test_lt_chrome_launcher.py"
+pattern = "email"
+line_match = 'http://(user:pw@127\.0\.0\.1:9222|127\.0\.0\.1:9222@evil\.example)'
+reason = "Synthetic credential and userinfo-confusion URLs refused by the loopback validator."

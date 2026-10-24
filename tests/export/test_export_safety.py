@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 
 import pytest
@@ -217,3 +218,104 @@ def test_flashcard_handoff_excludes_protected_pages_but_keeps_worked_pages(
     cards = export_module.build_flashcard_source(module, answers, None, "1", "Demo", config.load(make_config()))
     assert "Allowed prompt" in cards and "Allowed answer" in cards
     assert "Excluded prompt" not in cards and "Excluded answer" not in cards
+
+
+def test_T33_T34_rat_summary_reads_no_sheet_and_excludes_flashcards(
+        tmp_path, make_config, run, export_module, fixtures):
+    import hashlib
+    import sys
+    from ltcore import config, page_kinds, rat
+    root = tmp_path / 'sheets'
+    root.mkdir()
+    for src in (fixtures / 'curriculum/Block A/RATs').iterdir():
+        if src.is_file() and not src.name.startswith('.'):
+            (root / src.name).write_bytes(src.read_bytes())
+    cfgpath = make_config(rat={'answers_dir': str(root), 'trat': 'from_dir'},
+                          export__outputs={'pdf': False, 'flashcard_source': True})
+    cfg = config.load(cfgpath)
+    modpath = fixtures / 'modules/module-c1-r109.json'
+    anspath = fixtures / 'answers/answers-c1-r109.json'
+    mod = json.loads(modpath.read_text())
+    ans = json.loads(anspath.read_text())
+    page_kinds.classify(mod, rat.policy_from_config(cfg), answers=ans,
+                       answers_sha256=hashlib.sha256(anspath.read_bytes()).hexdigest(),
+                       path=tmp_path / 'data/runs/c1-r109/page-kinds.json')
+    opened = []
+    active = [True]
+    def audit(event, args):
+        if active[0] and event == 'open' and isinstance(args[0], (str, bytes)):
+            if Path(os.fsdecode(args[0])).is_relative_to(root):
+                opened.append(args[0])
+    sys.addaudithook(audit)
+    try:
+        rc, out, err = run('--module', modpath, '--answers', anspath,
+                           '--fill-report', fixtures / 'fill-reports/fill-report-c1-r109.json',
+                           '--config', cfgpath, '--out-dir', tmp_path / 'export', '--json')
+    finally:
+        active[0] = False
+    assert rc == 0, out+err
+    assert opened == []
+    text = (tmp_path / 'export/module-page.md').read_text()
+    assert 'Filled from your answer sheet 1.2-team.md: 4 of 5 questions; 1 left for you.' in text
+    for forbidden in ('Desert oasis', 'Amber spindle', 'p3-81', 'Choose a fictional object'):
+        assert forbidden not in text
+    handoff = (tmp_path / 'export/flashcard-source.md').read_text()
+    assert 'p3-' not in handoff and 'Desert oasis' not in handoff
+
+
+@pytest.mark.parametrize('stale', [False, True])
+def test_custom_marker_without_classification_holds_export(run, fixtures, make_config, tmp_path, stale):
+    from ltcore import config, page_kinds, rat
+    import hashlib
+    mod = json.loads((fixtures/'modules/module-c1-r101.json').read_text())
+    ans = json.loads((fixtures/'answers/answers-c1-r101.json').read_text())
+    page = next(p for p in mod['pages'] if any(a['status'] == 'drafted' and a['item_id'] in
+                {i['item_id'] for i in p['items']} for a in ans['items']))
+    page['content'] = [{'panel_key': 'synthetic-marker', 'plugin_key': 'kcTextArea', 'kind': 'text', 'text': 'Team examination'}]
+    page.pop('rat_candidate', None)
+    for a in ans['items']:
+        if a['status'] == 'drafted' and a['item_id'] in {i['item_id'] for i in page['items']}:
+            for n, segment in enumerate(a.get('segments', [])):
+                if segment['kind'] == 'claim':
+                    segment['text'] = f'Invented export omission sentinel {a["item_id"]} {n} ' * 8
+    cfgpath = make_config(rat__kind_markers={'trat': 'Team examination'})
+    mp, ap = tmp_path/'module.json', tmp_path/'answers.json'
+    mp.write_text(json.dumps(mod))
+    ans['source_module'].update(path=str(mp), sha256=hashlib.sha256(mp.read_bytes()).hexdigest())
+    ap.write_text(json.dumps(ans))
+    if stale:
+        cfg = config.load(cfgpath)
+        page_kinds.classify(mod, rat.policy_from_config(cfg), answers=ans,
+                           answers_sha256=hashlib.sha256(ap.read_bytes()).hexdigest(),
+                           path=tmp_path/'data/runs/c1-r101/page-kinds.json')
+        page['content'][0]['text'] += ' changed'
+    mp.write_text(json.dumps(mod))
+    ans['source_module']['sha256'] = hashlib.sha256(mp.read_bytes()).hexdigest()
+    ap.write_text(json.dumps(ans))
+    rc, out, err = run('--config', cfgpath, '--module', mp, '--answers', ap,
+                       '--out-dir', tmp_path/'export')
+    assert rc == 0, out + err
+    text = (tmp_path/'export/module-page.md').read_text()
+    assert 'Team examination' not in text
+    assert 'Invented export omission sentinel' not in text
+
+
+def test_rat_learning_outcome_export_refuses_before_read(export_module, make_config, tmp_path, monkeypatch):
+    from ltcore import config
+    sheets = tmp_path/'sheets'
+    sheets.mkdir()
+    sheet = sheets/'outcomes.md'
+    sheet.write_text('## Week 1 Demo\nInvented selection\n')
+    alias = tmp_path/'outcomes.md'
+    alias.symlink_to(sheet)
+    cfg = config.load(make_config(rat={'answers_dir': str(sheets), 'irat': 'skip', 'trat': 'skip'}))
+    opened = []
+    original = Path.open
+    def watched(path, *args, **kwargs):
+        if path.resolve() == sheet:
+            opened.append(path)
+        return original(path, *args, **kwargs)
+    monkeypatch.setattr(Path, 'open', watched)
+    with pytest.raises(ValueError, match='RAT root'):
+        export_module.parse_ilo_section(alias, '1', 'Demo', cfg)
+    assert opened == []

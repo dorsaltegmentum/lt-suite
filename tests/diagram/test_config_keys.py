@@ -82,3 +82,17 @@ def test_new_case_naming(tmp_path, engine_env):
     again = run_engine("new_case.py", tmp_path / "week-7", cwd=tmp_path, env=engine_env, timeout=120)
     assert again.returncode != 0 and "not overwriting" in (again.stdout + again.stderr)
     assert ENGINE.is_dir()
+
+
+def test_diagram_fonts_from_the_diagram_table(configured,font_file):
+    import core,style,themes
+    path=font_file('Test Diagram')
+    configured('[fonts.diagram]\nsans = '+json.dumps(str(path))+'\n')
+    assert style.font_family('sans') == 'Test Diagram'
+    assert style.font_path('sans') == path
+    assert all(t['sans']=='Test Diagram' for t in themes.THEMES.values())
+    core.use_configured_fonts()
+    core.fonts_for_geometry({'font':'Test Diagram'})
+    with pytest.raises(ValueError,match='fonts.diagram.sans'):
+        core.fonts_for_geometry({'font':'Other Font'})
+    core._FR=None

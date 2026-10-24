@@ -15,6 +15,21 @@ from ltcore import config, paths
 ORIGIN = "https://lt.example.invalid"
 
 
+def test_check_answer_defaults_off_and_explicit_opt_in(tmp_path):
+    # A missing opt-in must never authorize a press.
+    assert config.load().get("fill.check_answer.enabled") is False
+    path = write(tmp_path / "check.toml", "[fill.check_answer]\nenabled = true\n")
+    assert config.load(path).get("fill.check_answer.enabled") is True
+
+
+@pytest.mark.parametrize("entry", ['enabled = "yes"', 'on_cited = "retry"',
+    'max_presses_per_item = 8', 'types = ["multiple-choice"]',
+    'verdict_max_ms = 10000', 'call_deadline_ms = 90000'])
+def test_check_answer_rejects_non_boolean_and_removed_keys(tmp_path, entry):
+    with pytest.raises(config.ConfigError):
+        config.load(write(tmp_path / "check.toml", "[fill.check_answer]\n" + entry + "\n"))
+
+
 def write(p: Path, text: str) -> Path:
     p.parent.mkdir(parents=True, exist_ok=True)
     p.write_text(text, encoding="utf-8")
@@ -153,6 +168,9 @@ def test_relative_paths_resolve_against_the_config_file(tmp_path, monkeypatch):
     ('[model_answer]\nread = "yes"\n', "expected boolean"),
     ('[export.citations.url_aliases]\nX = "ftp://x"\n', "does not match"),
     ('notes = "flat"\n', "expected table"),
+    ('[browser]\nchromium = "unknown"\n', "browser.chromium"),
+    ('[browser]\ndevtools_url = "http://u:synthetic-password@192.0.2.1:9222"\n', "value hidden"),
+    ('[browser]\nchromium = "other"\n', "browser.chromium_user_data_dir"),
 ])
 def test_invalid_configs_fail_with_named_key(tmp_path, text, needle):
     f = write(tmp_path / "bad.toml", text)

@@ -32,7 +32,8 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent / "_shared"))
 import ltcore  # noqa: E402
 ltcore.bootstrap(["PIL", "numpy", "scipy"])   # re-runs inside <data>/venv when one exists and a package is missing
-from ltcore import config  # noqa: E402
+from ltcore import config, palettes  # noqa: E402
+import shutil
 
 import argparse
 import json
@@ -43,61 +44,8 @@ SS = 2  # Supersample the vector overlay.
 
 
 def resolve_font(cfg, size, weight):
-    """Resolve a configured font, fonts.sans, or Pillow's default."""
-    font = None
-    source_label = "pillow-default"
-    source_path = "builtin"
-    reasons = []
-    configured = cfg.get("annotate.font_path")
-
-    if configured:
-        try:
-            path = Path(configured).expanduser()
-            if not path.is_file():
-                raise FileNotFoundError(f"{path} does not exist")
-            font = ImageFont.truetype(str(path), size)
-            source_label = "config annotate.font_path"
-            source_path = str(path)
-        except Exception as exc:
-            reasons.append(f"annotate.font_path: {exc}")
-    else:
-        reasons.append("annotate.font_path is empty")
-
-    if font is None:
-        try:
-            from ltcore import fonts
-
-            resolved = fonts.resolve("sans", weight=weight, cfg=cfg)
-            path = getattr(resolved, "path", resolved)
-            font = ImageFont.truetype(str(path), size)
-            source_label = "fonts.sans"
-            source_path = str(path)
-        except Exception as exc:
-            reasons.append(f"fonts.sans: {exc}")
-
-    if font is None:
-        font = ImageFont.load_default()
-        print(
-            "WARNING: using pillow-default; " + "; ".join(reasons),
-            file=sys.stderr,
-        )
-
-    # A variable font draws at its default weight unless its wght axis is set.
-    try:
-        axes = font.get_variation_axes()
-        values = []
-        for axis in axes:
-            name = axis.get("name")
-            name = name.decode() if isinstance(name, bytes) else str(name)
-            lo, hi, default = axis.get("minimum"), axis.get("maximum"), axis.get("default")
-            values.append(min(max(weight, lo), hi) if name.lower() == "weight" else default)
-        if values:
-            font.set_variation_by_axes(values)
-    except Exception:
-        pass  # a static font, or Pillow's bitmap default
-
-    print(f"font: {source_label} {source_path}", file=sys.stderr)
-    return font, source_label
+    from ltcore import fonts
+    return fonts.label_font(cfg, size, weight)
 
 
 class _FontOverride:
@@ -408,97 +356,10 @@ def _slug(s):
     return "".join(c if c.isalnum() else "-" for c in s.lower())[:40].strip("-")
 
 
-def main() -> int:
-    global Image, ImageDraw, ImageFont, np, ndimage, CASING, INK, MARGIN_FILL
-
-    ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument("src", nargs="?")
-    ap.add_argument("dst", nargs="?")
-    ap.add_argument("--config", metavar="PATH")
-    ap.add_argument("--help-rules", action="store_true",
-                    help="print configured label naming rules and exit")
-    ap.add_argument("--point", action="append", default=[])
-    ap.add_argument("--bracket", action="append", default=[])
-    ap.add_argument("--ring", action="append", default=[],
-                    help="text:cx,cy:rx,ry - outline a whole round structure")
-    ap.add_argument("--inset", action="append", default=[])
-    ap.add_argument("--caption", default=None)
-    ap.add_argument("--pointsize", type=int, default=None,
-                    help="override the automatic size (image width / 46)")
-    ap.add_argument("--wrap", type=float, default=0.30, metavar="FRAC",
-                    help="wrap labels beyond this fraction of the image width "
-                         "(default 0.30)")
-    ap.add_argument("--ink", default=None,
-                    help="override annotate.ink")
-    ap.add_argument("--casing", default=None,
-                    help="override annotate.casing")
-    ap.add_argument("--margin-fill", default=None,
-                    help="override annotate.margin_fill")
-    ap.add_argument("--font", default=None,
-                    help="override annotate.font_path")
-    ap.add_argument("--quality", type=int, default=92)
-    ap.add_argument("--probe", metavar="DIR",
-                    help="write a crop around every anchor and render nothing")
-    args = ap.parse_args()
-
-    try:
-        cfg = config.load(args.config)
-    except config.ConfigError as exc:
-        print(exc, file=sys.stderr)
-        return 3
-
-    if args.help_rules:
-        rules = cfg.get("annotate.naming_rules")
-        if rules:
-            for rule in rules:
-                print(rule)
-        else:
-            print("no naming rules configured")
-        return 0
-
-    if not args.src:
-        ap.error("src is required unless --help-rules is given")
-
-    missing = []
-    try:
-        from PIL import Image, ImageDraw, ImageFont
-    except ImportError:
-        missing.append("PIL")
-    try:
-        import numpy as np
-    except ImportError:
-        missing.append("numpy")
-    try:
-        from scipy import ndimage
-    except ImportError:
-        missing.append("scipy")
-    if missing:
-        print(ltcore.missing_hint(missing), file=sys.stderr)
-        return 3
-
-    CASING = cfg.get("annotate.casing")
-    INK = cfg.get("annotate.ink")
-    MARGIN_FILL = cfg.get("annotate.margin_fill")
-    a = args
-    if a.ink is None:
-        a.ink = INK
-    if a.casing is None:
-        a.casing = CASING
-    if a.margin_fill is None:
-        a.margin_fill = MARGIN_FILL
-
-    anns = ([parse_point(s) for s in a.point]
-            + [parse_bracket(s) for s in a.bracket]
+def make_layout(a, cfg):
+    """Compute every source and label coordinate once, before any palette paint."""
+    anns = ([parse_point(s) for s in a.point] + [parse_bracket(s) for s in a.bracket]
             + [parse_ring(s) for s in a.ring])
-    if not anns and not a.inset:
-        raise SystemExit("nothing to draw: pass --point, --bracket or --inset")
-
-    if a.probe:
-        write_probe(a.src, anns, a.probe)
-        return 0
-    if not a.dst:
-        raise SystemExit("dst is required unless --probe is given")
-
     im = Image.open(a.src).convert("RGB")
     W, H = im.size
 
@@ -549,8 +410,6 @@ def main() -> int:
     MT = round(ps * 0.5)
 
     W2, H2 = ML + W + MR, MT + H + MB
-    canvas = Image.new("RGB", (W2, H2), a.margin_fill)
-    canvas.paste(im, (ML, MT))
 
     # Shift each source coordinate into canvas space once.
     for ann in anns:
@@ -592,51 +451,6 @@ def main() -> int:
                                 g[i]["stub"][1] + g[i]["n"][1] * push)
                 g[i]["tie"] = g[i]["stub"]
 
-    # Draw insets before leaders so leaders remain visible.
-    ov = Image.new("RGBA", (W2 * SS, H2 * SS), (0, 0, 0, 0))
-    d = ImageDraw.Draw(ov)
-
-    def line(p, q, width, colour):
-        d.line([p[0] * SS, p[1] * SS, q[0] * SS, q[1] * SS], fill=colour,
-               width=max(1, round(width * SS)), joint="curve")
-
-    def rect(box, width, colour):
-        d.rectangle([box[0] * SS, box[1] * SS, box[2] * SS, box[3] * SS],
-                    outline=colour, width=max(1, round(width * SS)))
-
-    insets = [parse_inset(s) for s in a.inset]
-    placed = []
-    for ins in insets:
-        x, y, w, h = ins["box"]
-        x, y = max(0, x), max(0, y)
-        w, h = min(w, W - x), min(h, H - y)
-        crop = im.crop((x, y, x + w, y + h))
-        sw, sh = round(w * ins["scale"]), round(h * ins["scale"])
-        sw, sh = min(sw, W - 2 * gap), min(sh, H - 2 * gap)
-        crop = crop.resize((sw, sh), Image.LANCZOS)
-        pad = round(ps * 0.6)
-        px = ML + pad if "left" in ins["corner"] else ML + W - sw - pad
-        py = MT + pad if "top" in ins["corner"] else MT + H - sh - pad
-        canvas.paste(crop, (px, py))
-        placed.append({"src": (ML + x, MT + y, ML + x + w, MT + y + h),
-                       "dst": (px, py, px + sw, py + sh), "text": ins["text"]})
-
-    bw = max(2, round(ps * 0.09))
-    cas = max(2, round(ps * 0.09))
-    for width, colour in ((bw + cas, a.casing), (bw, a.ink)):
-        for pl in placed:
-            rect(pl["src"], width, colour)
-            rect(pl["dst"], width, colour)
-            sx0, sy0, sx1, sy1 = pl["src"]
-            dx0, dy0, dx1, dy1 = pl["dst"]
-            # Join the nearest corner pairs to identify the magnified region.
-            if dx0 > sx1:
-                line((sx1, sy0), (dx0, dy0), width, colour)
-                line((sx1, sy1), (dx0, dy1), width, colour)
-            elif dx1 < sx0:
-                line((sx0, sy0), (dx1, dy0), width, colour)
-                line((sx0, sy1), (dx1, dy1), width, colour)
-
     assign_slots(left, MT, MT + H, round(ps * 0.55))
     assign_slots(right, MT, MT + H, round(ps * 0.55))
 
@@ -655,55 +469,346 @@ def main() -> int:
         print(f"WARNING: leaders for {t1!r} and {t2!r} {how} - move an anchor, force a "
               f"side with @left/@right, or stagger the brackets", file=sys.stderr)
 
-    lw = max(2, round(ps * 0.085))
-    for width, colour in ((lw + max(2, round(ps * 0.09)), a.casing), (lw, a.ink)):
+    def render(colours=None, key=False):
+        canvas = Image.new("RGB", (W2, H2), colours["margin"] if colours else a.margin_fill)
+        canvas.paste(im, (ML, MT))
+        # Draw insets before leaders so leaders remain visible.
+        ov = Image.new("RGBA", (W2 * SS, H2 * SS), (0, 0, 0, 0))
+        d = ImageDraw.Draw(ov)
+
+        def line(p, q, width, colour):
+            d.line([p[0] * SS, p[1] * SS, q[0] * SS, q[1] * SS], fill=colour,
+                   width=max(1, round(width * SS)), joint="curve")
+
+        def rect(box, width, colour):
+            d.rectangle([box[0] * SS, box[1] * SS, box[2] * SS, box[3] * SS],
+                        outline=colour, width=max(1, round(width * SS)))
+
+        insets = [parse_inset(s) for s in a.inset]
+        placed = []
+        for ins in insets:
+            x, y, w, h = ins["box"]
+            x, y = max(0, x), max(0, y)
+            w, h = min(w, W - x), min(h, H - y)
+            crop = im.crop((x, y, x + w, y + h))
+            sw, sh = round(w * ins["scale"]), round(h * ins["scale"])
+            sw, sh = min(sw, W - 2 * gap), min(sh, H - 2 * gap)
+            crop = crop.resize((sw, sh), Image.LANCZOS)
+            pad = round(ps * 0.6)
+            px = ML + pad if "left" in ins["corner"] else ML + W - sw - pad
+            py = MT + pad if "top" in ins["corner"] else MT + H - sh - pad
+            canvas.paste(crop, (px, py))
+            placed.append({"src": (ML + x, MT + y, ML + x + w, MT + y + h),
+                           "dst": (px, py, px + sw, py + sh), "text": ins["text"]})
+
+        bw = max(2, round(ps * 0.09))
+        cas = max(2, round(ps * 0.09))
+        for width, colour in ((bw + cas, colours["casing"] if colours else a.casing), (bw, colours["inset"] if colours else a.ink)):
+            for pl in placed:
+                rect(pl["src"], width, colour)
+                rect(pl["dst"], width, colour)
+                sx0, sy0, sx1, sy1 = pl["src"]
+                dx0, dy0, dx1, dy1 = pl["dst"]
+                # Join the nearest corner pairs to identify the magnified region.
+                if dx0 > sx1:
+                    line((sx1, sy0), (dx0, dy0), width, colour)
+                    line((sx1, sy1), (dx0, dy1), width, colour)
+                elif dx1 < sx0:
+                    line((sx0, sy0), (dx1, dy0), width, colour)
+                    line((sx0, sy1), (dx1, dy1), width, colour)
+
+        lw = max(2, round(ps * 0.085))
+        for width, colour in ((lw + max(2, round(ps * 0.09)), colours["casing"] if colours else a.casing), (lw, None)):
+            for ann in anns:
+                colour = (colours[ann["kind"]] if colours else a.ink) if width == lw else colour
+                if ann["kind"] == "point":
+                    line(ann["lead_end"], ann["p"], width, colour)
+                    r = dot_r
+                    d.ellipse([(ann["p"][0] - r) * SS, (ann["p"][1] - r) * SS,
+                               (ann["p"][0] + r) * SS, (ann["p"][1] + r) * SS],
+                              outline=colour, width=max(1, round(width * SS)))
+                elif ann["kind"] == "ring":
+                    line(ann["lead_end"], ann["edge"], width, colour)
+                    (cx, cy), (rx, ry) = ann["c"], ann["r"]
+                    d.ellipse([(cx - rx) * SS, (cy - ry) * SS,
+                               (cx + rx) * SS, (cy + ry) * SS],
+                              outline=colour, width=max(1, round(width * 1.25 * SS)))
+                else:
+                    # Draw bracket spans heavier than their leaders.
+                    for p, q in zip(ann["arms"], ann["arms"][1:]):
+                        line(p, q, width * 1.7, colour)
+                    line(ann["stub"], ann["lead_end"], width, colour)
+
+        ov = ov.resize((W2, H2), Image.LANCZOS)
+        canvas = Image.alpha_composite(canvas.convert("RGBA"), ov).convert("RGB")
+
+        # Draw text last at full resolution.
+        dt = ImageDraw.Draw(canvas)
+        stroke = max(2, round(ps * 0.13))
         for ann in anns:
-            if ann["kind"] == "point":
-                line(ann["lead_end"], ann["p"], width, colour)
-                r = dot_r
-                d.ellipse([(ann["p"][0] - r) * SS, (ann["p"][1] - r) * SS,
-                           (ann["p"][0] + r) * SS, (ann["p"][1] + r) * SS],
-                          outline=colour, width=max(1, round(width * SS)))
-            elif ann["kind"] == "ring":
-                line(ann["lead_end"], ann["edge"], width, colour)
-                (cx, cy), (rx, ry) = ann["c"], ann["r"]
-                d.ellipse([(cx - rx) * SS, (cy - ry) * SS,
-                           (cx + rx) * SS, (cy + ry) * SS],
-                          outline=colour, width=max(1, round(width * 1.25 * SS)))
-            else:
-                # Draw bracket spans heavier than their leaders.
-                for p, q in zip(ann["arms"], ann["arms"][1:]):
-                    line(p, q, width * 1.7, colour)
-                line(ann["stub"], ann["lead_end"], width, colour)
+            y0 = ann["ty"] - (len(ann["lines"]) - 1) * line_h / 2
+            for i, ln in enumerate(ann["lines"]):
+                dt.text((ann["tedge"], y0 + i * line_h), ln, font=font, fill=colours[ann["kind"]] if colours else a.ink,
+                        anchor=ann["anchor"], stroke_width=stroke, stroke_fill=colours["casing"] if colours else a.casing)
+        for pl in placed:
+            if pl["text"]:
+                dt.text((pl["dst"][0] + gap // 2, pl["dst"][1] + gap // 2), pl["text"],
+                        font=font, fill=colours["inset"] if colours else a.ink, anchor="lt",
+                        stroke_width=stroke, stroke_fill=colours["casing"] if colours else a.casing)
+        if a.caption:
+            dt.text((gap, MT + H + MB / 2), a.caption, font=cap_font, fill=colours["caption"] if colours else "#FFFFFF",
+                    anchor="lm", stroke_width=max(2, stroke - 1), stroke_fill=colours["casing"] if colours else a.casing)
 
-    ov = ov.resize((W2, H2), Image.LANCZOS)
-    canvas = Image.alpha_composite(canvas.convert("RGBA"), ov).convert("RGB")
+        if key and colours:
+            canvas = paint_key(canvas, anns, a.caption, cap_font, gap, MT + H, MB, colours)
+        return canvas
+    return {"paint": render, "width": W2, "height": H2, "annotations": anns,
+            "source": (W, H), "margins": (ML, MR, MT, MB), "pointsize": ps}
 
-    # Draw text last at full resolution.
-    dt = ImageDraw.Draw(canvas)
-    stroke = max(2, round(ps * 0.13))
-    for ann in anns:
-        y0 = ann["ty"] - (len(ann["lines"]) - 1) * line_h / 2
-        for i, ln in enumerate(ann["lines"]):
-            dt.text((ann["tedge"], y0 + i * line_h), ln, font=font, fill=a.ink,
-                    anchor=ann["anchor"], stroke_width=stroke, stroke_fill=a.casing)
-    for pl in placed:
-        if pl["text"]:
-            dt.text((pl["dst"][0] + gap // 2, pl["dst"][1] + gap // 2), pl["text"],
-                    font=font, fill=a.ink, anchor="lt",
-                    stroke_width=stroke, stroke_fill=a.casing)
-    if a.caption:
-        dt.text((gap, MT + H + MB / 2), a.caption, font=cap_font, fill="#FFFFFF",
-                anchor="lm", stroke_width=max(2, stroke - 1), stroke_fill=a.casing)
 
-    canvas.save(a.dst, quality=a.quality, subsampling=0)
-    print(f"{a.dst} {W2}x{H2} (source {W}x{H}, margins L{ML} R{MR} T{MT} B{MB}, "
-          f"pointsize {ps}) {os.path.getsize(a.dst)}B")
-    for ann in anns:
-        where = {"bracket": lambda: f"bracket {ann['p1']}->{ann['p2']}",
-                 "ring": lambda: f"ring {ann['c']} r{ann['r']}",
-                 "point": lambda: f"point {ann['p']}"}[ann["kind"]]()
-        print(f"  [{ann['side']:>5}] {ann['text']}  <- {where}")
+def paint(layout, colours=None, key=False):
+    return layout["paint"](colours, key)
+
+
+def paint_key(canvas, anns, caption, font, gap, image_bottom, margin_bottom, colours):
+    kinds = [k for k in ("point", "ring", "bracket") if any(a["kind"] == k for a in anns)]
+    if len(kinds) < 2:
+        return canvas
+    labels = {"point": "point: structure", "ring": "ring: whole round structure", "bracket": "bracket: layer or span"}
+    draw = ImageDraw.Draw(canvas)
+    row = max(26, round(getattr(font, "size", 18) * 1.9))
+    widths = [round(draw.textlength(labels[k], font=font)) + row + gap for k in kinds]
+    caption_width = round(draw.textlength(caption or "", font=font)) + 2 * gap
+    inline = margin_bottom >= row and caption_width + sum(widths) + gap <= canvas.width
+    if inline:
+        x, y = canvas.width - sum(widths) - gap, image_bottom + margin_bottom / 2
+    else:
+        # Wrap the key into rows of its own. Only palette copies grow.
+        rows, width = 1, gap
+        for size in widths:
+            if width + size > canvas.width and width > gap:
+                rows, width = rows + 1, gap
+            width += size
+        extended = Image.new("RGB", (canvas.width, canvas.height + row * rows), colours["margin"])
+        extended.paste(canvas, (0, 0))
+        x, y = gap, canvas.height + row / 2
+        canvas, draw = extended, ImageDraw.Draw(extended)
+    for kind, size in zip(kinds, widths):
+        if not inline and x + size > canvas.width and x > gap:
+            x, y = gap, y + row
+        cx, radius = x + row / 3, max(3, row / 7)
+        ink = colours[kind]
+        if kind == "point":
+            draw.ellipse((cx-radius-2, y-radius-2, cx+radius+2, y+radius+2), fill=colours["casing"])
+            draw.ellipse((cx-radius, y-radius, cx+radius, y+radius), fill=ink)
+        elif kind == "ring":
+            draw.ellipse((cx-radius-2, y-radius-2, cx+radius+2, y+radius+2), outline=colours["casing"], width=6)
+            draw.ellipse((cx-radius, y-radius, cx+radius, y+radius), outline=ink, width=2)
+        else:
+            points = [(cx+radius,y-radius),(cx-radius,y-radius),(cx-radius,y+radius),(cx+radius,y+radius)]
+            draw.line(points, fill=colours["casing"], width=6)
+            draw.line(points, fill=ink, width=2)
+        draw.text((x+row, y), labels[kind], font=font, fill=colours["caption"], anchor="lm",
+                  stroke_width=2, stroke_fill=colours["casing"])
+        x += size
+    return canvas
+
+
+def owns_copy(path, manifest):
+    if not path.exists():
+        return True
+    if path.is_symlink():
+        return False
+    for record in (manifest or {}).get("copies", {}).values():
+        if record.get("file") == path.name and record.get("sha256") == palettes.file_sha256(path):
+            return True
+    return False
+
+
+def write_manifest(path, value):
+    # Replacing the manifest invalidates any old sibling that was skipped.
+    import tempfile
+    manifest = palettes.copies_manifest(path)
+    with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8", dir=manifest.parent,
+                                     prefix=".lt-copies-", suffix=".tmp", delete=False) as stream:
+        temporary = Path(stream.name)
+        stream.write(json.dumps(value, indent=2) + "\n")
+    try:
+        temporary.replace(manifest)
+    finally:
+        temporary.unlink(missing_ok=True)
+
+
+def file_copies(source, destination, overwrite=False):
+    manifest = palettes.read_copies(source)
+    if not manifest or not source.is_file() or palettes.file_sha256(source) != manifest.get("upload", {}).get("sha256"):
+        print("WARNING: --file-copies source upload does not match its manifest", file=sys.stderr)
+        return 1
+    previous = palettes.read_copies(destination)
+    result = {"upload": manifest["upload"], "media_sha256": palettes.file_sha256(destination) if destination.is_file() else None,
+              "copies": {}}
+    for pid, record in manifest["copies"].items():
+        if not palettes.valid_palette_id(pid):
+            print("WARNING: --file-copies refused invalid palette id", file=sys.stderr)
+            continue
+        sibling = palettes.bound_copy(source, pid)
+        if sibling is None:
+            print(f"WARNING: --file-copies {pid}: copy does not match its manifest", file=sys.stderr)
+            continue
+        target = destination.with_name(f"{destination.stem}-{pid}{destination.suffix}")
+        if target.is_symlink() or (not overwrite and not owns_copy(target, previous)):
+            print(f"WARNING: --file-copies kept unowned {target.name}; pass --overwrite", file=sys.stderr)
+            continue
+        if sibling.resolve() != target.resolve():
+            shutil.copyfile(sibling, target)
+        result["copies"][pid] = {"file": target.name, "sha256": palettes.file_sha256(target), "print": bool(record.get("print"))}
+    write_manifest(destination, result)
+    return 0
+
+
+def main() -> int:
+    global Image, ImageDraw, ImageFont, np, ndimage, CASING, INK, MARGIN_FILL
+
+    ap = argparse.ArgumentParser(description=__doc__)
+    ap.add_argument("src", nargs="?")
+    ap.add_argument("dst", nargs="?")
+    ap.add_argument("--config", metavar="PATH")
+    ap.add_argument("--help-rules", action="store_true",
+                    help="print configured label naming rules and exit")
+    ap.add_argument("--point", action="append", default=[])
+    ap.add_argument("--bracket", action="append", default=[])
+    ap.add_argument("--ring", action="append", default=[],
+                    help="text:cx,cy:rx,ry - outline a whole round structure")
+    ap.add_argument("--inset", action="append", default=[])
+    ap.add_argument("--caption", default=None)
+    ap.add_argument("--pointsize", type=int, default=None,
+                    help="override the automatic size (image width / 46)")
+    ap.add_argument("--wrap", type=float, default=0.30, metavar="FRAC",
+                    help="wrap labels beyond this fraction of the image width "
+                         "(default 0.30)")
+    ap.add_argument("--ink", default=None,
+                    help="override annotate.ink")
+    ap.add_argument("--casing", default=None,
+                    help="override annotate.casing")
+    ap.add_argument("--margin-fill", default=None,
+                    help="override annotate.margin_fill")
+    ap.add_argument("--font", default=None,
+                    help="override annotate.font_path")
+    ap.add_argument("--quality", type=int, default=92)
+    ap.add_argument("--probe", metavar="DIR",
+                    help="write a crop around every anchor and render nothing")
+    ap.add_argument("--palette", help="comma-separated lt and palette ids")
+    ap.add_argument("--copy-max", type=int, default=1920)
+    ap.add_argument("--file-copies", action="store_true", help="file verified copies beside captured media; render nothing")
+    ap.add_argument("--overwrite", action="store_true")
+    args = ap.parse_args()
+
+    try:
+        cfg = config.load(args.config)
+    except config.ConfigError as exc:
+        print(exc, file=sys.stderr)
+        return 3
+
+    if args.help_rules:
+        rules = cfg.get("annotate.naming_rules")
+        if rules:
+            for rule in rules:
+                print(rule)
+        else:
+            print("no naming rules configured")
+        return 0
+
+    if not args.src:
+        ap.error("src is required unless --help-rules is given")
+
+    if args.file_copies:
+        if not args.dst:
+            ap.error("--file-copies requires src and dst")
+        return file_copies(Path(args.src), Path(args.dst), args.overwrite)
+    if args.copy_max < 0:
+        ap.error("--copy-max must be nonnegative")
+
+    missing = []
+    try:
+        from PIL import Image, ImageDraw, ImageFont
+    except ImportError:
+        missing.append("PIL")
+    try:
+        import numpy as np
+    except ImportError:
+        missing.append("numpy")
+    try:
+        from scipy import ndimage
+    except ImportError:
+        missing.append("scipy")
+    if missing:
+        print(ltcore.missing_hint(missing), file=sys.stderr)
+        return 3
+
+    CASING = cfg.get("annotate.casing")
+    INK = cfg.get("annotate.ink")
+    MARGIN_FILL = cfg.get("annotate.margin_fill")
+    a = args
+    if a.ink is None:
+        a.ink = INK
+    if a.casing is None:
+        a.casing = CASING
+    if a.margin_fill is None:
+        a.margin_fill = MARGIN_FILL
+
+    anns = ([parse_point(s) for s in a.point]
+            + [parse_bracket(s) for s in a.bracket]
+            + [parse_ring(s) for s in a.ring])
+    if not anns and not a.inset:
+        raise SystemExit("nothing to draw: pass --point, --bracket or --inset")
+
+    if a.probe:
+        write_probe(a.src, anns, a.probe)
+        return 0
+    if not a.dst:
+        raise SystemExit("dst is required unless --probe is given")
+
+    layout = make_layout(a, cfg)
+    destination = Path(a.dst)
+    previous = palettes.read_copies(destination)
+    canvas = paint(layout)
+    canvas.save(destination, quality=a.quality, subsampling=0)
+    manifest = {"upload": {"file": destination.name, "sha256": palettes.file_sha256(destination)},
+                "media_sha256": None, "copies": {}}
+    ids = a.palette.split(",") if a.palette is not None else (
+        ["lt"] + palettes.pdf_palette_ids(cfg) if cfg.get("annotate.palette_copies", True) else ["lt"])
+    printp = cfg.get("style.print_palette") or next(iter(palettes.pdf_palette_ids(cfg)), "")
+    for pid in dict.fromkeys(ids):
+        if pid == "lt":
+            continue
+        try:
+            colours = palettes.micrograph_colours(pid, cfg, print_copy=pid == printp)
+            target = destination.with_name(f"{destination.stem}-{pid}{destination.suffix}")
+            if target.is_symlink() or (not a.overwrite and not owns_copy(target, previous)):
+                print(f"WARNING: kept unowned {target.name}; pass --overwrite", file=sys.stderr)
+                continue
+            copy = paint(layout, colours, key=True)
+            if a.copy_max and max(copy.size) > a.copy_max:
+                copy.thumbnail((a.copy_max, a.copy_max), Image.Resampling.LANCZOS)
+            copy.save(target, quality=a.quality, subsampling=0)
+            manifest["copies"][pid] = {"file": target.name, "sha256": palettes.file_sha256(target), "print": pid == printp}
+        except (palettes.PaletteError, OSError, ValueError) as exc:
+            print(f"WARNING: palette {pid}: {exc}", file=sys.stderr)
+    leftovers = set()
+    for pid in palettes.pdf_palette_ids(cfg):
+        if pid in manifest["copies"]:
+            continue
+        name = f"{destination.stem}-{pid}{destination.suffix}"
+        if Path(name).name == name and (destination.parent / name).exists():
+            leftovers.add(name)
+    for pid, record in (previous or {}).get("copies", {}).items():
+        name = record.get("file", "")
+        if pid not in manifest["copies"] and name and Path(name).name == name and (destination.parent / name).exists():
+            leftovers.add(name)
+    for name in sorted(leftovers):
+        print(f"WARNING: {name} left unbound; use --file-copies after rendering", file=sys.stderr)
+    write_manifest(destination, manifest)
+    print(f"{a.dst} {canvas.width}x{canvas.height} pointsize {layout['pointsize']} {destination.stat().st_size}B")
     return 0
 
 

@@ -49,6 +49,7 @@ from ltcore import approvals as approvals_mod  # noqa: E402
 from ltcore.boundaries import (  # noqa: E402,F401
     ONE_WAY_DOORS, PLACEMENT_TYPES, first_stop_boundary, inferred_locks, lock_cause,
     lock_evidence, lock_reach, single_pass_pages, submitted_single)
+from ltcore import rat, page_kinds
 from ltcore.digest import question_digest  # noqa: E402
 
 NEEDS = [
@@ -58,11 +59,15 @@ NEEDS = [
     "schemas/run.schema.json",
     "schemas/fill-report.schema.json",
     "schemas/approvals.schema.json",
+    "schemas/page-kinds.schema.json",
+    "schemas/reconciled.schema.json",
 ]
 
 SCHEMAS_DIR = Path(__file__).resolve().parent.parent / "schemas"
 
 SCHEMA_BY_PREFIX = [
+    ("reconciled", "reconciled.schema.json"),
+    ("page-kinds", "page-kinds.schema.json"),
     ("fill-report", "fill-report.schema.json"),
     ("module", "module.schema.json"),
     ("answers", "answers.schema.json"),
@@ -145,6 +150,9 @@ class _Ctx:
     approvals: dict | None = None
     model_answer_read: bool = True
     model_answer_where: str = "default"
+    rat_roots: list[Path] = field(default_factory=list)
+    page_kinds: dict | None = None
+    rat_policy: dict = field(default_factory=lambda: dict(rat.DEFAULT_POLICY))
     notes: list[str] = field(default_factory=list)
     waived: list[str] = field(default_factory=list)
 
@@ -1068,10 +1076,117 @@ def rails_fill(doc, ctx: _Ctx):
                         errs.append(f"{it['item_id']}: result={it['result']!r} on page "
                                     f"{p['page_index']}, skipped by standing policy "
                                     f"({p['policy_skip']['reason']}); every write attempt counts")
+    from ltcore import check_answer
+    errs += check_answer.rails(doc, module, policy=ctx.rat_policy)
+    if module and doc.get('approval_mode') != 'manual':
+        pressed={i['item_id'] for i in doc['items'] if (i.get('check_answer') or {}).get('presses')}
+        if any(any(i.get('attempts')=='single' for i in p['items']) and any(i['item_id'] in pressed for i in p['items']) for p in module['pages']):
+            if not any(r[0]=='approval-manual-at-boundary' for r in held):
+                held.append(('approval-manual-at-boundary',None,'approval-manual-at-boundary: a check page holds a single-attempt item'))
     return errs + _apply_waivers(doc, held, module is not None, ctx)
 
 
 # --- reference.json, run.json, approvals.json ----------------------------------------
+
+RAT_RUN_FILE = re.compile(
+    r"(?:^|/)(?:page-kinds[^/]*\.json|fill-payload[^/]*\.json|fill-report[^/]*\.json|"
+    r"check-answer[^/]*\.json|reconcile-worklist[^/]*\.json|reconciled[^/]*\.json|"
+    r"fill-js(?:/|$)|logs(?:/|$))", re.I)
+
+
+def _rat_source(value, ctx):
+    if not isinstance(value, str):
+        return False
+    from urllib.parse import unquote
+    value = unquote(value).replace("\\", "/")
+    if RAT_RUN_FILE.search(value):
+        return True
+    value = value.split("#", 1)[0].split("?", 1)[0]
+    if value.startswith("file://"):
+        value = value[7:]
+    path = Path(value).expanduser()
+    if not path.is_absolute():
+        path = ctx.base_dir / path
+    return any(rat.within(path, root) for root in ctx.rat_roots)
+
+
+def rails_rat_quarantine(doc, ctx):
+    """Cited RAT roots and answer-bearing run files never become drafting evidence."""
+    errors = []
+    def walk(node, corpus=False):
+        if isinstance(node, dict):
+            for key, value in node.items():
+                if (key in {"source_id", "locator"} or corpus and key == "path") and _rat_source(value, ctx):
+                    errors.append("rat-root-quarantine: RAT sheets and run artifacts cannot be sources")
+                walk(value, corpus or key == "tier1_corpus")
+        elif isinstance(node, list):
+            for child in node:
+                walk(child, corpus)
+    walk(doc)
+    return errors
+
+
+def rails_rat_drafts(doc, ctx):
+    if not ctx.module:
+        return []
+    record = ctx.page_kinds
+    statuses = {s["page_index"]: s for s in page_kinds.page_status(ctx.module, record, policy=ctx.rat_policy)}
+    drafted = {a["item_id"] for a in doc.get("items", []) if a.get("status") == "drafted"}
+    if "source_answers" in doc:
+        rel = (doc.get("source_answers") or {}).get("path")
+        if rel and not _rat_source(rel, ctx):
+            path = Path(rel) if Path(rel).is_absolute() else ctx.base_dir / rel
+            try:
+                drafted = {a["item_id"] for a in json.loads(path.read_text(encoding="utf-8"))["items"] if a.get("status") == "drafted"}
+            except (OSError, ValueError, KeyError):
+                pass
+    errors = []
+    for page in ctx.module["pages"]:
+        status = statuses[page["page_index"]]
+        text, kind = page_kinds._text_evidence(page, ctx.rat_policy)
+        if record and page_kinds.page_current(page, record):
+            known_rat, known_kind = status["rat"] is True, status["kind"]
+        else:
+            known_rat, known_kind = text, kind
+        if known_rat and known_kind != "trat" and any(it["item_id"] in drafted for it in page["items"]):
+            errors.append("rat-irat-drafted: an individual or unknown-kind RAT cannot be drafted")
+    return errors
+
+
+def rails_rat_fill(doc, ctx):
+    errors = []
+    pages = {r["page_index"]: r for r in doc.get("rat_pages") or []}
+    item_pages = {i["item_id"]: p["page_index"] for p in (ctx.module or {}).get("pages", []) for i in p["items"]}
+    for item in doc.get("items", []):
+        src = item.get("answer_source")
+        if not src:
+            continue
+        idx = item_pages.get(item["item_id"])
+        row = pages.get(idx, {})
+        if row.get("decision") != "fill-from-sheet" or ctx.page_kinds is None:
+            errors.append("rat-sheet-decision: a sheet item requires a pinned fill-from-sheet decision")
+        if src.get("sha256") != row.get("sheet", {}).get("sha256"):
+            errors.append("rat-sheet-hash: item and page sheet hashes differ")
+        record = ctx.page_kinds or {}
+        policy = record.get("scan", {}).get("policy", {})
+        kind = row.get("kind")
+        mode = policy.get(kind or "irat")
+        choice = any(c["page_index"] == idx and c.get("fill") == "sheet" and
+                     (not c.get("sheet") or c["sheet"]["sha256"] == src.get("sha256")) for c in record.get("choices", []))
+        if mode != "from_dir" and not choice:
+            errors.append("rat-sheet-policy: sheet reading needs from_dir or a current sheet choice")
+        if record and ctx.module:
+            page = next((p for p in ctx.module["pages"] if p["page_index"] == idx), None)
+            decision = rat.decide(page, policy, record) if page else {}
+            if decision.get("decision") != "fill-from-sheet":
+                errors.append("rat-sheet-decision: shared decision does not permit sheet entry")
+            else:
+                pinned = decision.get("sheet") or {}
+                for reported in (src, row.get("sheet") or {}):
+                    if any(reported.get(k) != pinned.get(k) for k in ("root", "name", "sha256")):
+                        errors.append("rat-sheet-hash: reported sheet identity differs from pinned decision")
+    return errors
+
 
 def rails_reference(doc, ctx: _Ctx):
     errs = []
@@ -1144,7 +1259,7 @@ def validate_doc(doc, schema_name: str, *, module: dict | None = None,
                  approvals: dict | None = None, model_answer_read: bool | None = None,
                  config_path: str | os.PathLike | None = None,
                  schemas_dir: str | os.PathLike | None = None,
-                 base_dir: str | os.PathLike | None = None) -> Result:
+                 base_dir: str | os.PathLike | None = None, document_sha256: str | None = None) -> Result:
     """Validate a parsed document. ``schema_name`` is e.g. "module" or
     "module.schema.json". Relative source paths resolve against ``base_dir``.
 
@@ -1174,27 +1289,59 @@ def validate_doc(doc, schema_name: str, *, module: dict | None = None,
         ctx = _Ctx(base_dir=Path(base_dir or os.getcwd()), module=module, approvals=approvals,
                    notes=pre_notes)
         if schema_name in ("answers.schema.json", "reference.schema.json",
-                           "fill-report.schema.json"):
+                           "fill-report.schema.json", "reconciled.schema.json"):
             ctx.model_answer_read, ctx.model_answer_where = _model_answer_setting(
                 model_answer_read, config_path)
     except ValidationSetupError as e:
         res.fatal, res.exit_code = str(e), 3
         return res
+    if schema_name in ("answers.schema.json", "fill-report.schema.json", "reconciled.schema.json"):
+        from ltcore import config as config_mod
+        try:
+            cfg = config_mod.load(config_path)
+            ctx.rat_policy = rat.policy_from_config(cfg)
+            ctx.rat_roots = [p for _, p in rat.effective_roots(ctx.rat_policy)]
+            if module and schema_name == "answers.schema.json":
+                ctx.page_kinds = page_kinds.load_current(module, cfg, doc, answers_sha256=document_sha256)
+            pin = doc.get("source_page_kinds")
+            # Check authorization uses recorded status, independent of today's store.
+            # Still load a valid fill classification pin for ordinary draft rails.
+            # Sheet and explicit tRAT draft rails require that pin to resolve.
+            needs_record = not (schema_name == 'fill-report.schema.json' and doc.get('check_answer')) or any(i.get('answer_source') for i in doc.get('items',[])) or any(r.get('decision')=='fill-from-draft' for r in doc.get('rat_pages',[]))
+            if pin:
+                try:
+                    path = Path(pin["path"])
+                    path = path if path.is_absolute() else ctx.base_dir / path
+                    if any(rat.within(path, root) for root in ctx.rat_roots):
+                        raise ValueError("page-kinds pin enters a RAT root")
+                    raw = path.read_bytes()
+                    if hashlib.sha256(raw).hexdigest() != pin["sha256"]:
+                        raise ValueError("page-kinds pin mismatch")
+                    ctx.page_kinds = page_kinds.validate_record(json.loads(raw))
+                except (OSError, ValueError):
+                    if needs_record:
+                        raise
+        except (config_mod.ConfigError, OSError, ValueError):
+            res.fatal, res.exit_code = "invalid RAT config or page-kinds pin", 3
+            return res
     errs = scan_denied_keys(doc) + scan_timestamps(doc)
     if (module is not None and schema_name in ("answers.schema.json", "fill-report.schema.json")
             and module.get("module_id") != doc.get("module_id")):
         errs.append(f"module_id {doc.get('module_id')!r} differs from the supplied capture's "
                     f"module_id {module.get('module_id')!r}; use the matching capture")
     if schema_name == "fill-report.schema.json":
-        errs += rails_fill(doc, ctx)
+        errs += rails_fill(doc, ctx) + rails_rat_fill(doc, ctx) + rails_rat_drafts(doc, ctx)
         if module is None:
             ctx.notes.append("no --module given; the completion-page and door cross-checks "
                              "were not run")
     elif schema_name == "answers.schema.json":
-        errs += rails_answers(doc, ctx) + rails_answers_vs_module(doc, module)
+        errs += rails_answers(doc, ctx) + rails_answers_vs_module(doc, module) + rails_rat_quarantine(doc, ctx) + rails_rat_drafts(doc, ctx)
         if module is None:
             ctx.notes.append("no --module given; the table_cells and label_placements "
                              "cross-checks were not run")
+    elif schema_name == "reconciled.schema.json":
+        from ltcore.reconcile import rails_reconciled
+        errs += rails_reconciled(doc, ctx) + rails_rat_quarantine(doc, ctx)
     elif schema_name == "module.schema.json":
         errs += rails_module(doc, ctx)
     elif schema_name == "reference.schema.json":
@@ -1245,7 +1392,7 @@ def validate_file(path: str | os.PathLike, schema: str | None = None, *,
     except ValidationSetupError as e:
         return Result(name, exit_code=3, fatal=str(e))
     return validate_doc(doc, name, module=mod, approvals=appr, model_answer_read=model_answer_read,
-                        config_path=config_path, schemas_dir=schemas_dir, base_dir=p.parent)
+                        config_path=config_path, schemas_dir=schemas_dir, base_dir=p.parent, document_sha256=hashlib.sha256(p.read_bytes()).hexdigest())
 
 
 def _bool_arg(v: str) -> bool:

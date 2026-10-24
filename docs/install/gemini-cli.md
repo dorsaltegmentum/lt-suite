@@ -37,3 +37,8 @@ Run the [Python bootstrap](python.md), then setup's `doctor` command.
 Extension installation copies the source. Use Gemini CLI's extension update mechanism when changing versions.
 
 Sources: [extensions](https://geminicli.com/docs/extensions/reference/), [MCP servers](https://geminicli.com/docs/tools/mcp-server/), [access transition](https://developers.googleblog.com/an-important-update-transitioning-gemini-cli-to-antigravity-cli).
+
+The plugin's Node launcher reads `browser.adapter` at startup when the host expands its plugin folder.
+Choose Claude in Chrome for zero lt-chrome tools, or configure any Chromium browser through setup.
+If doctor reports the 0.1.0 fallback, install the stable launcher and merge its host snippet.
+Restart after changes; see [browser adapters](../browser-adapters.md) for folders and loopback limits.

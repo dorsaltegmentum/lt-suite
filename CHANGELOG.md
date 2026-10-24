@@ -8,6 +8,37 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 lt-suite records notable changes using [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/).
 Versions follow [Semantic Versioning 2.0.0](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.0] - 2026-10-25
+
+### Added
+
+- Separate fonts for page PDFs, diagrams and micrograph labels, with Noto and system fallback chains.
+- Palette-matched micrograph copies bound to their upload and captured media for PDF and notes exports.
+- Configurable Chromium selection, profile folders and loopback DevTools attachment through lt-chrome.
+- Setup questions and doctor checks for output fonts, browser attachment, RAT sheets and Check Answer.
+- Quarantined RAT answer-sheet folders, matching and shared page classification for permitted sheet entry.
+- Opt-in Check Answer retries for eligible multi-attempt items, with attempt records and reconciled exports.
+
+### Changed
+
+- Exported SVGs and interactive diagram pages carry font fallback stacks for other machines.
+- RAT filling and Check Answer share current page classifications; Check Answer refuses RAT pages.
+
+### Fixed
+
+- Check Answer refuses changed live classification inputs and requires recapture and reclassification.
+- lt-chrome rejects unknown browser keys and nested paths before selecting startup defaults.
+- Font discovery handles system filenames and checks every rendered face before font modification.
+- Micrograph exports reject malformed, stale or edited palette-copy manifests.
+- Fill receipts retain the executed sheet identity and reject changed classification bindings.
+- Unread Check Answer verdicts require a fresh document before further checks.
+
+### Security
+
+- Font embedding and modification respect licence metadata and embedding restrictions.
+- lt-chrome validates loopback addresses and isolates npm startup from workspace configuration.
+- RAT sheets and Check Answer feedback stay outside cited research and curriculum reads.
+
 ## [0.1.0] - 2026-10-24
 
 ### Added
@@ -29,4 +60,5 @@ Versions follow [Semantic Versioning 2.0.0](https://semver.org/spec/v2.0.0.html)
 
 - The permission gate and its configuration, scripts, and call sites.
 
+[0.2.0]: https://github.com/dorsaltegmentum/lt-suite/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/dorsaltegmentum/lt-suite/releases/tag/v0.1.0

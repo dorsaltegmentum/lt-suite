@@ -201,3 +201,7 @@ LT_REQUIRE_PRIVATE=1 python3 -m pytest tests/privacy/test_inventory_hits.py -q
 The test skips without a local inventory. `LT_REQUIRE_PRIVATE=1` turns missing evidence into failure.
 Run the gate again after shared-code synchronization and artifact generation.
 Resolve findings with the owning package before release integration.
+
+## RAT folders
+
+RAT sheets and answer-bearing payloads, rendered scripts, logs and fill reports stay local. Only the shared reader opens sheets. Classification output contains sheet names and counts, with paths replaced by root keys and hashes. Export never opens a sheet. See [RAT answers](rat-answers.md).

@@ -129,3 +129,18 @@ Drafts can be wrong. Graded or invigilated work may forbid the entire tool.
 Model-answer reading is enabled by default. Set `model_answer.read = false` to disable it.
 
 See [academic integrity](academic-integrity.md) and [provenance](provenance.md).
+
+lt-chrome reads only browser settings. A quiet adapter serves zero tools when the plugin folder resolves.
+Hosts without that folder run the 0.1.0 fallback and print one warning; doctor reports the fallback record.
+All 15 legacy tools retain the rendered-script rule, including fallback sessions.
+The launcher constrains explicit DevTools addresses to loopback HTTP with port 1 to 65535.
+The server trusts local discovery replies and DevToolsActivePort; doctor checks the path line and offers an explicit HTTP probe.
+lt-suite never launches a browser, creates a profile or copies a signed-in profile.
+
+
+
+## Check Answer
+
+Check Answer uses an explicit fill opt-in and a one-shot guard token. The capture, live model and guard must all prove multi-attempt instantFeedback eligibility. Current shared page-kinds status must permit checks. A recorded approval never permits pressing a single-attempt item. Unknown verdicts end the call. Historical receipts retain the policy in force after the setting turns off.
+
+Check Answer compares live page classification inputs with captured pins before every press. Changed or missing inputs stop the call and require a fresh document, recapture and classification.

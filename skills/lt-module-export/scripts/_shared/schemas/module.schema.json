@@ -1,7 +1,7 @@
 {
  "$schema": "https://json-schema.org/draft/2020-12/schema",
  "$id": "https://github.com/dorsaltegmentum/lt-suite/schemas/module.schema.json",
- "title": "module.json: lt-module-capture → lt-module-answer",
+ "title": "module.json: lt-module-capture \u2192 lt-module-answer",
  "description": "Normalised capture of one Lt run: page map, item inventory and commit-boundary map. Contains no answer content. Lt's model answer is excluded. The student's submitted answers belong in reference.json.",
  "type": "object",
  "additionalProperties": false,
@@ -299,7 +299,7 @@
       "integer",
       "null"
      ],
-     "description": "URL-addressable page number (…/run/page/<n>). NULL for Report and Checkpoint pages. Lt routes Checkpoint pages as /run/checkpoint/<n>, and the page menu leaves them unnumbered. These numbering schemes differ."
+     "description": "URL-addressable page number (\u2026/run/page/<n>). NULL for Report and Checkpoint pages. Lt routes Checkpoint pages as /run/checkpoint/<n>, and the page menu leaves them unnumbered. These numbering schemes differ."
     },
     "route": {
      "type": [
@@ -348,7 +348,7 @@
     "policy_skip": {
      "type": "object",
      "additionalProperties": false,
-     "description": "A page skipped by standing policy rather than capability. Record it without silently dropping it. See docs/design-notes.md for excluded page kinds.",
+     "description": "Existing capture policy skip, preserved by the fill. See docs/rat-answers.md.",
      "required": [
       "reason"
      ],
@@ -369,7 +369,7 @@
     "rat_candidate": {
      "type": "object",
      "additionalProperties": false,
-     "description": "Capture flags a page that resembles a Readiness Assurance Test without classifying it conclusively. Titles and item shapes cannot establish the page's kind. Record the human's classification in answers.json. Captures record what Lt returned and must remain unedited. Every consumer derives the classification from answers.json. See docs/design-notes.md for page kinds and consumer requirements.",
+     "description": "Capture hint only; classification lives in page-kinds.json. See docs/rat-answers.md.",
      "required": [
       "basis"
      ],
@@ -389,7 +389,7 @@
      "items": {
       "$ref": "#/$defs/content_panel"
      },
-     "description": "Non-answerable author panels (kcTextArea, image, video, divider…). The stimulus lt-module-answer drafts against."
+     "description": "Non-answerable author panels (kcTextArea, image, video, divider\u2026). The stimulus lt-module-answer drafts against."
     },
     "items": {
      "type": "array",
@@ -575,7 +575,7 @@
     },
     "plugin_key": {
      "type": "string",
-     "description": "Raw discriminator as observed. See schemas/README.md for the pluginKey → type map."
+     "description": "Raw discriminator as observed. See schemas/README.md for the pluginKey \u2192 type map."
     },
     "type": {
      "type": "string",
@@ -618,7 +618,7 @@
       "single",
       "multi"
      ],
-     "description": "single ⇔ content.singleAttempt === true. A commit boundary."
+     "description": "single \u21d4 content.singleAttempt === true. A commit boundary."
     },
     "assessment_type": {
      "type": "string",

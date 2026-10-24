@@ -18,7 +18,7 @@ with open(REPO / "shared" / "config.defaults.toml", "rb") as _fh:
 
 SUPPORTED = {"$schema", "$id", "title", "description", "type", "enum", "const", "properties",
              "additionalProperties", "required", "items", "minItems", "maxItems", "minimum",
-             "maximum", "pattern", "minLength", "default", "x-path", "x-regex", "x-unique"}
+             "maximum", "pattern", "minLength", "default", "x-path", "x-regex", "x-unique", "x-redact"}
 
 # Every key in the design's key table (section 4), dotted; [] marks array-of-table items.
 DESIGN_KEYS = """
@@ -30,7 +30,7 @@ notes.page_namespace notes.page_title notes.file_name_format notes.stamp_propert
 curriculum.root curriculum.learning_outcomes_file curriculum.skip_dirs curriculum.text_extensions
 curriculum.week_number_pattern curriculum.week_dir_pattern curriculum.title_stopwords
 curriculum.patterns.lesson curriculum.patterns.bare_number curriculum.patterns.ilo_heading
-curriculum.patterns.ilo_kind rat.answers_dir rat.irat rat.trat model_answer.read tiers.tier
+curriculum.patterns.ilo_kind rat.answers_dir rat.answers_dirs rat.kind_markers.irat rat.kind_markers.trat rat.irat rat.trat model_answer.read tiers.tier
 tiers.tier[].id tiers.tier[].label tiers.tier[].tag_template tiers.tier[].requires_accessed
 tiers.tier[].issuer_order tiers.tier[].access_note tiers.reference_set tiers.fallback_sources
 tiers.framing export.outputs.module_page export.outputs.pdf export.outputs.notes_graph
@@ -39,9 +39,10 @@ export.outputs.tracker_handoff export.flashcard_source.file export.flashcard_sou
 export.citations.page_aliases export.citations.url_aliases export.citations.kind_pages
 export.citations.hidden_skip_reasons pdf.author pdf.strip_metadata style.palettes
 style.print_palette style.custom_palettes_file fonts.sans fonts.mono fonts.sans_path
-fonts.mono_path fonts.mono_bold_path fonts.text_px fonts.allow_download fonts.page_fonts
-browser.adapter browser.transport browser.sink_port browser.lib_mode browser.lib_port
-browser.js_tmp_dir fill.approval_mode fill.max_pages_per_call fill.save_wait.quiet_ms
+fonts.system_fallback fonts.pdf.sans fonts.pdf.mono fonts.diagram.sans fonts.diagram.mono
+fonts.labels.sans annotate.palette_copies fonts.mono_path fonts.mono_bold_path fonts.text_px fonts.allow_download fonts.page_fonts
+browser.adapter browser.chromium browser.chromium_user_data_dir browser.devtools_url browser.transport browser.sink_port browser.lib_mode browser.lib_port
+browser.js_tmp_dir fill.check_answer.enabled fill.approval_mode fill.max_pages_per_call fill.save_wait.quiet_ms
 fill.save_wait.max_ms fill.save_wait.fallback_ms fill.save_wait.render_wait_ms
 fill.dialog.max_ms fill.dialog.fallback_ms text_cleaners text_cleaners[].name
 text_cleaners[].stage text_cleaners[].argv text_cleaners[].timeout_s annotate.casing

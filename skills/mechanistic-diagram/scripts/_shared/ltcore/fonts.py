@@ -11,7 +11,8 @@ this order, first hit wins:
   3. fetched: <data>/fonts/<id>/ (setup's fetch-font puts catalog fonts here)
   4. installed: fc-match when fontconfig exists, accepted only when it returns the
      requested family, else a scan of the platform font folders
-  5. fallback: the bundled default of the role, marked ``fallback=True``
+  5. fallback: Noto from bundled, fetched or installed files
+  6. optional OS fallback for page PDFs and pixel labels, never diagrams
 Bundled and fetched copies come first so that renders are the same on every
 machine; an installed font is used only for families lt-suite does not carry.
 
@@ -55,6 +56,7 @@ import argparse  # noqa: E402
 import hashlib  # noqa: E402
 import json  # noqa: E402
 import os  # noqa: E402
+import re  # noqa: E402
 import shutil  # noqa: E402
 import struct  # noqa: E402
 import subprocess  # noqa: E402
@@ -69,6 +71,8 @@ SHARED = Path(__file__).resolve().parent.parent
 FONTS_DIR = SHARED / "fonts"
 CATALOG_FILE = FONTS_DIR / "catalog.json"
 ROLES = ("sans", "mono")
+OUTPUTS = ("pdf", "diagram", "labels")
+SYSTEM_FONT_ROOT = Path("/System/Library/Fonts")
 FONT_SUFFIXES = (".ttf", ".otf", ".ttc", ".otc")
 FC_WEIGHT = {100: "thin", 200: "extralight", 300: "light", 400: "regular", 500: "medium",
              600: "semibold", 700: "bold", 800: "extrabold", 900: "black"}
@@ -94,6 +98,9 @@ class FontInfo:
     x_height: int
     cap_height: int
     axes: dict[str, tuple[float, float, float]] = field(default_factory=dict)  # tag: (min, default, max)
+
+    fs_type: int = 0
+    licence_text: str = ""
 
     @property
     def variable(self) -> bool:
@@ -152,10 +159,12 @@ def read_info(path: str | os.PathLike, index: int = 0) -> FontInfo:
         mac_style = struct.unpack(">H", data[head + 44:head + 46])[0]
         names = _names(data, t[b"name"]) if b"name" in t else {}
         weight, italic, asc, desc, gap, xh, ch = 400, bool(mac_style & 2), 0, 0, 0, 0, 0
+        fs_type = 0
         if b"OS/2" in t:
             o = t[b"OS/2"][0]
             ver = struct.unpack(">H", data[o:o + 2])[0]
             weight = struct.unpack(">H", data[o + 4:o + 6])[0]
+            fs_type = struct.unpack(">H", data[o + 8:o + 10])[0]
             fs_sel = struct.unpack(">H", data[o + 62:o + 64])[0]
             italic = italic or bool(fs_sel & 1)
             asc, desc, gap = struct.unpack(">hhh", data[o + 68:o + 74])
@@ -177,7 +186,7 @@ def read_info(path: str | os.PathLike, index: int = 0) -> FontInfo:
         raise FontError(f"{p}: unreadable font tables ({exc})") from None
     family = names.get(16) or names.get(1) or p.stem
     sub = names.get(17) or names.get(2) or ""
-    return FontInfo(p, family, sub, weight, italic, upm, asc, desc, gap, xh, ch, axes)
+    return FontInfo(p, family, sub, weight, italic, upm, asc, desc, gap, xh, ch, axes, fs_type, "\n".join(names.get(n, "") for n in (0, 13)))
 
 
 def metrics(path: str | os.PathLike, size_px: float = 1.0, line_px: float | None = None) -> dict:
@@ -249,6 +258,7 @@ class Font:
     font_id: str | None = None
     fallback: bool = False        # True when the requested family was not found
     requested: str = ""
+    os_fallback: bool = False
 
 
 def _cfg_get(cfg: Any, key: str, default: Any = "") -> Any:
@@ -342,7 +352,7 @@ def scan_family(family: str, dirs: Iterable[Path] | None = None) -> list[Path]:
         if not d.is_dir():
             continue
         for p in d.rglob("*"):
-            if p.suffix.lower() not in FONT_SUFFIXES or key not in p.name.lower().replace(" ", ""):
+            if p.suffix.lower() not in FONT_SUFFIXES:
                 continue
             try:
                 if read_info(p).family.lower() == family.lower():
@@ -361,85 +371,189 @@ def _face_note(source: str, wanted_italic: bool, got_italic: bool) -> str:
     return f"{source} ({face} face missing; the file's own face is used)"
 
 
-def _explicit(role: str, cfg: Any, weight: int) -> tuple[str, str] | None:
-    keys = [f"fonts.{role}_path"]
-    if role == "mono" and weight >= 600:
+def output_key(role: str, cfg: Any = None, output: str | None = None) -> str:
+    """The family key that owns this output and role; paths share its precedence."""
+    if output is not None and output not in OUTPUTS:
+        raise FontError(f"unknown font output {output!r}; use {', '.join(OUTPUTS)}")
+    if output == "labels" and role != "sans":
+        raise FontError("labels supports the sans role only")
+    for name in (("labels", "pdf") if output == "labels" else (output,)):
+        key = f"fonts.{name}.{role}"
+        if name and _cfg_get(cfg, key):
+            return key
+    return f"fonts.{role}"
+
+
+def _explicit(role: str, cfg: Any, weight: int, output: str | None = None) -> tuple[str, str] | None:
+    key = output_key(role, cfg, output)
+    keys = [] if key != f"fonts.{role}" else [f"fonts.{role}_path"]
+    if keys and role == "mono" and weight >= 600:
         keys.insert(0, "fonts.mono_bold_path")
-    for k in keys:
+    for k in keys + [key]:
         v = _cfg_get(cfg, k, "")
-        if v:
-            return v, f"config {k}"
-    v = _cfg_get(cfg, f"fonts.{role}", "")
-    if v and _looks_like_path(v):
-        base = getattr(cfg, "path", None)
-        p = Path(os.path.expanduser(v))
-        if not p.is_absolute() and base:
-            p = Path(base).parent / p
-        return str(p), f"config fonts.{role} (a file)"
+        if v and (k.endswith("_path") or _looks_like_path(v)):
+            base = getattr(cfg, "path", None)
+            path = Path(os.path.expanduser(v))
+            if not path.is_absolute() and base:
+                path = Path(base).parent / path
+            return str(path), f"config {k}" + (" (a file)" if not k.endswith("_path") else "")
     return None
+
+
+def _apple_denied(font: Font) -> bool:
+    names = catalog_meta()["defaults"]["system_fallback"]["deny_outside_system"]
+    return font.family.casefold() in {n.casefold() for n in names} and not (
+        font.path.resolve().is_relative_to(SYSTEM_FONT_ROOT.resolve()))
+
+
+def pdf_embeddable(path: str | os.PathLike) -> tuple[bool, str]:
+    """Editable PDFs may subset installable or editable fonts only."""
+    value = read_info(path).fs_type
+    allowed = not value & (0x0100 | 0x0200) and (value == 0 or bool(value & 0x0008))
+    return allowed, f"fsType 0x{value:04x}: " + ("editable embedding allowed" if allowed else "embedding refused")
+
+
+def licence_class(font: Font | str | os.PathLike) -> str:
+    """Conservative modification and redistribution policy, separate from fsType."""
+    if not isinstance(font, Font):
+        info = read_info(font)
+        font = Font("sans", info.family, Path(font), "file")
+    if font.os_fallback or _apple_denied(font):
+        return "none"
+    info = read_info(font.path)
+    text = info.licence_text
+    if re.search(r"(?im)^Microsoft supplied font", text):
+        return "none"
+    entry = find_entry(font.family)
+    licence = (entry or {}).get("licence") or {}
+    recognised = bool(licence.get("spdx")) or bool(re.search(
+        r"SIL Open Font License|Apache License(?:,?\s*Version)?[ ,\s]*2\.0|Bitstream Vera|Ubuntu Font Licen[cs]e", text, re.I))
+    if not recognised:
+        return "none"
+    declarations = re.sub(r'["“]Reserved Font Name["”]\s+refers to', "", text, flags=re.I)
+    if reserved_font_names(entry) or re.search(
+        r"with Reserved Font Names?|Reserved Font Names?\s*[:\"'“]", declarations, re.I) or re.search(
+        r"Bitstream Vera|Ubuntu Font Licen[cs]e", text, re.I):
+        return "whole"
+    return "modify"
+
+
+def _os_candidates(role: str, weight: int, italic: bool, runner: Callable):
+    block = catalog_meta()["defaults"]["system_fallback"]
+    platform = "darwin" if sys.platform == "darwin" else "win32" if sys.platform.startswith("win") else "linux"
+    spec = block[platform][role]
+    fam = spec["family"]
+    files = []
+    if platform == "darwin":
+        files = [SYSTEM_FONT_ROOT / name for name in spec["files"]]
+    elif platform == "win32":
+        import fnmatch
+        for directory in platform_font_dirs():
+            if directory.is_dir():
+                files.extend(p for p in directory.iterdir() if any(
+                    fnmatch.fnmatch(p.name.lower(), pattern.lower()) for pattern in spec["patterns"]))
+    else:
+        p = fc_match(fam, weight, italic, runner=runner)
+        files = ([p] if p else []) + scan_family(fam)
+    valid = []
+    for path in files:
+        try:
+            info = read_info(path)
+            if info.family.casefold() not in {x.casefold() for x in [fam] + spec.get("aliases", [])}:
+                continue
+            if spec.get("static") and info.variable:
+                continue
+            valid.append(path)
+        except FontError:
+            continue
+    while valid:
+        picked = _pick(valid, weight, italic) or (_pick(valid, weight, False) if italic else None)
+        if not picked:
+            break
+        path, info = picked
+        valid.remove(path)
+        label = {"darwin": "macOS", "win32": "Windows", "linux": "Linux"}[platform]
+        yield Font(role, info.family, path, f"system fallback ({label} {fam})", weight,
+                   info.italic, info.variable, info.axes, fallback=True, requested=fam, os_fallback=True)
 
 
 def find(role: str = "sans", cfg: Any = None, *, weight: int = 400, italic: bool = False,
          family: str | None = None, data_dir: str | os.PathLike | None = None,
-         use_system: bool = True, fallback: bool = True,
-         runner: Callable = subprocess.run) -> Font:
-    """Find the font file for a role (or an explicit ``family``), with where it came
-    from. See the module docstring for the order. Raises FontError when nothing is
-    found and ``fallback`` is False or the bundled default is missing too."""
+         use_system: bool = True, fallback: bool = True, output: str | None = None,
+         os_fallback: bool = False, runner: Callable = subprocess.run) -> Font:
+    """Explicit file, chosen family, Noto, then optional OS fallback, with licence gates."""
     if role == "mono_bold":
         role, weight = "mono", max(weight, 700)
     if role not in ROLES:
-        raise FontError(f"unknown font role {role!r}; use one of {', '.join(ROLES)}")
-    tried: list[str] = []
-    if family is None:
-        ex = _explicit(role, cfg, weight)
-        if ex is not None:
-            p = Path(ex[0])
-            if not p.is_file():
-                raise FontError(f"{p} ({ex[1]}) does not exist")
-            fi = read_info(p)
-            missing = fi.italic != italic
-            return Font(role, fi.family, p, _face_note(ex[1], italic, fi.italic), weight, fi.italic,
-                        fi.variable, fi.axes, fallback=missing, requested=str(p))
-        family = _cfg_get(cfg, f"fonts.{role}", "") or default_family(role)
-    entry = find_entry(family)
-    fam = entry["family"] if entry else family
-    if entry:
-        got = _pick(bundled_files(entry), weight, italic) or (
-            _pick(bundled_files(entry), weight, False) if italic else None)
-        if got:
-            return Font(role, fam, got[0], _face_note("bundled", italic, got[1].italic), weight,
-                        got[1].italic, got[1].variable, got[1].axes, entry["id"], requested=family)
-        tried.append("bundled")
-        ddir = _data_fonts_dir(cfg, data_dir)
-        if ddir is not None:
-            files = sorted(p for p in (ddir / entry["id"]).glob("*") if p.suffix.lower() in FONT_SUFFIXES)
-            got = _pick(files, weight, italic) or (_pick(files, weight, False) if italic else None)
-            if got:
-                return Font(role, fam, got[0], _face_note(f"data folder {ddir / entry['id']}", italic,
-                                                          got[1].italic), weight,
-                            got[1].italic, got[1].variable, got[1].axes, entry["id"], requested=family)
-            tried.append(f"data folder {ddir / entry['id']}")
-    if use_system:
-        p = fc_match(fam, weight, italic, runner=runner)
-        if p is not None:
-            fi = read_info(p)
-            return Font(role, fam, p, "fc-match", weight, fi.italic, fi.variable, fi.axes,
-                        entry["id"] if entry else None, requested=family)
-        tried.append("fc-match")
-        got = _pick(scan_family(fam), weight, italic)
-        if got:
-            return Font(role, fam, got[0], "platform font folder", weight, got[1].italic,
-                        got[1].variable, got[1].axes, entry["id"] if entry else None, requested=family)
-        tried.append("platform font folders")
+        raise FontError(f"unknown font role {role!r}; use {', '.join(ROLES)}")
+    key = output_key(role, cfg, output)
+    tried = []
+
+    def accepted(font):
+        if _apple_denied(font):
+            tried.append(f"{font.family}: Apple's font licence refuses files outside /System/Library/Fonts")
+            return False
+        if output == "diagram" and licence_class(font) == "none":
+            tried.append(f"{font.family}: unreadable or restricted licence; diagram embedding refused")
+            return False
+        if output == "pdf":
+            ok, reason = pdf_embeddable(font.path)
+            if not ok:
+                tried.append(f"{font.family}: {reason}")
+                return False
+        return True
+
+    requested = family or _cfg_get(cfg, key) or default_family(role)
+    if family is None or _looks_like_path(family):
+        ex = (family, "configured family file") if family is not None else _explicit(role, cfg, weight, output)
+        if ex:
+            path = Path(ex[0])
+            if not path.is_file():
+                raise FontError(f"{path} ({ex[1]}) does not exist")
+            info = read_info(path)
+            font = Font(role, info.family, path, _face_note(ex[1], italic, info.italic), weight,
+                        info.italic, info.variable, info.axes, fallback=info.italic != italic, requested=str(path))
+            if accepted(font):
+                return font
+            requested = str(path)
+    families = [] if _looks_like_path(requested) else [requested]
     default = default_family(role)
-    if fallback and fam != default:
-        f = find(role, None, weight=weight, italic=italic, family=default, use_system=False,
-                 fallback=False)
-        f.fallback, f.requested = True, family
-        f.source = f"bundled fallback ({family} not found: {', '.join(tried)})"
-        return f
-    raise FontError(f"font {family!r} for {role} not found (tried {', '.join(tried) or 'nothing'})")
+    if fallback and default != requested:
+        families.append(default)
+    for name in families:
+        entry = find_entry(name)
+        fam = entry["family"] if entry else name
+        def sources():
+            if entry:
+                yield "bundled", bundled_files(entry)
+                directory = _data_fonts_dir(cfg, data_dir)
+                if directory is not None:
+                    directory = directory / entry["id"]
+                    yield f"data folder {directory}", sorted(directory.glob("*"))
+            if use_system:
+                path = fc_match(fam, weight, italic, runner=runner)
+                yield "fc-match", [path] if path else []
+                yield "platform font folder", scan_family(fam)
+        for source, paths in sources():
+            got = _pick(paths, weight, italic) or (_pick(paths, weight, False) if italic else None)
+            if not got:
+                tried.append(f"{fam}: {source}")
+                continue
+            path, info = got
+            font = Font(role, info.family, path, _face_note(source, italic, info.italic), weight,
+                        info.italic, info.variable, info.axes, entry["id"] if entry else None,
+                        fallback=name != requested, requested=requested)
+            if accepted(font):
+                if tried and (font.fallback or any("refused" in x for x in tried)):
+                    font.source += f" fallback ({requested} not found: {', '.join(tried)})"
+                return font
+    if fallback and use_system and os_fallback and output != "diagram" and _cfg_get(cfg, "fonts.system_fallback", True):
+        for font in _os_candidates(role, weight, italic, runner):
+            if accepted(font):
+                return font
+        tried.append("system fallback")
+    hint = "; run setup.py fetch-font noto-sans --yes" if output == "diagram" else ""
+    raise FontError(f"font {requested!r} for {key} not found (tried {', '.join(tried) or 'nothing'}){hint}")
 
 
 class FontPath(type(Path())):
@@ -466,7 +580,7 @@ class FontPath(type(Path())):
 
     def __getattr__(self, name: str) -> Any:
         if name in ("family", "source", "fallback", "requested", "font_id", "variable", "role",
-                    "weight", "italic", "axes"):
+                    "weight", "italic", "axes", "os_fallback"):
             f = self.__dict__.get("_font")
             if f is not None:
                 return getattr(f, name)
@@ -512,7 +626,7 @@ def resolve(role: str = "sans", *args: Any, cfg: Any = None, weight: int | None 
     Keyword arguments go to ``find()`` (family, data_dir, use_system, fallback)."""
     cfg, weight, italic = _resolve_args(args, cfg, weight, italic)
     font = find(role, cfg, weight=weight, italic=italic, **kw)
-    if not (static and font.variable) or reserved_font_names(find_entry(font.family)):
+    if not (static and font.variable) or licence_class(font) != "modify":
         return _font_path(font.path, font)
     try:
         p = static_instance(font.path, weight=font.weight, italic=font.italic, family=font.family,
@@ -647,8 +761,7 @@ def face_file(role: str = "sans", cfg: Any = None, *, weight: int = 400, italic:
     font = find(role, cfg, weight=weight, italic=italic, family=family, **kw)
     if not font.variable:
         return font.path, font
-    entry = find_entry(font.family)
-    if reserved_font_names(entry):
+    if licence_class(font) != "modify":
         return font.path, font
     out = static_instance(font.path, weight=font.weight, italic=font.italic,
                           family=font.family, cache_dir=_font_cache_dir(cfg, cache_dir))
@@ -679,7 +792,8 @@ def _xml(s: str) -> str:
 
 # =========================================================================== Pillow
 def pillow_font(role: str = "sans", size: float = 14, cfg: Any = None, *, weight: int = 400,
-                path: str | os.PathLike | None = None, allow_default: bool = True):
+                path: str | os.PathLike | None = None, allow_default: bool = True,
+                output: str | None = None, os_fallback: bool = True):
     """A Pillow FreeTypeFont for ``role`` at ``size`` px and ``weight`` (variable fonts
     get their wght axis set). ``path`` overrides resolution (annotate.font_path).
     Pillow's built-in bitmap font is returned only when no file resolves and
@@ -689,7 +803,7 @@ def pillow_font(role: str = "sans", size: float = 14, cfg: Any = None, *, weight
     except ImportError:
         raise FontError("drawing text needs Pillow (run the setup skill's bootstrap step)") from None
     try:
-        p = Path(path) if path else find(role, cfg, weight=weight).path
+        p = Path(path) if path else find(role, cfg, weight=weight, output=output, os_fallback=os_fallback).path
         f = ImageFont.truetype(str(p), round(size))
         info = read_info(p)
         if info.variable:
@@ -707,6 +821,112 @@ def pillow_font(role: str = "sans", size: float = 14, cfg: Any = None, *, weight
         f = ImageFont.load_default(size)
         f.lt_default = True
         return f
+
+
+def label_font(cfg, size, weight=600, path=None):
+    """Resolve labels with the legacy wght-only axis rule and diagnostic labels."""
+    from PIL import ImageFont
+    reasons = []
+    font = None
+    label, source = "pillow-default", "builtin"
+    configured = path if path is not None else _cfg_get(cfg, "annotate.font_path")
+    if configured:
+        try:
+            candidate = Path(configured).expanduser()
+            if not candidate.is_file():
+                raise FontError(f"{candidate} does not exist")
+            info = read_info(candidate)
+            if _apple_denied(Font("sans", info.family, candidate, "file")):
+                raise FontError("Apple's font licence refuses files outside /System/Library/Fonts")
+            font = ImageFont.truetype(str(candidate), size)
+            label, source = "config annotate.font_path", str(candidate)
+        except (FontError, OSError) as exc:
+            reasons.append(f"annotate.font_path: {exc}")
+    else:
+        reasons.append("annotate.font_path is empty")
+    if font is None:
+        key = output_key("sans", cfg, "labels")
+        try:
+            resolved = find("sans", cfg, weight=weight, output="labels", os_fallback=True)
+            font = ImageFont.truetype(str(resolved.path), size)
+            label = resolved.source if resolved.os_fallback else key
+            source = str(resolved.path)
+        except (FontError, OSError) as exc:
+            reasons.append(f"{key}: {exc}")
+    if font is None:
+        font = ImageFont.load_default()
+        print("WARNING: using pillow-default; " + "; ".join(reasons), file=sys.stderr)
+    elif configured and reasons:
+        print("WARNING: " + "; ".join(reasons), file=sys.stderr)
+    try:
+        axes = font.get_variation_axes()
+        values = [min(max(weight, a["minimum"]), a["maximum"]) if (
+            a["name"].decode() if isinstance(a["name"], bytes) else str(a["name"])).lower() == "weight"
+            else a["default"] for a in axes]
+        if values:
+            font.set_variation_by_axes(values)
+    except (OSError, AttributeError):
+        pass
+    print(f"font: {label} {source}", file=sys.stderr)
+    return font, label
+
+
+def css_stack(role="sans", cfg=None, output=None, first=None):
+    """CSS names only; this never embeds font bytes."""
+    key = output_key(role, cfg, output)
+    name = first or _cfg_get(cfg, key) or default_family(role)
+    if _looks_like_path(name):
+        path = Path(name).expanduser()
+        if not path.is_absolute() and getattr(cfg, "path", None):
+            path = Path(cfg.path).parent / path
+        name = read_info(path).family
+    generic = {"-apple-system", "BlinkMacSystemFont", "sans-serif", "monospace", "ui-monospace"}
+    defaults = catalog_meta()["defaults"]["css_stack"][role]
+    if not _cfg_get(cfg, "fonts.system_fallback", True):
+        defaults = [default_family(role), "sans-serif" if role == "sans" else "monospace"]
+    result = []
+    for value in [name] + defaults:
+        if any(c in value for c in "'\"\n\r\\<>;"):
+            raise FontError(f"unsafe CSS font family {value!r}")
+        if value.casefold() not in {item.casefold() for item in result}:
+            result.append(value)
+    return ", ".join(v if v in generic else "'" + v + "'" for v in result)
+
+
+def svg_with_stacks(svg, cfg=None):
+    """Add viewer CSS stacks to single-family attributes and declarations in a copy."""
+    def stack(value):
+        if "," in value:
+            return value
+        family = value.strip("'\" ")
+        entry = find_entry(family)
+        role = entry.get("role") if entry else None
+        if role not in ROLES:
+            for configured_role in ROLES:
+                explicit = _explicit(configured_role, cfg, 400, "diagram")
+                try:
+                    configured_family = read_info(explicit[0]).family if explicit else (
+                        _cfg_get(cfg, output_key(configured_role, cfg, "diagram"))
+                        or default_family(configured_role))
+                except (FontError, OSError):
+                    continue
+                if family.casefold() == configured_family.casefold():
+                    role = configured_role
+                    break
+        if role not in ROLES:
+            role = "mono" if any(x in family.lower() for x in ("mono", "code", "consolas")) else "sans"
+        return css_stack(role, cfg, first=family)
+
+    def attribute(match):
+        quote, value = match.group(2), match.group(3)
+        replacement = stack(value)
+        if quote == "'":
+            replacement = replacement.replace("'", "&apos;")
+        return match.group(1) + quote + replacement + quote
+
+    svg = re.sub(r"(font-family\s*=\s*)([\"'])(.*?)\2", attribute, svg)
+    return re.sub(r"(font-family\s*:\s*)([^;{}<>]+)([;}])",
+                  lambda m: m.group(1) + stack(m.group(2)) + m.group(3), svg)
 
 
 # =========================================================================== fetch
@@ -796,7 +1016,12 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("role", nargs="?", default="sans", choices=ROLES + ("mono_bold",))
     p.add_argument("--weight", type=int, default=400)
     p.add_argument("--italic", action="store_true")
+    p.add_argument("--output", choices=OUTPUTS)
     p.add_argument("--static", action="store_true", help="cut a static instance of a variable font")
+    p.add_argument("--config")
+    p = sub.add_parser("stack", help="print a CSS fallback stack")
+    p.add_argument("role", choices=ROLES)
+    p.add_argument("--output", choices=OUTPUTS)
     p.add_argument("--config")
     p = sub.add_parser("fetch", help="download a catalog font into the data folder (sha256 checked)")
     p.add_argument("id")
@@ -815,8 +1040,11 @@ def main(argv: list[str] | None = None) -> int:
                 lic = (e.get("licence") or {}).get("spdx", "")
                 print(f"{e['id']:30s} {e['role']:5s} {state(e, cfg):12s} {lic}")
             return 0
+        if a.cmd == "stack":
+            print(css_stack(a.role, cfg, output=a.output))
+            return 0
         if a.cmd == "resolve":
-            f = resolve(a.role, cfg=cfg, weight=a.weight, italic=a.italic, static=a.static)
+            f = resolve(a.role, cfg=cfg, weight=a.weight, italic=a.italic, static=a.static, output=a.output, os_fallback=True)
             print(f"{f}\t{f.family}\t{f.source}" + ("\tFALLBACK" if f.fallback else ""))
             return 0
         if a.cmd == "fetch":

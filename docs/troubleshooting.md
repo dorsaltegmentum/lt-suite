@@ -58,3 +58,22 @@ A public report should contain versions, synthetic reproduction steps and saniti
 Remove account details, authentication values, Lt identifiers, questions, answers, screenshots and grades.
 
 Report security weaknesses through [private reporting](../SECURITY.md).
+
+## lt-chrome startup
+
+| Doctor or startup message | Fix |
+|---|---|
+| `lt-chrome did not start: browser.devtools_url` | Use HTTP on `127.0.0.1` or `[::1]` with port 1 to 65535; values stay hidden. |
+| `browser.chromium_user_data_dir is required` | Choose `other` and supply the folder above the Profile Path from `chrome://version`. |
+| `this agent did not pass the plugin folder` | The 0.1.0 fallback ignores settings; approve `lt-chrome install`, merge `lt-chrome snippet --host <host>`, restart. |
+| `no lt-chrome launcher under the plugin folder` | Reinstall lt-suite or use the stable launcher snippet. |
+| `no DevToolsActivePort` | Start the selected browser and enable remote debugging. |
+| `unexpected second line` | Stop attaching and restart the browser with remote debugging; doctor refuses the malformed file. |
+| `npx cache working folder cannot be written` | Allow the platform cache's `lt-chrome/run`; fallback npx otherwise uses the agent folder. |
+| `Node too old` | Install Node 20.19+ or 22.12+; Node 21 gets a package-support warning. |
+| `npm's npx-cli.js not found next to node.exe` | Reinstall Node with npm; settings-aware Windows startup requires the adjacent npm script. |
+| `stable launcher ... run setup.py lt-chrome install` | Approve installing the current launcher again after upgrading the skill. |
+| `last started with config ... but lt-suite reads` | Set `LT_SUITE_CONFIG` or use the platform config, then restart the agent. |
+
+`setup.py lt-chrome plan --json` shows the redacted action and config source.
+`doctor --probe-devtools` probes only the configured loopback HTTP listener and follows no redirects.

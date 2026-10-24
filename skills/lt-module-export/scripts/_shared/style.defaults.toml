@@ -31,3 +31,19 @@ text_px = 14
 allow_download = true
 # local embeds fonts in HTML and draw.io files; google links Google Fonts instead.
 page_fonts = "local"
+
+# Page PDFs and labels may use OS fonts after Noto fails. System files stay on the host.
+system_fallback = true
+
+# Empty output keys inherit the base family and file keys for that role.
+[fonts.pdf]
+sans = ""
+mono = ""
+
+[fonts.diagram]
+sans = ""
+mono = ""
+
+# Empty labels follow PDF sans, then base sans; annotate.font_path wins.
+[fonts.labels]
+sans = ""

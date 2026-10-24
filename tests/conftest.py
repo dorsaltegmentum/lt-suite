@@ -86,3 +86,41 @@ def run_py():
         return subprocess.run([sys.executable, *args], cwd=cwd or REPO, env=e, input=stdin,
                               capture_output=True, text=True, timeout=timeout)
     return _run
+
+
+@pytest.fixture(scope="session")
+def static_test_font(tmp_path_factory):
+    from fontTools.ttLib import TTFont
+    from fontTools.varLib.instancer import instantiateVariableFont
+    with TTFont(SHARED / "fonts/noto-sans/NotoSans-Variable.ttf") as font:
+        font = instantiateVariableFont(font, {a.axisTag: a.defaultValue for a in font['fvar'].axes})
+        path = tmp_path_factory.mktemp("font-template") / "template.ttf"
+        font.save(path)
+    return path
+
+
+@pytest.fixture
+def font_file(tmp_path, static_test_font):
+    """Invented faces derived from the pinned test asset, independent of host fonts."""
+    from fontTools.ttLib import TTFont
+    counter = 0
+
+    def make(family="Test Sans", *, weight=400, fs_type=0, licence="SIL Open Font License 1.1",
+             variable=False, filename=None, copyright="Synthetic test font"):
+        nonlocal counter
+        counter += 1
+        source = SHARED / "fonts/noto-sans/NotoSans-Variable.ttf" if variable else static_test_font
+        with TTFont(source) as font:
+            names = font['name']
+            for nid in (1, 2, 4, 6, 16, 17, 21, 22, 25, 0, 13):
+                names.removeNames(nameID=nid)
+            for nid, value in ((1, family), (2, "Regular"), (4, family + " Regular"),
+                               (6, family.replace(" ", "") + "-Regular"), (0, copyright), (13, licence)):
+                names.setName(value, nid, 3, 1, 0x409)
+            font['OS/2'].fsType = fs_type
+            font['OS/2'].usWeightClass = weight
+            path = tmp_path / (filename or f"face-{counter}.ttf")
+            path.parent.mkdir(parents=True, exist_ok=True)
+            font.save(path)
+        return path
+    return make

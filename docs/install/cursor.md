@@ -10,7 +10,9 @@ Install the skills:
 npx --yes skills@1.7.4 add dorsaltegmentum/lt-suite -a cursor
 ```
 
-Add the generated MCP configuration from `examples/mcp/cursor-mcp.json`, then ask Cursor to set up lt-suite.
+Ask Cursor to set up lt-suite, then approve `setup.py lt-chrome install`.
+Merge `setup.py lt-chrome snippet --host cursor` output into Cursor MCP settings and restart.
+Use `examples/mcp/cursor-mcp.json` as a static fallback that ignores browser settings.
 
 The skill installer does not install MCP servers. Configure the browser connection separately.
 

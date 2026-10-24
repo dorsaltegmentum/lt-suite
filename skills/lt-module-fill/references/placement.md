@@ -76,8 +76,7 @@ After writing, read back `linkedLabels` or `categoryAnswerItems` and verify pers
 Lt feedback describes what the platform accepts. It does not become a cited research tier.
 
 A multiple-choice panel's `modelAnswer.selectedAnswers` reads empty.
-Only Check Answer clicked by the user during review can expose its correctness feedback.
-The agent never clicks Check Answer.
+Check Answer exposes correctness feedback when the user presses it during review, or when the check pass presses it with `fill.check_answer.enabled = true`.
 
 When rendered feedback exists, split the class list into words.
 Test exact membership of `correctAnswer` or `incorrectAnswer`.
@@ -86,6 +85,12 @@ Never search by substring. `"labelLocation incorrectAnswer"` contains `"correctA
 A substring test once classified 11 incorrect placements as correct.
 
 ## Preserve cited disagreements
+
+With `fill.check_answer.enabled` on, the check pass may change the on-page answer.
+answers.json keeps the cited draft. The report keeps every press. The answer skill's
+reconcile step re-reads each citation and records any supported dispute. The following
+`lt_conflict` route applies with the setting off or when reviewing a model answer.
+
 
 Re-read the citation when Lt feedback contradicts a cited draft.
 If the citation still supports the answer, keep that answer written.

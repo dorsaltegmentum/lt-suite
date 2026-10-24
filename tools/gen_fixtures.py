@@ -1,6 +1,6 @@
 # SPDX-FileCopyrightText: 2026 dorsaltegmentum
 # SPDX-License-Identifier: AGPL-3.0-or-later
-"""Generate or check 7 deterministic, entirely invented Lt module fixtures.
+"""Generate or check 9 deterministic, entirely invented Lt module fixtures.
 
 Run with --seed 20001, --check or --out DIR. README.md in tests/fixtures describes
 coverage, ownership and the independently handwritten boundary oracle.
@@ -32,20 +32,20 @@ COURSE = 1
 LESSON_ID = 1
 UNIT = "X101"
 COURSE_TITLE = "Example Course 2000 (X101)"
-TOOL_VERSION = "0.1.0"
+TOOL_VERSION = "0.2.0"
 CONFIG_DIGEST = hashlib.sha256(b"lt-suite fixture config").hexdigest()
 
 # Directories the generator owns. Everything in them except HAND_WRITTEN is rewritten and
 # checked; a file in them that the generator did not produce is an orphan.
 OWNED_DIRS = ("modules", "answers", "references", "fill-reports", "runs", "curriculum",
-              "viewmodels", "media", "pages")
+              "viewmodels", "media", "pages", "page-kinds")
 HAND_WRITTEN = frozenset({"modules/expected-boundaries.json"})
 
 # module id -> (run id, file stem used in module-/answers-/reference-/fill-report- names)
 RUNS = {
     "c1-r101": (101, "c1-r101"), "c1-r102": (102, "c1-r102"), "c1-r103": (103, "c1-r103"),
     "c1-r104": (104, "c1-r104"), "c1-r105": (105, "c1-r105"), "c1-r106": (106, "c1-r106"),
-    "c1-r107": (107, "demo"),
+    "c1-r108": (108, "c1-r108"), "c1-r107": (107, "demo"), "c1-r109": (109, "c1-r109"),
 }
 FILL_REPORT_MODULES = ("c1-r101", "c1-r102", "c1-r103", "c1-r104", "c1-r106", "c1-r107")
 RUN_RECORD_MODULES = ("c1-r101", "c1-r102", "c1-r103", "c1-r104", "c1-r106", "c1-r107")
@@ -1163,9 +1163,139 @@ def spec_r107():
     return module_spec("c1-r107", "Demo: Quick tour", pages, completion=False, container=[])
 
 
+RAT_POOLS = [
+    ["Amber spindle", "Cobalt rotor", "Silver helix", "Bronze vessel"],
+    ["River delta", "Mountain summit", "Ocean trench", "Desert oasis"],
+    ["Glass prism", "Velvet curtain", "Paper lantern", "Marble column"],
+    ["Winter snowfall", "Summer sunshine", "Autumn foliage", "Spring blossom"],
+    ["Copper wire", "Rubber gasket", "Wooden axle", "Ceramic nozzle"],
+]
+
+
+def spec_r108():
+    def lab(key, labels):
+        return label_q('kcImageLabelling', key, 'Place fictional labels '+str(key),labels,
+                       [(0.1+i*0.15,0.5) for i in range(len(labels))],image_key=str(key),ratio=1,
+                       assess='instantFeedback',ro=False)
+    def quiz(key):
+        return mcq(key,'Choose an invented state '+str(key),['Low','High','Steady'],assess='instantFeedback',ro=False)
+    return module_spec('c1-r108','1.1 Demo: Check Answer practice',[
+        content_page('Practice items',quiz(11),cat_q(12,'Sort fictional stores',['Cap','Duct'],['Oram','Tessin'],assess='instantFeedback',ro=False),
+            mcq(13,'Choose fictional parts',['Cap','Duct','Lobe'],multi=True,assess='instantFeedback',ro=False),
+            lab(14,['A','B','C','D','E']),lab(15,['Cap','Duct']),
+            cat_q(16,'Sort without new marks',['One','Two','Three'],['A','B'],assess='instantFeedback',ro=False),
+            lab(17,['Same','Same']),mcq(18,'Review this single attempt',['One','Two'],single=True,assess='instantFeedback',ro=False)),
+        content_page('Team exercise',*[quiz(k) for k in (21,22,23)]),
+        content_page('Ordinary exercise',*[quiz(k) for k in (31,32,33)]),
+        content_page('Awaiting classification',*[quiz(k) for k in (41,42,43)]),report_page()],completion=True,container=[])
+
+
+def answers_r108(cx):
+    items=[]
+    for page in cx.module['pages']:
+        for cap in page['items']:
+            iid=cap['item_id']
+            if page['page_index'] in (2,4) or iid=='p1-18':
+                items.append(skipped(iid,'user-excluded'));continue
+            kw={}
+            if cap['type']=='multiple-choice':kw['proposed_selection']=['o1','o2'] if iid=='p1-13' else ['o1']
+            else:
+                kw['label_placements']=[{'label':o['text'],'target':('Cap' if cap['type']=='categorization' else cx.where(iid,n,'label '+str(n))),**({'target_index':0} if cap['type']=='categorization' else {})} for n,o in enumerate(cap['options'])]
+            items.append(drafted(iid,[claim('The fictional source describes the cap and duct in detail.','p1'),claim('The cited draft selects its initial position.','p1')],[S11('p1',2)],**kw))
+    return corpus_11(),items
+
+
+def _check_fixtures(files,module,answers):
+    from ltcore import page_kinds,rat,check_answer as ca
+    mid='c1-r108';caps={i['item_id']:i for p in module['pages'] for i in p['items']}
+    record=page_kinds.classify(module,rat.DEFAULT_POLICY,answers=answers,now=TS,answers_sha256=sha256(dumps(answers)))
+    record=page_kinds.mark(module,record,2,'trat','Team test',now=TS)
+    record=page_kinds.mark(module,record,3,'not-rat','Not a test',now=TS)
+    raw=dumps(record);files[f'page-kinds/page-kinds-{mid}.json']=raw;files[f'runs/{mid}/page-kinds.json']=raw
+    statuses={s['page_index']:s for s in page_kinds.page_status(module,record)}
+    def row(iid,kind,draft,presses,state,stop,verdict):
+        cap=caps[iid];h=lambda s:ca.hashes(kind,s,ca.pool_for(cap))
+        return {'item_id':iid,'kind':kind,'draft_state':draft,'draft_h':h(draft),'final_h':h(state),'state':state,
+                'stop':stop,'moved':h(state).split('/')[1]!=h(draft).split('/')[1], 'presses_before':0,'presses':presses,
+                'feedback':"The accepted choice should be Low." if iid=='p1-11' else '',
+                'pool_h':[ca.djb2(t) for t in ca.pool_for(cap)],'tried':[p.split('|')[0] for p in presses],
+                'wrote':len(presses)>1,'save_signal':'net' if len(presses)>1 else None,'final_verdict':verdict,
+                'targets_text':(cap.get('constraints') or {}).get('categories') or ['anchor '+str(i) for i in range(ca.target_count(cap))]}
+    rows=[row('p1-11','select','0',['0|incorrect|-|-','1|correct|-|-'],'1','correct','correct'),
+          row('p1-12','categories','0:0,1:0',['0:0,1:0|incorrect|-|0:0,1:0','0:1,1:1|correct|0:1,1:1|-'],'0:1,1:1','correct','correct'),
+          row('p1-13','select','0,1',['0,1|incorrect|0|1','0|correct|0|-'],'0','correct','correct'),
+          row('p1-14','labels','0:0,1:1,2:2,3:3,4:4',[
+              '0:0,1:1,2:2,3:3,4:4|partially-correct|0:0|1:1,2:2,3:3,4:4',
+              '0:0,1:2,2:3,3:4,4:1|partially-correct|0:0,1:2|2:3,3:4,4:1',
+              '0:0,1:2,2:4,3:1,4:3|incorrect|-|2:4,3:1,4:3'],
+              '0:0,1:2,2:3,3:4,4:1','no-next-attempt','partially-correct'),
+          row('p1-15','labels','0:0,1:1',['0:0,1:1|correct|0:0,1:1|-'],'0:0,1:1','correct','correct'),
+          row('p1-16','categories','0:0,1:0',['0:0,1:0|incorrect|-|0:0,1:0','0:1,1:1|incorrect|-|-'],'0:0,1:0','no-progress','incorrect'),
+          row('p1-17','labels','0:0,1:1',['0:0,1:1|incorrect|-|0:0,1:1','0:1,1:0|correct|0:1,1:0|-'],'0:1,1:0','correct','correct')]
+    ordinary=[row('p3-'+str(k),'select','0',['0|correct|-|-'],'0','correct','correct') for k in (31,32,33)]
+    ledger={'checks':[]}
+    for page,items in ((1,rows),(3,ordinary)):
+        ledger['checks'].append({'receipt':f'check-{mid}-p{page}.json','receipt_sha256':sha256(('check-page-'+str(page)).encode()),
+             'page':page,'policy':{'enabled':True,'config':CONFIG_DIGEST},'rat_page':statuses[page],'items':items})
+    ledger_raw=dumps(ledger);files[f'runs/{mid}/check-answer.json']=ledger_raw
+    checks=ca.project(module,answers,ledger)
+    report={'schema_version':1,'module_id':mid,'run_id':108,'started_at':TS,'ended_at':TS,'approval_mode':'manual',
+        'source_answers':{'path':f'../answers/answers-{mid}.json','sha256':sha256(dumps(answers))},
+        'source_check_answer':{'path':f'../runs/{mid}/check-answer.json','sha256':sha256(ledger_raw)},
+        'source_page_kinds':{'path':f'../page-kinds/page-kinds-{mid}.json','sha256':sha256(raw)},
+        'boundary_reached':{'class':None,'page_index':None,'item_id':None,'stopped':False},
+        'never_navigated':[{'route':'complete','reason':'run-level commit'}], 'pages_filled':[1,3],
+        'rat_pages':[{k:v for k,v in s.items() if k not in {'check_reason'}} for s in statuses.values() if s['candidate']], 'items':[]}
+    for cap in caps.values():
+        iid=cap['item_id'];c=checks.get(iid);base={'item_id':iid,'item_type':cap['type'],'attempts':cap['attempts'],
+          'attempted':bool(c),'method':'view-model' if c else 'not-attempted','result':'filled' if c else 'skipped','verified':bool(c)}
+        if c:base.update(check_answer=c,receipt={'expected_hash':c['final']['hash'],'observed_hash':c['final']['hash'],'observed_at':TS})
+        else:base['stopped_reason']='single-attempt: yours to check and submit' if iid=='p1-18' else 'rat-page' if iid.startswith('p2') else 'rat-unmarked'
+        report['items'].append(base)
+    report['check_answer']=ca.summary(report['items'])
+    waits=save_wait_rows(mid,[{'pages':[1],'signal':'net','waited_ms':420,'total':7,'saved':7,'pending':0,'errors':0,'calibrated':True,'ok':True},
+                              {'pages':[3],'signal':'net','waited_ms':420,'total':3,'saved':3,'pending':0,'errors':0,'calibrated':True,'ok':True}])
+    report['save_waits']=waits
+    files[f'runs/{mid}/save-waits.json']=dumps({'save_waits':waits})
+    report_raw=dumps(report)
+    files[f'fill-reports/fill-report-{mid}.json']=report_raw
+    rec={'schema_version':1,'module_id':mid,'reconciled_at':TS,'source_answers':{'path':f'../../answers/answers-{mid}.json','sha256':sha256(dumps(answers))},
+         'source_fill_report':{'path':f'../../fill-reports/fill-report-{mid}.json','sha256':sha256(report_raw)},'items':[]}
+    amap={a['item_id']:a for a in answers['items']}
+    for iid in ('p1-11','p1-12','p1-13'):
+        c=checks[iid];a=amap[iid];press=c['presses'][-1]
+        entry={'item_id':iid,'outcome':'disputed' if iid=='p1-12' else 'combined',
+          'lt_state':dict(c['final']['state'],hash=c['final']['hash'],presses=len(c['presses'])),
+          'draft_state':dict(c['draft']['state'],hash=c['draft']['hash']),
+          'segments':[{'origin':'lt','kind':'claim','text':f"Lt's Check Answer accepted the recorded state after {len(c['presses'])} presses.",'lt_press':press['receipt_sha256']+'#'+str(press['n'])},
+              dict(a['segments'][0],origin='draft',draft_segment=0),{'origin':'research','kind':'claim','text':'Without vorlase, tessin builds up and quillic acid falls.','provenance_refs':['r1']}],
+          'dropped':[{'draft_segment':1,'reason':'This segment argued for the rejected position.'}],
+          'provenance':[S11('r1',3)],'conflicts':[], 'note':c['lt_feedback'] if iid=='p1-11' else None,'dispute':None}
+        if iid=='p1-12':entry['dispute']={'lt_part':'Duct placement','evidence':[{'ref':'p1','locator':'slide 2','quote':'The Oram and Tessin labels belong in the Cap category.','contradiction':'The fictional slide assigns the opposite state.'}]}
+        rec['items'].append(entry)
+    files[f'runs/{mid}/reconciled.json']=dumps(rec)
+
+
+
+def spec_r109():
+    def questions():
+        return [mcq(81+i, f"Choose a fictional object in group {i+1}.",
+                    [f"{chr(65+k)}. {v}" for k, v in enumerate(pool)], multi=(i == 2), ro=False)
+                for i, pool in enumerate(RAT_POOLS)]
+    return module_spec("c1-r109", "1.2 Demo: readiness tests", [
+        content_page("Orientation", ctext(1, "Invented readiness exercise.")),
+        content_page("Readiness test (individual)", ctext(1, "Individual Readiness Assurance Test (iRAT)"), *questions()),
+        content_page("Readiness test (team)", ctext(1, "Team Readiness Assurance Test (tRAT)"), *questions()),
+        content_page("Case", text_q(11, "Describe the fictional case.", "", ro=False)),
+        content_page("Practice", *[mcq(i+1, f"Practice number {i+1}", ["Odd pebble", "Even stone"],
+                                       assess="instantFeedback", ro=False) for i in range(3)]),
+        content_page("True or false", *[mcq(i+1, f"Fictional assertion {i+1}", ["True", "False"], ro=False) for i in range(4)]),
+        report_page()], completion=True, container=[])
+
+
 SPEC_BUILDERS = {"c1-r101": spec_r101, "c1-r102": spec_r102, "c1-r103": spec_r103,
                  "c1-r104": spec_r104, "c1-r105": spec_r105, "c1-r106": spec_r106,
-                 "c1-r107": spec_r107}
+                 "c1-r108": spec_r108, "c1-r107": spec_r107, "c1-r109": spec_r109}
 
 # What the mirror detector must find, written from the design of each page rather than read
 # back from the derived module: (source item, mirror item, basis).
@@ -1190,6 +1320,7 @@ Vorlase is an enzyme of the fictional quillen pathway.
 
 ## Slide 2
 Vorlase turns tessin into quillic acid.
+The Oram and Tessin labels belong in the Cap category.
 
 ## Slide 3
 Without vorlase, tessin builds up and quillic acid falls.
@@ -1607,6 +1738,12 @@ def answers_r107(cx):
     return [], items
 
 
+def answers_r109(cx):
+    return [], [skipped(it["item_id"], "irat-policy" if p["page_index"] == 2 else
+                       "rat-sheet" if p["page_index"] == 3 else "user-excluded")
+                for p in cx.module["pages"] for it in p["items"]]
+
+
 # ---------------------------------------------------------------- approvals --------------
 # tests/fixtures/approvals/approvals-c1-r104.json belongs to the schema package. The draft
 # of p3-12 cites its id. The generated run also stores the two synthetic waivers used by
@@ -2003,7 +2140,7 @@ def build_all(seed: int):
 
     # answers
     builders = {"c1-r101": answers_r101, "c1-r102": answers_r102, "c1-r103": answers_r103,
-                "c1-r105": answers_r105, "c1-r106": answers_r106, "c1-r107": answers_r107}
+                "c1-r108": answers_r108, "c1-r105": answers_r105, "c1-r106": answers_r106, "c1-r107": answers_r107, "c1-r109": answers_r109}
     digest = load_digest()
     answers_bytes = {}
     for mid in specs:
@@ -2047,9 +2184,84 @@ def build_all(seed: int):
     # curriculum and the exported page
     for rel, text in CURRICULUM.items():
         files[f"curriculum/{rel}"] = text.encode("utf-8")
+    _check_fixtures(files, derived["c1-r108"][0], json.loads(answers_bytes["c1-r108"]))
+    _rat_fixtures(files, derived["c1-r109"][0], json.loads(answers_bytes["c1-r109"]))
     files["pages/page.md"] = PAGE_MD.encode("utf-8")
     assert PAGE_MD.count("\n") == 14, PAGE_MD.count("\n")
     return files, {"approval_ids": ids, "approvals_in_file": found}
+
+
+def _rat_fixtures(files, module, answers):
+    # A deterministic logical snapshot: roots use synthetic identities and stat values.
+    # Runtime tests classify their temporary installed fixture tree afresh.
+    sys.path.insert(0, str(SHARED))
+    from ltcore import page_kinds, rat
+    sys.path.pop(0)
+    compact = ("---\nlt-rat: 1\nmodule: c1-r109\npage: 3\nkind: trat\nquestions: 5\nweek: 1.2\n---\n"
+               "1. B\n2. D | Desert oasis\n3. A, C\n4. ?\n5. A\n")
+    marked = "\n\n".join(f"Choose a fictional object in group {j+1}.\n" + "\n".join(
+        f"{chr(65+k)}. {v}" + (" ✓" if k == j % 4 else "") for k, v in enumerate(pool))
+        for j, pool in enumerate(RAT_POOLS)) + "\n"
+    tf = "\n\n".join(f"Fictional assertion {j+1}\nA. True ✓\nB. False" for j in range(4)) + "\n"
+    sheets = {"1.2-team.md": compact, "1.2-readiness.md": marked, "tf.md": tf,
+              "notes.md": "Synthetic notes, no answer sheet.\n", ".old.md": compact,
+              "sub/1.2-team-copy.md": compact}
+    for name, text in sheets.items():
+        files["curriculum/Block A/RATs/" + name] = text.encode("utf-8")
+    pol = dict(rat.DEFAULT_POLICY, trat="from_dir")
+    record = page_kinds.classify(module, pol, answers=answers, now=TS, answers_sha256=sha256(dumps(answers)))
+    row = {"key": "rat.answers_dir", "real_sha256": rat.sha("synthetic-root"), "exists": True,
+           "listing_sha256": rat.sha("synthetic-listing"), "files_seen": 4, "sheets_parsed": 3,
+           "skipped": {"hidden": 1, "not-a-file": 1, "not-a-sheet": 1}}
+    record["scan"].update(roots=[row], roots_digest=rat.sha([{k: row[k] for k in ("key", "real_sha256", "listing_sha256")}]),
+                          read={"irat": False, "trat": True, "why": "trat = from_dir"})
+    parsed = []
+    for name in ("1.2-team.md", "1.2-readiness.md", "tf.md"):
+        sheet = rat.parse_sheet(sheets[name])
+        sheet.update(name=name, root="rat.answers_dir", sha256=sha256(sheets[name].encode()))
+        parsed.append(sheet)
+    for page in module["pages"]:
+        if not page_kinds.is_candidate(page):
+            continue
+        status = next(r for r in page_kinds.page_status(module, record) if r["page_index"] == page["page_index"])
+        matches = [m for sh in parsed if (m := rat.match_sheet(sh, page, module)) and m["grade"] != "none"]
+        chosen, reasons = rat.select_match(matches, status["kind"])
+        for match in matches:
+            ev = rat.evidence(match)
+            ev.pop("selection_sha256", None)
+            ev.update(chosen=match is chosen, confirmation_reasons=reasons if match is chosen else [])
+            record["matches"].append(dict(page_kinds._pin(page), kind="rat", source="rat-answers", evidence=ev))
+    page_kinds.validate_record(record)
+    raw = dumps(record)
+    files["page-kinds/page-kinds-c1-r109.json"] = raw
+    files["runs/c1-r109/page-kinds.json"] = raw
+    statuses = [rat.decide(p, pol, record, answers) for p in module["pages"] if page_kinds.is_candidate(p)]
+    report_items = []
+    for p in module["pages"]:
+        for n, item in enumerate(p["items"], 1):
+            entry = {"item_id": item["item_id"], "item_type": item["type"], "attempts": item["attempts"],
+                     "attempted": False, "method": "not-attempted", "result": "skipped", "verified": False,
+                     "stopped_reason": "irat-policy" if p["page_index"] == 2 else "rat-unclassified"}
+            if p["page_index"] == 3:
+                entry["answer_source"] = {"kind": "rat-sheet", "root": "rat.answers_dir", "name": "1.2-team.md",
+                    "sha256": sha256(compact.encode()), "question": n, "page_kind": "trat", "classified_by": ["page-text", "rat-answers"]}
+                if n == 4:
+                    entry.update(result="todo", method="manual-todo", todo={"blocker": "Question 4 has no marked answer in 1.2-team.md", "placement": "page 3, panel 84"})
+                else:
+                    entry.update(attempted=True, method="view-model", result="filled", verified=True,
+                                 receipt={"expected_hash": "101", "observed_hash": "101", "observed_at": TS})
+            report_items.append(entry)
+    report = {"schema_version": 1, "module_id": "c1-r109", "run_id": 109, "started_at": TS, "ended_at": TS,
+        "approval_mode": "manual", "source_answers": {"path": "../answers/answers-c1-r109.json", "sha256": sha256(dumps(answers))},
+        "source_page_kinds": {"path": "../page-kinds/page-kinds-c1-r109.json", "sha256": sha256(raw)},
+        "rat_pages": [{k:v for k,v in r.items() if k not in {"question", "reasons", "check_reason"}} for r in statuses],
+        "boundary_reached": {"stopped": False, "class": None, "page_index": None, "item_id": None, "detail": "Synthetic run stops before completion."},
+        "never_navigated": COMPLETE_ROUTE, "pages_filled": [3], "items": report_items}
+    waits = save_wait_rows("c1-r109", [{"pages": [3], "signal": "model", "waited_ms": 420,
+        "total": 4, "saved": 4, "pending": 0, "errors": 0, "calibrated": True, "ok": True}])
+    report["save_waits"] = waits
+    files["runs/c1-r109/save-waits.json"] = dumps({"save_waits": waits})
+    files["fill-reports/fill-report-c1-r109.json"] = dumps(report)
 
 
 def load_digest():
@@ -2140,7 +2352,7 @@ def validate_tree(root: Path, approvals_found: dict) -> list[str]:
     fails = []
     kinds = (("modules", "module-*.json", None), ("references", "reference-*.json", None),
              ("answers", "answers-*.json", "module"), ("fill-reports", "fill-report-*.json", "module"),
-             ("runs", "*/run.json", None), ("runs", "*/approvals.json", None))
+             ("page-kinds", "page-kinds-*.json", None), ("runs", "*/run.json", None), ("runs", "*/approvals.json", None), ("runs", "*/reconciled.json", "module"))
     for d, pat, needs_module in kinds:
         for p in sorted((root / d).glob(pat)):
             kw = {"model_answer_read": True}
@@ -2149,6 +2361,8 @@ def validate_tree(root: Path, approvals_found: dict) -> list[str]:
                 stem = p.name[len("answers-"):-len(".json")]
             elif d == "fill-reports":
                 stem = p.name[len("fill-report-"):-len(".json")]
+            if d == "runs" and p.name == "reconciled.json":
+                stem = p.parent.name
             if needs_module:
                 kw["module"] = root / "modules" / f"module-{stem}.json"
             if appr.is_file() and stem == "c1-r104":

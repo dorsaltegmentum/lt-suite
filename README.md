@@ -30,6 +30,10 @@ Synthetic example. A mechanism diagram built from the toy case in `skills/mechan
 Start with setup, then capture, draft, review, fill, review and export.
 The diagram skill also works on supplied material without a live Lt module.
 
+Optional Check Answer retries are off by default. Setup asks before enabling them for
+verified multi-attempt drafts; single-attempt items and test pages stay unpressed.
+Cited drafts remain in answers.json, and reconciled exports show Lt evidence and source explanations.
+
 <img src="docs/assets/export-page.png" alt="First page of a synthetic module export: questions, drafted answers and source tags." width="600">
 
 Synthetic example. A module export built from the schema example in `tests/fixtures/examples`. Every claim carries a source tag. [Full PDF](docs/assets/sample-module-export.pdf).
@@ -46,7 +50,11 @@ The `lt-suite-setup` skill asks for institution, paths, browser, palette and fon
 It installs Python dependencies in an external environment and runs `doctor`.
 
 Use Python 3.11+ and Node.js 22.20+ for the documented installer routes.
-For `lt-chrome`, enable remote debugging at `chrome://inspect/#remote-debugging` in Chrome 144+.
+Setup chooses Claude in Chrome or a Chromium browser through lt-chrome.
+For auto-connect, enable remote debugging at `chrome://inspect/#remote-debugging` in Chrome 144+.
+Quiet adapters expose zero lt-chrome tools when the host passes its plugin folder.
+Other hosts retain the 0.1.0 auto-connect fallback; doctor reports it.
+Restart the agent after changing browser settings.
 Sign in to Lt yourself, then approve the browser connection.
 The suite uses your existing tab.
 
@@ -66,12 +74,14 @@ Claude Code 2.1.306 passed local validation, plugin loading and discovery of all
 ```sh
 codex plugin marketplace add dorsaltegmentum/lt-suite
 codex plugin add lt-suite@lt-suite
-# Merge examples/mcp/codex-config.toml into your Codex config.
+# After setup approval, run setup.py lt-chrome install.
+# Merge setup.py lt-chrome snippet --host codex output into your config.
 # Restart Codex and ask: "Set up lt-suite".
 ```
 
 Codex CLI 0.162.1 discovered all 6 skills through plugins, project skills and user skills.
-The MCP example restricts tools and keeps action approval enabled.
+The generated host snippet restricts 6 tools and keeps action approval enabled.
+Static MCP examples remain a fallback that ignores browser settings.
 
 ### Gemini CLI
 
@@ -109,7 +119,8 @@ Copilot targets the local workflow; this release has no completed Copilot runtim
 
 ```sh
 npx skills add dorsaltegmentum/lt-suite -a cursor
-# Add examples/mcp/cursor-mcp.json to your Cursor MCP config.
+# Approve setup.py lt-chrome install after setup.
+# Merge setup.py lt-chrome snippet --host cursor output into your MCP config.
 # Ask: "Set up lt-suite".
 ```
 
@@ -190,6 +201,11 @@ See [safety](docs/safety.md).
 The measured defaults are **Tol Bright** for light and print, and
 **Petroff-10 on Primer Dark High Contrast** for dark.
 The bundled fonts are **Noto Sans** and **Noto Sans Mono**.
+`fonts.pdf`, `fonts.diagram` and `fonts.labels` can choose separate families or files.
+Page PDFs and labels fall back through Noto to the OS fonts when enabled.
+System fonts stay on their host; HTML pages and SVGs name them in CSS stacks.
+Micrograph palette copies follow the selected PDF palettes and bind by sha256.
+See [fonts and palettes](docs/fonts-and-palettes.md) for licence gates and filing.
 Setup offers **Atkinson Hyperlegible Next** and its mono companion for low vision.
 
 Ranking measures the derived diagram theme's text contrast, stroke contrast,

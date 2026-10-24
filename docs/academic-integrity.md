@@ -40,3 +40,12 @@ Keep captures and answers local. Do not publish course content, submitted work, 
 The software licence governs code. Course material and Lt Content retain their own restrictions.
 
 See [safety](safety.md) and [provenance](provenance.md).
+
+## RAT answers
+
+RAT entry uses your own or your team's supplied answers. Check your course's rules before enabling it. Individual RAT pages are never drafted. Only you submit in Lt. See [RAT answers](rat-answers.md).
+
+
+## Check Answer
+
+Check Answer retries are off by default. Setup asks before enabling them. The loop can discover Lt's key through repeated trials on multi-attempt items. Lt may log each attempt; check your course's rules. The suite excludes single-attempt items, graded items, RAT pages and unknown candidate pages. The user reviews and submits.

@@ -1,0 +1,224 @@
+{
+ "schema_version": 1,
+ "module_id": "c1-r108",
+ "reconciled_at": "2000-01-01T00:00:00Z",
+ "source_answers": {
+  "path": "../../answers/answers-c1-r108.json",
+  "sha256": "e368c813722ca118022eba5ff9efc3bf7012226aeb88e9b3686dbc007aabe5fd"
+ },
+ "source_fill_report": {
+  "path": "../../fill-reports/fill-report-c1-r108.json",
+  "sha256": "3324966099e9e7adc4c268b2824f9949fba717f23c243608b0bcafe51ecbaf1f"
+ },
+ "items": [
+  {
+   "item_id": "p1-11",
+   "outcome": "combined",
+   "lt_state": {
+    "proposed_selection": [
+     "o2"
+    ],
+    "hash": "274282356/274282356",
+    "presses": 2
+   },
+   "draft_state": {
+    "proposed_selection": [
+     "o1"
+    ],
+    "hash": "274282355/274282355"
+   },
+   "segments": [
+    {
+     "origin": "lt",
+     "kind": "claim",
+     "text": "Lt's Check Answer accepted the recorded state after 2 presses.",
+     "lt_press": "d6fb9b3b833fcc20bb0e5a14019630761c07defa99bdceddfcd4e6198844c108#2"
+    },
+    {
+     "kind": "claim",
+     "text": "The fictional source describes the cap and duct in detail.",
+     "provenance_refs": [
+      "p1"
+     ],
+     "origin": "draft",
+     "draft_segment": 0
+    },
+    {
+     "origin": "research",
+     "kind": "claim",
+     "text": "Without vorlase, tessin builds up and quillic acid falls.",
+     "provenance_refs": [
+      "r1"
+     ]
+    }
+   ],
+   "dropped": [
+    {
+     "draft_segment": 1,
+     "reason": "This segment argued for the rejected position."
+    }
+   ],
+   "provenance": [
+    {
+     "ref": "r1",
+     "tier": 1,
+     "source_id": "DEMO-1-1-SLIDES",
+     "locator": "slide 3",
+     "tag": "[T1:DEMO-1-1-SLIDES:slide 3]"
+    }
+   ],
+   "conflicts": [],
+   "note": "The accepted choice should be Low.",
+   "dispute": null
+  },
+  {
+   "item_id": "p1-12",
+   "outcome": "disputed",
+   "lt_state": {
+    "label_placements": [
+     {
+      "label": "Oram",
+      "target": "Duct",
+      "target_index": 1
+     },
+     {
+      "label": "Tessin",
+      "target": "Duct",
+      "target_index": 1
+     }
+    ],
+    "hash": "1141484442/3320699487",
+    "presses": 2
+   },
+   "draft_state": {
+    "label_placements": [
+     {
+      "label": "Oram",
+      "target": "Cap",
+      "target_index": 0
+     },
+     {
+      "label": "Tessin",
+      "target": "Cap",
+      "target_index": 0
+     }
+    ],
+    "hash": "3028314360/2029230429"
+   },
+   "segments": [
+    {
+     "origin": "lt",
+     "kind": "claim",
+     "text": "Lt's Check Answer accepted the recorded state after 2 presses.",
+     "lt_press": "d6fb9b3b833fcc20bb0e5a14019630761c07defa99bdceddfcd4e6198844c108#2"
+    },
+    {
+     "kind": "claim",
+     "text": "The fictional source describes the cap and duct in detail.",
+     "provenance_refs": [
+      "p1"
+     ],
+     "origin": "draft",
+     "draft_segment": 0
+    },
+    {
+     "origin": "research",
+     "kind": "claim",
+     "text": "Without vorlase, tessin builds up and quillic acid falls.",
+     "provenance_refs": [
+      "r1"
+     ]
+    }
+   ],
+   "dropped": [
+    {
+     "draft_segment": 1,
+     "reason": "This segment argued for the rejected position."
+    }
+   ],
+   "provenance": [
+    {
+     "ref": "r1",
+     "tier": 1,
+     "source_id": "DEMO-1-1-SLIDES",
+     "locator": "slide 3",
+     "tag": "[T1:DEMO-1-1-SLIDES:slide 3]"
+    }
+   ],
+   "conflicts": [],
+   "note": null,
+   "dispute": {
+    "lt_part": "Duct placement",
+    "evidence": [
+     {
+      "ref": "p1",
+      "locator": "slide 2",
+      "quote": "The Oram and Tessin labels belong in the Cap category.",
+      "contradiction": "The fictional slide assigns the opposite state."
+     }
+    ]
+   }
+  },
+  {
+   "item_id": "p1-13",
+   "outcome": "combined",
+   "lt_state": {
+    "proposed_selection": [
+     "o1"
+    ],
+    "hash": "274282355/274282355",
+    "presses": 2
+   },
+   "draft_state": {
+    "proposed_selection": [
+     "o1",
+     "o2"
+    ],
+    "hash": "2340742672/2340742672"
+   },
+   "segments": [
+    {
+     "origin": "lt",
+     "kind": "claim",
+     "text": "Lt's Check Answer accepted the recorded state after 2 presses.",
+     "lt_press": "d6fb9b3b833fcc20bb0e5a14019630761c07defa99bdceddfcd4e6198844c108#2"
+    },
+    {
+     "kind": "claim",
+     "text": "The fictional source describes the cap and duct in detail.",
+     "provenance_refs": [
+      "p1"
+     ],
+     "origin": "draft",
+     "draft_segment": 0
+    },
+    {
+     "origin": "research",
+     "kind": "claim",
+     "text": "Without vorlase, tessin builds up and quillic acid falls.",
+     "provenance_refs": [
+      "r1"
+     ]
+    }
+   ],
+   "dropped": [
+    {
+     "draft_segment": 1,
+     "reason": "This segment argued for the rejected position."
+    }
+   ],
+   "provenance": [
+    {
+     "ref": "r1",
+     "tier": 1,
+     "source_id": "DEMO-1-1-SLIDES",
+     "locator": "slide 3",
+     "tag": "[T1:DEMO-1-1-SLIDES:slide 3]"
+    }
+   ],
+   "conflicts": [],
+   "note": null,
+   "dispute": null
+  }
+ ]
+}

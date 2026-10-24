@@ -64,8 +64,13 @@ ilo_kind = ""
 
 [rat]
 answers_dir = ""
+answers_dirs = []
 irat = "skip"
 trat = "ask"
+
+[rat.kind_markers]
+trat = '(?i)\b[tg]-?RAT\b|\b(?:team|group) readiness\b'
+irat = '(?i)\bi-?RAT\b|\bindividual readiness\b'
 
 [model_answer]
 read = true
@@ -132,6 +137,9 @@ strip_metadata = true
 
 [browser]
 adapter = "auto"
+chromium = "chrome"
+chromium_user_data_dir = ""
+devtools_url = ""
 transport = "sink"
 sink_port = 8731
 lib_mode = "inline"
@@ -141,6 +149,9 @@ js_tmp_dir = ""
 [fill]
 approval_mode = "manual"
 max_pages_per_call = 5
+
+[fill.check_answer]
+enabled = false
 
 [fill.save_wait]
 quiet_ms = 300
@@ -153,6 +164,7 @@ max_ms = 15000
 fallback_ms = 6000
 
 [annotate]
+palette_copies = true
 casing = "#101010"
 ink = "#FFD400"
 margin_fill = "#101010"

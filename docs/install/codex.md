@@ -21,37 +21,18 @@ The plugin installation route targets Codex CLI. Plugins are unavailable in the 
 
 ## Browser connection
 
-Use the generated MCP example in `examples/mcp/codex-config.toml`.
+After setup, approve copying the stable launcher, then print its host snippet:
 
-The corresponding server settings are:
-
-```toml
-[mcp_servers.lt-chrome]
-command = "npx"
-args = [
-  "-y",
-  "chrome-devtools-mcp@1.12.0",
-  "--autoConnect",
-  "--no-usage-statistics",
-  "--no-performance-crux",
-  "--no-category-input",
-  "--no-category-network",
-  "--no-category-memory",
-  "--no-category-performance",
-  "--no-category-emulation",
-  "--redact-network-headers",
-]
-startup_timeout_sec = 30
-default_tools_approval_mode = "prompt"
-enabled_tools = [
-  "list_pages",
-  "select_page",
-  "navigate_page",
-  "evaluate_script",
-  "take_screenshot",
-  "wait_for",
-]
+```sh
+python3 "$SKILL_DIR/scripts/setup.py" lt-chrome install
+python3 "$SKILL_DIR/scripts/setup.py" lt-chrome snippet --host codex
 ```
+
+Merge that output into your Codex config and restart the session.
+It preserves the 6-tool allowlist, approval prompts, a 30-second timeout and `env_vars` forwarding.
+The plugin route may keep its root variable literal and start the 0.1.0 fallback.
+Doctor reports that record; disable the duplicate plugin server if the host reports a name clash.
+Use `examples/mcp/codex-config.toml` as a static fallback that ignores browser settings.
 
 Chrome 144 or newer supports the documented auto-connect route. Open `chrome://inspect/#remote-debugging`, enable remote debugging and approve the connection.
 

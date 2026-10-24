@@ -5,7 +5,7 @@
   {
    "path": "references/_shared/browser-adapters.md",
    "source": "shared/references/browser-adapters.md",
-   "sha256": "ddb45acf1cc23d927ad345c01e049df5d2f00002b338c2d6ffdecdb04fe71b7f"
+   "sha256": "91e89015ddae7879a2bb186f4aa823cf02ed662600a94fbba972f363b33ef297"
   },
   {
    "path": "references/_shared/lexicon/README.md",
@@ -20,7 +20,7 @@
   {
    "path": "references/_shared/safety.md",
    "source": "shared/references/safety.md",
-   "sha256": "57825f33c707e0415eba703a2d3b94c0e270a9e19662c81bf3485f4f539f04aa"
+   "sha256": "66e5b64cd3d0fa40d8a9b3e5da1ac479dd3cbe576464bc713e918e7056a3ee72"
   },
   {
    "path": "scripts/_shared/browser/guard.js",
@@ -30,7 +30,7 @@
   {
    "path": "scripts/_shared/browser/lt_guard.js",
    "source": "shared/browser/lt_guard.js",
-   "sha256": "2f36a271e84b3fd756e191453df51cc2feac39dece98a53b2fed662e90370378"
+   "sha256": "6a99af1b60ce2e4a121ee5e73dc88230ee020137a5410cea7d3fcde56c8e9a49"
   },
   {
    "path": "scripts/_shared/browser/lt_net.js",
@@ -40,12 +40,12 @@
   {
    "path": "scripts/_shared/config.defaults.toml",
    "source": "shared/config.defaults.toml",
-   "sha256": "5f3f93ff213bb753658e50d0bc901723f496cef93e0e14274be3138cd991ede7"
+   "sha256": "8f8401cbe157af6757ca2de5bc116678293b51e03b0ff8a033184b03b3ff72b5"
   },
   {
    "path": "scripts/_shared/fonts/catalog.json",
    "source": "shared/fonts/catalog.json",
-   "sha256": "c363791373661e8373f5bea587f4ca1c8bb62e771a78841dfa58c478450d4af1"
+   "sha256": "531d4399e37fe76c6dc800a42a5370593fcd67a3882a319c31824292171a3bed"
   },
   {
    "path": "scripts/_shared/fonts/noto-sans-mono/NotoSansMono-Variable.ttf",
@@ -68,9 +68,14 @@
    "sha256": "cee9892f9f0cc8fe882c9e9537ee6a89621d86ee7ceaf70b02e2b2b1c25c061a"
   },
   {
+   "path": "scripts/_shared/lt_chrome/lt-chrome.cjs",
+   "source": "shared/lt_chrome/lt-chrome.cjs",
+   "sha256": "a12423637d222a5f78761bf1764c22a25307d044b98af67c63097271be35d2f1"
+  },
+  {
    "path": "scripts/_shared/ltcore/__init__.py",
    "source": "shared/ltcore/__init__.py",
-   "sha256": "e4e1d7384629389895ece8156bc2dec337c8ec2103f5579effe5e458fdbd7390"
+   "sha256": "6593ea9c92b2685dbea1db583106278324741faff8f2829ea3990599f4ea2f16"
   },
   {
    "path": "scripts/_shared/ltcore/approvals.py",
@@ -83,9 +88,14 @@
    "sha256": "094b526ed3a8ad2e98a9e7a1b198af7a66fdbbd034a647edc423fffceb4dac26"
   },
   {
+   "path": "scripts/_shared/ltcore/check_answer.py",
+   "source": "shared/ltcore/check_answer.py",
+   "sha256": "88e2de0733c6a591a553e3ddae288343d493f8a2febe44855e6445474deced48"
+  },
+  {
    "path": "scripts/_shared/ltcore/config.py",
    "source": "shared/ltcore/config.py",
-   "sha256": "bbb954cf15d74b5f8a321bf4fe72d1777d8a5f9d9a086856242679bc4634b0da"
+   "sha256": "17c9f129a7cdf2a1922295d6ed31e33c9af5c9c94991d7b556ce2c6cb19f4aeb"
   },
   {
    "path": "scripts/_shared/ltcore/digest.py",
@@ -95,22 +105,37 @@
   {
    "path": "scripts/_shared/ltcore/fonts.py",
    "source": "shared/ltcore/fonts.py",
-   "sha256": "695268eb5d273053ca5006f7044570f8746d959608b640b2398b4a20e1ced298"
+   "sha256": "aa0176972df01f8da6183bdca4c55ea4e68fbcaf5b10cc370b4cfa97d311e2c8"
   },
   {
    "path": "scripts/_shared/ltcore/ltjs.py",
    "source": "shared/ltcore/ltjs.py",
-   "sha256": "f5a1d8a8bfe2aab6bd6a2966ff8447644a0c686aee679f38e734cf717b41db1a"
+   "sha256": "e55cf0ca1edcf9ad2678b8eaac695aea501ff4590e1da1557374df8b7832e4f5"
+  },
+  {
+   "path": "scripts/_shared/ltcore/page_kinds.py",
+   "source": "shared/ltcore/page_kinds.py",
+   "sha256": "83b26c917dab1ea93cfc05fc0de645d5ea1656aeac93cba9f503c5a52ba040ae"
   },
   {
    "path": "scripts/_shared/ltcore/palettes.py",
    "source": "shared/ltcore/palettes.py",
-   "sha256": "672f156137f548902c0da395e15fed519647a692cb0cb4a7d955f5cc1ee758d2"
+   "sha256": "4f7793c8cd7fca4dfe1593627ec44021ccd4ae9d81e727c907e5eb645936be88"
   },
   {
    "path": "scripts/_shared/ltcore/paths.py",
    "source": "shared/ltcore/paths.py",
    "sha256": "bcb5bacffa32e605b9723a3edee6e85b3dcae6cb0a221a693f17323ffa2a1e6e"
+  },
+  {
+   "path": "scripts/_shared/ltcore/rat.py",
+   "source": "shared/ltcore/rat.py",
+   "sha256": "e9d7bb60434372395e01bedaae78efd23553e26590fcb4a9dcd50ca7c67738b7"
+  },
+  {
+   "path": "scripts/_shared/ltcore/reconcile.py",
+   "source": "shared/ltcore/reconcile.py",
+   "sha256": "e2134326acf7ad7f2c2911a25409e511b3c8c1b24b77dbc430343b4ad0c67c11"
   },
   {
    "path": "scripts/_shared/ltcore/requirements.py",
@@ -120,7 +145,7 @@
   {
    "path": "scripts/_shared/ltcore/store.py",
    "source": "shared/ltcore/store.py",
-   "sha256": "9a5f0dd065fd55192a595f6ab339824f4746d804edbdf040d219cf53834eac4d"
+   "sha256": "947c8076ba782ccdb7ed64961b3c0fab5d0d476c2890902dc0287046155c46e5"
   },
   {
    "path": "scripts/_shared/ltcore/tomlw.py",
@@ -130,7 +155,7 @@
   {
    "path": "scripts/_shared/ltcore/validate.py",
    "source": "shared/ltcore/validate.py",
-   "sha256": "d80fedadd6d2ce91609601e9d22c761d2a82c1749e2bbae0c6fd6351e4d1862e"
+   "sha256": "21a56abda035d04a4cfafe95e6d5f1c03d4e94e69c0866e6851253d202314139"
   },
   {
    "path": "scripts/_shared/palettes/ATTRIBUTION.md",
@@ -160,7 +185,7 @@
   {
    "path": "scripts/_shared/schemas/answers.schema.json",
    "source": "shared/schemas/answers.schema.json",
-   "sha256": "9425d0db2367e42e1326bf46008ad4b2b34eab66adb94d415cb956bb1a6be287"
+   "sha256": "ebf4a3c4cee8342137696f43ded187acc00435481b27967c9f6230347b98d011"
   },
   {
    "path": "scripts/_shared/schemas/approvals.schema.json",
@@ -170,17 +195,27 @@
   {
    "path": "scripts/_shared/schemas/config.schema.json",
    "source": "shared/schemas/config.schema.json",
-   "sha256": "fa4776d89ed475c767f6f030a40e31e82d40a0ec9963fd929acb5c0eb2f26d12"
+   "sha256": "665acf2ca793d7f2862ffc27d8940242c455384a195b0d49a14699600f004333"
   },
   {
    "path": "scripts/_shared/schemas/fill-report.schema.json",
    "source": "shared/schemas/fill-report.schema.json",
-   "sha256": "194c65b31a6f06f27c7f9878a9075bc916fc3d8ddf966a67be85501492454349"
+   "sha256": "7dda8192e7d8568e2a2aaec6367e7616ec201788ac2afe93a3f9753d1a2790e2"
   },
   {
    "path": "scripts/_shared/schemas/module.schema.json",
    "source": "shared/schemas/module.schema.json",
-   "sha256": "b119aa1a8f8a7b5a9cd36f34021b4c3d196a6e04c34b465ba79d8f6a4fa96d07"
+   "sha256": "cb0c6ee46011c69ec8a5807b022e318173bc0b2605982b203ab8c747b16db8c8"
+  },
+  {
+   "path": "scripts/_shared/schemas/page-kinds.schema.json",
+   "source": "shared/schemas/page-kinds.schema.json",
+   "sha256": "370424e7d8744e673a8a050a98bb782c56cf944a3f4b1d62145fd8e73a4e9756"
+  },
+  {
+   "path": "scripts/_shared/schemas/reconciled.schema.json",
+   "source": "shared/schemas/reconciled.schema.json",
+   "sha256": "4d7ea95d8c5c48c6d3e06cd475f959e84b5cc693e044cfb1cec9bafb13ea3132"
   },
   {
    "path": "scripts/_shared/schemas/reference.schema.json",
@@ -195,7 +230,7 @@
   {
    "path": "scripts/_shared/style.defaults.toml",
    "source": "shared/style.defaults.toml",
-   "sha256": "af681cf2825cd35a7f0997d3ef8a19910c3ae14ceaee4076d59fc9036582d4ec"
+   "sha256": "ae3652e8e94437938145388c27c70424259ffe9f1cacdee271bf6cf57e51cf09"
   }
  ]
 }

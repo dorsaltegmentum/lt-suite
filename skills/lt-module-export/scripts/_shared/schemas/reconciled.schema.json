@@ -1,0 +1,456 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "$id": "https://github.com/dorsaltegmentum/lt-suite/schemas/reconciled.schema.json",
+ "title": "reconciled.json: cited drafts combined with recorded Lt evidence",
+ "type": "object",
+ "additionalProperties": false,
+ "properties": {
+  "schema_version": {
+   "const": 1
+  },
+  "module_id": {
+   "type": "string"
+  },
+  "reconciled_at": {
+   "type": "string",
+   "format": "date-time"
+  },
+  "source_answers": {
+   "type": "object",
+   "additionalProperties": false,
+   "properties": {
+    "path": {
+     "type": "string"
+    },
+    "sha256": {
+     "type": "string",
+     "pattern": "^[0-9a-f]{64}$"
+    }
+   },
+   "required": [
+    "path",
+    "sha256"
+   ]
+  },
+  "source_fill_report": {
+   "type": "object",
+   "additionalProperties": false,
+   "properties": {
+    "path": {
+     "type": "string"
+    },
+    "sha256": {
+     "type": "string",
+     "pattern": "^[0-9a-f]{64}$"
+    }
+   },
+   "required": [
+    "path",
+    "sha256"
+   ]
+  },
+  "items": {
+   "type": "array",
+   "items": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+     "item_id": {
+      "type": "string"
+     },
+     "outcome": {
+      "enum": [
+       "combined",
+       "disputed"
+      ]
+     },
+     "lt_state": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+       "proposed_selection": {
+        "type": "array",
+        "description": "For multiple-choice, option_ids supported by reasoning in segments. Reading panelState.modelAnswer is permitted and on by default. `model_answer.read` (default true) can disable it. Drafted selections still require reasoning and provenance tags. Copying the key would evaluate the suite against the key instead of its research.",
+        "items": {
+         "type": "string"
+        }
+       },
+       "label_placements": {
+        "type": "array",
+        "description": "Required in schema_version 2 for drafted image-labeling, drag-and-drop-labeling and categorization items. Records where each label goes, as table_cells records grid answers. Describe the target in prose. Capture emits no anchor coordinates, and option_id refers to a position in an alphabetically sorted pool. Describe anchors so a fill run can resolve them against the picture.",
+        "items": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "label",
+          "target"
+         ],
+         "properties": {
+          "label": {
+           "type": "string",
+           "minLength": 1,
+           "description": "Label text verbatim from the item's options[].text. The cross-check rejects other text to prevent invented vocabulary."
+          },
+          "target": {
+           "type": "string",
+           "minLength": 1,
+           "description": "Where the label goes. For the two labelling types, describe an anchor so a human or fill run can find it, e.g. 'the upper-left circle'. For categorization, use the bin title verbatim from constraints.categories. There is no category_titles field."
+          },
+          "target_index": {
+           "type": [
+            "integer",
+            "null"
+           ],
+           "minimum": 0,
+           "description": "Only where the index is genuinely knowable from the capture - a categorization bin's position in constraints.categories, which is emitted in the order the student sees it and is therefore knowable. NEVER guess one for an image anchor."
+          },
+          "confidence": {
+           "enum": [
+            "high",
+            "medium",
+            "low"
+           ],
+           "description": "Confidence per placement. medium or low requires `alternative`, enforced by the validator (ltcore.validate). See docs/design-notes.md for confidence limits."
+          },
+          "alternative": {
+           "type": "string",
+           "description": "The competing reading: the structure this label might sit on instead. Named, not gestured at."
+          }
+         }
+        }
+       },
+       "hash": {
+        "type": "string"
+       },
+       "presses": {
+        "type": "integer",
+        "minimum": 0
+       }
+      },
+      "required": [
+       "hash",
+       "presses"
+      ]
+     },
+     "draft_state": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+       "proposed_selection": {
+        "type": "array",
+        "description": "For multiple-choice, option_ids supported by reasoning in segments. Reading panelState.modelAnswer is permitted and on by default. `model_answer.read` (default true) can disable it. Drafted selections still require reasoning and provenance tags. Copying the key would evaluate the suite against the key instead of its research.",
+        "items": {
+         "type": "string"
+        }
+       },
+       "label_placements": {
+        "type": "array",
+        "description": "Required in schema_version 2 for drafted image-labeling, drag-and-drop-labeling and categorization items. Records where each label goes, as table_cells records grid answers. Describe the target in prose. Capture emits no anchor coordinates, and option_id refers to a position in an alphabetically sorted pool. Describe anchors so a fill run can resolve them against the picture.",
+        "items": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "label",
+          "target"
+         ],
+         "properties": {
+          "label": {
+           "type": "string",
+           "minLength": 1,
+           "description": "Label text verbatim from the item's options[].text. The cross-check rejects other text to prevent invented vocabulary."
+          },
+          "target": {
+           "type": "string",
+           "minLength": 1,
+           "description": "Where the label goes. For the two labelling types, describe an anchor so a human or fill run can find it, e.g. 'the upper-left circle'. For categorization, use the bin title verbatim from constraints.categories. There is no category_titles field."
+          },
+          "target_index": {
+           "type": [
+            "integer",
+            "null"
+           ],
+           "minimum": 0,
+           "description": "Only where the index is genuinely knowable from the capture - a categorization bin's position in constraints.categories, which is emitted in the order the student sees it and is therefore knowable. NEVER guess one for an image anchor."
+          },
+          "confidence": {
+           "enum": [
+            "high",
+            "medium",
+            "low"
+           ],
+           "description": "Confidence per placement. medium or low requires `alternative`, enforced by the validator (ltcore.validate). See docs/design-notes.md for confidence limits."
+          },
+          "alternative": {
+           "type": "string",
+           "description": "The competing reading: the structure this label might sit on instead. Named, not gestured at."
+          }
+         }
+        }
+       },
+       "hash": {
+        "type": "string"
+       }
+      },
+      "required": [
+       "hash"
+      ]
+     },
+     "segments": {
+      "type": "array",
+      "items": {
+       "type": "object",
+       "additionalProperties": false,
+       "properties": {
+        "origin": {
+         "enum": [
+          "draft",
+          "research",
+          "lt",
+          "reconcile"
+         ]
+        },
+        "draft_segment": {
+         "type": "integer",
+         "minimum": 0
+        },
+        "kind": {
+         "enum": [
+          "claim",
+          "connective"
+         ]
+        },
+        "text": {
+         "type": "string",
+         "minLength": 1
+        },
+        "provenance_refs": {
+         "type": "array",
+         "items": {
+          "type": "string"
+         }
+        },
+        "lt_press": {
+         "type": "string"
+        }
+       },
+       "required": [
+        "origin",
+        "kind",
+        "text"
+       ]
+      }
+     },
+     "dropped": {
+      "type": "array",
+      "items": {
+       "type": "object",
+       "additionalProperties": false,
+       "properties": {
+        "draft_segment": {
+         "type": "integer",
+         "minimum": 0
+        },
+        "reason": {
+         "type": "string",
+         "minLength": 1
+        }
+       },
+       "required": [
+        "draft_segment",
+        "reason"
+       ]
+      }
+     },
+     "provenance": {
+      "type": "array",
+      "items": {
+       "type": "object",
+       "additionalProperties": false,
+       "required": [
+        "ref",
+        "tier",
+        "source_id",
+        "locator"
+       ],
+       "properties": {
+        "ref": {
+         "type": "string",
+         "minLength": 1,
+         "description": "Local id referenced by segments, e.g. 'p1'."
+        },
+        "tier": {
+         "type": "integer",
+         "minimum": 1,
+         "maximum": 4
+        },
+        "source_id": {
+         "type": "string",
+         "minLength": 1,
+         "description": "Tier 4 MUST be a resolvable DOI (10.x/\u2026) or PMID:<digits>. An unresolvable identifier is a fabrication and is deleted, not softened."
+        },
+        "locator": {
+         "type": "string",
+         "minLength": 1,
+         "description": "slide number, timestamp, section, page."
+        },
+        "accessed": {
+         "type": "string",
+         "format": "date"
+        },
+        "title": {
+         "type": "string"
+        },
+        "tag": {
+         "type": "string",
+         "description": "Rendered provenance tag, e.g. [T1:lecture-1:slide-14]. Derived from the authoritative structured fields."
+        }
+       }
+      }
+     },
+     "tier_descent": {
+      "type": "array",
+      "description": "Record a reason for descending each tier. Reaching tier 3 requires accounts of tiers 1 and 2. Validated for completeness.",
+      "items": {
+       "type": "object",
+       "additionalProperties": false,
+       "required": [
+        "from_tier",
+        "to_tier",
+        "reason"
+       ],
+       "properties": {
+        "from_tier": {
+         "type": "integer",
+         "minimum": 1,
+         "maximum": 3
+        },
+        "to_tier": {
+         "type": "integer",
+         "minimum": 2,
+         "maximum": 4
+        },
+        "reason": {
+         "type": "string",
+         "enum": [
+          "absent",
+          "insufficient-depth",
+          "contradicted"
+         ]
+        },
+        "note": {
+         "type": "string"
+        }
+       }
+      }
+     },
+     "conflicts": {
+      "type": "array",
+      "description": "Surface conflicts without silently reconciling them. Renders as \u26a0 Conflict in the export.",
+      "items": {
+       "type": "object",
+       "additionalProperties": false,
+       "required": [
+        "higher_ref",
+        "lower_ref",
+        "higher_claim",
+        "lower_claim"
+       ],
+       "properties": {
+        "higher_ref": {
+         "type": "string"
+        },
+        "lower_ref": {
+         "type": "string"
+        },
+        "higher_claim": {
+         "type": "string"
+        },
+        "lower_claim": {
+         "type": "string"
+        },
+        "note": {
+         "type": "string"
+        }
+       }
+      }
+     },
+     "note": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "dispute": {
+      "anyOf": [
+       {
+        "type": "null"
+       },
+       {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+         "lt_part": {
+          "type": "string"
+         },
+         "evidence": {
+          "type": "array",
+          "items": {
+           "type": "object",
+           "additionalProperties": false,
+           "properties": {
+            "ref": {
+             "type": "string"
+            },
+            "locator": {
+             "type": "string"
+            },
+            "quote": {
+             "type": "string",
+             "minLength": 1,
+             "maxLength": 300
+            },
+            "contradiction": {
+             "type": "string"
+            }
+           },
+           "required": [
+            "ref",
+            "locator",
+            "quote",
+            "contradiction"
+           ]
+          }
+         }
+        },
+        "required": [
+         "lt_part",
+         "evidence"
+        ]
+       }
+      ]
+     }
+    },
+    "required": [
+     "item_id",
+     "outcome",
+     "lt_state",
+     "draft_state",
+     "segments",
+     "dropped",
+     "provenance",
+     "conflicts",
+     "note",
+     "dispute"
+    ]
+   }
+  }
+ },
+ "required": [
+  "schema_version",
+  "module_id",
+  "reconciled_at",
+  "source_answers",
+  "source_fill_report",
+  "items"
+ ]
+}

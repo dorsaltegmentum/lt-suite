@@ -1,0 +1,17 @@
+{
+  "pillow": "13.0.0",
+  "freetype": "2.14.3",
+  "commit": "705731f",
+  "engines": {
+    "BASIC": [
+      "4b509633d3b76c84d394dafc5dff8716e327194aa1adb2e2e6b71c5a166976a1",
+      "be4f00c1e4d76b3e8e3413aae897379a1c76f6a8c0e5d3f27aebb65f2b695675",
+      "8cfd07e2553d1cb0bf3f2b536f99c054f2deb8daa519691e5a6727001acd9235"
+    ],
+    "RAQM": [
+      "1b0b183f8af19fa512c030d1dc22a21afc298661a9e05d9211e6f3999675df4e",
+      "1175ff1bdfce715f2506fe08633ed8be678767e4ca4b99fec3a56913034dba6e",
+      "c63c74de6e27c8d0e7c6ca9b6e8db770a9ee485749bd09254eab3651ab75d4ab"
+    ]
+  }
+}

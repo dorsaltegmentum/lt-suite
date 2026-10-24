@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Source for tools/gen_manifests.py. Regenerate after changing this file.
 name = "lt-suite"
-version = "0.1.0"
+version = "0.2.0"
 description = "Unofficial tools to capture, draft, diagram, fill and export Lt learning modules."
 author = "dorsaltegmentum"
 author_url = "https://github.com/dorsaltegmentum"
@@ -32,9 +32,23 @@ disabled = ["browser_click", "browser_close", "browser_console_messages", "brows
 name = "dorsaltegmentum"
 url = "https://github.com/dorsaltegmentum"
 
-[mcp.lt-chrome]
-command = "npx"
-args = ["-y", "chrome-devtools-mcp@1.12.0", "--autoConnect", "--no-usage-statistics", "--no-performance-crux", "--no-category-input", "--no-category-network", "--no-category-memory", "--no-category-performance", "--no-category-emulation", "--redact-network-headers"]
+[lt_chrome]
+package = "chrome-devtools-mcp@1.12.0"
+fixed_args = ["--no-usage-statistics", "--no-performance-crux", "--no-category-input", "--no-category-network", "--no-category-memory", "--no-category-performance", "--no-category-emulation", "--redact-network-headers"]
+node_gate = { min_major = 20, "20" = 19, "22" = 12 }
+bootstrap = "packaging/lt-chrome-bootstrap.cjs"
+launcher_rel = "skills/lt-suite-setup/scripts/_shared/lt_chrome/lt-chrome.cjs"
+example_env = { CHROME_DEVTOOLS_MCP_NO_CONFIG_DISCOVERY = "1", CHROME_DEVTOOLS_MCP_NO_UPDATE_CHECKS = "1", CHROME_DEVTOOLS_MCP_CATEGORY_EXPERIMENTAL_THIRD_PARTY = "" }
+
+[lt_chrome.hosts.".mcp.json"]
+tags = ["via=.mcp.json", "root=${CLAUDE_PLUGIN_ROOT}"]
+[lt_chrome.hosts."mcp.json"]
+tags = ["via=mcp.json", "root=${PLUGIN_ROOT}"]
+[lt_chrome.hosts."mcp_config.json"]
+tags = ["via=mcp_config.json", "root=${PLUGIN_ROOT}"]
+[lt_chrome.hosts."gemini-extension.json"]
+tags = ["via=gemini-extension.json", "root=${extensionPath}", "workspace=${workspacePath}"]
+env = { LT_SUITE_CONFIG = "${LT_SUITE_CONFIG}", XDG_CONFIG_HOME = "${XDG_CONFIG_HOME}", XDG_CACHE_HOME = "${XDG_CACHE_HOME}", APPDATA = "${APPDATA}", LOCALAPPDATA = "${LOCALAPPDATA}" }
 
 [tool_filters]
 codex_enabled = ["list_pages", "select_page", "navigate_page", "evaluate_script", "take_screenshot", "wait_for"]

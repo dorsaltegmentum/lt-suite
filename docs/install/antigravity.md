@@ -43,3 +43,8 @@ The supplied research classifies the root `AGENTS.md` diagnostic as a warning.
 Validation of this release on an installed Antigravity client remains pending. Record the command's result and client version before claiming a tested installation; see [platforms](../platforms.md).
 
 Sources: [plugins](https://antigravity.google/docs/plugins?tab=cli), [skills](https://antigravity.google/docs/skills), [separate browser profile](https://antigravity.google/docs/ide/separate-chrome-profile/).
+
+The plugin's Node launcher reads `browser.adapter` at startup when the host expands its plugin folder.
+Choose Claude in Chrome for zero lt-chrome tools, or configure any Chromium browser through setup.
+If doctor reports the 0.1.0 fallback, install the stable launcher and merge its host snippet.
+Restart after changes; see [browser adapters](../browser-adapters.md) for folders and loopback limits.

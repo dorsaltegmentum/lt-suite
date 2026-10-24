@@ -42,7 +42,7 @@
  */
 (function (G) {
   'use strict';
-  if (!G || (G.LtGuard && G.LtGuard.version === 1)) return;
+  if (!G || G.LtGuard) return;
 
   const ERR = 'lt-suite never-submit';
   const MUTATORS = ['commitClicked', 'setCheckpointCommitState',
@@ -59,13 +59,13 @@
 
   const st = {
     installed: false, trips: 0, last: null, log: [], rewraps: 0, rebinds_blocked: 0,
-    policies: [], mutators: {}, form: 'absent', submit_listener: false,
+    active: null, token: null, policies: [], mutators: {}, form: 'absent', submit_listener: false,
     events: 'absent', confirm: 'absent',
     navigate: 'absent', uncancelable: 0, retries: 0, watching: false,
     ours: new WeakSet(), guarded: new WeakSet(), roots: new WeakSet(), originals: new WeakSet()
   };
   Object.defineProperty(G, '__ltGuard', {
-    value: Object.freeze({ installed: true, version: 1 }), enumerable: false, configurable: false, writable: false
+    value: Object.freeze({ installed: true, version: 2 }), enumerable: false, configurable: false, writable: false
   });
 
   const trip = reason => {
@@ -181,6 +181,49 @@
     }
     return null;
   }
+  const now = () => G.__ltClock ? G.__ltClock.now() : Date.now();
+  function panelKey(raw) {
+    const a = A(U(raw)) || {};
+    return a.panelKey == null ? null : String(U(a.panelKey));
+  }
+  function contextPanel(el) {
+    try {
+      const c = G.ko.contextFor(el);
+      for (const raw of c ? [c.$data, c.$parent, ...(c.$parents || [])] : []) {
+        if (panelKey(raw) != null && A(U(raw)).panelState) return raw;
+      }
+    } catch (e) { /* absent context refuses */ }
+    return null;
+  }
+  function checkButton(target) {
+    for (let el = target; el && el !== G.document; el = el.parentNode) {
+      if (isAction(el) && /^\s*check\s+answer\s*$/i.test(String(el.textContent || ''))) return el;
+    }
+    return null;
+  }
+  function checkable(raw) {
+    const state = A(U((A(raw) || {}).panelState)) || {};
+    const c = A(U(state.content)) || {}, inp = A(U(state.input)) || {};
+    return U(c.singleAttempt) === false && U(c.assessmentType) === 'instantFeedback' && U(inp.locked) !== true;
+  }
+  function armCheck(page, key) {
+    st.token = null;
+    const pol = st.active, painted = paintedPage();
+    if (!pol || !Array.isArray(pol.check_answer_keys) ||
+        !pol.check_answer_keys.some(pair => pair[0] === page && String(pair[1]) === String(key)) ||
+        !painted || painted.idx !== page || routeRefusal()) return false;
+    const raw = models(U(painted.p.allPanels)).find(p => panelKey(p) === String(key));
+    if (!raw || !checkable(raw)) return false;
+    st.token = {page, key: String(key), until: now() + 2000, policy: pol};
+    return true;
+  }
+  function commitControl(el) {
+    if (!el) return false;
+    const nodes = [el];
+    if (typeof el.querySelectorAll === 'function') nodes.push(...el.querySelectorAll('*'));
+    else { for (let i = 0; i < nodes.length; i++) nodes.push(...(nodes[i].children || [])); }
+    return nodes.some(node => !!commitReason(node));
+  }
   function onAction(ev) {
     if (!ev || !ev.target) return;
     if (/^key/.test(String(ev.type))) {
@@ -188,6 +231,16 @@
     }
     let why = null;
     try { why = commitReason(ev.target); } catch (e) { why = null; }
+    if (!why && ev.type === 'click' && ev.isTrusted !== true) {
+      const button = checkButton(ev.target);
+      if (button) {
+        const token = st.token, raw = contextPanel(button), painted = paintedPage();
+        st.token = null;
+        if (token && token.policy === st.active && now() < token.until && painted &&
+            painted.idx === token.page && panelKey(raw) === token.key && checkable(raw)) return;
+        why = 'check-answer-token';
+      }
+    }
     if (!why) return;
     trip('event:' + ev.type + ':' + why);
     cancel(ev);
@@ -527,12 +580,16 @@
       if (!G.LtNet || typeof G.LtNet.install !== 'function') return stamp({ ok: false, fatal: 'net-missing' });
       G.LtNet.install(G);
     }
+    if (st.active) return stamp({ok: false, fatal: 'guard-busy'});
+    st.active = clone(policy || {});
     let r;
     try {
       r = await body();
     } catch (e) {
       r = { ok: false, fatal: 'script-threw', error: String((e && e.message) || e).slice(0, 200) };
     }
+    st.token = null;
+    st.active = null;
     check();
     return stamp(r);
   }
@@ -543,7 +600,7 @@
     for (const n of MUTATORS) muts[n] = st.mutators[n] || 'no-root';
     const bad = failedParts();
     return {
-      ok: bad.length === 0, installed: st.installed, version: 1, guard_trips: st.trips,
+      ok: bad.length === 0, installed: st.installed, version: 2, guard_trips: st.trips,
       mutators: muts, form: st.form, submit_listener: st.submit_listener, navigate: st.navigate,
       events: st.events, confirm: st.confirm,
       policy: blockAll() ? 'block-all' : 'plan', policies: st.policies.length,
@@ -552,7 +609,7 @@
   }
 
   const api = Object.freeze({
-    version: 1, install, check, run, stamp, status, classify,
+    version: 2, install, check, run, stamp, status, classify, armCheck, commitControl,
     allowed: (href, download) => decideNav(href, !!download),
     trips: () => st.trips,
     policies: () => clone(st.policies)

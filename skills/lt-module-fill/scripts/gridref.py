@@ -25,61 +25,8 @@ import argparse
 
 
 def resolve_font(cfg, size, weight):
-    """Resolve a configured font, fonts.sans, or Pillow's default."""
-    font = None
-    source_label = "pillow-default"
-    source_path = "builtin"
-    reasons = []
-    configured = cfg.get("annotate.font_path")
-
-    if configured:
-        try:
-            path = Path(configured).expanduser()
-            if not path.is_file():
-                raise FileNotFoundError(f"{path} does not exist")
-            font = ImageFont.truetype(str(path), size)
-            source_label = "config annotate.font_path"
-            source_path = str(path)
-        except Exception as exc:
-            reasons.append(f"annotate.font_path: {exc}")
-    else:
-        reasons.append("annotate.font_path is empty")
-
-    if font is None:
-        try:
-            from ltcore import fonts
-
-            resolved = fonts.resolve("sans", weight=weight, cfg=cfg)
-            path = getattr(resolved, "path", resolved)
-            font = ImageFont.truetype(str(path), size)
-            source_label = "fonts.sans"
-            source_path = str(path)
-        except Exception as exc:
-            reasons.append(f"fonts.sans: {exc}")
-
-    if font is None:
-        font = ImageFont.load_default()
-        print(
-            "WARNING: using pillow-default; " + "; ".join(reasons),
-            file=sys.stderr,
-        )
-
-    # A variable font draws at its default weight unless its wght axis is set.
-    try:
-        axes = font.get_variation_axes()
-        values = []
-        for axis in axes:
-            name = axis.get("name")
-            name = name.decode() if isinstance(name, bytes) else str(name)
-            lo, hi, default = axis.get("minimum"), axis.get("maximum"), axis.get("default")
-            values.append(min(max(weight, lo), hi) if name.lower() == "weight" else default)
-        if values:
-            font.set_variation_by_axes(values)
-    except Exception:
-        pass  # a static font, or Pillow's bitmap default
-
-    print(f"font: {source_label} {source_path}", file=sys.stderr)
-    return font, source_label
+    from ltcore import fonts
+    return fonts.label_font(cfg, size, weight)
 
 
 def main() -> int:

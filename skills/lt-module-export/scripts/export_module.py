@@ -48,7 +48,7 @@ import unicodedata
 import urllib.parse
 import uuid
 
-from ltcore import config as config_mod, store as store_mod
+from ltcore import config as config_mod, store as store_mod, page_kinds, rat
 from pdf_base import SELF_REFERENCE_TEXT
 
 
@@ -284,7 +284,15 @@ def excluded_page(page, rat_verdict=None) -> str | None:
         return "report-page"
     if page.get("policy_skip"):
         return f"policy-skip:{page['policy_skip'].get('reason')}"
-    if page.get("rat_candidate"):
+    status = page.get("_rat_status")
+    if status:
+        decision = status["decision"]
+        if decision == "fill-from-sheet":
+            return "rat-sheet"
+        if status["rat"] is not False and decision != "fill-from-draft":
+            if not (page.get("_rat_verdict") == "trat" and status["rat"] is None):
+                return "irat-policy" if status["kind"] == "irat" else "rat-unclassified"
+    if page.get("rat_candidate") and not (status and status["rat"] is False):
         rat_verdict = rat_verdict if rat_verdict is not None else page.get("_rat_verdict")
         if rat_verdict == "irat":
             return "irat-policy"
@@ -332,6 +340,8 @@ def parse_ilo_section(ilo_path, week, title, cfg) -> dict | None:
     ilo_path = Path(ilo_path)
     if not ilo_path.exists():
         return None
+    if any(rat.within(ilo_path, root) for _, root in rat.effective_roots(rat.policy_from_config(cfg))):
+        raise ValueError("learning_outcomes_file is inside a quarantined RAT root")
     lines = ilo_path.read_text(encoding="utf-8", errors="replace").splitlines()
     h_re = re.compile(cfg.get("curriculum.patterns.ilo_heading"))
     kind_pattern = cfg.get("curriculum.patterns.ilo_kind")
@@ -612,11 +622,57 @@ def render_answer(
     return blocks, links
 
 
+def check_state_label(state, item):
+    if 'proposed_selection' in state:
+        options={o['option_id']:o['text'] for o in item.get('options',[])}
+        return '; '.join(options.get(k,k) for k in state['proposed_selection'])
+    return '; '.join(p['label']+' → '+p['target'] for p in state.get('label_placements',[]))
+
+
+def render_check_answer(item, draft, filled, reconciled, corpus, self_ids, cfg, link, used):
+    """Lt evidence gets no tier; source tags belong to draft/research segments only."""
+    c=(filled or {}).get('check_answer') or {}
+    if not c.get('presses'):
+        return None
+    final=c['final']; state=check_state_label(final['state'],item);n=len(c['presses'])
+    if reconciled:
+        record=reconciled
+        answer=dict(draft,segments=record['segments'],provenance=draft.get('provenance',[])+record['provenance'],conflicts=record['conflicts'])
+        blocks,made=render_answer(answer,link,used,corpus,self_ids,cfg)
+        blocks.insert(0,f"Answer: {state} (accepted by Lt's Check Answer after {n} presses)")
+        tags=provenance_tags(answer,corpus,self_ids,cfg)
+        if record.get('note'):blocks.append('Note: '+record['note'])
+        dispute=record.get('dispute')
+        if record['outcome']=='disputed':
+            evidence=' '.join('“'+e['quote']+'” '+tags.get(e['ref'],e['ref']) for e in dispute['evidence'])
+            blocks.insert(0,"⚠ **Lt's key contradicts the cited sources.** "+dispute['lt_part']+'. Evidence: '+evidence+" The page holds Lt's key.")
+        blocks.append('Cited draft: '+check_state_label(c['draft']['state'],item))
+        for drop in record['dropped']:
+            seg=draft['segments'][drop['draft_segment']]
+            refs=' '.join(tags.get(r,r) for r in seg.get('provenance_refs',[]))
+            blocks.append('Dropped draft segment: '+seg['text']+' '+refs+' Reason: '+drop['reason'])
+        return blocks,made
+    if not final['moved']:
+        return None
+    if final['verdict']=='correct':
+        headline=f"Answer in Lt: {state} (accepted by Lt's Check Answer after {n} presses)"
+    else:
+        attempt=next((p for p in c['presses'] if p['hash']==final['hash']),None)
+        headline=f"Answer in Lt: {state}. Lt did not mark this correct; the page holds attempt {attempt['n'] if attempt else '?'}, with {len(attempt['right']) if attempt else 0} parts marked right and {len(attempt['wrong']) if attempt else 0} wrong."
+    if not filled.get('verified'):headline+=' Persistence is unconfirmed; re-run check-verify.'
+    blocks,made=render_answer(draft,link,used,corpus,self_ids,cfg)
+    blocks.insert(0,headline)
+    blocks.insert(1,'Cited draft: '+check_state_label(c['draft']['state'],item))
+    if c.get('lt_feedback'):blocks.append('Lt feedback (data): '+c['lt_feedback'])
+    return blocks,made
+
+
 def build_module_page(
     module, answers, fill, ilo, page_title, stamp_props, cfg, link, asset_rows,
-    media_rows=None, page_figures=None,
+    media_rows=None, page_figures=None, reconciled=None,
 ) -> tuple[str, list[str]]:
     ai, fi = answer_index(answers), fill_index(fill)
+    ri = {i['item_id']:i for i in (reconciled or {}).get('items',[])}
     media_rows = media_rows or {}
     page_figures = page_figures or {}
     corpus = {
@@ -661,6 +717,10 @@ def build_module_page(
         lines += ["- ---", "-"]
 
     for page in module.get("pages", []):
+        if page.get("_rat_summary"):
+            lines.append(f"- # Page {page['page_index']} - {page.get('title') or 'Readiness test'}")
+            lines.append("\t- " + page["_rat_summary"])
+            continue
         if excluded_page(page):
             continue
         items = [
@@ -692,7 +752,8 @@ def build_module_page(
                 meta.append(f"{ans['confidence']} confidence")
             lines.append("\t  *" + " · ".join(meta) + "*")
 
-            blocks, made = render_answer(ans, link, used, corpus, self_ids, cfg)
+            checked = render_check_answer(item,ans,fi.get(item['item_id']),ri.get(item['item_id']),corpus,self_ids,cfg,link,used)
+            blocks, made = checked if checked else render_answer(ans, link, used, corpus, self_ids, cfg)
             all_links += made
             for block in blocks:
                 lines.append("\t\t- " + block)
@@ -1198,10 +1259,12 @@ def main(argv=None) -> int:
     parser.add_argument("--module", help="module.json path, or a module id in the captures folder")
     parser.add_argument("--answers", type=Path)
     parser.add_argument("--fill-report", type=Path)
+    parser.add_argument("--reconciled", type=Path)
     parser.add_argument("--diagram-dir", type=Path, action="append", default=[])
     parser.add_argument("--out-dir", type=Path)
     parser.add_argument("--media-dir", type=Path)
     parser.add_argument("--week")
+    parser.add_argument("--page-kinds", type=Path)
     parser.add_argument("--rat", choices=["trat", "irat"])
     parser.add_argument("--install", action="store_true")
     parser.add_argument("--replace", action="store_true")
@@ -1282,7 +1345,8 @@ def main(argv=None) -> int:
         args.module = module_path
         args.answers = expand(args.answers) if args.answers else None
         args.fill_report = expand(args.fill_report) if args.fill_report else None
-        for path in (args.module, args.answers, args.fill_report):
+        args.reconciled = expand(args.reconciled) if args.reconciled else None
+        for path in (args.module, args.answers, args.fill_report, args.reconciled):
             if path is not None and not path.is_file():
                 print(f"FATAL: {path} does not exist", file=sys.stderr)
                 return 3
@@ -1325,12 +1389,13 @@ def export_run(args, cfg, st, validate_mod, scratch, outputs, want_pdf) -> int:
             scratch,
             module=validated_module,
             model_answer_read=cfg.get("model_answer.read"),
+            config_path=args.config,
         )
         if rc:
             return rc
     if args.fill_report:
         approvals_path = Path(st.approvals_path(module_id))
-        kwargs = {"model_answer_read": cfg.get("model_answer.read")}
+        kwargs = {"model_answer_read": cfg.get("model_answer.read"), "config_path": args.config}
         if approvals_path.is_file():
             kwargs["approvals"] = str(approvals_path)
         fill, _, rc = validated_input(
@@ -1343,6 +1408,24 @@ def export_run(args, cfg, st, validate_mod, scratch, outputs, want_pdf) -> int:
         )
         if rc:
             return rc
+
+    reconciled = None
+    if args.reconciled:
+        if not args.answers or not args.fill_report:
+            print('FATAL: --reconciled requires --answers and --fill-report; re-run reconcile',file=sys.stderr)
+            return 1
+        try:
+            reconciled = json.loads(args.reconciled.read_text(encoding='utf-8'))
+            for field,path in (('source_answers',args.answers),('source_fill_report',args.fill_report)):
+                if reconciled.get(field,{}).get('sha256')!=sha256_of(path):
+                    print('FATAL: stale '+field+' pin; re-run reconcile',file=sys.stderr)
+                    return 1
+        except (OSError,ValueError):
+            print('FATAL: invalid reconciled file; re-run reconcile',file=sys.stderr)
+            return 1
+        reconciled,_,rc=validated_input(args.reconciled,'reconciled',validate_mod,scratch,module=validated_module,
+                                       model_answer_read=cfg.get('model_answer.read'),config_path=args.config)
+        if rc:return rc
 
     if answers:
         source = answers.get("source_module") or {}
@@ -1405,10 +1488,27 @@ def export_run(args, cfg, st, validate_mod, scratch, outputs, want_pdf) -> int:
         print("FATAL: fill-report module_id does not match the capture", file=sys.stderr)
         return 1
 
-    # Assessment verdicts stay in memory so captured source files remain unchanged.
+    # Export consumes safe recorded evidence only. It never opens answer sheets.
     ai = answer_index(answers)
+    pkpath = args.page_kinds or st.run_dir(module_id) / "page-kinds.json"
+    kind_record = page_kinds.load_current(module, cfg, answers, path=pkpath, answers_sha256=sha256_of(args.answers) if args.answers else None)
+    statuses = {r["page_index"]: r for r in page_kinds.page_status(module, kind_record, policy=rat.policy_from_config(cfg))}
     for page in module.get("pages", []):
-        if page.get("rat_candidate"):
+        idx = page["page_index"]
+        if statuses[idx]["candidate"]:
+            status = rat.decide(page, rat.policy_from_config(cfg), kind_record, answers)
+            page["_rat_status"] = status
+            if status["decision"] == "fill-from-sheet":
+                sheet = status["sheet"]
+                filled = sum(i.get("result") == "filled" and i.get("answer_source", {}).get("kind") == "rat-sheet"
+                             for i in (fill or {}).get("items", []) if i["item_id"] in {it["item_id"] for it in page["items"]})
+                total = len(page["items"])
+                page["_rat_summary"] = (f"Filled from your answer sheet {sheet['name']}: "
+                                        f"{filled} of {total} questions; {total-filled} left for you.")
+            page["_rat_verdict"] = status["kind"] if status["rat"] is not None else args.rat
+            if page["_rat_verdict"] is None and args.rat:
+                page["_rat_verdict"] = args.rat
+        elif page.get("rat_candidate"):
             page["_rat_verdict"] = rat_verdict_from_answers(page, ai, args.rat)
 
     week, title = lesson_week_title(module, cfg)
@@ -1471,6 +1571,9 @@ def export_run(args, cfg, st, validate_mod, scratch, outputs, want_pdf) -> int:
     ilo_setting = cfg.get("curriculum.learning_outcomes_file")
     if ilo_setting:
         ilo_path = expand(ilo_setting)
+        if any(rat.within(ilo_path, root) for _, root in rat.effective_roots(rat.policy_from_config(cfg))):
+            print("FATAL: learning_outcomes_file is inside a quarantined RAT root", file=sys.stderr)
+            return 3
         if ilo_path.is_file():
             ilo = parse_ilo_section(ilo_path, week, title, cfg)
     if not ilo and ilo_setting:
@@ -1554,6 +1657,9 @@ def export_run(args, cfg, st, validate_mod, scratch, outputs, want_pdf) -> int:
             }:
                 destination = asset_dir / f"{prefix}-{source.name}"
                 copy_asset(source, destination)
+                if source.suffix.lower() == ".svg":
+                    from ltcore import fonts
+                    destination.write_text(fonts.svg_with_stacks(source.read_text(encoding="utf-8"), cfg), encoding="utf-8")
                 if destination not in asset_files:
                     asset_files.append(destination)
 
@@ -1605,6 +1711,20 @@ def export_run(args, cfg, st, validate_mod, scratch, outputs, want_pdf) -> int:
             if destination not in asset_files:
                 copy_asset(source, destination)
                 asset_files.append(destination)
+                from ltcore import palettes
+                manifest_path = palettes.copies_manifest(source)
+                if manifest_path.exists():
+                    manifest_destination = asset_dir / manifest_path.name
+                    copy_asset(manifest_path, manifest_destination)
+                    asset_files.append(manifest_destination)
+                    for pid in palettes.pdf_palette_ids(cfg):
+                        sibling = palettes.bound_copy(source, pid)
+                        if sibling is None:
+                            report["warnings"].append(f"{source.name}: unbound {pid} palette copy; run --file-copies")
+                            continue
+                        target = asset_dir / sibling.name
+                        copy_asset(sibling, target)
+                        asset_files.append(target)
             rows = bucket.setdefault(bucket_key, [])
             if any(row["name"] == destination.name for row in rows):
                 return
@@ -1676,7 +1796,7 @@ def export_run(args, cfg, st, validate_mod, scratch, outputs, want_pdf) -> int:
 
     page_md, links = build_module_page(
         module, answers, fill, ilo, page_title, stamp_props, cfg, link,
-        asset_rows, media_rows, page_figures,
+        asset_rows, media_rows, page_figures, reconciled,
     )
     report["links"] = links
     assets_setting = str(cfg.get("notes.assets_dir")).replace("\\", "/")
@@ -1765,7 +1885,7 @@ def export_run(args, cfg, st, validate_mod, scratch, outputs, want_pdf) -> int:
         report["warnings"].append(
             "tRAT page(s) in scope but not answered, so not exported: "
             + describe(unavailable)
-            + ". The answers come from the folder in rat.answers_dir and are never "
+            + ". The answers come from the folders in rat.answers_dir and rat.answers_dirs and are never "
             "invented here. This clears when that file exists."
         )
 

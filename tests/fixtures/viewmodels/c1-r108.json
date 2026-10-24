@@ -1,0 +1,581 @@
+{
+ "module_id": "c1-r108",
+ "location": {
+  "origin": "https://lt.example.invalid",
+  "pathname": "/i/inst0001/student/courses/1/runs/108/run/page/1"
+ },
+ "globals": {
+  "pageLessonId": 1,
+  "pageCourseLongName": "Example Course 2000 (X101)"
+ },
+ "root": {
+  "lessonTitleDisplay": "1.1 Demo: Check Answer practice",
+  "hasCompletionPage": true,
+  "runLocked": false,
+  "showPageMenuPageRemaining": false,
+  "remainingFlowPagesWithoutCheckpoints": 0,
+  "checkpointPageContainer": {
+   "pages": []
+  }
+ },
+ "pages": [
+  {
+   "title": "Practice items",
+   "allPanels": [
+    {
+     "pluginKey": "select",
+     "panelKey": "11",
+     "panelState": {
+      "content": {
+       "question": "Choose an invented state 11",
+       "answers": [
+        {
+         "answer": "Low"
+        },
+        {
+         "answer": "High"
+        },
+        {
+         "answer": "Steady"
+        }
+       ],
+       "multiselect": false,
+       "singleAttempt": false,
+       "assessmentType": "instantFeedback"
+      },
+      "input": {
+       "selectedAnswers": []
+      },
+      "isReadOnly": false
+     }
+    },
+    {
+     "pluginKey": "categories",
+     "panelKey": "12",
+     "panelState": {
+      "content": {
+       "question": "Sort fictional stores",
+       "categoryItems": [
+        {
+         "title": "Cap"
+        },
+        {
+         "title": "Duct"
+        }
+       ],
+       "labelItems": [
+        {
+         "label": "Oram"
+        },
+        {
+         "label": "Tessin"
+        }
+       ],
+       "singleAttempt": false,
+       "assessmentType": "instantFeedback"
+      },
+      "input": {
+       "categoryAnswerItems": []
+      },
+      "isReadOnly": false
+     }
+    },
+    {
+     "pluginKey": "select",
+     "panelKey": "13",
+     "panelState": {
+      "content": {
+       "question": "Choose fictional parts",
+       "answers": [
+        {
+         "answer": "Cap"
+        },
+        {
+         "answer": "Duct"
+        },
+        {
+         "answer": "Lobe"
+        }
+       ],
+       "multiselect": true,
+       "singleAttempt": false,
+       "assessmentType": "instantFeedback"
+      },
+      "input": {
+       "selectedAnswers": []
+      },
+      "isReadOnly": false
+     }
+    },
+    {
+     "pluginKey": "kcImageLabelling",
+     "panelKey": "14",
+     "panelState": {
+      "content": {
+       "question": "Place fictional labels 14",
+       "labelItems": [
+        {
+         "label": "A"
+        },
+        {
+         "label": "B"
+        },
+        {
+         "label": "C"
+        },
+        {
+         "label": "D"
+        },
+        {
+         "label": "E"
+        }
+       ],
+       "labelLocationItems": [
+        {
+         "dropZoneLeftProportion": 0.1,
+         "dropZoneTopProportion": 0.5,
+         "anchorX": 0.1,
+         "anchorY": 0.5
+        },
+        {
+         "dropZoneLeftProportion": 0.25,
+         "dropZoneTopProportion": 0.5,
+         "anchorX": 0.25,
+         "anchorY": 0.5
+        },
+        {
+         "dropZoneLeftProportion": 0.4,
+         "dropZoneTopProportion": 0.5,
+         "anchorX": 0.4,
+         "anchorY": 0.5
+        },
+        {
+         "dropZoneLeftProportion": 0.5499999999999999,
+         "dropZoneTopProportion": 0.5,
+         "anchorX": 0.5499999999999999,
+         "anchorY": 0.5
+        },
+        {
+         "dropZoneLeftProportion": 0.7,
+         "dropZoneTopProportion": 0.5,
+         "anchorX": 0.7,
+         "anchorY": 0.5
+        }
+       ],
+       "presentedRatio": 1,
+       "imageResourceKey": "14",
+       "singleAttempt": false,
+       "assessmentType": "instantFeedback"
+      },
+      "input": {
+       "linkedLabels": []
+      },
+      "isReadOnly": false
+     }
+    },
+    {
+     "pluginKey": "kcImageLabelling",
+     "panelKey": "15",
+     "panelState": {
+      "content": {
+       "question": "Place fictional labels 15",
+       "labelItems": [
+        {
+         "label": "Cap"
+        },
+        {
+         "label": "Duct"
+        }
+       ],
+       "labelLocationItems": [
+        {
+         "dropZoneLeftProportion": 0.1,
+         "dropZoneTopProportion": 0.5,
+         "anchorX": 0.1,
+         "anchorY": 0.5
+        },
+        {
+         "dropZoneLeftProportion": 0.25,
+         "dropZoneTopProportion": 0.5,
+         "anchorX": 0.25,
+         "anchorY": 0.5
+        }
+       ],
+       "presentedRatio": 1,
+       "imageResourceKey": "15",
+       "singleAttempt": false,
+       "assessmentType": "instantFeedback"
+      },
+      "input": {
+       "linkedLabels": []
+      },
+      "isReadOnly": false
+     }
+    },
+    {
+     "pluginKey": "categories",
+     "panelKey": "16",
+     "panelState": {
+      "content": {
+       "question": "Sort without new marks",
+       "categoryItems": [
+        {
+         "title": "One"
+        },
+        {
+         "title": "Two"
+        },
+        {
+         "title": "Three"
+        }
+       ],
+       "labelItems": [
+        {
+         "label": "A"
+        },
+        {
+         "label": "B"
+        }
+       ],
+       "singleAttempt": false,
+       "assessmentType": "instantFeedback"
+      },
+      "input": {
+       "categoryAnswerItems": []
+      },
+      "isReadOnly": false
+     }
+    },
+    {
+     "pluginKey": "kcImageLabelling",
+     "panelKey": "17",
+     "panelState": {
+      "content": {
+       "question": "Place fictional labels 17",
+       "labelItems": [
+        {
+         "label": "Same"
+        },
+        {
+         "label": "Same"
+        }
+       ],
+       "labelLocationItems": [
+        {
+         "dropZoneLeftProportion": 0.1,
+         "dropZoneTopProportion": 0.5,
+         "anchorX": 0.1,
+         "anchorY": 0.5
+        },
+        {
+         "dropZoneLeftProportion": 0.25,
+         "dropZoneTopProportion": 0.5,
+         "anchorX": 0.25,
+         "anchorY": 0.5
+        }
+       ],
+       "presentedRatio": 1,
+       "imageResourceKey": "17",
+       "singleAttempt": false,
+       "assessmentType": "instantFeedback"
+      },
+      "input": {
+       "linkedLabels": []
+      },
+      "isReadOnly": false
+     }
+    },
+    {
+     "pluginKey": "select",
+     "panelKey": "18",
+     "panelState": {
+      "content": {
+       "question": "Review this single attempt",
+       "answers": [
+        {
+         "answer": "One"
+        },
+        {
+         "answer": "Two"
+        }
+       ],
+       "multiselect": false,
+       "singleAttempt": true,
+       "assessmentType": "instantFeedback"
+      },
+      "input": {
+       "selectedAnswers": []
+      },
+      "isReadOnly": false
+     }
+    }
+   ],
+   "rows": []
+  },
+  {
+   "title": "Team exercise",
+   "allPanels": [
+    {
+     "pluginKey": "select",
+     "panelKey": "21",
+     "panelState": {
+      "content": {
+       "question": "Choose an invented state 21",
+       "answers": [
+        {
+         "answer": "Low"
+        },
+        {
+         "answer": "High"
+        },
+        {
+         "answer": "Steady"
+        }
+       ],
+       "multiselect": false,
+       "singleAttempt": false,
+       "assessmentType": "instantFeedback"
+      },
+      "input": {
+       "selectedAnswers": []
+      },
+      "isReadOnly": false
+     }
+    },
+    {
+     "pluginKey": "select",
+     "panelKey": "22",
+     "panelState": {
+      "content": {
+       "question": "Choose an invented state 22",
+       "answers": [
+        {
+         "answer": "Low"
+        },
+        {
+         "answer": "High"
+        },
+        {
+         "answer": "Steady"
+        }
+       ],
+       "multiselect": false,
+       "singleAttempt": false,
+       "assessmentType": "instantFeedback"
+      },
+      "input": {
+       "selectedAnswers": []
+      },
+      "isReadOnly": false
+     }
+    },
+    {
+     "pluginKey": "select",
+     "panelKey": "23",
+     "panelState": {
+      "content": {
+       "question": "Choose an invented state 23",
+       "answers": [
+        {
+         "answer": "Low"
+        },
+        {
+         "answer": "High"
+        },
+        {
+         "answer": "Steady"
+        }
+       ],
+       "multiselect": false,
+       "singleAttempt": false,
+       "assessmentType": "instantFeedback"
+      },
+      "input": {
+       "selectedAnswers": []
+      },
+      "isReadOnly": false
+     }
+    }
+   ],
+   "rows": []
+  },
+  {
+   "title": "Ordinary exercise",
+   "allPanels": [
+    {
+     "pluginKey": "select",
+     "panelKey": "31",
+     "panelState": {
+      "content": {
+       "question": "Choose an invented state 31",
+       "answers": [
+        {
+         "answer": "Low"
+        },
+        {
+         "answer": "High"
+        },
+        {
+         "answer": "Steady"
+        }
+       ],
+       "multiselect": false,
+       "singleAttempt": false,
+       "assessmentType": "instantFeedback"
+      },
+      "input": {
+       "selectedAnswers": []
+      },
+      "isReadOnly": false
+     }
+    },
+    {
+     "pluginKey": "select",
+     "panelKey": "32",
+     "panelState": {
+      "content": {
+       "question": "Choose an invented state 32",
+       "answers": [
+        {
+         "answer": "Low"
+        },
+        {
+         "answer": "High"
+        },
+        {
+         "answer": "Steady"
+        }
+       ],
+       "multiselect": false,
+       "singleAttempt": false,
+       "assessmentType": "instantFeedback"
+      },
+      "input": {
+       "selectedAnswers": []
+      },
+      "isReadOnly": false
+     }
+    },
+    {
+     "pluginKey": "select",
+     "panelKey": "33",
+     "panelState": {
+      "content": {
+       "question": "Choose an invented state 33",
+       "answers": [
+        {
+         "answer": "Low"
+        },
+        {
+         "answer": "High"
+        },
+        {
+         "answer": "Steady"
+        }
+       ],
+       "multiselect": false,
+       "singleAttempt": false,
+       "assessmentType": "instantFeedback"
+      },
+      "input": {
+       "selectedAnswers": []
+      },
+      "isReadOnly": false
+     }
+    }
+   ],
+   "rows": []
+  },
+  {
+   "title": "Awaiting classification",
+   "allPanels": [
+    {
+     "pluginKey": "select",
+     "panelKey": "41",
+     "panelState": {
+      "content": {
+       "question": "Choose an invented state 41",
+       "answers": [
+        {
+         "answer": "Low"
+        },
+        {
+         "answer": "High"
+        },
+        {
+         "answer": "Steady"
+        }
+       ],
+       "multiselect": false,
+       "singleAttempt": false,
+       "assessmentType": "instantFeedback"
+      },
+      "input": {
+       "selectedAnswers": []
+      },
+      "isReadOnly": false
+     }
+    },
+    {
+     "pluginKey": "select",
+     "panelKey": "42",
+     "panelState": {
+      "content": {
+       "question": "Choose an invented state 42",
+       "answers": [
+        {
+         "answer": "Low"
+        },
+        {
+         "answer": "High"
+        },
+        {
+         "answer": "Steady"
+        }
+       ],
+       "multiselect": false,
+       "singleAttempt": false,
+       "assessmentType": "instantFeedback"
+      },
+      "input": {
+       "selectedAnswers": []
+      },
+      "isReadOnly": false
+     }
+    },
+    {
+     "pluginKey": "select",
+     "panelKey": "43",
+     "panelState": {
+      "content": {
+       "question": "Choose an invented state 43",
+       "answers": [
+        {
+         "answer": "Low"
+        },
+        {
+         "answer": "High"
+        },
+        {
+         "answer": "Steady"
+        }
+       ],
+       "multiselect": false,
+       "singleAttempt": false,
+       "assessmentType": "instantFeedback"
+      },
+      "input": {
+       "selectedAnswers": []
+      },
+      "isReadOnly": false
+     }
+    }
+   ],
+   "rows": []
+  },
+  {
+   "title": "Report",
+   "reportInfoPanels": []
+  }
+ ]
+}

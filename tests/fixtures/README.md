@@ -2,12 +2,12 @@
 <!-- SPDX-License-Identifier: AGPL-3.0-or-later -->
 # Synthetic fixtures
 
-These 7 modules describe invented reactions, glands, stores and question types.
+These 9 modules describe invented reactions, glands, stores and question types.
 Vorlase, tessin, quillic acid and the quillen gland have no clinical meaning.
 Every question and submitted response was written for these tests.
 
 All captures use `https://lt.example.invalid`, instance `inst0001`, course `1`,
-lesson `1`, unit label `X101` and run numbers `101` through `107`.
+lesson `1`, unit label `X101` and run numbers `101` through `109`.
 Every timestamp is `2000-01-01T00:00:00Z`; access dates use `2000-01-01`.
 Panel keys stay below `100`.
 
@@ -19,12 +19,14 @@ Panel keys stay below `100`.
 | `modules/module-c1-r104.json` | Committed checkpoint outside the flow; locked pages 3 through 8; null child locks; submitted single attempt; 15 team selections. |
 | `modules/module-c1-r105.json` | 3 mirror pairs and 1 near-duplicate with different responses. |
 | `modules/module-c1-r106.json` | Tables with 17 and 6 rows; a live checkpoint on page 3. |
+| `modules/module-c1-r108.json` | Check Answer retries, strict-subset multiselect, unsuccessful restore, duplicate-label identity, single-attempt exclusion and shared page marks. |
+| `modules/module-c1-r109.json` | iRAT/tRAT, a practice quiz, indistinct True/False options and synthetic answer sheets. |
 | `modules/module-demo.json` | Run `c1-r107`: 2 pages, subpage child, null upload prompt, notebook and readiness-test candidate. |
 
 `modules/index.json` maps module identifiers to filenames.
 `modules/expected-mirrors.json` lists the intended duplicate relationships.
 `modules/expected-boundaries.json` is a separate, handwritten oracle containing
-7 base cases and 14 mutations. Its expectations come from the boundary rules.
+9 base cases and 14 mutations. Its expectations come from the boundary rules.
 The generator never rewrites that oracle.
 
 `viewmodels/<module_id>.json` holds the corresponding browser-model inputs.
@@ -37,9 +39,9 @@ collections and models. Both forms must produce the same captured structure.
 after drafting. Drafting must keep them quarantined. The untouched demo has an
 empty reference, which retains the same quarantine flag.
 
-`fill-reports/` covers 6 simulated fills. `runs/` holds their notes, hash receipts,
+`fill-reports/` covers 8 simulated fills. `runs/` holds their notes, hash receipts,
 save waits and run records. The mirror-only run `c1-r105` has no simulated fill.
-Five of the six reports carry `save_waits`, copied to `runs/<id>/save-waits.json`.
+Seven of the eight reports carry `save_waits`, copied to `runs/<id>/save-waits.json`.
 Together they use every save signal: `fallback` (first page of an origin, not calibrated),
 `unconfirmed`, `error` followed by a retried `model` row, `net`, and a two-page call.
 Items filled on a page with a `fallback`, `unconfirmed` or `error` wait carry the matching
@@ -91,3 +93,12 @@ Boundary mutations use these operations in their listed order:
 
 Mutations preserve item identifiers so assertions can follow the original items.
 They target boundary logic and need not constitute complete recaptures.
+
+`page-kinds/` holds deterministic safe classification snapshots. Runtime tests refresh the installed tree to bind actual root identities and stat listings. `curriculum/Block A/RATs` contains invented compact, marked and ambiguous sheets plus hidden and nested exclusions.
+
+
+`runs/c1-r108/check-answer.json` preserves indexed attempts and the recorded policy.
+Its `reconciled.json` preserves the cited draft, combined explanations, a source-backed
+synthetic dispute, and a feedback-only note. Same-text swaps and unsuccessful attempts
+have no reconciliation entry. `page-kinds/page-kinds-c1-r108.json` and its run copy share
+the same schema as `c1-r109`; only `page-kinds.json` is the live classification store.

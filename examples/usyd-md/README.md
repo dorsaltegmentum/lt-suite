@@ -29,3 +29,5 @@ Palettes and fonts are not set, so the defaults apply.
 4. Check it: `python3 -m ltcore.config validate --config <your file>` (with `shared/` or a skill's `scripts/_shared/` on `PYTHONPATH`).
 
 eTG Complete needs your own licensed access. lt-suite never stores credentials; you sign in by hand in the browser the agent uses.
+
+Set `rat.answers_dir` and `rat.answers_dirs` to your own answer-sheet folders. Choose `from_dir` per kind only when your course permits entry from those sheets. The example keeps `irat = "skip"` and `trat = "ask"`. See [RAT answers](../../docs/rat-answers.md).

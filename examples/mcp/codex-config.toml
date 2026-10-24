@@ -4,7 +4,11 @@
 
 [mcp_servers."lt-chrome"]
 command = "npx"
-args = ["-y", "chrome-devtools-mcp@1.12.0", "--autoConnect", "--no-usage-statistics", "--no-performance-crux", "--no-category-input", "--no-category-network", "--no-category-memory", "--no-category-performance", "--no-category-emulation", "--redact-network-headers"]
+args = ["--no-workspaces", "-y", "chrome-devtools-mcp@1.12.0", "--autoConnect", "--no-usage-statistics", "--no-performance-crux", "--no-category-input", "--no-category-network", "--no-category-memory", "--no-category-performance", "--no-category-emulation", "--redact-network-headers"]
 enabled_tools = ["list_pages", "select_page", "navigate_page", "evaluate_script", "take_screenshot", "wait_for"]
 startup_timeout_sec = 30
 default_tools_approval_mode = "prompt"
+[mcp_servers."lt-chrome".env]
+CHROME_DEVTOOLS_MCP_NO_CONFIG_DISCOVERY = "1"
+CHROME_DEVTOOLS_MCP_NO_UPDATE_CHECKS = "1"
+CHROME_DEVTOOLS_MCP_CATEGORY_EXPERIMENTAL_THIRD_PARTY = ""

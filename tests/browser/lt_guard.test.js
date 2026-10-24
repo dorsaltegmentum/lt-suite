@@ -399,3 +399,65 @@ test('lt_guard regression: deeply nested commit ancestor is inspected', () => {
   assert.equal(calls, 0);
   assert.equal(env.ctx.LtGuard.trips(), 1);
 });
+
+// A raw script press must never reach a Check Answer handler.
+test('lt_guard: check clicks need a current one-shot token', async () => {
+  const {env, G} = setup();
+  let presses = 0;
+  const raw = {attributes: {panelKey: 'K', panelState: {content: {singleAttempt: false, assessmentType: 'instantFeedback'}}}};
+  env.root.lessonFlowPages()[0].allPanels = H.obs([raw]);
+  const button = env.el('button', {text: 'Check Answer', on: {click: () => presses++}});
+  const original = env.ctx.ko.contextFor;
+  env.ctx.ko.contextFor = el => el === button ? {$data: raw} : original(el);
+  button.click();
+  assert.equal(presses, 0);
+  assert.equal(G.trips(), 1);
+  await G.run({...POLICY, check_answer_keys: [[1, 'K']]}, async () => {
+    assert.equal(G.armCheck(1, 'K'), true);
+    button.click(); button.click();
+    return {ok: true};
+  });
+  assert.equal(presses, 1);
+  assert.equal(G.trips(), 2);
+});
+
+function checkPanel(env,key='K',single=false) {
+ const raw={attributes:{panelKey:key,panelState:{content:{singleAttempt:single,assessmentType:'instantFeedback'}}}};
+ env.root.lessonFlowPages()[0].allPanels=H.obs([raw]);
+ const button=env.el('button',{text:'Check Answer'}),original=env.ctx.ko.contextFor;
+ env.ctx.ko.contextFor=el=>el===button?{$data:raw}:original(el);
+ return {raw,button};
+}
+test('lt_guard: trusted Check Answer passes without a token (45)',()=>{
+ const {env,G}=setup();const {button}=checkPanel(env);
+ assert.equal(env.dispatch(button,'click',{isTrusted:true}).defaultPrevented,false);assert.equal(G.trips(),0);
+});
+test('lt_guard: token panel and expiry bind every script press (47)',async()=>{
+ const {env,G}=setup();const {button}=checkPanel(env);const other=env.el('button',{text:'Check Answer'});
+ const old=env.ctx.ko.contextFor;env.ctx.ko.contextFor=el=>el===other?{$data:{attributes:{panelKey:'OTHER',panelState:{content:{singleAttempt:false,assessmentType:'instantFeedback'}}}}}:old(el);
+ const r=await G.run({...POLICY,check_answer_keys:[[1,'K']]},async()=>{
+  assert.equal(G.armCheck(1,'K'),true);other.click();assert.equal(G.trips(),1);
+  assert.equal(G.armCheck(1,'K'),true);await env.clock.advance(2000);button.click();assert.equal(G.trips(),2);return {ok:true};
+ });assert.equal(r.ok,true,r.error);
+});
+test('lt_guard: earlier grants never authorize another run; live attempts are strict (48)',async()=>{
+ const {env,G}=setup();const {raw}=checkPanel(env);
+ await G.run({...POLICY,check_answer_keys:[[1,'K']]},async()=>({ok:true}));
+ let result=await G.run(POLICY,async()=>({ok:true,armed:G.armCheck(1,'K')}));assert.equal(result.armed,false);
+ for(const value of [true,undefined,null]){
+  raw.attributes.panelState.content.singleAttempt=value;
+  result=await G.run({...POLICY,check_answer_keys:[[1,'K']]},async()=>({ok:true,armed:G.armCheck(1,'K')}));assert.equal(result.armed,false);
+ }
+ raw.attributes.panelState.content.singleAttempt=false;
+ result=await G.run({...POLICY,check_answer_keys:[[2,'K']]},async()=>({ok:true,armed:G.armCheck(2,'K')}));assert.equal(result.armed,false);
+ assert.equal(G.armCheck(1,'K'),false);
+});
+test('lt_guard: version 2 preserves a nonconfigurable version 1 guard (49)',()=>{
+ const env=H.makeEnv();const old={version:1};Object.defineProperty(env.ctx,'LtGuard',{value:old});
+ assert.doesNotThrow(()=>env.loadShared('lt_guard'));assert.equal(env.ctx.LtGuard,old);
+});
+test('lt_guard: subtree control inspection reuses commit vocabulary (50)',()=>{
+ const {env,G}=setup();const el=env.el('div');env.el('button',{text:'Check Answer',parent:el});assert.equal(G.commitControl(el),false);
+ const button=env.el('button',{text:'Save',attrs:{'data-bind':'click: commitClicked'},parent:el});assert.equal(G.commitControl(el),true);
+ button.attrs={};button.textContent='Submit';assert.equal(G.commitControl(el),true);
+});

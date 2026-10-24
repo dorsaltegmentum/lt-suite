@@ -24,3 +24,14 @@ Use receipt names and fresh-load verification to distinguish refused writes from
 | A subpage child reports `no-panel`. | Its model sits under `panelState.content.subpages[].rows[].cells[].panels[]`. A walk limited to the panel's own content can miss undisplayed subpage children. |
 
 See [write-paths.md](write-paths.md) for result handling and replacement rules.
+
+
+## Check Answer
+
+Check Answer unknown states (`verdict-unread`, `dialog-refused`, `dialog-stuck`, `guard-trip`) end the call without another write. `lt-changed-state`, `shape-changed`, `write-mismatch` and ownership failures stop the item. `save-fallback`, `save-unconfirmed` and `save-error` require a fresh-tab verify before navigation. `not-finished` resumes with prior receipts. Unknown RAT classification holds as `rat-unmarked`; settled RAT evidence refuses as `rat-page`.
+
+An unread verdict leaves a pending dialog whose response cannot identify its originating panel.
+`fresh-document-required` blocks all further checks in that document, including after script reloads.
+Load a fresh document before resuming remaining `not-finished` items.
+
+A Check Answer classification-changed refusal means the live title, author content, panel identities or attempt settings differ from the capture. Missing pins also refuse the pass. Stop checks, load a fresh document, recapture and classify the page before regenerating check scripts.

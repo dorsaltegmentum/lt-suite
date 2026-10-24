@@ -44,3 +44,8 @@ The binding safety rules appear inside every `SKILL.md`. A plugin's root `AGENTS
 Read [safety](../safety.md) before capture or fill.
 
 Sources: [plugin installation](https://code.claude.com/docs/en/plugins/install.md), [Chrome connection](https://code.claude.com/docs/en/chrome).
+
+The plugin's Node launcher reads `browser.adapter` at startup when the host expands its plugin folder.
+Choose Claude in Chrome for zero lt-chrome tools, or configure any Chromium browser through setup.
+If doctor reports the 0.1.0 fallback, install the stable launcher and merge its host snippet.
+Restart after changes; see [browser adapters](../browser-adapters.md) for folders and loopback limits.

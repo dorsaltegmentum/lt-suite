@@ -1,0 +1,358 @@
+{
+ "checks": [
+  {
+   "receipt": "check-c1-r108-p1.json",
+   "receipt_sha256": "d6fb9b3b833fcc20bb0e5a14019630761c07defa99bdceddfcd4e6198844c108",
+   "page": 1,
+   "policy": {
+    "enabled": true,
+    "config": "2d654a20ec10a7aa978f2bb34c5d9ede8aeb0582397773d8866f11b896692482"
+   },
+   "rat_page": {
+    "page_index": 1,
+    "page_digest": "6b3cf6abf8ac98fbbd249b876f68bc979fb287e3ba32f1517cca2cf532cc0da4",
+    "classification_digest": "430b45bf9e6e75c8e886aff29c1208202060f6def07e10923b8aa43cc2b608ca",
+    "candidate": false,
+    "rat_shape": false,
+    "rat_candidate": false,
+    "rat": false,
+    "kind": null,
+    "sources": [],
+    "decision": "not-rat",
+    "check_allowed": true,
+    "record_sha256": "64e809a5f9fd1667b9953af4cf040f1bb5eb3e3658a6e9e2900db4cddfdce30b"
+   },
+   "items": [
+    {
+     "item_id": "p1-11",
+     "kind": "select",
+     "draft_state": "0",
+     "draft_h": "274282355/274282355",
+     "final_h": "274282356/274282356",
+     "state": "1",
+     "stop": "correct",
+     "moved": true,
+     "presses_before": 0,
+     "presses": [
+      "0|incorrect|-|-",
+      "1|correct|-|-"
+     ],
+     "feedback": "The accepted choice should be Low.",
+     "pool_h": [
+      193463543,
+      2089178917,
+      3521599407
+     ],
+     "tried": [
+      "0",
+      "1"
+     ],
+     "wrote": true,
+     "save_signal": "net",
+     "final_verdict": "correct",
+     "targets_text": []
+    },
+    {
+     "item_id": "p1-12",
+     "kind": "categories",
+     "draft_state": "0:0,1:0",
+     "draft_h": "3028314360/2029230429",
+     "final_h": "1141484442/3320699487",
+     "state": "0:1,1:1",
+     "stop": "correct",
+     "moved": true,
+     "presses_before": 0,
+     "presses": [
+      "0:0,1:0|incorrect|-|0:0,1:0",
+      "0:1,1:1|correct|0:1,1:1|-"
+     ],
+     "feedback": "",
+     "pool_h": [
+      2089440084,
+      3543468859
+     ],
+     "tried": [
+      "0:0,1:0",
+      "0:1,1:1"
+     ],
+     "wrote": true,
+     "save_signal": "net",
+     "final_verdict": "correct",
+     "targets_text": [
+      "Cap",
+      "Duct"
+     ]
+    },
+    {
+     "item_id": "p1-13",
+     "kind": "select",
+     "draft_state": "0,1",
+     "draft_h": "2340742672/2340742672",
+     "final_h": "274282355/274282355",
+     "state": "0",
+     "stop": "correct",
+     "moved": true,
+     "presses_before": 0,
+     "presses": [
+      "0,1|incorrect|0|1",
+      "0|correct|0|-"
+     ],
+     "feedback": "",
+     "pool_h": [
+      193453273,
+      2089048117,
+      2089329031
+     ],
+     "tried": [
+      "0,1",
+      "0"
+     ],
+     "wrote": true,
+     "save_signal": "net",
+     "final_verdict": "correct",
+     "targets_text": []
+    },
+    {
+     "item_id": "p1-14",
+     "kind": "labels",
+     "draft_state": "0:0,1:1,2:2,3:3,4:4",
+     "draft_h": "3144390380/2086483712",
+     "final_h": "888809964/4125870592",
+     "state": "0:0,1:2,2:3,3:4,4:1",
+     "stop": "no-next-attempt",
+     "moved": true,
+     "presses_before": 0,
+     "presses": [
+      "0:0,1:1,2:2,3:3,4:4|partially-correct|0:0|1:1,2:2,3:3,4:4",
+      "0:0,1:2,2:3,3:4,4:1|partially-correct|0:0,1:2|2:3,3:4,4:1",
+      "0:0,1:2,2:4,3:1,4:3|incorrect|-|2:4,3:1,4:3"
+     ],
+     "feedback": "",
+     "pool_h": [
+      177638,
+      177639,
+      177640,
+      177641,
+      177642
+     ],
+     "tried": [
+      "0:0,1:1,2:2,3:3,4:4",
+      "0:0,1:2,2:3,3:4,4:1",
+      "0:0,1:2,2:4,3:1,4:3"
+     ],
+     "wrote": true,
+     "save_signal": "net",
+     "final_verdict": "partially-correct",
+     "targets_text": [
+      "anchor 0",
+      "anchor 1",
+      "anchor 2",
+      "anchor 3",
+      "anchor 4"
+     ]
+    },
+    {
+     "item_id": "p1-15",
+     "kind": "labels",
+     "draft_state": "0:0,1:1",
+     "draft_h": "1306485615/3905139125",
+     "final_h": "1306485615/3905139125",
+     "state": "0:0,1:1",
+     "stop": "correct",
+     "moved": false,
+     "presses_before": 0,
+     "presses": [
+      "0:0,1:1|correct|0:0,1:1|-"
+     ],
+     "feedback": "",
+     "pool_h": [
+      193453273,
+      2089048117
+     ],
+     "tried": [
+      "0:0,1:1"
+     ],
+     "wrote": false,
+     "save_signal": null,
+     "final_verdict": "correct",
+     "targets_text": [
+      "anchor 0",
+      "anchor 1"
+     ]
+    },
+    {
+     "item_id": "p1-16",
+     "kind": "categories",
+     "draft_state": "0:0,1:0",
+     "draft_h": "3726287094/2029230429",
+     "final_h": "3726287094/2029230429",
+     "state": "0:0,1:0",
+     "stop": "no-progress",
+     "moved": false,
+     "presses_before": 0,
+     "presses": [
+      "0:0,1:0|incorrect|-|0:0,1:0",
+      "0:1,1:1|incorrect|-|-"
+     ],
+     "feedback": "",
+     "pool_h": [
+      177638,
+      177639
+     ],
+     "tried": [
+      "0:0,1:0",
+      "0:1,1:1"
+     ],
+     "wrote": true,
+     "save_signal": "net",
+     "final_verdict": "incorrect",
+     "targets_text": [
+      "One",
+      "Two",
+      "Three"
+     ]
+    },
+    {
+     "item_id": "p1-17",
+     "kind": "labels",
+     "draft_state": "0:0,1:1",
+     "draft_h": "2625192567/3905139125",
+     "final_h": "2625192567/3906325045",
+     "state": "0:1,1:0",
+     "stop": "correct",
+     "moved": true,
+     "presses_before": 0,
+     "presses": [
+      "0:0,1:1|incorrect|-|0:0,1:1",
+      "0:1,1:0|correct|0:1,1:0|-"
+     ],
+     "feedback": "",
+     "pool_h": [
+      2089565707,
+      2089565707
+     ],
+     "tried": [
+      "0:0,1:1",
+      "0:1,1:0"
+     ],
+     "wrote": true,
+     "save_signal": "net",
+     "final_verdict": "correct",
+     "targets_text": [
+      "anchor 0",
+      "anchor 1"
+     ]
+    }
+   ]
+  },
+  {
+   "receipt": "check-c1-r108-p3.json",
+   "receipt_sha256": "405ac192dd0352a3a534d0a72ac68d8638a713060e0b9c9fdf1091dea6041c36",
+   "page": 3,
+   "policy": {
+    "enabled": true,
+    "config": "2d654a20ec10a7aa978f2bb34c5d9ede8aeb0582397773d8866f11b896692482"
+   },
+   "rat_page": {
+    "page_index": 3,
+    "page_digest": "8bbbf0e33dd2fda6dcc541b4bc49b95c9456ccf0e2f43e3cad57d703cdbe4221",
+    "classification_digest": "b0a4f754036bd2ef99d30677b0036ac610a044b4c30704a72a22746cd35283f7",
+    "candidate": true,
+    "rat_shape": true,
+    "rat_candidate": false,
+    "rat": false,
+    "kind": null,
+    "sources": [
+     "user-mark"
+    ],
+    "decision": "not-rat",
+    "check_allowed": true,
+    "record_sha256": "64e809a5f9fd1667b9953af4cf040f1bb5eb3e3658a6e9e2900db4cddfdce30b",
+    "check_reason": null
+   },
+   "items": [
+    {
+     "item_id": "p3-31",
+     "kind": "select",
+     "draft_state": "0",
+     "draft_h": "274282355/274282355",
+     "final_h": "274282355/274282355",
+     "state": "0",
+     "stop": "correct",
+     "moved": false,
+     "presses_before": 0,
+     "presses": [
+      "0|correct|-|-"
+     ],
+     "feedback": "",
+     "pool_h": [
+      193463543,
+      2089178917,
+      3521599407
+     ],
+     "tried": [
+      "0"
+     ],
+     "wrote": false,
+     "save_signal": null,
+     "final_verdict": "correct",
+     "targets_text": []
+    },
+    {
+     "item_id": "p3-32",
+     "kind": "select",
+     "draft_state": "0",
+     "draft_h": "274282355/274282355",
+     "final_h": "274282355/274282355",
+     "state": "0",
+     "stop": "correct",
+     "moved": false,
+     "presses_before": 0,
+     "presses": [
+      "0|correct|-|-"
+     ],
+     "feedback": "",
+     "pool_h": [
+      193463543,
+      2089178917,
+      3521599407
+     ],
+     "tried": [
+      "0"
+     ],
+     "wrote": false,
+     "save_signal": null,
+     "final_verdict": "correct",
+     "targets_text": []
+    },
+    {
+     "item_id": "p3-33",
+     "kind": "select",
+     "draft_state": "0",
+     "draft_h": "274282355/274282355",
+     "final_h": "274282355/274282355",
+     "state": "0",
+     "stop": "correct",
+     "moved": false,
+     "presses_before": 0,
+     "presses": [
+      "0|correct|-|-"
+     ],
+     "feedback": "",
+     "pool_h": [
+      193463543,
+      2089178917,
+      3521599407
+     ],
+     "tried": [
+      "0"
+     ],
+     "wrote": false,
+     "save_signal": null,
+     "final_verdict": "correct",
+     "targets_text": []
+    }
+   ]
+  }
+ ]
+}

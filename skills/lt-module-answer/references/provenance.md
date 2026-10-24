@@ -83,3 +83,11 @@ answers from becoming source authority. Unmarked lecture notes remain eligible.
 not override a reference file's quarantine marker. Captures retain no answer-key fields,
 and the drafting skill never opens Lt to fetch a key. Claims still require researched
 provenance and conflicts still reach the user's packet.
+
+
+## Check Answer
+
+Reconciliation uses four segment origins: draft (verbatim source segments), research (new resolving citations), lt (a Correct ledger press with no tier), and reconcile (connective prose only). Every original segment is kept once or dropped once with a reason. Disputes require a quoted source contradicting Lt, with no supporting source at an equal or higher tier. Feedback alone becomes a note until research establishes that source contradiction.
+
+Never cite `check-answer.json`, `reconcile-worklist.json` or `reconciled.json` as research sources.
+These run artifacts hold Lt feedback or derived answers and supply no research tier.

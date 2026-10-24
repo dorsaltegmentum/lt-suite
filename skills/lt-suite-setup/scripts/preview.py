@@ -73,16 +73,10 @@ def load_font(size, cfg=None, bold=False):
         # (fontTools, cached under <cache>/font-cache/); fall back to the plain file.
         for static in (True, False):
             try:
-                path = fonts.resolve("sans", weight=700 if bold else 400, cfg=cfg, static=static)
+                path = fonts.resolve("sans", weight=700 if bold else 400, cfg=cfg, static=static, os_fallback=True)
                 return ImageFont.truetype(str(path), size), "ltcore.fonts"
             except Exception:
                 continue
-    for name in ("DejaVuSans-Bold.ttf" if bold else "DejaVuSans.ttf", "NotoSans-Regular.ttf",
-                 "Arial.ttf", "LiberationSans-Regular.ttf"):
-        try:
-            return ImageFont.truetype(name, size), name
-        except OSError:
-            continue
     try:
         return ImageFont.load_default(size=size), "pillow default"
     except TypeError:  # Pillow older than 10.1 has no sized default

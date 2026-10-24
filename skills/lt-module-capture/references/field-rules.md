@@ -113,7 +113,7 @@ answered.
 
 - `rat_candidate` marks the one page on which every item is multiple-choice. Team and
   individual readiness tests look identical in the view model, so the verdict belongs in
-  `answers.json` and never in the capture.
+  `page-kinds.json` and never in the capture. The flag is a hint; the shared classifier also inspects unflagged candidates.
 - `mirror_of` marks a panel on a later page that repeats an earlier panel's type, prompt and
   constraints. `basis` lists the evidence: equal answered evidence, plus `read_only` null on
   the copy and a boolean on the original. Team-based modules show earlier tables again in

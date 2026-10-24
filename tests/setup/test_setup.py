@@ -218,7 +218,7 @@ def test_doctor_real_fonts_and_palettes(setup, capsys):
     result = json.loads(capsys.readouterr().out)
     assert result["counts"]["FAIL"] == 0
     assert sum(r["status"] == "PASS" and r["part"] == "fonts"
-               for r in result["results"]) == 2
+               for r in result["results"]) == 5
 
 
 def test_doctor_require_escalates_warning(setup, monkeypatch, capsys):
@@ -581,3 +581,175 @@ def test_bootstrap_preserves_marker_variants_and_hashes(setup, tmp_path, monkeyp
 
 def test_doctor_uses_actual_distribution_import_names(setup):
     assert setup.import_name("rpds-py") == "rpds"
+
+
+def test_doctor_lists_each_output(setup,capsys,monkeypatch):
+    from ltcore import fonts
+    monkeypatch.setattr(fonts,'fc_match',lambda *a,**k:None)
+    monkeypatch.setattr(fonts,'scan_family',lambda *a,**k:[])
+    from ltcore import config
+    import _catalog
+    rows=_catalog.check_fonts(config.load())
+    assert len(rows)==5 and all(status=='PASS' for status,_ in rows)
+    assert all(any(name in text for _,text in rows) for name in ['pdf sans','pdf mono','diagram sans','diagram mono','labels sans'])
+    rows=_catalog.check_fonts({'fonts.diagram.sans':'Missing Synthetic Family'})
+    assert any(status=='WARN' and 'diagram sans' in text and 'Noto Sans' in text for status,text in rows)
+
+
+def test_doctor_lists_labels(setup,font_file,monkeypatch):
+    from ltcore import fonts
+    monkeypatch.setattr(fonts,'fc_match',lambda *a,**k:None)
+    monkeypatch.setattr(fonts,'scan_family',lambda *a,**k:[])
+    import _catalog
+    path=font_file('Test Labels')
+    rows=_catalog.check_fonts({'annotate.font_path':str(path)})
+    assert any('annotate.font_path wins over fonts.labels.sans' in text for _,text in rows)
+    assert any(status=='PASS' and 'labels sans' in text and 'Test Labels' in text for status,text in rows)
+    rows=_catalog.check_fonts({'fonts.labels.sans':'Missing Synthetic Family'})
+    assert any(status=='WARN' and 'labels sans' in text and 'Noto Sans' in text for status,text in rows)
+
+
+def test_doctor_warns_google_mode_for_unhosted_family(setup,font_file):
+    import _catalog
+    path=font_file('Test Local')
+    rows=_catalog.check_fonts({'fonts.diagram.sans':str(path),'fonts.page_fonts':'google'})
+    assert any(status=='WARN' and 'Test Local' in text and 'Google-hosted' in text for status,text in rows)
+    rows=_catalog.check_fonts({'fonts.page_fonts':'google'})
+    assert not any('Google-hosted' in text for _,text in rows)
+
+
+def test_answers_with_diagram_fonts_validate(setup,tmp_path,capsys):
+    from ltcore import config
+    answer=tmp_path/'answers.json'
+    answer.write_text(json.dumps({'fonts':{'diagram':{'sans':'Noto Sans','mono':'Noto Sans Mono'},'labels':{'sans':'Noto Sans'}}}))
+    target=tmp_path/'new.toml'
+    assert setup.main(['write','--answers',str(answer),'--config',str(target)]) == 0
+    assert config.load(target).get('fonts.diagram.sans')=='Noto Sans'
+    assert setup.main(['set','fonts.diagram.sans','Noto Sans','--config',str(target)]) == 0
+    assert setup.main(['set','fonts.labels.sans','Noto Sans','--config',str(target)]) == 0
+
+
+def test_doctor_missing_annotate_path_follows_label_chain(setup):
+    import _catalog
+    rows=_catalog.check_fonts({'annotate.font_path':'missing.ttf'})
+    assert not any(status=='FAIL' for status,_ in rows)
+    assert any(status=='WARN' and 'annotate.font_path' in text and 'does not exist' in text for status,text in rows)
+    assert any('labels sans: Noto Sans' in text for _,text in rows)
+
+
+def test_doctor_warns_for_os_fallback(setup,monkeypatch,font_file):
+    import _catalog
+    from ltcore import fonts as F
+    path=font_file('Test OS')
+    original=F.find
+    def lookup(role,cfg=None,**kw):
+        if kw.get('output')=='diagram':
+            return original(role,None,output='diagram')
+        return F.Font(role,'Test OS',path,'system fallback (Test OS)',fallback=True,os_fallback=True)
+    monkeypatch.setattr(F,'find',lookup)
+    rows=_catalog.check_fonts({})
+    assert sum(status=='WARN' for status,_ in rows)==3
+    assert sum(status=='PASS' for status,_ in rows)==2
+    assert all('system fallback' in text for status,text in rows if status=='WARN')
+
+def test_T36_rat_doctor_safe_counts_without_sheet_reads(setup, tmp_path, monkeypatch):
+    from ltcore import rat
+    root = tmp_path / 'sheets'
+    root.mkdir()
+    (root / 'team.md').write_text('Synthetic sheet never opened by doctor')
+    cfg = tmp_path / 'config.toml'
+    cfg.write_text('[rat]\nanswers_dir = ' + json.dumps(str(root)) + '\nanswers_dirs = []\nirat = "from_dir"\ntrat = "from_dir"\n')
+    def forbidden(*args):
+        pytest.fail('doctor opened a sheet')
+    monkeypatch.setattr(rat, 'read_sheet', forbidden)
+    rows = setup.check_rat({'config': str(cfg)})
+    text = '\n'.join(r.text for r in rows)
+    assert 'rat.answers_dir' in text and 'files=1' in text and 'irat=True trat=True' in text
+    assert str(root) not in text and 'Synthetic sheet' not in text
+
+
+def test_T36_write_rat_keys(setup, tmp_path, capsys):
+    answers = tmp_path / 'answers.json'
+    answers.write_text(json.dumps({'rat': {'answers_dirs': ['sheets'], 'irat': 'from_dir', 'trat': 'ask',
+                                          'kind_markers': {'trat': '(?i)team test', 'irat': '(?i)individual test'}}}))
+    assert setup.main(['write', '--answers', str(answers), '--config', str(tmp_path/'config.toml'), '--stdout']) == 0
+    doc = tomllib.loads(capsys.readouterr().out)
+    assert doc['rat']['answers_dirs'] == ['sheets']
+    assert doc['rat']['irat'] == 'from_dir'
+
+
+def test_combined_feature_config_roundtrip_and_doctor(setup, tmp_path, capsys):
+    """One setup config must retain all four features and expose their diagnostics."""
+    from ltcore import config
+    root = tmp_path / 'sheets'
+    root.mkdir()
+    answers = tmp_path / 'answers.json'
+    values = {
+        'fonts': {'system_fallback': True,
+                  'pdf': {'sans': 'Noto Sans', 'mono': 'Noto Sans Mono'},
+                  'diagram': {'sans': 'Noto Sans', 'mono': 'Noto Sans Mono'},
+                  'labels': {'sans': 'Noto Sans'}},
+        'annotate': {'palette_copies': True},
+        'browser': {'adapter': 'manual-paste', 'chromium': 'brave',
+                    'chromium_user_data_dir': 'synthetic-profile', 'devtools_url': ''},
+        'rat': {'answers_dir': str(root), 'answers_dirs': [], 'irat': 'from_dir',
+                'trat': 'from_dir', 'kind_markers': {'irat': '(?i)individual examination',
+                                                   'trat': '(?i)team examination'}},
+        'fill': {'check_answer': {'enabled': True}},
+    }
+    answers.write_text(json.dumps(values))
+    target = tmp_path / 'config.toml'
+    assert setup.main(['write', '--answers', str(answers), '--config', str(target)]) == 0
+    cfg = config.load(target)
+    assert cfg.get('fonts.pdf.sans') == 'Noto Sans'
+    assert cfg.get('fonts.diagram.mono') == 'Noto Sans Mono'
+    assert cfg.get('fonts.labels.sans') == 'Noto Sans'
+    assert cfg.get('annotate.palette_copies') is True
+    assert cfg.get('browser.chromium') == 'brave'
+    assert cfg.get('browser.chromium_user_data_dir') == str(tmp_path / 'synthetic-profile')
+    assert cfg.get('rat.irat') == 'from_dir'
+    assert cfg.get('rat.kind_markers.trat') == '(?i)team examination'
+    assert cfg.get('fill.check_answer.enabled') is True
+    ctx = {'config': str(target)}
+    rows = setup.check_config(ctx) + setup.check_fonts(ctx) + setup.check_browser(ctx) + setup.check_rat(ctx)
+    text = '\n'.join(row.text for row in rows)
+    assert not [row.text for row in rows if row.status == 'FAIL']
+    for expected in ('fill.check_answer.enabled = true', 'pdf sans', 'diagram mono',
+                     'labels sans', 'lt-chrome plan: serve-none', 'irat=True trat=True'):
+        assert expected in text
+    capsys.readouterr()
+
+
+def test_first_setup_feature_question_order():
+    """RAT questions precede the opt-in, then the browser route and font choices."""
+    skill = (SCRIPTS.parent / 'SKILL.md').read_text()
+    prompts = [
+        'Do you keep RAT answer sheets',
+        'Team RAT: From my sheets',
+        'Individual RAT: Leave',
+        'Then ask the Check Answer question alone',
+        'Browser path Q1',
+        'After Chromium or Automatic, ask Q2',
+        'After another browser, ask Q3',
+        'After Chromium or Automatic, ask Q4',
+        'Only after the address option, ask Q5',
+        'Ask which sans page PDFs',
+        'Ask which mono page PDFs',
+        'Ask whether diagrams and labels',
+    ]
+    assert all(skill.count(prompt) == 1 for prompt in prompts)
+    positions = [skill.index(prompt) for prompt in prompts]
+    assert positions == sorted(positions)
+
+
+def test_check_answer_setup_question_and_default():
+    from ltcore import config
+    assert config.load().get('fill.check_answer.enabled') is False
+    text=(Path(__file__).resolve().parents[2]/'skills/lt-suite-setup/SKILL.md').read_text()
+    assert 'no press limit' in text and 'individual' in text and 'tests' in text
+
+
+def test_check_answer_doctor_prints_opt_in(setup,tmp_path):
+    p=tmp_path/'lt-suite.toml';p.write_text('[fill.check_answer]\nenabled=true\n')
+    rows=setup.check_config({'config':p})
+    assert any('fill.check_answer.enabled = true' in row.text for row in rows)

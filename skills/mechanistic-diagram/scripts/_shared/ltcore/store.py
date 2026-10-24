@@ -10,7 +10,9 @@ follows the same order with $LT_SUITE_CACHE and paths.cache_dir.
     <data>/captures/            module-<id>.json, reference-<id>.json, media/
     <data>/incoming/            sink.py writes here; stamp_capture.py moves files on
     <data>/runs/<module_id>/    run.json, logs/, fill-js/, fill-report.json,
-                                approvals.json, model-answer.json
+                                approvals.json, model-answer.json, page-kinds.json,
+                                check-answer.json, reconcile-worklist.json,
+                                fill-report-pre-rat.json, reconciled.json
     <data>/state/               calibration.json, ledger.json, applied.json
     <data>/lexicon/             user lexicon entries proposed by run review
     <data>/fonts/               fonts fetched by setup

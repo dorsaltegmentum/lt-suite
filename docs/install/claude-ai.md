@@ -12,9 +12,9 @@ lt-suite keeps skill descriptions within 200 characters to accommodate the stric
 
 ## Supported workflows
 
-The 0.1.0 hosted-chat workflow supports answer drafting from supplied material, export from an uploaded capture and diagram preparation.
+The 0.2.0 hosted-chat workflow supports answer drafting from supplied material, export from an uploaded capture and diagram preparation.
 
-Capture and fill are unsupported on this surface in 0.1.0. The execution container cannot use the suite's local sink, local Downloads folder and lasting configuration together.
+Capture and fill are unsupported on this surface in 0.2.0. The execution container cannot use the suite's local sink, local Downloads folder and lasting configuration together.
 
 A separate browser connector does not establish compatibility with this release's complete capture and fill workflow.
 

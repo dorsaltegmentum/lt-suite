@@ -34,9 +34,9 @@ The same applies inside the configured notes graph (`notes.graph_path`). Its pag
 
 When `model_answer.read` is on, Lt's model answer may be cited with provenance `lt-model-answer`. When it is off, an answers or reference file that cites it fails the `model-answer-policy` rail.
 
-## Four skips are mandated, and each is recorded with its reason
+## Scope exclusions use supported reasons
 
-`report-page`, `rat-page`, `already-answered`, `course-feedback` identify excluded items. Record each exclusion in `answers.json` using `status: skipped` and its `skip_reason`. The fill plan preserves these exclusions. The already-answered status protects a response the student has submitted.
+The fill plan holds report pages. RAT scope uses `rat-sheet`, `irat-policy`, `trat-answers-unavailable` or `user-excluded`, from `page-kinds.json`. Use `already-answered` and `course-feedback` for the corresponding exclusions. Record item exclusions as `status: skipped` with a supported `skip_reason`. RAT roots and answer-bearing run files never serve as provenance.
 
 ## A clean TODO is a success
 

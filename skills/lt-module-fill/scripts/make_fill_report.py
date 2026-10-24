@@ -16,12 +16,16 @@ be found ("NOT VALIDATED"), 3 input refused and nothing written.
 `result` and `verified` for a written item come from one source: the fresh-load hash
 receipts. No input can set `verified`.
 
-Receipts: a JSON list, or {"receipts": [...]}, of exactly
+Receipts: a JSON list, or {"receipts": [...]}, with these required keys:
 
     {"item_id": "p4-12", "expected_hash": 2066687429, "observed_hash": 2066687429,
      "observed_at": "2000-01-01T00:00:00Z"}
 
-from a fresh load of the item's page. expected_hash is the hash of the drafted answer and
+RAT sheet receipts also require source_payload {path, sha256}, written by record.
+Keep the executed payload and its pinned page-kinds.json unchanged until reporting.
+Missing or changed bindings refuse reporting; reclassification cannot replace provenance.
+
+Each receipt comes from a fresh load of the item's page. expected_hash hashes the drafted answer;
 observed_hash the hash of what the load read back; for a table both cover every target cell.
 Hashes are strings or integers and compare as strings. An item's latest receipt decides it:
 equal hashes give result filled and verified true, unequal give failed and verified false.
@@ -70,6 +74,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parent / "_shared"))
 import ltcore  # noqa: E402
 ltcore.bootstrap(["jsonschema"])
 from ltcore import config, store  # noqa: E402
+
+from ltcore import page_kinds, rat
 
 import argparse  # noqa: E402
 import datetime as dt  # noqa: E402
@@ -147,9 +153,9 @@ def load_receipts(raw, answer_ids, start, end):
     by_item: dict[str, list] = {}
     for n, r in enumerate(rows):
         tag = f"receipts[{n}]"
-        if not isinstance(r, dict) or set(r) != RECEIPT_KEYS:
+        if not isinstance(r, dict) or set(r) not in (RECEIPT_KEYS, RECEIPT_KEYS | {"source_payload"}):
             got = sorted(r) if isinstance(r, dict) else type(r).__name__
-            raise Refused(f"{tag}: keys must be exactly {sorted(RECEIPT_KEYS)}, got {got}")
+            raise Refused(f"{tag}: keys must be {sorted(RECEIPT_KEYS)} with optional source_payload, got {got}")
         if r["item_id"] not in answer_ids:
             raise Refused(f"{tag}: {r['item_id']!r} is not an item in answers.json")
         for k in ("expected_hash", "observed_hash"):
@@ -234,7 +240,7 @@ def weak_pages(save_waits) -> dict[int, str]:
 
 
 def build(mod, ans, raw_receipts, notes, answers_path, receipts_path, *, save_waits=None,
-          cfg=None, schema_props=None):
+          cfg=None, schema_props=None, page_kinds_path=None, data_dir=None, check_ledger=None, check_plan=None):
     if ans.get("module_id") != mod.get("module_id"):
         raise Refused(f"answers.json is for {ans.get('module_id')!r}, module.json is "
                       f"{mod.get('module_id')!r}")
@@ -261,7 +267,58 @@ def build(mod, ans, raw_receipts, notes, answers_path, receipts_path, *, save_wa
     if stray:
         raise Refused(f"notes.items: {stray} are not items in answers.json")
 
-    pl = plan_fill.plan(mod, ans, False, cfg)
+    pl = plan_fill.plan(mod, ans, False, cfg, page_kinds_path=page_kinds_path, data_dir=data_dir, answers_sha256=hashlib.sha256(answers_path.read_bytes()).hexdigest())
+    rat_status = {r["page_index"]: r for r in pl.get("rat_pages", [])}
+    sheet_status = {idx: r for idx, r in rat_status.items() if r["decision"] == "fill-from-sheet"}
+
+    # Never infer an executed sheet from today's decision. Both browser receipts
+    # echo the payload hash; record pins it, and the payload pins classification.
+    import emit_fill
+    pkpath = Path(page_kinds_path) if page_kinds_path else store.Store(cfg, data_dir=data_dir).run_dir(mod["module_id"]) / "page-kinds.json"
+    payloads = {}
+    for iid, rs in receipts.items():
+        pg = mod_items[iid][0]
+        answer = next(a for a in ans["items"] if a["item_id"] == iid)
+        for receipt in rs:
+            binding = receipt.get("source_payload")
+            page = next(p for p in mod["pages"] if p["page_index"] == pg)
+            required = (answer.get("skip_reason") == "rat-sheet" or
+                        page_kinds.is_candidate(page, rat.policy_from_config(cfg)) and
+                        rat_status.get(pg, {}).get("decision") not in {"not-rat", "fill-from-draft"})
+            if not binding and not required:
+                continue
+            try:
+                if not isinstance(binding, dict) or set(binding) != {"path", "sha256"}:
+                    raise ValueError
+                ppath = Path(binding["path"])
+                if not ppath.is_absolute():
+                    ppath = (receipts_path.parent if receipts_path else answers_path.parent) / ppath
+                if any(rat.within(ppath, root) for _, root in rat.effective_roots(rat.policy_from_config(cfg))):
+                    raise ValueError
+                raw = ppath.read_bytes()
+                if hashlib.sha256(raw).hexdigest() != binding["sha256"]:
+                    raise ValueError
+                payload = payloads.setdefault(binding["sha256"], json.loads(raw))
+                if (payload.get("schema") != emit_fill.PAYLOAD_SCHEMA or
+                        payload.get("module_id") != mod["module_id"] or
+                        payload.get("run_id") != mod["run_id"] or
+                        payload.get("module", {}).get("question_digest") != emit_fill.question_digest(mod) or
+                        payload.get("answers", {}).get("sha256") != hashlib.sha256(answers_path.read_bytes()).hexdigest()):
+                    raise ValueError
+                pin = payload.get("source_page_kinds") or {}
+                if (not pin.get("sha256") or not pkpath.is_file() or
+                        hashlib.sha256(pkpath.read_bytes()).hexdigest() != pin["sha256"] or
+                        pl["rat_policy"]["record_sha256"] != pin["sha256"]):
+                    raise ValueError
+                job = next(j for page in payload["pages"].values() for j in page["jobs"] if j["item"] == iid)
+                sheet = sheet_status.get(pg, {}).get("sheet") or {}
+                if (job.get("source") != "rat-sheet" or
+                        any(job.get("sheet", {}).get(k) != sheet.get(k) for k in ("root", "name", "sha256")) or
+                        str(emit_fill.expected_hash(job)) != str(receipt["expected_hash"])):
+                    raise ValueError
+            except (OSError, ValueError, TypeError, KeyError, StopIteration):
+                raise Refused("RAT receipt binding: executed payload or classification snapshot is missing or changed") from None
+
     bm = pl["boundary_map"]
     fillable, held, page_skips = plan_index(pl)
     weak = weak_pages(save_waits)
@@ -276,7 +333,18 @@ def build(mod, ans, raw_receipts, notes, answers_path, receipts_path, *, save_wa
         rs = receipts.get(iid)
         base = {"item_id": iid, "item_type": m["type"], "attempts": m.get("attempts") or "multi"}
         type_method = "selector" if m["type"] in SELECTOR_TYPES else "view-model"
+        sheet_page = sheet_status.get(pg)
+        sheet = (sheet_page or {}).get("sheet")
+        number = next((n for p in mod["pages"] if p["page_index"] == pg
+                       for n, it in enumerate(p["items"], 1) if it["item_id"] == iid), None)
+        sheet_item = sheet and a.get("skip_reason") in {"rat-sheet", "trat-answers-unavailable"} or sheet and a.get("status") == "drafted"
+        if sheet_item:
+            base["answer_source"] = dict({k: sheet[k] for k in ("root", "name", "sha256")},
+                                         kind="rat-sheet", question=number, page_kind=sheet_page["kind"],
+                                         classified_by=sheet_page["sources"])
         if rs:
+            if sheet_item and str(number) in sheet.get("todo_questions", {}):
+                raise Refused("receipt for an unanswered RAT sheet question")
             extra = sorted(set(note) - NOTE_KEYS)
             if extra:
                 raise Refused(f"{iid}: has a receipt, so its result is the receipt's; the note "
@@ -320,6 +388,19 @@ def build(mod, ans, raw_receipts, notes, answers_path, receipts_path, *, save_wa
             ap = a.get("single_attempt_approval") or {}
             if attempted and m.get("attempts") == "single" and ap.get("approval_id"):
                 base["approval_id"] = ap["approval_id"]
+        elif sheet_item and str(number) in sheet.get("todo_questions", {}):
+            state = sheet["todo_questions"][str(number)]
+            blocker = (f"Question {number} has no marked answer in {sheet['name']}" if state == "unanswered" else
+                       f"Question {number} has {state} answer in {sheet['name']}")
+            base.update(attempted=False, method="manual-todo", result="todo", verified=False,
+                        todo={"blocker": blocker, "placement": f"page {pg}, panel {m['panel_key']}"},
+                        stopped_reason="RAT sheet question needs your answer")
+        elif sheet_item and iid in fillable:
+            missing.append(iid)
+            continue
+        elif pg in page_skips:
+            base.update(attempted=False, method="not-attempted", result="skipped", verified=False,
+                        stopped_reason=joined(page_skips[pg]["reason"], page_skips[pg].get("detail")))
         elif a.get("status") == "blocked":
             base.update(attempted=False, method="manual-todo", result="todo", verified=False,
                         todo=a["todo"], stopped_reason=joined(
@@ -381,6 +462,13 @@ def build(mod, ans, raw_receipts, notes, answers_path, receipts_path, *, save_wa
         "pages_filled": pages_filled,
         "items": items,
     }
+    if pl.get("rat_pages"):
+        # Safe status projection only. The record's sheet evidence contains no answers.
+        rep["rat_pages"] = [{k: v for k, v in r.items() if k not in {"question", "reasons", "check_reason"}}
+                            for r in pl["rat_pages"]]
+        pkpath = Path(page_kinds_path) if page_kinds_path else store.Store(cfg, data_dir=data_dir).run_dir(mod["module_id"]) / "page-kinds.json"
+        if pkpath.is_file() and pl["rat_policy"]["record_sha256"]:
+            rep["source_page_kinds"] = {"path": str(pkpath.resolve()), "sha256": hashlib.sha256(pkpath.read_bytes()).hexdigest()}
     if receipts_path is not None and receipts_path.is_file():
         rep["source_receipts"] = {"path": str(receipts_path.resolve()),
                                   "sha256": hashlib.sha256(receipts_path.read_bytes()).hexdigest()}
@@ -390,6 +478,29 @@ def build(mod, ans, raw_receipts, notes, answers_path, receipts_path, *, save_wa
     if schema_props and "save_waits" in schema_props and save_waits:
         rows = save_waits.get("save_waits") if isinstance(save_waits, dict) else save_waits
         rep["save_waits"] = rows
+    if check_ledger or check_plan:
+        from ltcore import check_answer as ca
+        projected = ca.project(mod, ans, check_ledger)
+        statuses={r['page_index']:r for r in (check_plan or {}).get('rat_pages',[])}
+        for refusal in (check_plan or {}).get('refused',[]):
+            iid=refusal['item'];reason=refusal['reason']
+            if iid not in projected:
+                projected[iid]={'eligible':False,'reason':reason,'policy':check_plan['policy'],
+                  'rat_page':statuses[refusal['page']],'calls':[], 'pool_h':[], 'draft':{'state':{},'hash':'','refs':[]},
+                  'presses':[], 'final':{'state':{},'hash':'','index_state':'','verdict':None,'stop':reason,'moved':False},'lt_feedback':''}
+        for item in rep['items']:
+            iid = item['item_id']
+            if iid in projected:
+                item['check_answer'] = projected[iid]
+        rep['check_answer'] = ca.summary(rep['items'])
+        # Judge each historical press against its recorded classification.
+        rat_rows = {r['page_index']:r for r in rep.get('rat_pages',[])}
+        for call in (check_ledger or {}).get('checks',[]):
+            status = call.get('rat_page') or {}
+            if status.get('candidate') and call.get('page') not in sheet_status:
+                rat_rows[call['page']] = {k:v for k,v in status.items() if k not in {'check_reason','question','reasons'}}
+        if rat_rows:
+            rep['rat_pages'] = list(rat_rows.values())
     return rep, weak
 
 
@@ -431,6 +542,7 @@ def main(argv=None) -> int:
     ap.add_argument("--approvals", type=Path, help="default <run>/approvals.json when it exists")
     ap.add_argument("--out", type=Path, help="default <run>/fill-report.json")
     ap.add_argument("--validator", type=Path, help="validate.py to run (default the shared copy)")
+    ap.add_argument("--page-kinds", type=Path)
     ap.add_argument("--config")
     ap.add_argument("--data-dir")
     args = ap.parse_args(argv)
@@ -448,10 +560,15 @@ def main(argv=None) -> int:
         notes = _read(npath, "notes")
         waits = _read(wpath, "save waits", default={"save_waits": []})
         rep, weak = build(mod, ans, receipts, notes, args.answers, rpath, save_waits=waits,
-                          cfg=cfg, schema_props=schema_properties())
+                          cfg=cfg, schema_props=schema_properties(), page_kinds_path=args.page_kinds, data_dir=args.data_dir,
+                          check_ledger=_read(run/'check-answer.json','check ledger',default={}),
+                          check_plan=_read(run/'fill-js/check-plan.json','check plan',default={}))
     except (config.ConfigError, ValueError, Refused) as e:
         print(f"REFUSED: {e}", file=sys.stderr)
         return 3
+    ledger_path=run/'check-answer.json'
+    if ledger_path.is_file():
+        rep['source_check_answer']={'path':str(ledger_path.resolve()),'sha256':hashlib.sha256(ledger_path.read_bytes()).hexdigest()}
     out = args.out or st.fill_report_path(mid)
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(rep, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")

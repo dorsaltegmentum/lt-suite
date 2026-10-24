@@ -7,7 +7,7 @@ Geometry is decided once (layout_engine.py) and written twice: to an SVG (-> PDF
 rsvg-convert, render.py) and to a .drawio file (drawio.py), so the submission copy and the editable
 draw.io master show the same picture.
 
-Text is measured through PIL in the configured sans (fonts.sans). use_fonts() switches the face.
+Text is measured through PIL in the configured sans (fonts.diagram.sans). use_fonts() switches the face.
 Text wraps into balanced lines and uses explicit
 line breaks so draw.io never re-wraps.
 
@@ -100,7 +100,7 @@ def use_fonts(regular, family, bold=None, wght=None, opsz=None, italic=None, bol
 
 
 def use_configured_fonts(wght=None):
-    """Measure in the configured sans (fonts.sans) at the configured size (fonts.text_px)."""
+    """Measure in the configured sans (fonts.diagram.sans) at the configured size (fonts.text_px)."""
     import style
     set_size(style.text_px())
     w = tuple(wght) if wght else (500, 700)
@@ -126,7 +126,7 @@ def fonts_for_geometry(geo):
     ensure_fonts()
     fam = geo.get("font")
     if fam and fam != FONT:
-        raise ValueError(f"geometry.json was measured in {fam}, but the config sets text in {FONT} (fonts.sans): "
+        raise ValueError(f"geometry.json was measured in {fam}, but the config sets text in {FONT} (fonts.diagram.sans): "
                          f"run layout_engine.py (or build.py) again")
     if geo.get("wght") and tuple(geo["wght"]) != tuple(WGHT):
         use_configured_fonts(geo["wght"])

@@ -15,6 +15,7 @@ Prerequisite drift checks always run, including when --check is omitted.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 from pathlib import Path, PurePosixPath
@@ -36,7 +37,7 @@ TARGETS = (
 GEMINI_KEYS = {"name", "description", "license", "metadata"}
 STAMP = (1980, 1, 1, 0, 0, 0)
 IGNORED = {"__pycache__", ".pytest_cache", ".git", ".venv", "node_modules"}
-FONT_SUFFIXES = {".ttf", ".otf", ".ttc", ".woff", ".woff2"}
+FONT_SUFFIXES = {".ttf", ".otf", ".ttc", ".otc", ".woff", ".woff2"}
 
 
 class BuildError(Exception):
@@ -99,12 +100,20 @@ def files_under(folder: Path, *, plugin: bool = False, allowed: set[str] | None 
     return result
 
 
-def font_licenses(files: dict[str, bytes]) -> None:
+def font_licenses(files: dict[str, bytes], root: Path = REPO) -> None:
     """Require the bundled font's own license, including copyright notices."""
+    catalog = json.loads((root / "shared/fonts/catalog.json").read_text())
+    approved = {}
+    for entry in catalog["fonts"]:
+        for item in (entry.get("bundled") or {}).get("files", []):
+            approved[item["file"]] = item["sha256"]
     for name in files:
         font = PurePosixPath(name)
         if font.suffix.lower() not in FONT_SUFFIXES:
             continue
+        relative = str(font).split("/fonts/", 1)[-1]
+        if relative not in approved or hashlib.sha256(files[name]).hexdigest() != approved[relative]:
+            raise BuildError(f"unapproved font or sha256 mismatch: {name}")
         found = False
         for parent in font.parents:
             if str(parent) == ".":
@@ -194,7 +203,7 @@ def plan(root: Path) -> dict[str, tuple[str, dict[str, bytes]]]:
         if skill.is_symlink() or not re.fullmatch(r"[a-z0-9]+(?:-[a-z0-9]+)*", skill.name):
             raise BuildError(f"invalid skill directory: {skill.name}")
         files = files_under(skill, allowed=allowed, root=root)
-        font_licenses(files)
+        font_licenses(files, root)
         # Validate and transform once; non-Gemini variants retain original bytes.
         gemini = gemini_frontmatter(files["SKILL.md"])
         files = merge_legal(files, legal)

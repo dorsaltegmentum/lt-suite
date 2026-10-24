@@ -10,8 +10,9 @@
   "upload": 12,
   "model-answer": 9,
   "probe": 81,
-  "rail": 102
+  "rail": 102,
+  "check-answer": 80
  },
- "files": 5,
- "min_tests": 379
+ "files": 6,
+ "min_tests": 461
 }

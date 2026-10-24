@@ -19,8 +19,8 @@ toward the text colour until it does, and the PDF step prints a note. Without th
 module the built-in light (print) and dark (screen) themes are used, with a note.
 This check also covers warning glyphs and coloured group headings.
 
-Fonts come from `ltcore.fonts` (`fonts.sans`, `fonts.mono`, or the explicit
-`fonts.sans_path` and `fonts.mono_path`). ReportLab reads TrueType outlines only. Faces:
+Fonts come from `ltcore.fonts` (`fonts.pdf.sans`, `fonts.pdf.mono`, or the explicit
+`fonts.pdf.sans_path` and `fonts.pdf.mono_path`). ReportLab reads TrueType outlines only. Faces:
 regular, bold, italic, bold italic and semibold of the sans font, and regular, bold and
 italic of the mono font. A face the family lacks falls back to its upright or bold file,
 with a note.
@@ -88,3 +88,6 @@ QC runs on the drafts, which still carry their metadata. The final pass then rem
 | PyMuPDF | vector SVG figures | SVG figures become PNG |
 | qpdf, exiftool, pikepdf | metadata strip | the final pass fails when the strip is on |
 | rsvg-convert | SVG to PDF or PNG | SVG figures cannot be drawn |
+
+Page PDF body and symbol fonts must permit editable or installable embedding.
+Restricted fsType, preview-and-print, no-subsetting and bitmap-only files are refused.

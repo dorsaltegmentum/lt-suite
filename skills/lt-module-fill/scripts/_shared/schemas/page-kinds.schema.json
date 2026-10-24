@@ -1,0 +1,507 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/dorsaltegmentum/lt-suite/schemas/page-kinds.schema.json",
+  "title": "Shared page classification, no answer text",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "module_id": {
+      "type": "string"
+    },
+    "marks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "page_index": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "page_digest": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "classification_digest": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "kind": {
+            "enum": [
+              "irat",
+              "trat",
+              "not-rat"
+            ]
+          },
+          "source": {
+            "const": "user-mark"
+          },
+          "answer": {
+            "type": "string"
+          },
+          "evidence_seen": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "answers-json",
+                "rat-answers",
+                "user-mark",
+                "page-text"
+              ]
+            }
+          },
+          "at": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "page_index",
+          "page_digest",
+          "classification_digest",
+          "kind",
+          "source",
+          "answer",
+          "evidence_seen",
+          "at"
+        ]
+      }
+    },
+    "choices": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "page_index": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "page_digest": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "classification_digest": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "fill": {
+            "enum": [
+              "sheet",
+              "draft",
+              "leave"
+            ]
+          },
+          "sheet": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "root": {
+                "type": "string",
+                "pattern": "^rat\\.answers_dir(?:s\\[[0-9]+\\])?$"
+              },
+              "name": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9 ._()-]{1,80}$"
+              },
+              "sha256": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              }
+            },
+            "required": [
+              "root",
+              "name",
+              "sha256"
+            ]
+          },
+          "asked": {
+            "type": "string"
+          },
+          "roots_digest": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "policy_sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "answer": {
+            "type": "string"
+          },
+          "at": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "page_index",
+          "page_digest",
+          "classification_digest",
+          "fill",
+          "asked",
+          "roots_digest",
+          "policy_sha256",
+          "answer",
+          "at"
+        ]
+      }
+    },
+    "scan": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "made_at": {
+          "type": "string"
+        },
+        "policy": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "irat": {
+              "type": "string"
+            },
+            "trat": {
+              "type": "string"
+            },
+            "markers": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "week_pattern_sha256": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            }
+          },
+          "required": [
+            "irat",
+            "trat",
+            "markers"
+          ]
+        },
+        "answers_sha256": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "pages": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "page_index": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "page_digest": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "classification_digest": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "text_kind": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "enum": [
+                  "irat",
+                  "trat",
+                  null
+                ]
+              },
+              "answer_kind": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "enum": [
+                  "irat",
+                  "trat",
+                  null
+                ]
+              },
+              "sources": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": [
+                    "answers-json",
+                    "rat-answers",
+                    "user-mark",
+                    "page-text"
+                  ]
+                }
+              },
+              "drafted": {
+                "type": "integer",
+                "minimum": 0
+              }
+            },
+            "required": [
+              "page_index",
+              "page_digest",
+              "classification_digest",
+              "text_kind",
+              "answer_kind",
+              "sources",
+              "drafted"
+            ]
+          }
+        },
+        "read": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "irat": {
+              "type": "boolean"
+            },
+            "trat": {
+              "type": "boolean"
+            },
+            "why": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "irat",
+            "trat",
+            "why"
+          ]
+        },
+        "roots": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "key": {
+                "type": "string",
+                "pattern": "^rat\\.answers_dir(?:s\\[[0-9]+\\])?$"
+              },
+              "real_sha256": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "exists": {
+                "type": "boolean"
+              },
+              "listing_sha256": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "files_seen": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "sheets_parsed": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "skipped": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              }
+            },
+            "required": [
+              "key",
+              "real_sha256",
+              "exists",
+              "listing_sha256",
+              "files_seen",
+              "sheets_parsed",
+              "skipped"
+            ]
+          }
+        },
+        "roots_digest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      },
+      "required": [
+        "made_at",
+        "policy",
+        "answers_sha256",
+        "pages",
+        "read",
+        "roots",
+        "roots_digest"
+      ]
+    },
+    "matches": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "page_index": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "page_digest": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "classification_digest": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "kind": {
+            "const": "rat"
+          },
+          "source": {
+            "const": "rat-answers"
+          },
+          "evidence": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "root": {
+                "type": "string",
+                "pattern": "^rat\\.answers_dir(?:s\\[[0-9]+\\])?$"
+              },
+              "name": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9 ._()-]{1,80}$"
+              },
+              "sha256": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "format": {
+                "enum": [
+                  "compact",
+                  "marked"
+                ]
+              },
+              "declared_kind": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "enum": [
+                  "irat",
+                  "trat",
+                  null
+                ]
+              },
+              "grade": {
+                "enum": [
+                  "full",
+                  "partial",
+                  "none"
+                ]
+              },
+              "distinct": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "aligned": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "answered": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "unanswered": {
+                "type": "array",
+                "items": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              },
+              "mark_mismatch": {
+                "type": "array",
+                "items": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              },
+              "aligned_questions": {
+                "type": "array",
+                "items": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              },
+              "week": {
+                "enum": [
+                  "agree",
+                  "differs",
+                  "absent"
+                ]
+              },
+              "chosen": {
+                "type": "boolean"
+              },
+              "confirmation_reasons": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "todo_questions": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "string",
+                  "enum": [
+                    "malformed",
+                    "unaligned",
+                    "mark-mismatch",
+                    "unanswered",
+                    "multi-marked"
+                  ]
+                }
+              }
+            },
+            "required": [
+              "root",
+              "name",
+              "sha256",
+              "format",
+              "declared_kind",
+              "grade",
+              "distinct",
+              "aligned",
+              "answered",
+              "unanswered",
+              "mark_mismatch",
+              "aligned_questions",
+              "week",
+              "chosen",
+              "confirmation_reasons",
+              "todo_questions"
+            ]
+          }
+        },
+        "required": [
+          "page_index",
+          "page_digest",
+          "classification_digest",
+          "kind",
+          "source",
+          "evidence"
+        ]
+      }
+    }
+  },
+  "required": [
+    "schema_version",
+    "module_id",
+    "marks",
+    "choices",
+    "scan",
+    "matches"
+  ]
+}

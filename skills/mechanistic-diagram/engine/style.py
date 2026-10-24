@@ -138,9 +138,9 @@ def palette_name(pid, theme=None):
 
 
 # ------------------------------------------------------------------ fonts
-_FONT_KEYS = {"sans": ("fonts.sans", "fonts.sans_path"),
-              "mono": ("fonts.mono", "fonts.mono_path"),
-              "mono_bold": ("fonts.mono", "fonts.mono_bold_path")}
+_FONT_KEYS = {"sans": ("fonts.diagram.sans", "fonts.sans_path"),
+              "mono": ("fonts.diagram.mono", "fonts.mono_path"),
+              "mono_bold": ("fonts.diagram.mono", "fonts.mono_bold_path")}
 
 
 def _fonts():
@@ -158,7 +158,7 @@ def font_path(role, weight=400, italic=False):
     file comes back variable; the engine cuts its own static instances (fontset.py)."""
     fonts = _fonts()
     try:
-        return Path(fonts.resolve(role, weight=weight, italic=italic, cfg=cfg()))
+        return Path(fonts.resolve(role, weight=weight, italic=italic, cfg=cfg(), output="diagram"))
     except fonts.FontError as ex:
         fam_key, path_key = _FONT_KEYS[role]
         raise StyleError(f"no font file for {role} (weight {weight}{', italic' if italic else ''}): {ex}. "
@@ -169,7 +169,7 @@ def font_family(role):
     """The family name a role's text is set in (the name the SVG and the .drawio carry)."""
     fonts = _fonts()
     try:
-        return str(fonts.family("mono" if role == "mono_bold" else role, cfg=cfg()))
+        return str(fonts.family("mono" if role == "mono_bold" else role, cfg=cfg(), output="diagram"))
     except fonts.FontError as ex:
         raise StyleError(f"no font for {role}: {ex}") from ex
 

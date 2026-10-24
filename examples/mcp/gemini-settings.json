@@ -3,6 +3,7 @@
     "lt-chrome": {
       "command": "npx",
       "args": [
+        "--no-workspaces",
         "-y",
         "chrome-devtools-mcp@1.12.0",
         "--autoConnect",
@@ -15,6 +16,11 @@
         "--no-category-emulation",
         "--redact-network-headers"
       ],
+      "env": {
+        "CHROME_DEVTOOLS_MCP_NO_CONFIG_DISCOVERY": "1",
+        "CHROME_DEVTOOLS_MCP_NO_UPDATE_CHECKS": "1",
+        "CHROME_DEVTOOLS_MCP_CATEGORY_EXPERIMENTAL_THIRD_PARTY": ""
+      },
       "excludeTools": [
         "new_page",
         "click",

@@ -299,11 +299,20 @@ def item_parts(n):
     return title, head, " · ".join(m for m in metas if m), rest, kids
 
 
-def flavour_variant(path: str, name: str | None) -> str:
+def flavour_variant(path: str, name: str | None, *, print_copy=False) -> str:
     """Prefer a palette sibling, checking its original extension before alternatives."""
     if not name:
         return path
     p = Path(path)
+    from ltcore import palettes
+    if p.suffix.lower() != ".svg" and palettes.copies_manifest(p).exists():
+        copy = palettes.bound_copy(p, name)
+        if copy is not None:
+            return str(copy)
+        print(f"NOTE: {p.name}: palette {name} copy is unbound; run --file-copies after upload capture", file=sys.stderr)
+        return path
+    if print_copy:
+        return path
     for ext in dict.fromkeys([p.suffix, ".svg", ".png"]):
         v = p.with_name(f"{p.stem}-{name}{ext}")
         if v.is_file():
@@ -311,7 +320,7 @@ def flavour_variant(path: str, name: str | None) -> str:
     return path
 
 
-def image_parts(t, page_dir, flavour=None):
+def image_parts(t, page_dir, flavour=None, *, print_copy=False):
     """Resolve image references and palette variants only inside approved asset roots."""
     m = IMG.match(t)
     note = m[3].strip()
@@ -337,7 +346,7 @@ def image_parts(t, page_dir, flavour=None):
             break
     if path is None:
         raise FileNotFoundError(f"image {m[2]} not found; tried {cands}")
-    return m[1], approved(flavour_variant(path, flavour)), note
+    return m[1], approved(flavour_variant(path, flavour, print_copy=print_copy)), note
 
 
 def mk(t, theme):
@@ -737,7 +746,7 @@ def node_flows(n, k, level, theme, st, page_dir):
     if k == "image":
         use = theme["use"]
         out = [image_flow(
-            *image_parts(t, page_dir, None if use == "print" else theme["name"]), st)]
+            *image_parts(t, page_dir, theme["name"], print_copy=use == "print"), st)]
     elif k == "ilo":
         num, text = ILO.match(t).groups()
         out = [K(Para(mk(text, theme), lv(st, "claim", level), bulletText=f"{num}."),
@@ -1155,7 +1164,7 @@ def build_pdfs(page, out, cfg, *, assets=(), render=None, qc=True, final=True) -
     if plan["missing"]:
         print(
             f"FATAL: no installed font has these characters: {plan['missing']}. "
-            "They would print as empty boxes. Set fonts.sans to a font that has them.",
+            "They would print as empty boxes. Set fonts.pdf.sans to a font that has them.",
             file=sys.stderr)
         return 1
     for ch, face in sorted(plan["runs"].items()):

@@ -341,10 +341,12 @@ if mode == "checks":
         if worst < floor - 1e-9:
             problems.append("PDF theme %s (%s): text contrast %.2f is below %.1f" % (pid, use, worst, floor))
         res["pdf"].append({"id": pid, "use": use, "text_min": round(worst, 2)})
-    fonts_cfg = {"sans": cfg.get("fonts.sans", ""), "mono": cfg.get("fonts.mono", "")}
+    fonts_cfg = {role: cfg.get("fonts.pdf." + role) or cfg.get("fonts." + role, "") for role in ("sans", "mono")}
     try:
         from ltcore import fonts
-        sans = Path(str(want(fonts, "resolve")("sans", weight=400, cfg=cfg)))
+        sans = Path(str(want(fonts, "resolve")("sans", weight=400, cfg=cfg, output="pdf", os_fallback=True)))
+        fonts_cfg["resolved"] = [fonts.family(role, cfg, output=output, os_fallback=output == "pdf")
+                                 for output in ("pdf", "diagram") for role in ("sans", "mono")]
         fonts_cfg["sans_file"] = sans.name
         fonts_cfg["bundled"] = any(str(sans).startswith(str(repo / d)) for d in ("shared/fonts", "skills"))
         if not fonts_cfg["bundled"]:
@@ -830,6 +832,7 @@ def a11y_checks(c: Ctx) -> None:
     if res.get("problems"):
         raise Fail(1, "accessibility checks failed:\n  " + "\n  ".join(res["problems"]))
     allowed = [re.sub(r"[^a-z0-9]", "", s.lower()) for s in (res["fonts"].get("sans"), res["fonts"].get("mono")) if s]
+    allowed += [re.sub(r"[^a-z0-9]", "", s.lower()) for s in res["fonts"].get("resolved", [])]
     allowed += list(SYMBOL_FONTS)
     font_usage = c.helper("font-usage", files=[str(p) for p in c.stage.glob("*.pdf")])
     for name, (_n, kind, *_r) in BY_NAME.items():

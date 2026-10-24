@@ -19,7 +19,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent / "_shared"))
 import ltcore
 
 ltcore.bootstrap()
-from ltcore import config
+from ltcore import config, rat
 
 import argparse
 import json
@@ -46,11 +46,12 @@ def week_number(title: str, pattern: str) -> str | None:
     return ".".join(str(int(part)) for part in match.groups() if part is not None)
 
 
-def _visible_dirs(root: Path, skip_dirs: set[str]):
+def _visible_dirs(root: Path, skip_dirs: set[str], rat_roots=()):
     """Walk without hidden, skipped or linked directories."""
     for base, dirs, _ in os.walk(root, followlinks=False, onerror=_walk_error):
         dirs[:] = sorted(name for name in dirs if not name.startswith(".")
-                         and name not in skip_dirs and not (Path(base) / name).is_symlink())
+                         and name not in skip_dirs and not (Path(base) / name).is_symlink()
+                         and not any(rat.within(Path(base) / name, r) for r in rat_roots))
         yield Path(base), dirs
 
 
@@ -58,11 +59,11 @@ def _walk_error(error):
     raise error
 
 
-def find_week_dirs(num: str, root: Path, pattern: str, skip_dirs: set[str]) -> list[Path]:
+def find_week_dirs(num: str, root: Path, pattern: str, skip_dirs: set[str], rat_roots=()) -> list[Path]:
     """Match prefixed and bare folders at any depth beneath curriculum.root."""
     rx = re.compile(pattern.replace("{num}", re.escape(num)), re.IGNORECASE)
     hits = []
-    for base, dirs in _visible_dirs(root, skip_dirs):
+    for base, dirs in _visible_dirs(root, skip_dirs, rat_roots):
         matched = [name for name in dirs if rx.match(name)]
         hits.extend(base / name for name in matched)
         # A week may contain numbered topic folders; those are not more weeks.
@@ -70,12 +71,12 @@ def find_week_dirs(num: str, root: Path, pattern: str, skip_dirs: set[str]) -> l
     return sorted(hits)
 
 
-def survey(week: Path, extensions: set[str], skip_dirs: set[str]) -> dict:
+def survey(week: Path, extensions: set[str], skip_dirs: set[str], rat_roots=()) -> dict:
     """Count files by extension and immediate subject folder without reading them."""
     out = {"path": str(week), "block": week.parent.name, "name": week.name,
            "subjects": [], "files_by_ext": {}, "total_files": 0}
     subjects: dict[str, int] = {}
-    for base, dirs in _visible_dirs(week, skip_dirs):
+    for base, dirs in _visible_dirs(week, skip_dirs, rat_roots):
         if base == week:
             subjects.update({name: 0 for name in dirs})
         for f in sorted(base.iterdir()):
@@ -97,10 +98,12 @@ def _words(text: str, stopwords: set[str]) -> set[str]:
 
 
 def ilo_lines(num: str, title: str, path: Path | None, stopwords: set[str],
-              limit: int = 8) -> list[str]:
+              limit: int = 8, *, rat_roots=()) -> list[str]:
     """Rank matching outcome lines by title overlap; retain competing headings."""
     if path is None:
         return []
+    if any(rat.within(path, root) for root in rat_roots):
+        raise ValueError("learning_outcomes_file is inside a quarantined RAT root")
     rx = re.compile(rf"(?<![\d.]){re.escape(num)}(?![\d.]|\d)")
     title_words = _words(title, stopwords)
     hits = []
@@ -123,8 +126,11 @@ def main(argv=None) -> int:
     args = ap.parse_args(argv)
     try:
         cfg = config.load(args.config)
+        rat_roots = [p for _, p in rat.effective_roots(rat.policy_from_config(cfg))]
         title, course = args.title, ""
         if args.module:
+            if any(rat.within(args.module, root) for root in rat_roots):
+                raise ValueError("module path is inside a quarantined RAT root")
             doc = json.loads(args.module.read_text(encoding="utf-8"))
             title = doc.get("lesson", {}).get("title", "")
             course = doc.get("lesson", {}).get("course_title", "")
@@ -137,18 +143,20 @@ def main(argv=None) -> int:
                              f"(from {cfg.where('curriculum.root')})")
         num = week_number(title, cfg.get("curriculum.week_number_pattern"))
         skip = set(cfg.get("curriculum.skip_dirs"))
-        hits = find_week_dirs(num, root, cfg.get("curriculum.week_dir_pattern"), skip) \
+        rat_roots = [p for _, p in rat.effective_roots(rat.policy_from_config(cfg))]
+        hits = find_week_dirs(num, root, cfg.get("curriculum.week_dir_pattern"), skip, rat_roots) \
             if num and root else []
         outcome_value = cfg.get("curriculum.learning_outcomes_file")
         ilos = ilo_lines(num, title, Path(outcome_value) if outcome_value else None,
-                         {s.casefold() for s in cfg.get("curriculum.title_stopwords")}) if num else []
+                         {s.casefold() for s in cfg.get("curriculum.title_stopwords")}, rat_roots=rat_roots) if num else []
         result = {
             "title": title, "course_title": course, "week_number": num,
             "curriculum_root": root_value, "curriculum_root_from": cfg.where("curriculum.root"),
             "learning_outcomes_file": outcome_value,
             "learning_outcomes_from": cfg.where("curriculum.learning_outcomes_file"),
-            "matches": [survey(h, {e.lower() for e in cfg.get("curriculum.text_extensions")}, skip)
+            "matches": [survey(h, {e.lower() for e in cfg.get("curriculum.text_extensions")}, skip, rat_roots)
                         for h in hits],
+            "rat_roots_excluded": sum(r.is_dir() and root is not None and rat.within(r, root) for r in rat_roots),
             "ilo_hits": len(ilos), "ilo_sample": ilos,
             "status": "ok" if len(hits) == 1 else "ambiguous" if hits else "none",
             "lookup_disabled": root is None,

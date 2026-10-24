@@ -12,13 +12,41 @@
   "checkpoints_passed lists the index of every checkpoints entry that is committed and not in_flow."
  ],
  "modules": {
+  "c1-r109": {
+   "why": "Four writable quiz pages, no checkpoint and no single-attempt items. Only report page 7 is a navigation boundary.",
+   "first_stop": null,
+   "checkpoint_pages": [],
+   "single_attempt_items": [],
+   "doors": [
+    {
+     "class": "report-page",
+     "page_index": 7,
+     "item_id": null
+    }
+   ],
+   "single_attempts_passed": [],
+   "checkpoints_passed": [],
+   "inferred_locks": {}
+  },
   "c1-r101": {
    "why": "Locked and completed run. run_locked makes every page of the reach a single-pass page, so both submitted single-attempt items are passed, not doors.",
    "first_stop": null,
    "checkpoint_pages": [],
-   "single_attempt_items": ["p2-13", "p4-32"],
-   "doors": [{"class": "report-page", "page_index": 5, "item_id": null}],
-   "single_attempts_passed": ["p2-13", "p4-32"],
+   "single_attempt_items": [
+    "p2-13",
+    "p4-32"
+   ],
+   "doors": [
+    {
+     "class": "report-page",
+     "page_index": 5,
+     "item_id": null
+    }
+   ],
+   "single_attempts_passed": [
+    "p2-13",
+    "p4-32"
+   ],
    "checkpoints_passed": [],
    "inferred_locks": {}
   },
@@ -26,11 +54,25 @@
    "why": "Writable run. The unsubmitted single-attempt item p3-21 and the unmapped item p3-23 are per-item doors; nothing stops the run.",
    "first_stop": null,
    "checkpoint_pages": [],
-   "single_attempt_items": ["p3-21"],
+   "single_attempt_items": [
+    "p3-21"
+   ],
    "doors": [
-    {"class": "single-attempt-item", "page_index": 3, "item_id": "p3-21"},
-    {"class": "unmapped", "page_index": 3, "item_id": "p3-23"},
-    {"class": "report-page", "page_index": 5, "item_id": null}
+    {
+     "class": "single-attempt-item",
+     "page_index": 3,
+     "item_id": "p3-21"
+    },
+    {
+     "class": "unmapped",
+     "page_index": 3,
+     "item_id": "p3-23"
+    },
+    {
+     "class": "report-page",
+     "page_index": 5,
+     "item_id": null
+    }
    ],
    "single_attempts_passed": [],
    "checkpoints_passed": [],
@@ -40,8 +82,16 @@
    "why": "No completion page. The single-attempt drag item p4-31 is a per-item door.",
    "first_stop": null,
    "checkpoint_pages": [],
-   "single_attempt_items": ["p4-31"],
-   "doors": [{"class": "single-attempt-item", "page_index": 4, "item_id": "p4-31"}],
+   "single_attempt_items": [
+    "p4-31"
+   ],
+   "doors": [
+    {
+     "class": "single-attempt-item",
+     "page_index": 4,
+     "item_id": "p4-31"
+    }
+   ],
    "single_attempts_passed": [],
    "checkpoints_passed": [],
    "inferred_locks": {}
@@ -50,10 +100,22 @@
    "why": "Committed checkpoint 8 left the flow, so it is the lock cause. Pages 3, 4, 5, 7 and 8 are locked; page 9 has writable evidence and ends the reach. p3-12 is submitted on locked page 3, so it is passed. Page 4 has locked evidence, so its children are read-only-inferred; page 6 has no evidence, so its children are lock-unknown.",
    "first_stop": null,
    "checkpoint_pages": [],
-   "single_attempt_items": ["p3-12"],
-   "doors": [{"class": "report-page", "page_index": 10, "item_id": null}],
-   "single_attempts_passed": ["p3-12"],
-   "checkpoints_passed": [8],
+   "single_attempt_items": [
+    "p3-12"
+   ],
+   "doors": [
+    {
+     "class": "report-page",
+     "page_index": 10,
+     "item_id": null
+    }
+   ],
+   "single_attempts_passed": [
+    "p3-12"
+   ],
+   "checkpoints_passed": [
+    8
+   ],
    "inferred_locks": {
     "p4-22": "read-only-inferred",
     "p4-23": "read-only-inferred",
@@ -66,17 +128,35 @@
    "first_stop": null,
    "checkpoint_pages": [],
    "single_attempt_items": [],
-   "doors": [{"class": "report-page", "page_index": 5, "item_id": null}],
+   "doors": [
+    {
+     "class": "report-page",
+     "page_index": 5,
+     "item_id": null
+    }
+   ],
    "single_attempts_passed": [],
    "checkpoints_passed": [],
    "inferred_locks": {}
   },
   "c1-r106": {
    "why": "Page 3 is a live, uncommitted checkpoint: the only stop-severity door, and no report page is captured behind it.",
-   "first_stop": {"page_index": 3, "class": "checkpoint-page", "item_id": null},
-   "checkpoint_pages": [3],
+   "first_stop": {
+    "page_index": 3,
+    "class": "checkpoint-page",
+    "item_id": null
+   },
+   "checkpoint_pages": [
+    3
+   ],
    "single_attempt_items": [],
-   "doors": [{"class": "checkpoint-page", "page_index": 3, "item_id": null}],
+   "doors": [
+    {
+     "class": "checkpoint-page",
+     "page_index": 3,
+     "item_id": null
+    }
+   ],
    "single_attempts_passed": [],
    "checkpoints_passed": [],
    "inferred_locks": {}
@@ -86,7 +166,36 @@
    "first_stop": null,
    "checkpoint_pages": [],
    "single_attempt_items": [],
-   "doors": [{"class": "unmapped", "page_index": 1, "item_id": "p1-16"}],
+   "doors": [
+    {
+     "class": "unmapped",
+     "page_index": 1,
+     "item_id": "p1-16"
+    }
+   ],
+   "single_attempts_passed": [],
+   "checkpoints_passed": [],
+   "inferred_locks": {}
+  },
+  "c1-r108": {
+   "why": "Practice page 1 contains one single-attempt item. Report page 5 is never visited. No checkpoint stops the run.",
+   "first_stop": null,
+   "checkpoint_pages": [],
+   "single_attempt_items": [
+    "p1-18"
+   ],
+   "doors": [
+    {
+     "class": "single-attempt-item",
+     "page_index": 1,
+     "item_id": "p1-18"
+    },
+    {
+     "class": "report-page",
+     "page_index": 5,
+     "item_id": null
+    }
+   ],
    "single_attempts_passed": [],
    "checkpoints_passed": [],
    "inferred_locks": {}
@@ -98,15 +207,46 @@
    "base": "c1-r104",
    "why": "The state before the user committed: no committed checkpoint, a live one before the team test, p3-12 still open. The single-attempt item is a door on page 3, the checkpoint stops the run at page 9.",
    "ops": [
-    {"op": "checkpoints", "value": []},
-    {"op": "insert_checkpoint_page", "before_page_index": 9, "index": 8, "committed": false},
-    {"op": "item", "item_id": "p3-12", "set": {"read_only": false, "answered": false}}
+    {
+     "op": "checkpoints",
+     "value": []
+    },
+    {
+     "op": "insert_checkpoint_page",
+     "before_page_index": 9,
+     "index": 8,
+     "committed": false
+    },
+    {
+     "op": "item",
+     "item_id": "p3-12",
+     "set": {
+      "read_only": false,
+      "answered": false
+     }
+    }
    ],
-   "first_stop": {"page_index": 9, "class": "checkpoint-page", "item_id": null},
+   "first_stop": {
+    "page_index": 9,
+    "class": "checkpoint-page",
+    "item_id": null
+   },
    "doors": [
-    {"class": "single-attempt-item", "page_index": 3, "item_id": "p3-12"},
-    {"class": "checkpoint-page", "page_index": 9, "item_id": null},
-    {"class": "report-page", "page_index": 11, "item_id": null}
+    {
+     "class": "single-attempt-item",
+     "page_index": 3,
+     "item_id": "p3-12"
+    },
+    {
+     "class": "checkpoint-page",
+     "page_index": 9,
+     "item_id": null
+    },
+    {
+     "class": "report-page",
+     "page_index": 11,
+     "item_id": null
+    }
    ],
    "single_attempts_passed": [],
    "checkpoints_passed": [],
@@ -117,15 +257,36 @@
    "base": "c1-r104",
    "why": "A committed checkpoint out of the flow still causes the lock while a second, live one stops the run before the team test.",
    "ops": [
-    {"op": "insert_checkpoint_page", "before_page_index": 9, "index": 12, "committed": false}
+    {
+     "op": "insert_checkpoint_page",
+     "before_page_index": 9,
+     "index": 12,
+     "committed": false
+    }
    ],
-   "first_stop": {"page_index": 9, "class": "checkpoint-page", "item_id": null},
+   "first_stop": {
+    "page_index": 9,
+    "class": "checkpoint-page",
+    "item_id": null
+   },
    "doors": [
-    {"class": "checkpoint-page", "page_index": 9, "item_id": null},
-    {"class": "report-page", "page_index": 11, "item_id": null}
+    {
+     "class": "checkpoint-page",
+     "page_index": 9,
+     "item_id": null
+    },
+    {
+     "class": "report-page",
+     "page_index": 11,
+     "item_id": null
+    }
    ],
-   "single_attempts_passed": ["p3-12"],
-   "checkpoints_passed": [8],
+   "single_attempts_passed": [
+    "p3-12"
+   ],
+   "checkpoints_passed": [
+    8
+   ],
    "inferred_locks": {
     "p4-22": "read-only-inferred",
     "p4-23": "read-only-inferred",
@@ -138,12 +299,28 @@
    "base": "c1-r104",
    "why": "run_locked makes the whole run the reach, including the page with writable items; the lock evidence per page is unchanged.",
    "ops": [
-    {"op": "checkpoints", "value": []},
-    {"op": "lesson", "set": {"run_locked": true}}
+    {
+     "op": "checkpoints",
+     "value": []
+    },
+    {
+     "op": "lesson",
+     "set": {
+      "run_locked": true
+     }
+    }
    ],
    "first_stop": null,
-   "doors": [{"class": "report-page", "page_index": 10, "item_id": null}],
-   "single_attempts_passed": ["p3-12"],
+   "doors": [
+    {
+     "class": "report-page",
+     "page_index": 10,
+     "item_id": null
+    }
+   ],
+   "single_attempts_passed": [
+    "p3-12"
+   ],
    "checkpoints_passed": [],
    "inferred_locks": {
     "p4-22": "read-only-inferred",
@@ -157,12 +334,23 @@
    "base": "c1-r104",
    "why": "No lock cause: a submitted single-attempt item alone proves nothing about its Submit control, so p3-12 stays a door.",
    "ops": [
-    {"op": "checkpoints", "value": []}
+    {
+     "op": "checkpoints",
+     "value": []
+    }
    ],
    "first_stop": null,
    "doors": [
-    {"class": "single-attempt-item", "page_index": 3, "item_id": "p3-12"},
-    {"class": "report-page", "page_index": 10, "item_id": null}
+    {
+     "class": "single-attempt-item",
+     "page_index": 3,
+     "item_id": "p3-12"
+    },
+    {
+     "class": "report-page",
+     "page_index": 10,
+     "item_id": null
+    }
    ],
    "single_attempts_passed": [],
    "checkpoints_passed": [],
@@ -173,15 +361,32 @@
    "base": "c1-r104",
    "why": "Submission needs both answered and read_only evidence. The unanswered item remains a door; page 3 retains locked evidence, so its child locks remain inferred.",
    "ops": [
-    {"op": "item", "item_id": "p3-12", "set": {"read_only": true, "answered": false}}
+    {
+     "op": "item",
+     "item_id": "p3-12",
+     "set": {
+      "read_only": true,
+      "answered": false
+     }
+    }
    ],
    "first_stop": null,
    "doors": [
-    {"class": "single-attempt-item", "page_index": 3, "item_id": "p3-12"},
-    {"class": "report-page", "page_index": 10, "item_id": null}
+    {
+     "class": "single-attempt-item",
+     "page_index": 3,
+     "item_id": "p3-12"
+    },
+    {
+     "class": "report-page",
+     "page_index": 10,
+     "item_id": null
+    }
    ],
    "single_attempts_passed": [],
-   "checkpoints_passed": [8],
+   "checkpoints_passed": [
+    8
+   ],
    "inferred_locks": {
     "p4-22": "read-only-inferred",
     "p4-23": "read-only-inferred",
@@ -194,15 +399,32 @@
    "base": "c1-r104",
    "why": "read_only null on p3-12 makes it evidence that is not true, so page 3 is not locked, the reach ends at page 3 and no page is locked inside it: no reach at all.",
    "ops": [
-    {"op": "item", "item_id": "p3-12", "set": {"read_only": null, "answered": true}}
+    {
+     "op": "item",
+     "item_id": "p3-12",
+     "set": {
+      "read_only": null,
+      "answered": true
+     }
+    }
    ],
    "first_stop": null,
    "doors": [
-    {"class": "single-attempt-item", "page_index": 3, "item_id": "p3-12"},
-    {"class": "report-page", "page_index": 10, "item_id": null}
+    {
+     "class": "single-attempt-item",
+     "page_index": 3,
+     "item_id": "p3-12"
+    },
+    {
+     "class": "report-page",
+     "page_index": 10,
+     "item_id": null
+    }
    ],
    "single_attempts_passed": [],
-   "checkpoints_passed": [8],
+   "checkpoints_passed": [
+    8
+   ],
    "inferred_locks": {}
   },
   {
@@ -210,15 +432,32 @@
    "base": "c1-r104",
    "why": "A writable single-attempt item on page 3 ends the reach there, so no page is locked inside it.",
    "ops": [
-    {"op": "item", "item_id": "p3-12", "set": {"read_only": false, "answered": true}}
+    {
+     "op": "item",
+     "item_id": "p3-12",
+     "set": {
+      "read_only": false,
+      "answered": true
+     }
+    }
    ],
    "first_stop": null,
    "doors": [
-    {"class": "single-attempt-item", "page_index": 3, "item_id": "p3-12"},
-    {"class": "report-page", "page_index": 10, "item_id": null}
+    {
+     "class": "single-attempt-item",
+     "page_index": 3,
+     "item_id": "p3-12"
+    },
+    {
+     "class": "report-page",
+     "page_index": 10,
+     "item_id": null
+    }
    ],
    "single_attempts_passed": [],
-   "checkpoints_passed": [8],
+   "checkpoints_passed": [
+    8
+   ],
    "inferred_locks": {}
   },
   {
@@ -226,15 +465,32 @@
    "base": "c1-r104",
    "why": "answered null is no evidence of a Submit, so p3-12 is a door; page 3 stays locked.",
    "ops": [
-    {"op": "item", "item_id": "p3-12", "set": {"read_only": true, "answered": null}}
+    {
+     "op": "item",
+     "item_id": "p3-12",
+     "set": {
+      "read_only": true,
+      "answered": null
+     }
+    }
    ],
    "first_stop": null,
    "doors": [
-    {"class": "single-attempt-item", "page_index": 3, "item_id": "p3-12"},
-    {"class": "report-page", "page_index": 10, "item_id": null}
+    {
+     "class": "single-attempt-item",
+     "page_index": 3,
+     "item_id": "p3-12"
+    },
+    {
+     "class": "report-page",
+     "page_index": 10,
+     "item_id": null
+    }
    ],
    "single_attempts_passed": [],
-   "checkpoints_passed": [8],
+   "checkpoints_passed": [
+    8
+   ],
    "inferred_locks": {
     "p4-22": "read-only-inferred",
     "p4-23": "read-only-inferred",
@@ -247,16 +503,62 @@
    "base": "c1-r102",
    "why": "Doors on one page sort by item_id as plain strings: p3-12, p3-21, p3-23, p3-9.",
    "ops": [
-    {"op": "add_item", "page_index": 3, "item": {"item_id": "p3-9", "panel_key": "9", "plugin_key": "text-question", "type": "text-response", "attempts": "single", "read_only": false, "answered": false, "parent_item_id": null}},
-    {"op": "add_item", "page_index": 3, "item": {"item_id": "p3-12", "panel_key": "12", "plugin_key": "text-question", "type": "text-response", "attempts": "single", "read_only": false, "answered": false, "parent_item_id": null}}
+    {
+     "op": "add_item",
+     "page_index": 3,
+     "item": {
+      "item_id": "p3-9",
+      "panel_key": "9",
+      "plugin_key": "text-question",
+      "type": "text-response",
+      "attempts": "single",
+      "read_only": false,
+      "answered": false,
+      "parent_item_id": null
+     }
+    },
+    {
+     "op": "add_item",
+     "page_index": 3,
+     "item": {
+      "item_id": "p3-12",
+      "panel_key": "12",
+      "plugin_key": "text-question",
+      "type": "text-response",
+      "attempts": "single",
+      "read_only": false,
+      "answered": false,
+      "parent_item_id": null
+     }
+    }
    ],
    "first_stop": null,
    "doors": [
-    {"class": "single-attempt-item", "page_index": 3, "item_id": "p3-12"},
-    {"class": "single-attempt-item", "page_index": 3, "item_id": "p3-21"},
-    {"class": "unmapped", "page_index": 3, "item_id": "p3-23"},
-    {"class": "single-attempt-item", "page_index": 3, "item_id": "p3-9"},
-    {"class": "report-page", "page_index": 5, "item_id": null}
+    {
+     "class": "single-attempt-item",
+     "page_index": 3,
+     "item_id": "p3-12"
+    },
+    {
+     "class": "single-attempt-item",
+     "page_index": 3,
+     "item_id": "p3-21"
+    },
+    {
+     "class": "unmapped",
+     "page_index": 3,
+     "item_id": "p3-23"
+    },
+    {
+     "class": "single-attempt-item",
+     "page_index": 3,
+     "item_id": "p3-9"
+    },
+    {
+     "class": "report-page",
+     "page_index": 5,
+     "item_id": null
+    }
    ],
    "single_attempts_passed": [],
    "checkpoints_passed": [],
@@ -267,14 +569,39 @@
    "base": "c1-r102",
    "why": "A live checkpoint inserted before page 3 stops the run there; the per-item doors move to page 4.",
    "ops": [
-    {"op": "insert_checkpoint_page", "before_page_index": 3, "index": 5, "committed": false}
+    {
+     "op": "insert_checkpoint_page",
+     "before_page_index": 3,
+     "index": 5,
+     "committed": false
+    }
    ],
-   "first_stop": {"page_index": 3, "class": "checkpoint-page", "item_id": null},
+   "first_stop": {
+    "page_index": 3,
+    "class": "checkpoint-page",
+    "item_id": null
+   },
    "doors": [
-    {"class": "checkpoint-page", "page_index": 3, "item_id": null},
-    {"class": "single-attempt-item", "page_index": 4, "item_id": "p3-21"},
-    {"class": "unmapped", "page_index": 4, "item_id": "p3-23"},
-    {"class": "report-page", "page_index": 6, "item_id": null}
+    {
+     "class": "checkpoint-page",
+     "page_index": 3,
+     "item_id": null
+    },
+    {
+     "class": "single-attempt-item",
+     "page_index": 4,
+     "item_id": "p3-21"
+    },
+    {
+     "class": "unmapped",
+     "page_index": 4,
+     "item_id": "p3-23"
+    },
+    {
+     "class": "report-page",
+     "page_index": 6,
+     "item_id": null
+    }
    ],
    "single_attempts_passed": [],
    "checkpoints_passed": [],
@@ -285,13 +612,30 @@
    "base": "c1-r101",
    "why": "Without run_locked and with no committed checkpoint there is no lock cause, so the submitted single-attempt items are doors again.",
    "ops": [
-    {"op": "lesson", "set": {"run_locked": false}}
+    {
+     "op": "lesson",
+     "set": {
+      "run_locked": false
+     }
+    }
    ],
    "first_stop": null,
    "doors": [
-    {"class": "single-attempt-item", "page_index": 2, "item_id": "p2-13"},
-    {"class": "single-attempt-item", "page_index": 4, "item_id": "p4-32"},
-    {"class": "report-page", "page_index": 5, "item_id": null}
+    {
+     "class": "single-attempt-item",
+     "page_index": 2,
+     "item_id": "p2-13"
+    },
+    {
+     "class": "single-attempt-item",
+     "page_index": 4,
+     "item_id": "p4-32"
+    },
+    {
+     "class": "report-page",
+     "page_index": 5,
+     "item_id": null
+    }
    ],
    "single_attempts_passed": [],
    "checkpoints_passed": [],
@@ -302,11 +646,26 @@
    "base": "c1-r101",
    "why": "run_locked covers every page of the run, so a writable item on page 4 does not take p4-32 out of the passed list.",
    "ops": [
-    {"op": "item", "item_id": "p4-31", "set": {"read_only": false}}
+    {
+     "op": "item",
+     "item_id": "p4-31",
+     "set": {
+      "read_only": false
+     }
+    }
    ],
    "first_stop": null,
-   "doors": [{"class": "report-page", "page_index": 5, "item_id": null}],
-   "single_attempts_passed": ["p2-13", "p4-32"],
+   "doors": [
+    {
+     "class": "report-page",
+     "page_index": 5,
+     "item_id": null
+    }
+   ],
+   "single_attempts_passed": [
+    "p2-13",
+    "p4-32"
+   ],
    "checkpoints_passed": [],
    "inferred_locks": {}
   },
@@ -315,13 +674,29 @@
    "base": "c1-r106",
    "why": "Once committed, the checkpoint leaves the flow: no stop, no door, and the container still records it as passed.",
    "ops": [
-    {"op": "remove_page", "page_index": 3},
-    {"op": "checkpoints", "value": [{"index": 7, "page_index": null, "committed": true, "in_flow": false, "source": "checkpointPageContainer"}]}
+    {
+     "op": "remove_page",
+     "page_index": 3
+    },
+    {
+     "op": "checkpoints",
+     "value": [
+      {
+       "index": 7,
+       "page_index": null,
+       "committed": true,
+       "in_flow": false,
+       "source": "checkpointPageContainer"
+      }
+     ]
+    }
    ],
    "first_stop": null,
    "doors": [],
    "single_attempts_passed": [],
-   "checkpoints_passed": [7],
+   "checkpoints_passed": [
+    7
+   ],
    "inferred_locks": {}
   },
   {
@@ -329,12 +704,29 @@
    "base": "c1-r106",
    "why": "With two live checkpoints the first stop is the earlier page.",
    "ops": [
-    {"op": "insert_checkpoint_page", "before_page_index": 2, "index": 6, "committed": false}
+    {
+     "op": "insert_checkpoint_page",
+     "before_page_index": 2,
+     "index": 6,
+     "committed": false
+    }
    ],
-   "first_stop": {"page_index": 2, "class": "checkpoint-page", "item_id": null},
+   "first_stop": {
+    "page_index": 2,
+    "class": "checkpoint-page",
+    "item_id": null
+   },
    "doors": [
-    {"class": "checkpoint-page", "page_index": 2, "item_id": null},
-    {"class": "checkpoint-page", "page_index": 4, "item_id": null}
+    {
+     "class": "checkpoint-page",
+     "page_index": 2,
+     "item_id": null
+    },
+    {
+     "class": "checkpoint-page",
+     "page_index": 4,
+     "item_id": null
+    }
    ],
    "single_attempts_passed": [],
    "checkpoints_passed": [],

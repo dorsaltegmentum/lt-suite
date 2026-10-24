@@ -172,3 +172,46 @@ def test_module_title_and_relative_paths_work_from_other_cwd(tmp_path, run_py):
     result = run_py(str(SCRIPT), "--module", str(module), "--config", str(cfg), "--json", cwd=elsewhere)
     assert result.returncode == 0
     assert json.loads(result.stdout)["course_title"] == "Synthetic course"
+
+
+@pytest.mark.parametrize('alias', [False, True])
+def test_rat_learning_outcome_path_refused_before_read(tmp_path, run_py, alias):
+    root, cfg = settings(tmp_path)
+    (root / 'Week 1 Demo').mkdir()
+    sheets = root / 'sheets'
+    sheets.mkdir()
+    sheet = sheets / 'answers.md'
+    sheet.write_text('Week 1 invented-secret-selection\n')
+    outcome = sheet
+    if alias:
+        outcome = root / 'outcomes.md'
+        outcome.symlink_to(sheet)
+    cfg.write_text(cfg.read_text() + f'learning_outcomes_file = {json.dumps(str(outcome))}\n'
+                   f'[rat]\nanswers_dir = {json.dumps(str(sheets))}\nirat = "skip"\ntrat = "skip"\n')
+    result = resolve(run_py, cfg)
+    assert result.returncode == 3
+    assert 'RAT root' in result.stderr
+    assert 'invented-secret-selection' not in result.stdout + result.stderr
+
+
+def test_rat_outcome_refusal_opens_no_sheet(tmp_path, monkeypatch):
+    import importlib.util
+    spec = importlib.util.spec_from_file_location('review_resolve_week', SCRIPT)
+    resolver = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(resolver)
+    sheets = tmp_path/'sheets'
+    sheets.mkdir()
+    sheet = sheets/'answers.md'
+    sheet.write_text('Week 1 invented selection')
+    alias = tmp_path/'alias.md'
+    alias.symlink_to(sheet)
+    opened = []
+    original = Path.open
+    def watched(path, *args, **kwargs):
+        if path.resolve() == sheet:
+            opened.append(path)
+        return original(path, *args, **kwargs)
+    monkeypatch.setattr(Path, 'open', watched)
+    with pytest.raises(ValueError, match='RAT root'):
+        resolver.ilo_lines('1', 'Week 1 Demo', alias, set(), rat_roots=[sheets])
+    assert opened == []

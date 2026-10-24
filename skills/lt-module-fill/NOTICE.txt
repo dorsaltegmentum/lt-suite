@@ -16,3 +16,7 @@ Bundled third-party files in this folder:
   scripts/_shared/fonts/noto-sans-mono/OFL.txt: SIL Open Font License 1.1; the licence text and copyright lines are beside each font
   scripts/_shared/fonts/noto-sans/NotoSans-Variable.ttf: SIL Open Font License 1.1; the licence text and copyright lines are in the OFL.txt beside each font
   scripts/_shared/fonts/noto-sans/OFL.txt: SIL Open Font License 1.1; the licence text and copyright lines are beside each font
+  scripts/_shared/palettes/catalog.json: palette colour values under their own licences or attribution terms; see palettes/ATTRIBUTION.md in the lt-suite repository
+  scripts/_shared/palettes/overrides/catppuccin-frappe.toml: Catppuccin colour values, MIT licence, Copyright (c) 2021 Catppuccin
+  scripts/_shared/palettes/overrides/catppuccin-latte.toml: Catppuccin colour values, MIT licence, Copyright (c) 2021 Catppuccin
+  scripts/_shared/palettes/overrides/everforest-dark-medium.toml: Everforest colour values, MIT licence, Copyright (c) 2019 sainnhe

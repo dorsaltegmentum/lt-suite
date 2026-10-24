@@ -461,3 +461,235 @@ def test_export_makes_final_pdfs_and_records_the_pass(run, args, make_config, tm
 def test_export_timestamp_honors_reproducible_build_epoch(export_module, monkeypatch):
     monkeypatch.setenv("SOURCE_DATE_EPOCH", "946684800")
     assert export_module.now_iso() == "2000-01-01T00:00:00+00:00"
+
+
+def _memory_pdf(cfg):
+    import io
+    import re
+    import pdf_base as B
+    from reportlab.pdfgen.canvas import Canvas
+    faces, notes = B.resolve_faces(cfg)
+    B.register_fonts(faces)
+    out = io.BytesIO()
+    canvas = Canvas(out)
+    canvas.setFont('Sans',12)
+    canvas.drawString(20,20,'A synthetic page body')
+    canvas.save()
+    names = set(re.findall(rb'/BaseFont\s*/([^\s/>]+)',out.getvalue()))
+    return names, notes
+
+
+def test_pdf_uses_pdf_fonts(font_file):
+    _memory_pdf({})  # A prior export must not pin ReportLab's Sans alias.
+    path = font_file('Test PDF')
+    names,_ = _memory_pdf({'fonts.pdf.sans':str(path)})
+    assert any(b'TestPDF' in n for n in names), names
+    assert all(b'NotoSans-' not in n for n in names)
+
+
+def test_diagram_fonts_do_not_reach_pdf_body(font_file):
+    path = font_file('Test Diagram')
+    names,_ = _memory_pdf({'fonts.diagram.sans':str(path)})
+    assert any(b'NotoSans' in n for n in names)
+    assert all(b'TestDiagram' not in n for n in names)
+
+
+def test_pdf_gate_runs_on_every_face(font_file, monkeypatch):
+    from ltcore import fonts as F
+    import pdf_base as B
+    bad = font_file('Refused Test',fs_type=2)
+    names,notes = _memory_pdf({'fonts.pdf.sans':str(bad)})
+    assert all(b'RefusedTest' not in n for n in names)
+    assert any('fsType 0x0002' in n for n in notes)
+    monkeypatch.setattr(F,'bundled_files',lambda e: [])
+    monkeypatch.setattr(F,'_data_fonts_dir',lambda *a: None)
+    monkeypatch.setattr(F,'fc_match',lambda *a,**k:None)
+    monkeypatch.setattr(F,'scan_family',lambda *a,**k:[])
+    monkeypatch.setattr(F,'_os_candidates',lambda *a: iter([F.Font('sans','Refused Test',bad,'system fallback',os_fallback=True)]))
+    with pytest.raises(B.FontUnavailable,match='fsType 0x0002'):
+        _memory_pdf({})
+    monkeypatch.setattr(F,'resolve',lambda *a,**k:bad)
+    assert B.find_symbol_font({'a'}) is None
+
+
+def test_equilibrium_arrows_have_stand_ins(monkeypatch):
+    import pdf_base as B
+    monkeypatch.setattr(B,'_cmap',lambda *a:set())
+    monkeypatch.setattr(B,'find_symbol_font',lambda *a:None)
+    faces={name:('fake.ttf',0) for name in B.FACE_SPEC}
+    plan=B.plan_glyphs(set('⇄⇌⇒'),faces)
+    assert not plan['missing']
+    assert plan['subs'] == {'⇄':'<->','⇌':'<=>','⇒':'=>'}
+
+
+def test_svg_assets_carry_the_chain(run,args,tmp_path):
+    directory=tmp_path/'diagrams'
+    directory.mkdir()
+    source=directory/'test.svg'
+    original='<svg xmlns="http://www.w3.org/2000/svg"><text font-family="Noto Sans">Test</text></svg>'
+    source.write_text(original)
+    rc,_,err=run(*args(extra=['--diagram-dir',directory]))
+    assert rc==0,err
+    copy=tmp_path/'out/assets/lt-c1-r101-test.svg'
+    assert 'Segoe UI' in copy.read_text() and source.read_text()==original
+
+
+def _bound_images(directory):
+    from PIL import Image
+    from ltcore import palettes as P
+    directory.mkdir(parents=True,exist_ok=True)
+    linked=directory/'lt-m-u5.png'
+    Image.new('RGB',(80,60),'red').save(linked)
+    copies={}
+    for pid,colour,printed in [('tol-bright','green',True),('catppuccin-frappe','blue',False)]:
+        sibling=directory/f'{linked.stem}-{pid}.png'
+        Image.new('RGB',(80,60),colour).save(sibling)
+        copies[pid]={'file':sibling.name,'sha256':P.file_sha256(sibling),'print':printed}
+    manifest={'upload':{'file':linked.name,'sha256':P.file_sha256(linked)},'media_sha256':None,'copies':copies}
+    P.copies_manifest(linked).write_text(json.dumps(manifest))
+    return linked,manifest
+
+
+def _image_pdf_colours(tmp_path, linked, cfg):
+    """Drive render_page's actual print/screen selection and inspect decoded PDF image pixels."""
+    import pdf_base as B
+    import module_pdf as M
+    import pypdfium2 as pdfium
+    B.register_fonts(cfg=cfg)
+    page=tmp_path/'page.md'
+    page.write_text('title:: Image test\ntype:: **Lt Module Output**\n\n- # Page\n\t- ![Test](assets/'+linked.name+')\n')
+    reports=M.render_page(page,tmp_path/'pdfs',cfg)
+    out={}
+    for pid,report in reports.items():
+        with pdfium.PdfDocument(report['path']) as doc:
+            pixels=[]
+            for pg in doc:
+                for obj in pg.get_objects():
+                    if isinstance(obj,pdfium.PdfImage):
+                        image=obj.get_bitmap().to_pil().convert('RGB')
+                        pixels.append(image.getpixel((image.width//2,image.height//2)))
+            out[pid]=pixels
+    return out
+
+
+def test_print_pdf_takes_print_palette_copy(tmp_path,make_config):
+    from ltcore import config,palettes as P
+    cfg=config.load(make_config(style={'palettes':['catppuccin-frappe'],'print_palette':'tol-bright'}))
+    linked,_=_bound_images(tmp_path/'assets')
+    colours=_image_pdf_colours(tmp_path,linked,cfg)
+    assert (0,128,0) in colours['tol-bright'] and (0,0,255) in colours['catppuccin-frappe']
+    P.copies_manifest(linked).unlink()
+    colours=_image_pdf_colours(tmp_path,linked,cfg)
+    assert (255,0,0) in colours['tol-bright'] and (0,0,255) in colours['catppuccin-frappe']
+
+
+@pytest.mark.parametrize('change',['upload','disable','edited'])
+def test_stale_copies_never_reach_a_pdf(tmp_path,make_config,change,capsys):
+    from PIL import Image
+    from ltcore import config,palettes as P
+    cfg=config.load(make_config(style={'palettes':['catppuccin-frappe'],'print_palette':'tol-bright'}))
+    linked,manifest=_bound_images(tmp_path/'assets')
+    if change=='upload':
+        Image.new('RGB',(90,70),'red').save(linked)
+    elif change=='disable':
+        manifest['copies']={}
+        P.copies_manifest(linked).write_text(json.dumps(manifest))
+    else:
+        for record in manifest['copies'].values():
+            (linked.parent/record['file']).write_bytes(b'edited')
+    colours=_image_pdf_colours(tmp_path,linked,cfg)
+    assert all((255,0,0) in values and (0,128,0) not in values and (0,0,255) not in values for values in colours.values())
+    assert '--file-copies' in capsys.readouterr().err
+
+
+def test_palette_copies_reach_assets(run,args,tmp_path,fixtures):
+    from ltcore import palettes as P
+    import shutil
+    directory=tmp_path/'media'
+    directory.mkdir()
+    for p in (fixtures/'media').iterdir():
+        if p.is_file(): shutil.copyfile(p,directory/p.name)
+    source=next(p for p in directory.iterdir() if p.name.startswith('lt-c1-r101-'))
+    pid=P.pdf_palette_ids({'style.palettes':['tol-bright'],'style.print_palette':'tol-bright'})[0]
+    sibling=source.with_name(f'{source.stem}-{pid}{source.suffix}')
+    shutil.copyfile(source,sibling)
+    extra=source.with_name(f'{source.stem}-other{source.suffix}')
+    shutil.copyfile(source,extra)
+    manifest={'upload':{'file':source.name,'sha256':P.file_sha256(source)},'media_sha256':None,
+              'copies':{pid:{'file':sibling.name,'sha256':P.file_sha256(sibling),'print':True}}}
+    P.copies_manifest(source).write_text(json.dumps(manifest))
+    argv=args()
+    argv[argv.index('--media-dir')+1]=directory
+    rc,_,err=run(*argv)
+    assert rc==0,err
+    assets=tmp_path/'out/assets'
+    assert (assets/sibling.name).is_file() and (assets/P.copies_manifest(source).name).is_file()
+    assert not (assets/extra.name).exists()
+
+
+@pytest.mark.parametrize('field,value', [
+    ('upload', 'invalid'), ('upload', []), ('upload', None),
+    ('upload.file', []), ('upload.sha256', []), ('media_sha256', {}),
+    ('copy', 'invalid'), ('copy', None), ('copy.file', []),
+    ('copy.sha256', {}), ('copy.print', 'yes'),
+])
+def test_malformed_copy_manifest_is_rejected(tmp_path, field, value):
+    """Malformed nested fields must never escape the manifest trust boundary."""
+    from ltcore import palettes as P
+    linked, manifest = _bound_images(tmp_path / 'assets')
+    if field.startswith('copy.'):
+        manifest['copies']['tol-bright'][field.split('.')[1]] = value
+    elif field == 'copy':
+        manifest['copies']['tol-bright'] = value
+    elif field.startswith('upload.'):
+        manifest['upload'][field.split('.')[1]] = value
+    else:
+        manifest[field] = value
+    P.copies_manifest(linked).write_text(json.dumps(manifest))
+    try:
+        selected = P.bound_copy(linked, 'tol-bright')
+    except (AttributeError, TypeError, KeyError) as exc:
+        pytest.fail(f'malformed manifest escaped validation: {exc}')
+    assert selected is None
+    assert P.read_copies(linked) is None
+
+
+def test_malformed_copy_manifest_keeps_linked_image_in_pdf(tmp_path, make_config, capsys):
+    """A malformed upload field must fall back to the linked image in both PDFs."""
+    from ltcore import config, palettes as P
+    cfg = config.load(make_config(style={'palettes': ['catppuccin-frappe'], 'print_palette': 'tol-bright'}))
+    linked, manifest = _bound_images(tmp_path / 'assets')
+    manifest['upload'] = 'invalid'
+    P.copies_manifest(linked).write_text(json.dumps(manifest))
+    colours = _image_pdf_colours(tmp_path, linked, cfg)
+    assert all((255, 0, 0) in values and (0, 128, 0) not in values and (0, 0, 255) not in values
+               for values in colours.values())
+    assert '--file-copies' in capsys.readouterr().err
+
+
+def test_reconciled_check_export_tags_and_dispute(run,args,fixtures,tmp_path):
+    rec=fixtures/'runs/c1-r108/reconciled.json'
+    rc,out,err=run(*args('c1-r108',extra=['--reconciled',rec]))
+    assert rc==0,err+out
+    page=(tmp_path/'out/module-page.md').read_text()
+    assert "accepted by Lt's Check Answer after 2 presses" in page
+    assert "Lt's key contradicts the cited sources" in page
+    assert 'Cited draft:' in page and 'Dropped draft segment:' in page
+    assert 'slide 2' in page and 'slide 3' in page
+
+
+def test_unreconciled_unsuccessful_restore_is_never_called_accepted(run,args,tmp_path):
+    rc,out,err=run(*args('c1-r108'))
+    assert rc==0,err+out
+    page=(tmp_path/'out/module-page.md').read_text()
+    section=page.split('p1-14')[1].split('p1-15')[0]
+    assert 'Lt did not mark this correct' in section
+    assert 'accepted' not in section
+
+
+@pytest.mark.parametrize('pin',['source_answers','source_fill_report'])
+def test_reconciled_stale_pin_is_fatal(run,args,fixtures,tmp_path,pin):
+    doc=json.loads((fixtures/'runs/c1-r108/reconciled.json').read_text());doc[pin]['sha256']='0'*64
+    p=tmp_path/'reconciled.json';p.write_text(json.dumps(doc))
+    rc,out,err=run(*args('c1-r108',extra=['--reconciled',p]))
+    assert rc==1 and pin in err and 're-run reconcile' in err

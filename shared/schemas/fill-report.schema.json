@@ -1,7 +1,7 @@
 {
  "$schema": "https://json-schema.org/draft/2020-12/schema",
  "$id": "https://github.com/dorsaltegmentum/lt-suite/schemas/fill-report.schema.json",
- "title": "fill-report.json: lt-module-fill → human → lexicon",
+ "title": "fill-report.json: lt-module-fill \u2192 human \u2192 lexicon",
  "description": "Records what was typed where, skips, the stopping boundary, every selector and every TODO with its placement. Also supports resuming after a dropped browser agent connection.",
  "type": "object",
  "additionalProperties": false,
@@ -421,13 +421,877 @@
        },
        "draft_ref": {
         "type": "string",
-        "description": "The provenance ref from answers.json that the held answer rests on. Required: the rule that keeps an answer against the key applies only where the answer is CITED and the citation survives being re-read. An lt_conflict with nothing behind it is not a conflict but an uncorrected wrong answer, and the Check Answer loop is what settles those."
+        "description": "The provenance ref from answers.json that the held answer rests on. Required: the rule that keeps an answer against the key applies only where the answer is CITED and the citation survives being re-read. An lt_conflict with nothing behind it is not a conflict but an uncorrected wrong answer, check_answer separately records optional retries and their evidence."
        },
        "note": {
         "type": "string",
         "description": "Why the researched answer was kept, and any sibling items keyed the same way."
        }
       }
+     },
+     "answer_source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+       "kind",
+       "root",
+       "name",
+       "sha256",
+       "question",
+       "page_kind",
+       "classified_by"
+      ],
+      "properties": {
+       "kind": {
+        "const": "rat-sheet"
+       },
+       "root": {
+        "type": "string",
+        "pattern": "^rat\\.answers_dir(?:s\\[[0-9]+\\])?$"
+       },
+       "name": {
+        "type": "string",
+        "pattern": "^[A-Za-z0-9 ._()-]{1,80}$"
+       },
+       "sha256": {
+        "type": "string",
+        "pattern": "^[0-9a-f]{64}$"
+       },
+       "question": {
+        "type": "integer",
+        "minimum": 0
+       },
+       "page_kind": {
+        "enum": [
+         "trat",
+         "irat",
+         null
+        ]
+       },
+       "classified_by": {
+        "type": "array",
+        "items": {
+         "type": "string",
+         "enum": [
+          "answers-json",
+          "rat-answers",
+          "user-mark",
+          "page-text"
+         ]
+        }
+       }
+      }
+     },
+     "check_answer": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+       "pool_h": {
+        "type": "array",
+        "items": {
+         "type": "integer",
+         "minimum": 0
+        }
+       },
+       "eligible": {
+        "type": "boolean"
+       },
+       "reason": {
+        "type": [
+         "string",
+         "null"
+        ]
+       },
+       "policy": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+         "enabled": {
+          "type": "boolean"
+         },
+         "config": {
+          "type": "string"
+         }
+        },
+        "required": [
+         "enabled",
+         "config"
+        ]
+       },
+       "rat_page": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+         "page_index",
+         "candidate",
+         "rat_shape",
+         "rat_candidate",
+         "rat",
+         "kind",
+         "sources",
+         "decision",
+         "check_allowed",
+         "page_digest",
+         "classification_digest",
+         "record_sha256"
+        ],
+        "properties": {
+         "page_index": {
+          "type": "integer",
+          "minimum": 0
+         },
+         "candidate": {
+          "type": "boolean"
+         },
+         "rat_shape": {
+          "type": "boolean"
+         },
+         "rat_candidate": {
+          "type": "boolean"
+         },
+         "rat": {
+          "type": [
+           "boolean",
+           "null"
+          ]
+         },
+         "kind": {
+          "enum": [
+           "trat",
+           "irat",
+           null
+          ]
+         },
+         "sources": {
+          "type": "array",
+          "items": {
+           "type": "string",
+           "enum": [
+            "answers-json",
+            "rat-answers",
+            "user-mark",
+            "page-text"
+           ]
+          }
+         },
+         "decision": {
+          "type": "string"
+         },
+         "check_allowed": {
+          "type": "boolean"
+         },
+         "page_digest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+         },
+         "classification_digest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+         },
+         "record_sha256": {
+          "type": [
+           "string",
+           "null"
+          ]
+         },
+         "sheet": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+           "root": {
+            "type": "string",
+            "pattern": "^rat\\.answers_dir(?:s\\[[0-9]+\\])?$"
+           },
+           "name": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9 ._()-]{1,80}$"
+           },
+           "sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+           },
+           "format": {
+            "enum": [
+             "compact",
+             "marked"
+            ]
+           },
+           "declared_kind": {
+            "type": [
+             "string",
+             "null"
+            ],
+            "enum": [
+             "irat",
+             "trat",
+             null
+            ]
+           },
+           "grade": {
+            "enum": [
+             "full",
+             "partial",
+             "none"
+            ]
+           },
+           "distinct": {
+            "type": "integer",
+            "minimum": 0
+           },
+           "aligned": {
+            "type": "integer",
+            "minimum": 0
+           },
+           "answered": {
+            "type": "integer",
+            "minimum": 0
+           },
+           "unanswered": {
+            "type": "array",
+            "items": {
+             "type": "integer",
+             "minimum": 0
+            }
+           },
+           "mark_mismatch": {
+            "type": "array",
+            "items": {
+             "type": "integer",
+             "minimum": 0
+            }
+           },
+           "aligned_questions": {
+            "type": "array",
+            "items": {
+             "type": "integer",
+             "minimum": 0
+            }
+           },
+           "week": {
+            "enum": [
+             "agree",
+             "differs",
+             "absent"
+            ]
+           },
+           "chosen": {
+            "type": "boolean"
+           },
+           "confirmation_reasons": {
+            "type": "array",
+            "items": {
+             "type": "string"
+            }
+           },
+           "todo_questions": {
+            "type": "object",
+            "additionalProperties": {
+             "type": "string",
+             "enum": [
+              "malformed",
+              "unaligned",
+              "mark-mismatch",
+              "unanswered",
+              "multi-marked"
+             ]
+            }
+           }
+          },
+          "required": [
+           "root",
+           "name",
+           "sha256",
+           "format",
+           "declared_kind",
+           "grade",
+           "distinct",
+           "aligned",
+           "answered",
+           "unanswered",
+           "mark_mismatch",
+           "aligned_questions",
+           "week",
+           "chosen",
+           "confirmation_reasons",
+           "todo_questions"
+          ]
+         },
+         "check_reason": {
+          "type": [
+           "string",
+           "null"
+          ]
+         }
+        }
+       },
+       "calls": {
+        "type": "array",
+        "items": {
+         "type": "object",
+         "additionalProperties": false,
+         "properties": {
+          "receipt_sha256": {
+           "type": "string",
+           "pattern": "^[0-9a-f]{64}$"
+          },
+          "policy": {
+           "type": "object",
+           "additionalProperties": false,
+           "properties": {
+            "enabled": {
+             "type": "boolean"
+            },
+            "config": {
+             "type": "string"
+            }
+           },
+           "required": [
+            "enabled",
+            "config"
+           ]
+          },
+          "rat_page": {
+           "type": "object",
+           "additionalProperties": false,
+           "required": [
+            "page_index",
+            "candidate",
+            "rat_shape",
+            "rat_candidate",
+            "rat",
+            "kind",
+            "sources",
+            "decision",
+            "check_allowed",
+            "page_digest",
+            "classification_digest",
+            "record_sha256"
+           ],
+           "properties": {
+            "page_index": {
+             "type": "integer",
+             "minimum": 0
+            },
+            "candidate": {
+             "type": "boolean"
+            },
+            "rat_shape": {
+             "type": "boolean"
+            },
+            "rat_candidate": {
+             "type": "boolean"
+            },
+            "rat": {
+             "type": [
+              "boolean",
+              "null"
+             ]
+            },
+            "kind": {
+             "enum": [
+              "trat",
+              "irat",
+              null
+             ]
+            },
+            "sources": {
+             "type": "array",
+             "items": {
+              "type": "string",
+              "enum": [
+               "answers-json",
+               "rat-answers",
+               "user-mark",
+               "page-text"
+              ]
+             }
+            },
+            "decision": {
+             "type": "string"
+            },
+            "check_allowed": {
+             "type": "boolean"
+            },
+            "page_digest": {
+             "type": "string",
+             "pattern": "^[0-9a-f]{64}$"
+            },
+            "classification_digest": {
+             "type": "string",
+             "pattern": "^[0-9a-f]{64}$"
+            },
+            "record_sha256": {
+             "type": [
+              "string",
+              "null"
+             ]
+            },
+            "sheet": {
+             "type": "object",
+             "additionalProperties": false,
+             "properties": {
+              "root": {
+               "type": "string",
+               "pattern": "^rat\\.answers_dir(?:s\\[[0-9]+\\])?$"
+              },
+              "name": {
+               "type": "string",
+               "pattern": "^[A-Za-z0-9 ._()-]{1,80}$"
+              },
+              "sha256": {
+               "type": "string",
+               "pattern": "^[0-9a-f]{64}$"
+              },
+              "format": {
+               "enum": [
+                "compact",
+                "marked"
+               ]
+              },
+              "declared_kind": {
+               "type": [
+                "string",
+                "null"
+               ],
+               "enum": [
+                "irat",
+                "trat",
+                null
+               ]
+              },
+              "grade": {
+               "enum": [
+                "full",
+                "partial",
+                "none"
+               ]
+              },
+              "distinct": {
+               "type": "integer",
+               "minimum": 0
+              },
+              "aligned": {
+               "type": "integer",
+               "minimum": 0
+              },
+              "answered": {
+               "type": "integer",
+               "minimum": 0
+              },
+              "unanswered": {
+               "type": "array",
+               "items": {
+                "type": "integer",
+                "minimum": 0
+               }
+              },
+              "mark_mismatch": {
+               "type": "array",
+               "items": {
+                "type": "integer",
+                "minimum": 0
+               }
+              },
+              "aligned_questions": {
+               "type": "array",
+               "items": {
+                "type": "integer",
+                "minimum": 0
+               }
+              },
+              "week": {
+               "enum": [
+                "agree",
+                "differs",
+                "absent"
+               ]
+              },
+              "chosen": {
+               "type": "boolean"
+              },
+              "confirmation_reasons": {
+               "type": "array",
+               "items": {
+                "type": "string"
+               }
+              },
+              "todo_questions": {
+               "type": "object",
+               "additionalProperties": {
+                "type": "string",
+                "enum": [
+                 "malformed",
+                 "unaligned",
+                 "mark-mismatch",
+                 "unanswered",
+                 "multi-marked"
+                ]
+               }
+              }
+             },
+             "required": [
+              "root",
+              "name",
+              "sha256",
+              "format",
+              "declared_kind",
+              "grade",
+              "distinct",
+              "aligned",
+              "answered",
+              "unanswered",
+              "mark_mismatch",
+              "aligned_questions",
+              "week",
+              "chosen",
+              "confirmation_reasons",
+              "todo_questions"
+             ]
+            },
+            "check_reason": {
+             "type": [
+              "string",
+              "null"
+             ]
+            }
+           }
+          },
+          "page": {
+           "type": "integer",
+           "minimum": 0
+          },
+          "presses": {
+           "type": "integer",
+           "minimum": 0
+          },
+          "final_hash": {
+           "type": "string"
+          },
+          "stop": {
+           "type": "string"
+          },
+          "wrote": {
+           "type": "boolean"
+          },
+          "order": {
+           "type": "integer",
+           "minimum": 0,
+           "description": "Item position in the browser receipt, independent of answers.json ordering."
+          }
+         },
+         "required": [
+          "receipt_sha256",
+          "policy",
+          "rat_page",
+          "page",
+          "presses",
+          "final_hash",
+          "stop",
+          "wrote",
+          "order"
+         ]
+        }
+       },
+       "draft": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+         "state": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+           "proposed_selection": {
+            "type": "array",
+            "description": "For multiple-choice, option_ids supported by reasoning in segments. Reading panelState.modelAnswer is permitted and on by default. `model_answer.read` (default true) can disable it. Drafted selections still require reasoning and provenance tags. Copying the key would evaluate the suite against the key instead of its research.",
+            "items": {
+             "type": "string"
+            }
+           },
+           "label_placements": {
+            "type": "array",
+            "description": "Required in schema_version 2 for drafted image-labeling, drag-and-drop-labeling and categorization items. Records where each label goes, as table_cells records grid answers. Describe the target in prose. Capture emits no anchor coordinates, and option_id refers to a position in an alphabetically sorted pool. Describe anchors so a fill run can resolve them against the picture.",
+            "items": {
+             "type": "object",
+             "additionalProperties": false,
+             "required": [
+              "label",
+              "target"
+             ],
+             "properties": {
+              "label": {
+               "type": "string",
+               "minLength": 1,
+               "description": "Label text verbatim from the item's options[].text. The cross-check rejects other text to prevent invented vocabulary."
+              },
+              "target": {
+               "type": "string",
+               "minLength": 1,
+               "description": "Where the label goes. For the two labelling types, describe an anchor so a human or fill run can find it, e.g. 'the upper-left circle'. For categorization, use the bin title verbatim from constraints.categories. There is no category_titles field."
+              },
+              "target_index": {
+               "type": [
+                "integer",
+                "null"
+               ],
+               "minimum": 0,
+               "description": "Only where the index is genuinely knowable from the capture - a categorization bin's position in constraints.categories, which is emitted in the order the student sees it and is therefore knowable. NEVER guess one for an image anchor."
+              },
+              "confidence": {
+               "enum": [
+                "high",
+                "medium",
+                "low"
+               ],
+               "description": "Confidence per placement. medium or low requires `alternative`, enforced by the validator (ltcore.validate). See docs/design-notes.md for confidence limits."
+              },
+              "alternative": {
+               "type": "string",
+               "description": "The competing reading: the structure this label might sit on instead. Named, not gestured at."
+              }
+             }
+            }
+           }
+          },
+          "required": []
+         },
+         "hash": {
+          "type": "string"
+         },
+         "refs": {
+          "type": "array",
+          "items": {
+           "type": "string"
+          }
+         }
+        },
+        "required": [
+         "state",
+         "hash",
+         "refs"
+        ]
+       },
+       "presses": {
+        "type": "array",
+        "items": {
+         "type": "object",
+         "additionalProperties": false,
+         "properties": {
+          "n": {
+           "type": "integer",
+           "minimum": 0
+          },
+          "state": {
+           "type": "object",
+           "additionalProperties": false,
+           "properties": {
+            "proposed_selection": {
+             "type": "array",
+             "description": "For multiple-choice, option_ids supported by reasoning in segments. Reading panelState.modelAnswer is permitted and on by default. `model_answer.read` (default true) can disable it. Drafted selections still require reasoning and provenance tags. Copying the key would evaluate the suite against the key instead of its research.",
+             "items": {
+              "type": "string"
+             }
+            },
+            "label_placements": {
+             "type": "array",
+             "description": "Required in schema_version 2 for drafted image-labeling, drag-and-drop-labeling and categorization items. Records where each label goes, as table_cells records grid answers. Describe the target in prose. Capture emits no anchor coordinates, and option_id refers to a position in an alphabetically sorted pool. Describe anchors so a fill run can resolve them against the picture.",
+             "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+               "label",
+               "target"
+              ],
+              "properties": {
+               "label": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Label text verbatim from the item's options[].text. The cross-check rejects other text to prevent invented vocabulary."
+               },
+               "target": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Where the label goes. For the two labelling types, describe an anchor so a human or fill run can find it, e.g. 'the upper-left circle'. For categorization, use the bin title verbatim from constraints.categories. There is no category_titles field."
+               },
+               "target_index": {
+                "type": [
+                 "integer",
+                 "null"
+                ],
+                "minimum": 0,
+                "description": "Only where the index is genuinely knowable from the capture - a categorization bin's position in constraints.categories, which is emitted in the order the student sees it and is therefore knowable. NEVER guess one for an image anchor."
+               },
+               "confidence": {
+                "enum": [
+                 "high",
+                 "medium",
+                 "low"
+                ],
+                "description": "Confidence per placement. medium or low requires `alternative`, enforced by the validator (ltcore.validate). See docs/design-notes.md for confidence limits."
+               },
+               "alternative": {
+                "type": "string",
+                "description": "The competing reading: the structure this label might sit on instead. Named, not gestured at."
+               }
+              }
+             }
+            }
+           },
+           "required": []
+          },
+          "index_state": {
+           "type": "string"
+          },
+          "hash": {
+           "type": "string"
+          },
+          "verdict": {
+           "enum": [
+            "correct",
+            "incorrect",
+            "partially-correct",
+            "unread",
+            null
+           ]
+          },
+          "right": {
+           "type": "array",
+           "items": {
+            "type": "string"
+           }
+          },
+          "wrong": {
+           "type": "array",
+           "items": {
+            "type": "string"
+           }
+          },
+          "receipt_sha256": {
+           "type": "string",
+           "pattern": "^[0-9a-f]{64}$"
+          }
+         },
+         "required": [
+          "n",
+          "state",
+          "index_state",
+          "hash",
+          "verdict",
+          "right",
+          "wrong",
+          "receipt_sha256"
+         ]
+        }
+       },
+       "final": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+         "state": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+           "proposed_selection": {
+            "type": "array",
+            "description": "For multiple-choice, option_ids supported by reasoning in segments. Reading panelState.modelAnswer is permitted and on by default. `model_answer.read` (default true) can disable it. Drafted selections still require reasoning and provenance tags. Copying the key would evaluate the suite against the key instead of its research.",
+            "items": {
+             "type": "string"
+            }
+           },
+           "label_placements": {
+            "type": "array",
+            "description": "Required in schema_version 2 for drafted image-labeling, drag-and-drop-labeling and categorization items. Records where each label goes, as table_cells records grid answers. Describe the target in prose. Capture emits no anchor coordinates, and option_id refers to a position in an alphabetically sorted pool. Describe anchors so a fill run can resolve them against the picture.",
+            "items": {
+             "type": "object",
+             "additionalProperties": false,
+             "required": [
+              "label",
+              "target"
+             ],
+             "properties": {
+              "label": {
+               "type": "string",
+               "minLength": 1,
+               "description": "Label text verbatim from the item's options[].text. The cross-check rejects other text to prevent invented vocabulary."
+              },
+              "target": {
+               "type": "string",
+               "minLength": 1,
+               "description": "Where the label goes. For the two labelling types, describe an anchor so a human or fill run can find it, e.g. 'the upper-left circle'. For categorization, use the bin title verbatim from constraints.categories. There is no category_titles field."
+              },
+              "target_index": {
+               "type": [
+                "integer",
+                "null"
+               ],
+               "minimum": 0,
+               "description": "Only where the index is genuinely knowable from the capture - a categorization bin's position in constraints.categories, which is emitted in the order the student sees it and is therefore knowable. NEVER guess one for an image anchor."
+              },
+              "confidence": {
+               "enum": [
+                "high",
+                "medium",
+                "low"
+               ],
+               "description": "Confidence per placement. medium or low requires `alternative`, enforced by the validator (ltcore.validate). See docs/design-notes.md for confidence limits."
+              },
+              "alternative": {
+               "type": "string",
+               "description": "The competing reading: the structure this label might sit on instead. Named, not gestured at."
+              }
+             }
+            }
+           }
+          },
+          "required": []
+         },
+         "hash": {
+          "type": "string"
+         },
+         "index_state": {
+          "type": "string"
+         },
+         "verdict": {
+          "enum": [
+           "correct",
+           "incorrect",
+           "partially-correct",
+           "unread",
+           null
+          ]
+         },
+         "stop": {
+          "type": "string"
+         },
+         "moved": {
+          "type": "boolean"
+         }
+        },
+        "required": [
+         "state",
+         "hash",
+         "index_state",
+         "verdict",
+         "stop",
+         "moved"
+        ]
+       },
+       "lt_feedback": {
+        "type": "string",
+        "maxLength": 300
+       }
+      },
+      "required": [
+       "pool_h",
+       "eligible",
+       "reason",
+       "policy",
+       "rat_page",
+       "calls",
+       "draft",
+       "presses",
+       "final",
+       "lt_feedback"
+      ]
      }
     },
     "allOf": [
@@ -615,6 +1479,304 @@
      }
     }
    }
+  },
+  "source_page_kinds": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "path",
+    "sha256"
+   ],
+   "properties": {
+    "path": {
+     "type": "string"
+    },
+    "sha256": {
+     "type": "string",
+     "pattern": "^[0-9a-f]{64}$"
+    }
+   }
+  },
+  "rat_pages": {
+   "type": "array",
+   "items": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+     "page_index",
+     "candidate",
+     "rat_shape",
+     "rat_candidate",
+     "rat",
+     "kind",
+     "sources",
+     "decision",
+     "check_allowed",
+     "page_digest",
+     "classification_digest",
+     "record_sha256"
+    ],
+    "properties": {
+     "page_index": {
+      "type": "integer",
+      "minimum": 0
+     },
+     "candidate": {
+      "type": "boolean"
+     },
+     "rat_shape": {
+      "type": "boolean"
+     },
+     "rat_candidate": {
+      "type": "boolean"
+     },
+     "rat": {
+      "type": [
+       "boolean",
+       "null"
+      ]
+     },
+     "kind": {
+      "enum": [
+       "trat",
+       "irat",
+       null
+      ]
+     },
+     "sources": {
+      "type": "array",
+      "items": {
+       "type": "string",
+       "enum": [
+        "answers-json",
+        "rat-answers",
+        "user-mark",
+        "page-text"
+       ]
+      }
+     },
+     "decision": {
+      "type": "string"
+     },
+     "check_allowed": {
+      "type": "boolean"
+     },
+     "page_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+     },
+     "classification_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+     },
+     "record_sha256": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "sheet": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+       "root": {
+        "type": "string",
+        "pattern": "^rat\\.answers_dir(?:s\\[[0-9]+\\])?$"
+       },
+       "name": {
+        "type": "string",
+        "pattern": "^[A-Za-z0-9 ._()-]{1,80}$"
+       },
+       "sha256": {
+        "type": "string",
+        "pattern": "^[0-9a-f]{64}$"
+       },
+       "format": {
+        "enum": [
+         "compact",
+         "marked"
+        ]
+       },
+       "declared_kind": {
+        "type": [
+         "string",
+         "null"
+        ],
+        "enum": [
+         "irat",
+         "trat",
+         null
+        ]
+       },
+       "grade": {
+        "enum": [
+         "full",
+         "partial",
+         "none"
+        ]
+       },
+       "distinct": {
+        "type": "integer",
+        "minimum": 0
+       },
+       "aligned": {
+        "type": "integer",
+        "minimum": 0
+       },
+       "answered": {
+        "type": "integer",
+        "minimum": 0
+       },
+       "unanswered": {
+        "type": "array",
+        "items": {
+         "type": "integer",
+         "minimum": 0
+        }
+       },
+       "mark_mismatch": {
+        "type": "array",
+        "items": {
+         "type": "integer",
+         "minimum": 0
+        }
+       },
+       "aligned_questions": {
+        "type": "array",
+        "items": {
+         "type": "integer",
+         "minimum": 0
+        }
+       },
+       "week": {
+        "enum": [
+         "agree",
+         "differs",
+         "absent"
+        ]
+       },
+       "chosen": {
+        "type": "boolean"
+       },
+       "confirmation_reasons": {
+        "type": "array",
+        "items": {
+         "type": "string"
+        }
+       },
+       "todo_questions": {
+        "type": "object",
+        "additionalProperties": {
+         "type": "string",
+         "enum": [
+          "malformed",
+          "unaligned",
+          "mark-mismatch",
+          "unanswered",
+          "multi-marked"
+         ]
+        }
+       }
+      },
+      "required": [
+       "root",
+       "name",
+       "sha256",
+       "format",
+       "declared_kind",
+       "grade",
+       "distinct",
+       "aligned",
+       "answered",
+       "unanswered",
+       "mark_mismatch",
+       "aligned_questions",
+       "week",
+       "chosen",
+       "confirmation_reasons",
+       "todo_questions"
+      ]
+     }
+    }
+   }
+  },
+  "check_answer": {
+   "type": "object",
+   "additionalProperties": false,
+   "properties": {
+    "policy": {
+     "type": "array",
+     "items": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+       "enabled": {
+        "type": "boolean"
+       },
+       "config": {
+        "type": "string"
+       }
+      },
+      "required": [
+       "enabled",
+       "config"
+      ]
+     }
+    },
+    "presses": {
+     "type": "integer",
+     "minimum": 0
+    },
+    "items_pressed": {
+     "type": "integer",
+     "minimum": 0
+    },
+    "correct": {
+     "type": "integer",
+     "minimum": 0
+    },
+    "moved": {
+     "type": "integer",
+     "minimum": 0
+    },
+    "not_correct": {
+     "type": "integer",
+     "minimum": 0
+    },
+    "ineligible": {
+     "type": "object",
+     "additionalProperties": {
+      "type": "integer",
+      "minimum": 0
+     }
+    }
+   },
+   "required": [
+    "policy",
+    "presses",
+    "items_pressed",
+    "correct",
+    "moved",
+    "not_correct",
+    "ineligible"
+   ]
+  },
+  "source_check_answer": {
+   "type": "object",
+   "additionalProperties": false,
+   "properties": {
+    "path": {
+     "type": "string"
+    },
+    "sha256": {
+     "type": "string",
+     "pattern": "^[0-9a-f]{64}$"
+    }
+   },
+   "required": [
+    "path",
+    "sha256"
+   ]
   }
  }
 }

@@ -79,8 +79,8 @@ ARG_KEY_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]{0,63}$")
 RUN_RE = re.compile(r"^/i/([^/]+)/student/courses/(\d+)/runs/(\d+)/run/(.*)$")
 PAGE_RE = re.compile(r"^page/([1-9]\d*)$")
 PREVIEW_RE = re.compile(r"/preview(/|$)", re.I)
-FILL_NAMES = {"fill_lib", "confirm_dialog", "upload"}
-FILL_PREFIXES = ("_fill-", "_verify-", "_replace-", "_calibrate-")
+FILL_NAMES = {"fill_lib", "confirm_dialog", "upload", "check_answer"}
+FILL_PREFIXES = ("_fill-", "_verify-", "_check-", "_replace-", "_calibrate-")
 RESERVED = {"lt_guard", "lt_net"}
 ADAPTER_FORM = {
     "claude-in-chrome": ("expression", True),
@@ -432,7 +432,7 @@ def _list(v: Any, what: str) -> list:
 
 
 def policy_from_plan(plan: Mapping[str, Any] | None, origin: str | None = None,
-                     instance: str | None = None) -> dict:
+                     instance: str | None = None, *, check_answer_enabled: bool = False) -> dict:
     """Normalize a plan into the policy check-url and lt_guard.js read.
 
     ``origin`` and ``instance`` come from the config (lt.origin, lt.instance); the plan's own
@@ -528,6 +528,11 @@ def policy_from_plan(plan: Mapping[str, Any] | None, origin: str | None = None,
         "report_indexes": sorted(set(report)), "checkpoint_indexes": sorted(set(checkpoints)),
         "page_map": page_map, "url_map": url_map, "mapped": mapped,
     })
+    if check_answer_enabled is True and "check_answer_keys" in plan:
+        keys = _list(plan["check_answer_keys"], "check_answer_keys")
+        if any(not isinstance(p, list) or len(p) != 2 or not isinstance(p[1], str) for p in keys):
+            raise PlanError("check_answer_keys must contain [page, panel_key] pairs")
+        pol["check_answer_keys"] = [[_int(p[0], "check page", minimum=1), p[1]] for p in keys]
     return pol
 
 
@@ -759,6 +764,8 @@ def render(target: str, *, form: str | None = None, stub: bool | None = None,
     if name == "model_answer" and cfg is not None and cfg.get("model_answer.read", True) is False:
         raise RenderRefused(EXIT_MODEL_ANSWER,
                             "model_answer.read is false in the config, so model_answer.js is not rendered")
+    if (name == "check_answer" or name.startswith("_check-")) and cfg.get("fill.check_answer.enabled", False) is not True:
+        raise RenderRefused(5, "fill.check_answer.enabled is false; check script refused")
     dform, dstub = default_form(cfg)
     form = form or dform
     stub = dstub if stub is None else bool(stub)
@@ -779,7 +786,7 @@ def render(target: str, *, form: str | None = None, stub: bool | None = None,
         plan = load_plan(plan)
     origin = cfg.get("lt.origin", "") if cfg is not None else ""
     inst = cfg.get("lt.instance", "") if cfg is not None else ""
-    policy = policy_from_plan(plan, origin or None, inst or None)
+    policy = policy_from_plan(plan, origin or None, inst or None, check_answer_enabled=cfg.get("fill.check_answer.enabled", False))
     text = render_source(_read(path), name=name, form=form, stub=stub, args=a, net=net, policy=policy)
     out, digest = _write(out_dir_for(cfg, out_dir), name, text)
     return {"path": str(out), "sha256": digest, "form": form, "bytes": len(text.encode("utf-8")),

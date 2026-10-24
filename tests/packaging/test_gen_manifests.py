@@ -41,7 +41,9 @@ ARGS = [
 @pytest.fixture
 def source(tmp_path):
     # A private temp tree keeps tests independent of concurrent skill writers.
-    for name in ("packaging/plugin.toml", "shared/references/safety.md"):
+    for name in ("packaging/plugin.toml", "shared/references/safety.md",
+                 "packaging/lt-chrome-bootstrap.cjs", "shared/lt_chrome/lt-chrome.cjs",
+                 "shared/schemas/config.schema.json"):
         target = tmp_path / name
         target.parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(REPO / name, target)
@@ -49,6 +51,8 @@ def source(tmp_path):
     text = config.read_text()
     # This synthetic tree deliberately contains one skill.
     import re
+    # This synthetic release stays at 0.1.0, including its sample skill below.
+    text = re.sub(r'^version = .*?$', 'version = "0.1.0"', text, flags=re.M)
     text = re.sub(r"^skills = .*?$", 'skills = ["sample"]', text, flags=re.M)
     if "skills =" not in text:
         text = 'skills = ["sample"]\n' + text
@@ -164,8 +168,15 @@ def test_pinned_mcp_commands_and_platform_tool_filters(source):
         data = read(source, name)
         key = "servers" if name.endswith("vscode-mcp.json") else "mcpServers"
         server = data[key]["lt-chrome"]
-        assert server["command"] == "npx"
-        assert server["args"] == ARGS
+        if name.startswith("examples/"):
+            assert server["command"] == "npx"
+            assert server["args"] == ["--no-workspaces", *ARGS]
+            assert server["env"]["CHROME_DEVTOOLS_MCP_NO_CONFIG_DISCOVERY"] == "1"
+        else:
+            assert server["command"] == "node"
+            assert server["args"][0] == "-e"
+            assert server["args"][2] == "--"
+            assert "via=" + name in server["args"]
     for name in ("gemini-extension.json", "examples/mcp/gemini-settings.json"):
         server = read(source, name)["mcpServers"]["lt-chrome"]
         assert set(server["excludeTools"]) == DISABLED
@@ -178,7 +189,7 @@ def test_pinned_mcp_commands_and_platform_tool_filters(source):
     server = codex["mcp_servers"]["lt-chrome"]
     assert set(server["enabled_tools"]) == ENABLED
     assert not ENABLED & DISABLED
-    assert server["command"] == "npx" and server["args"] == ARGS
+    assert server["command"] == "npx" and server["args"] == ["--no-workspaces", *ARGS]
     assert server["startup_timeout_sec"] == 30
     assert server["default_tools_approval_mode"] == "prompt"
 
@@ -317,3 +328,26 @@ def test_playwright_filter_sets_cover_the_observed_runtime_catalog():
     assert len(allowed) == 5 and len(denied) == 20
     assert not allowed & denied
     assert allowed | denied == set(catalog["tools"])
+
+
+def test_check_reports_stale_pins_block(source):
+    assert run(source).returncode == 0
+    launcher = source / "shared/lt_chrome/lt-chrome.cjs"
+    launcher.write_text(launcher.read_text().replace('"package":"chrome-devtools-mcp@1.12.0"', '"package":"stale"'))
+    result = run(source, "--check")
+    assert result.returncode == 1
+    assert "shared/lt_chrome/lt-chrome.cjs" in result.stdout
+
+
+def test_examples_carry_hardening_env(source):
+    assert run(source).returncode == 0
+    for name in OUTPUTS:
+        if not name.startswith("examples/mcp/"):
+            continue
+        if name.endswith(".toml"):
+            data = tomllib.loads((source / name).read_text())["mcp_servers"]
+        else:
+            doc = read(source, name)
+            data = doc.get("mcpServers", doc.get("servers"))
+        env = data["lt-chrome"]["env"]
+        assert env == {"CHROME_DEVTOOLS_MCP_NO_CONFIG_DISCOVERY": "1", "CHROME_DEVTOOLS_MCP_NO_UPDATE_CHECKS": "1", "CHROME_DEVTOOLS_MCP_CATEGORY_EXPERIMENTAL_THIRD_PARTY": ""}

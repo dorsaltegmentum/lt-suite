@@ -1,6 +1,6 @@
 # SPDX-FileCopyrightText: 2026 dorsaltegmentum
 # SPDX-License-Identifier: AGPL-3.0-or-later
-"""The fill evals and trigger queries: 7 evals on synthetic fixtures that exist, each with a
+"""The fill evals and trigger queries: 10 evals on synthetic fixtures that exist, each with a
 prompt and expectations, and trigger queries with both answers present."""
 from __future__ import annotations
 
@@ -11,11 +11,11 @@ REPO = Path(__file__).resolve().parents[2]
 EVALS = REPO / "evals" / "lt-module-fill"
 
 
-def test_seven_evals_on_existing_synthetic_fixtures():
+def test_ten_evals_on_existing_synthetic_fixtures():
     doc = json.loads((EVALS / "evals.json").read_text())
     assert doc["skill_name"] == "lt-module-fill"
     evs = doc["evals"]
-    assert [e["id"] for e in evs] == list(range(1, 8))
+    assert [e["id"] for e in evs] == list(range(1, 9)) + [63, 84]
     for e in evs:
         assert e["prompt"].strip() and len(e["expectations"]) >= 5
         for f in e["files"]:

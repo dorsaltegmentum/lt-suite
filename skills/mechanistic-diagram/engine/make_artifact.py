@@ -41,10 +41,11 @@ import _bootstrap  # noqa: E402,F401  (engine and shared core on sys.path)
 ENGINE = pathlib.Path(__file__).resolve().parent
 from casekit import NBSP
 import themes
+from ltcore import fonts
+import style
 
 FIELDS = ("PAGE_TITLE", "EYEBROW", "HEADING", "LEDE", "FIGCAPTION", "FINDINGS", "SOURCES")
 SVG_NS = "{http://www.w3.org/2000/svg}"
-UI_SANS = 'system-ui, -apple-system, "Segoe UI", sans-serif'     # the page's own text, after the configured sans
 
 
 def esc(s):
@@ -84,8 +85,7 @@ def figure(case_dir, flavour, index=0):
     svg = re.sub(r'(<svg xmlns="http://www.w3.org/2000/svg"[^>]*?) width="\d+" height="\d+"',
                  rf'\1 class="fig fig-{flavour}" data-pal="{flavour}"', svg, count=1)
     T = themes.THEMES[flavour]
-    svg = svg.replace(f'font-family="{T["sans"]}"', f"font-family=\"'{T['sans']}', sans-serif\"")
-    svg = svg.replace(f'font-family="{T["mono"]}"', f"font-family=\"'{T['mono']}', ui-monospace, monospace\"")
+    svg = fonts.svg_with_stacks(svg, style.cfg())
     if index:
         svg = _suffix_ids(svg, f"--p{index}")
     return svg, w, h
@@ -376,8 +376,8 @@ def make(case, out=None):
     lp, dp = auto_pair(pals)
     light, dark, dark_mq = theme_tokens(lp, 2), theme_tokens(dp, 2), theme_tokens(dp, 4)
     T0 = themes.THEMES[pp]
-    sans_css = f"'{T0['sans']}', {UI_SANS}"
-    mono_css = f"'{T0['mono']}', ui-monospace, monospace"
+    sans_css = fonts.css_stack("sans", style.cfg(), output="diagram", first=T0["sans"])
+    mono_css = fonts.css_stack("mono", style.cfg(), output="diagram", first=T0["mono"])
     pal_buttons = "\n".join(f'          <button type="button" id="pal-{fl}" data-pal="{fl}" aria-pressed="false">'
                             f'{esc(themes.label(fl))}</button>' for fl in pals)
     file_cards = "\n".join(

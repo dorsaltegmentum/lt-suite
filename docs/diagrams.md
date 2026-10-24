@@ -80,6 +80,12 @@ A successful build still requires visual inspection of the rendered PNG and revi
 
 ## Final outputs
 
+`fonts.diagram.sans` controls box text; `fonts.diagram.mono` controls titles and headers.
+Empty values inherit the base pair. Families and config-relative font files are accepted.
+Diagrams use recognised libre fonts and fall back to Noto. Reserved Font Name faces
+remain whole; unreadable licences fall back to Noto. Page PDFs use `fonts.pdf` instead.
+HTML pages and copied SVGs carry viewer-side CSS fallback names for other machines.
+
 Local font embedding is the default for HTML and draw.io output. Google-hosted font links require `fonts.page_fonts = "google"`.
 
 Finalisation uses built-in metadata handling and configured optional cleaner hooks. A cleaner must preserve wording, relationships and geometry.

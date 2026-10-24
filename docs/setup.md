@@ -71,7 +71,7 @@ The commands below use `SKILL_DIR`, the absolute path to the installed setup ski
 8. Check the browser using the skill's guarded ping procedure.
    The `auto` adapter tries Claude in Chrome, lt-chrome, Playwright MCP, then manual paste.
    Lt-chrome uses `browser.adapter = "chrome-devtools-mcp"` and evaluates the rendered file through `sourcePath`.
-   Doctor pre-fetches `chrome-devtools-mcp@1.12.0` for that adapter; `--prefetch-mcp` requests it explicitly.
+   Doctor pre-fetches `chrome-devtools-mcp@1.12.0` for that adapter and Antigravity; `--prefetch-mcp` requests it explicitly.
    Codex MCP configuration should set `startup_timeout_sec = 30`.
    `ping render` returns a file receipt; execute that file through your evaluate-file tool.
    If the server refuses its directory, render once in the permitted directory reported by the server.
@@ -82,3 +82,10 @@ The commands below use `SKILL_DIR`, the absolute path to the installed setup ski
 The [run review guide](../skills/lt-suite-setup/references/run-review.md) describes local diff classification and selector ledgers.
 Proposals stay under `<data>/lexicon/proposals/`; a human reviews and applies changes separately.
 The [configuration reference](configuration.md) lists every config key.
+
+Setup asks for the browser path, browser name and auto-connect or a loopback DevTools address.
+Claude in Chrome and manual paste skip the DevTools questions and serve zero lt-chrome tools.
+Restart after writing the config. Run `setup.py lt-chrome plan --json` to inspect the redacted decision.
+Doctor pre-fetches for explicit Chromium and Antigravity choices; quiet adapters skip it.
+For Codex and Cursor, approve `lt-chrome install`, then merge `lt-chrome snippet --host <host>` output.
+For an unlisted Chromium browser, choose other and set browser.chromium_user_data_dir.

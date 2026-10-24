@@ -250,17 +250,29 @@ def check_fonts(cfg=None):
     if fonts is None:
         return [("FAIL", "ltcore.fonts is missing from this install; reinstall the skill")]
     out = []
-    for role in ("sans", "mono"):
-        try:
-            f = fonts.find(role, cfg, weight=400)
-        except Exception as exc:
-            out.append(("FAIL", "%s font does not resolve: %s" % (role, exc)))
-            continue
-        if not Path(f.path).is_file():
-            out.append(("FAIL", "%s font resolved to %s, which is not a file" % (role, f.path)))
-        elif getattr(f, "fallback", False):
-            out.append(("WARN", "%s font %r was not found; the bundled %s is used instead (%s)"
-                        % (role, f.requested, f.family, f.path)))
-        else:
-            out.append(("PASS", "%s font %s from %s: %s" % (role, f.family, f.source, f.path)))
+    for output, roles in (("pdf", ("sans", "mono")), ("diagram", ("sans", "mono")), ("labels", ("sans",))):
+        for role in roles:
+            title = f"{output} {role}"
+            try:
+                if output == "labels" and cfg and cfg.get("annotate.font_path"):
+                    try:
+                        f = fonts.find(role, cfg, family=cfg.get("annotate.font_path"), output="labels", os_fallback=True)
+                    except fonts.FontError as exc:
+                        out.append(("WARN", f"labels sans: annotate.font_path: {exc}; continuing the label chain"))
+                        f = fonts.find(role, cfg, output="labels", os_fallback=True)
+                else:
+                    f = fonts.find(role, cfg, weight=400, output=output, os_fallback=output != "diagram")
+                status = "WARN" if f.fallback or f.os_fallback else "PASS"
+                out.append((status, f"{title}: {f.family} from {f.source}"))
+                if f.variable and fonts.licence_class(f) != "modify":
+                    out.append(("WARN", f"{title}: variable font used as is; default weight may be used"))
+                if output == "diagram" and cfg and cfg.get("fonts.page_fonts") == "google":
+                    entry = fonts.find_entry(f.family) or {}
+                    urls = [v.get("url", "") for v in (entry.get("fetch") or {}).get("files", [])]
+                    if not any("google/fonts" in u for u in urls):
+                        out.append(("WARN", f"{title}: {f.family} is not Google-hosted; use fonts.page_fonts = local"))
+            except Exception as exc:
+                out.append(("FAIL", f"{title} font does not resolve: {exc}"))
+    if cfg and cfg.get("annotate.font_path"):
+        out.append(("WARN", "annotate.font_path wins over fonts.labels.sans; fonts.labels.sans also takes a family name"))
     return out

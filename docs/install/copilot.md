@@ -35,3 +35,8 @@ Use a local installation for capture and fill. Keep cloud work limited to author
 See [Python](python.md), [browser adapters](../browser-adapters.md) and [academic integrity](../academic-integrity.md).
 
 Sources: [CLI plugins](https://docs.github.com/en/copilot/reference/copilot-cli-reference/cli-plugin-reference), [VS Code plugins](https://code.visualstudio.com/docs/copilot/customization/agent-plugins), [cloud MCP](https://docs.github.com/en/copilot/concepts/agents/cloud-agent/mcp-and-cloud-agent).
+
+The plugin's Node launcher reads `browser.adapter` at startup when the host expands its plugin folder.
+Choose Claude in Chrome for zero lt-chrome tools, or configure any Chromium browser through setup.
+If doctor reports the 0.1.0 fallback, install the stable launcher and merge its host snippet.
+Restart after changes; see [browser adapters](../browser-adapters.md) for folders and loopback limits.

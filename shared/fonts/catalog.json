@@ -9,20 +9,88 @@
    "mono": "atkinson-hyperlegible-mono",
    "note": "best I/l/1 separation (0.605 against 0.275); Greek letters, arrows and super/subscripts fall back to Noto Sans"
   },
-  "sans_stack": [
-   "Noto Sans",
-   "Adwaita Sans",
-   "DejaVu Sans",
-   "sans-serif"
-  ],
-  "mono_stack": [
-   "Noto Sans Mono",
-   "Adwaita Mono",
-   "DejaVu Sans Mono",
-   "Cascadia Mono",
-   "monospace"
-  ],
-  "dyslexia_note": "Offer letter- and word-spacing controls instead of a dyslexia font; OpenDyslexic shows no benefit (wery2017, azzarello2026) while spacing has support (zorzi2012, marinus2016). Change letter and word spacing together: letter spacing alone slowed reading in one study (galliussi2020)."
+  "dyslexia_note": "Offer letter- and word-spacing controls instead of a dyslexia font; OpenDyslexic shows no benefit (wery2017, azzarello2026) while spacing has support (zorzi2012, marinus2016). Change letter and word spacing together: letter spacing alone slowed reading in one study (galliussi2020).",
+  "system_fallback": {
+   "darwin": {
+    "sans": {
+     "family": "SF Pro",
+     "aliases": [
+      ".SF NS",
+      ".AppleSystemUIFont"
+     ],
+     "files": [
+      "SFNS.ttf",
+      "SFNSItalic.ttf"
+     ]
+    },
+    "mono": {
+     "family": "SF Mono",
+     "aliases": [
+      ".SF NS Mono",
+      ".SFNSMono"
+     ],
+     "files": [
+      "SFNSMono.ttf",
+      "SFNSMonoItalic.ttf"
+     ]
+    }
+   },
+   "win32": {
+    "sans": {
+     "family": "Segoe UI",
+     "patterns": [
+      "segoeui*.ttf",
+      "segui*.ttf"
+     ],
+     "static": true
+    },
+    "mono": {
+     "family": "Cascadia Mono",
+     "patterns": [
+      "cascadiamono*.ttf"
+     ]
+    }
+   },
+   "linux": {
+    "sans": {
+     "family": "DejaVu Sans"
+    },
+    "mono": {
+     "family": "DejaVu Sans Mono"
+    }
+   },
+   "deny_outside_system": [
+    "SF Pro",
+    "SF Pro Display",
+    "SF Pro Text",
+    "SF Pro Rounded",
+    "SF Compact",
+    "SF Mono",
+    "New York",
+    ".SF NS",
+    ".SF NS Mono",
+    ".SFNSMono",
+    ".AppleSystemUIFont"
+   ]
+  },
+  "css_stack": {
+   "sans": [
+    "Noto Sans",
+    "-apple-system",
+    "BlinkMacSystemFont",
+    "Segoe UI",
+    "DejaVu Sans",
+    "sans-serif"
+   ],
+   "mono": [
+    "Noto Sans Mono",
+    "ui-monospace",
+    "SF Mono",
+    "Cascadia Mono",
+    "DejaVu Sans Mono",
+    "monospace"
+   ]
+  }
  },
  "evidence_tiers": {
   "A": "large independent peer-reviewed study",
@@ -35,7 +103,7 @@
   "il1_min_distance": "min over pairs I~l, l~1, I~1 of (1 - IoU) of binarised glyph ink rendered at 96 px with Pillow, glyphs centred horizontally on a shared baseline; variable fonts at wght 400, wdth 100. 0 = identical shapes, higher = less confusable. Heuristic proxy for letter differentiation, not a validated legibility measure.",
   "b_vs_mirrored_d": "1 - IoU of b against horizontally mirrored d; below 0.2 means b and d are near mirror images.",
   "o_vs_zero": "1 - IoU of O against 0; slashed or dotted zeros in monospace fonts score low because the IoU ignores small inner marks.",
-  "diagram_glyphs_missing": "count missing from 89 code points that diagram labels use: 49 basic Greek letters, 8 arrows (← ↑ → ↓ ↔ ⇄ ⇌ ⇒), 8 maths signs (− ± × ≤ ≥ ≈ ∞ ∆), 22 super/subscripts (⁺ ⁻ ⁰-⁹ ₀-₉), 8 misc (° µ – — • ′ ″ ‰). Missing glyphs fall back to another font at render time.",
+  "diagram_glyphs_missing": "count missing from 95 code points that diagram labels use: 49 basic Greek letters, 8 arrows (← ↑ → ↓ ↔ ⇄ ⇌ ⇒), 8 maths signs (− ± × ≤ ≥ ≈ ∞ ∆), 22 super/subscripts (⁺ ⁻ ⁰-⁹ ₀-₉), 8 misc (° µ – — • ′ ″ ‰). Missing glyphs fall back to another font at render time.",
   "x_height_em": "OS/2 sxHeight / unitsPerEm.",
   "font_files_measured": "Google Fonts repo copies for GF families; upstream release files for DejaVu 2.37, Liberation 2.1.5, Luciole (Luciole.zip), OpenDyslexic 0.91.12 zip, Cantarell 0.311, Nerd Fonts 3.5.1; Adwaita fonts 51 and Iosevka Nerd Font 34.8.0 release files (Nerd-patched, so code point count includes icons)."
  },
@@ -1650,7 +1718,8 @@
    "readability_evidence": "No reading study found. Listed so the mono fallback stack names a font Windows 11 has.",
    "measured": {},
    "bundled": null,
-   "fetch": null
+   "fetch": null,
+   "notes": " Cascadia Mono 2407.24 measured fsType 0x0000; lacks ⇄ ⇌ ⇒ ⁺ ⁻. Microsoft-supplied notice prevents cutting and web embedding under lt-suite policy."
   }
  ]
 }

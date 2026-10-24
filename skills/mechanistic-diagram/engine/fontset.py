@@ -22,6 +22,8 @@ from pathlib import Path
 
 import core as E
 import style
+import warnings
+from ltcore import fonts
 
 
 def _is_variable(path):
@@ -103,7 +105,12 @@ def static_set():
     dest = style.cache_dir("font-cache", "static-" + sig.hexdigest()[:12])
     rename, dirs = {}, []
     for fam, w, it, p in fs:
-        if _is_variable(p):
+        permission = fonts.licence_class(p)
+        if permission == "none":
+            raise fonts.FontError(f"{fam}: licence refuses diagram embedding")
+        if _is_variable(p) and permission != "modify":
+            warnings.warn(f"{fam}: variable font used as it is; PDF text may lose its weight", stacklevel=2)
+        if _is_variable(p) and permission == "modify":
             sfam = _static_name(fam)
             if not _instance_path(dest, sfam, w, it).exists():
                 _cut(p, dest, sfam, w, it, E.OPSZ)
@@ -122,21 +129,14 @@ def static_set():
     return conf, rename
 
 
-def _has_reserved_name(path):
-    from fontTools.ttLib import TTFont
-    name = TTFont(str(path), lazy=True)["name"]
-    for nid in (0, 13):
-        v = name.getDebugName(nid) or ""
-        if "reserved font name" in v.lower():
-            return True
-    return False
-
-
 def _subset(path, text, weight, italic):
     """The font cut down to the characters on the page (a variable file instanced first), as TrueType bytes:
     the same on every machine (WOFF2 would depend on an optional compressor). A font with a Reserved Font
     Name is never modified: it goes in whole."""
-    if _has_reserved_name(path):
+    permission = fonts.licence_class(path)
+    if permission == "none":
+        raise fonts.FontError(f"{path}: licence refuses HTML or draw.io embedding")
+    if permission == "whole":
         return Path(path).read_bytes(), "truetype"
     from fontTools import subset
     from fontTools.ttLib import TTFont
@@ -179,6 +179,11 @@ def page_css(text):
 def google_css_url():
     """The Google Fonts stylesheet for the configured faces (fonts.page_fonts = "google")."""
     sans, mono = E.FONT, style.font_family("mono")
+    for family in (sans, mono):
+        entry = fonts.find_entry(family) or {}
+        files = (entry.get("fetch") or {}).get("files", [])
+        if not any("google/fonts" in item.get("url", "") for item in files):
+            warnings.warn(f"{family} is not Google-hosted; use fonts.page_fonts = local", stacklevel=2)
     w0, w1 = E.WGHT
     return ("https://fonts.googleapis.com/css2?family=" + sans.replace(" ", "+") +
             f":ital,wght@0,{w0};0,{w1};1,{w0};1,{w1}&family=" + mono.replace(" ", "+") + ":wght@700&display=swap")

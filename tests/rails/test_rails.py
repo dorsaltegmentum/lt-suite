@@ -1200,3 +1200,86 @@ def test_tally_covers_every_case():
     labels = [c[0] for c in CASES]
     assert len(labels) == len(set(labels)), "duplicate case labels"
     assert len(CASES) >= 100
+
+# RAT quarantine checks reject answer-bearing sources even when no text is copied.
+@pytest.mark.parametrize('field,value', [
+    ('path', 'Block A/RATs/team.md'), ('locator', 'page-kinds.json'),
+    ('source_id', 'fill-payload.json'), ('locator', 'run/fill-js/p3.js'),
+    ('locator', 'run/logs/receipt.json'), ('locator', 'fill-report-pre-rat.json'),
+])
+def test_T27_rat_root_quarantine(tmp_path, field, value):
+    root = tmp_path / 'Block A/RATs'
+    root.mkdir(parents=True)
+    ctx = validate._Ctx(base_dir=tmp_path, rat_roots=[root])
+    doc = {'tier1_corpus': [{field: value}]} if field == 'path' else {'items': [{'provenance': [{field: value}]}]}
+    assert any('rat-root-quarantine' in s for s in validate.rails_rat_quarantine(doc, ctx))
+    # Reconciliation provenance uses the same rail and context.
+    assert validate.rails_rat_quarantine({'entries': [{'provenance': [{'locator': 'fill-report.json'}]}]}, ctx)
+
+
+@pytest.mark.parametrize('mutation,rail', [
+    ('decision', 'rat-sheet-decision'), ('policy', 'rat-sheet-policy'), ('hash', 'rat-sheet-hash'),
+])
+def test_T32_rat_report_negative_rails(tmp_path, mutation, rail):
+    from ltcore import page_kinds
+    fixtures = REPO / 'tests/fixtures'
+    mod = json.loads((fixtures / 'modules/module-c1-r109.json').read_text())
+    rep = json.loads((fixtures / 'fill-reports/fill-report-c1-r109.json').read_text())
+    record = json.loads((fixtures / 'page-kinds/page-kinds-c1-r109.json').read_text())
+    ctx = validate._Ctx(base_dir=tmp_path, module=mod, page_kinds=record)
+    assert validate.rails_rat_fill(rep, ctx) == []
+    if mutation == 'decision':
+        next(r for r in rep['rat_pages'] if r['page_index'] == 3)['decision'] = 'not-rat'
+    elif mutation == 'policy':
+        record['scan']['policy']['trat'] = 'ask'
+    else:
+        next(r for r in rep['items'] if r.get('answer_source'))['answer_source']['sha256'] = '0' * 64
+    assert any(rail in s for s in validate.rails_rat_fill(rep, ctx))
+
+
+def test_T31_rat_irat_drafted_is_unwaivable(tmp_path):
+    from ltcore import page_kinds, rat
+    fixtures = REPO / 'tests/fixtures'
+    mod = json.loads((fixtures / 'modules/module-c1-r109.json').read_text())
+    ans = json.loads((fixtures / 'answers/answers-c1-r109.json').read_text())
+    item = next(a for a in ans['items'] if a['item_id'] == 'p2-81')
+    item.pop('skip_reason')
+    item.update(status='drafted', confidence='high', segments=[{'kind': 'claim', 'text': 'Invented claim', 'provenance_refs': ['p1']}], provenance=[{'ref': 'p1', 'tier': 4, 'source_id': '10.1000/demo', 'locator': 'section 1', 'tag': '[T4:10.1000/demo]'}])
+    ctx = validate._Ctx(base_dir=tmp_path, module=mod)
+    assert validate.rails_rat_drafts(ans, ctx) == ['rat-irat-drafted: an individual or unknown-kind RAT cannot be drafted']
+    ans['user_decisions'] = [{'rail': 'rat-irat-drafted', 'who': 'user', 'when': T0, 'why': 'Draft it'}]
+    assert validate.rails_rat_drafts(ans, ctx)
+
+
+def test_T27_reconciled_dispatches_the_quarantine_rail(tmp_path):
+    # J4 supplies its full schema; a minimal schema exercises the shared dispatcher now.
+    schema = tmp_path / 'reconciled.schema.json'
+    schema.write_text(json.dumps({'type': 'object', 'properties': {'entries': {'type': 'array'}}}))
+    doc = {'entries': [{'provenance': [{'source_id': 'fill-report-pre-rat.json'}]}]}
+    result = validate.validate_doc(doc, 'reconciled', schemas_dir=tmp_path, base_dir=tmp_path)
+    assert result.exit_code == 1
+    assert any('rat-root-quarantine' in message for message in result.rail_errors)
+
+
+def test_T20_informed_ordinary_mark_allows_an_ordinary_draft(tmp_path):
+    from ltcore import page_kinds
+    fixtures = REPO / 'tests/fixtures'
+    mod = json.loads((fixtures / 'modules/module-c1-r109.json').read_text())
+    ans = json.loads((fixtures / 'answers/answers-c1-r109.json').read_text())
+    ans['items'][0].update(status='drafted', segments=[], provenance=[])
+    record = page_kinds.classify(mod, answers=ans)
+    record = page_kinds.mark(mod, record, 2, 'not-rat', 'Ordinary page despite the marker')
+    ctx = validate._Ctx(base_dir=tmp_path, module=mod, page_kinds=record)
+    assert validate.rails_rat_drafts(ans, ctx) == []
+    assert not next(r for r in page_kinds.page_status(mod, record) if r['page_index'] == 2)['check_allowed']
+
+
+def test_T31_custom_individual_marker_also_forbids_drafting(tmp_path):
+    from ltcore import rat
+    fixtures = REPO / 'tests/fixtures'
+    mod = json.loads((fixtures / 'modules/module-c1-r109.json').read_text())
+    mod['pages'][1]['content'] = [{'text': 'Solo examination'}]
+    ans = {'items': [{'item_id': 'p2-81', 'status': 'drafted'}]}
+    ctx = validate._Ctx(base_dir=tmp_path, module=mod,
+                        rat_policy=dict(rat.DEFAULT_POLICY, kind_markers={'irat': 'Solo examination', 'trat': 'Team examination'}))
+    assert any('rat-irat-drafted' in message for message in validate.rails_rat_drafts(ans, ctx))

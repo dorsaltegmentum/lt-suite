@@ -9,6 +9,9 @@
                            [--stub | --no-stub] [--lib-mode inline|served] [--lib-url URL] [--no-render]
     emit_fill.py approve   --module M --item ITEM --quote "<the user's words>"
     emit_fill.py record    --module M --fill RECEIPT [RECEIPT ...] --verify RECEIPT [--payload F ...]
+    emit_fill.py check     --module M [--answers A] [--fill RECEIPT ...] [--resume RECEIPT ...]
+    emit_fill.py check-verify --module M --check RECEIPT [...]
+    emit_fill.py record    --module M --check RECEIPT [...] --verify RECEIPT
     emit_fill.py record    --module M --dialog RECEIPT
     emit_fill.py calibrate --module M --answers A --item ITEM
     emit_fill.py dialog-args --module M --panel KEY
@@ -91,6 +94,8 @@ import ltcore  # noqa: E402
 ltcore.bootstrap([])
 from ltcore import approvals, config, store  # noqa: E402
 from ltcore.digest import question_digest  # noqa: E402
+
+from ltcore import page_kinds, rat
 
 import argparse  # noqa: E402
 import copy  # noqa: E402
@@ -423,22 +428,20 @@ def build_jobs(mod: dict, ans: dict, args, cfg, *, approvals_path: Path | None,
         raise Refusal("--replace needs --against: the recorded text of the earlier fill is the hash guard")
     against_kind, prior = prior_hashes(against) if replace else (None, {})
 
-    # An approval waives that item's door for planning only. The scripts still flag the
-    # panel single-attempt, and nothing they do clicks Submit or Check Answer.
-    plan_mod = mod
+    # Verify each item approval. Scripts retain single-attempt flags and never submit.
     if appr:
-        plan_mod = copy.deepcopy(mod)
-        for p in plan_mod["pages"]:
-            for it in p["items"]:
-                if it["item_id"] in appr:
-                    it["attempts"] = "multi"
         for iid, rec in appr.items():
             notes.append(f"{iid}: single-attempt item approved by the user ({rec['approval_id']}); "
                          f"written through the model only, never submitted")
-    pl = plan_fill.plan(plan_mod, ans, bool(getattr(args, "include_rat", False)), cfg)
+    answer_hash = sha256(Path(args.answers))
+    record = page_kinds.load_current(mod, cfg, ans, data_dir=getattr(args, "data_dir", None), answers_sha256=answer_hash)
+    if record is None and any(page_kinds.is_candidate(p, rat.policy_from_config(cfg)) for p in mod["pages"]):
+        raise Refusal("rat-record-stale: run page_kinds.py classify --json")
+    pl = plan_fill.plan(mod, ans, bool(getattr(args, "include_rat", False)), cfg, record=record,
+                        data_dir=getattr(args, "data_dir", None), answers_sha256=answer_hash)
     # The capture as it is: the plan check-url reads, and the submitted single-attempt items
     # every later script must find still read-only, approved or not.
-    plan_out = plan_fill.plan(mod, ans, bool(getattr(args, "include_rat", False)), cfg)
+    plan_out = pl
 
     caps = {i["item_id"]: (p, i) for p in mod["pages"] for i in p["items"]}
     planned = {i["item_id"]: (pg, i) for pg in pl["pages"] for i in pg["items"]}
@@ -461,11 +464,15 @@ def build_jobs(mod: dict, ans: dict, args, cfg, *, approvals_path: Path | None,
         return pages.setdefault(str(p["page_index"]), {
             "title": p.get("title"), "title_hash": title_hash(p.get("title")),
             "url": p.get("url"), "jobs": [], "todo": [],
+            "rat": any(r["page_index"] == p["page_index"] and r["rat"] is True for r in pl.get("rat_pages", [])),
             "single_attempt_keys": single_keys.get(p["page_index"], []),
             "single_attempt_locked": [[pg, k] for pg, k in passed if pg <= p["page_index"]]})
 
+    sheet_pages = {d["page_index"]: d for d in pl.get("rat_pages", []) if d["decision"] == "fill-from-sheet"}
     for a in ans.get("items", []):
         iid = a["item_id"]
+        if iid in caps and caps[iid][0]["page_index"] in sheet_pages:
+            continue
         if a.get("status") != "drafted":
             continue
         if only_items is not None and iid not in only_items:
@@ -616,6 +623,64 @@ def build_jobs(mod: dict, ans: dict, args, cfg, *, approvals_path: Path | None,
                     continue
         page_entry(p)["jobs"].append(job)
 
+    # Sheet mappings live only in this process and the emitted payload/scripts.
+    root_paths = dict(rat.effective_roots(rat.policy_from_config(cfg)))
+    answer_map = {a["item_id"]: a for a in ans.get("items", [])}
+    for idx, status in sheet_pages.items():
+        if only_pages is not None and idx not in only_pages:
+            continue
+        page = next(p for p in mod["pages"] if p["page_index"] == idx)
+        if any(i["item_id"] not in answer_map for i in page["items"]):
+            raise Refusal("RAT page item missing from answers.json")
+        ref = status["sheet"]
+        root = root_paths.get(ref["root"])
+        if root is None:
+            raise Refusal("rat-record-stale: root changed")
+        # Resolve sanitized display names by stat-only iteration; only read_sheet opens.
+        matched = None
+        for path in rat._listing(ref["root"], root)[1]:
+            if path.name == ref["name"] or ref["name"].startswith("sheet-"):
+                try:
+                    candidate = rat.read_sheet(root, path.name)
+                except rat.RatError:
+                    continue
+                if candidate["sha256"] == ref["sha256"] and candidate["name"] == ref["name"]:
+                    matched = candidate
+                    break
+        if matched is None:
+            raise Refusal("rat-record-stale: sheet hash changed")
+        matched["root"] = ref["root"]
+        match = rat.match_sheet(matched, page, mod, week_pattern=rat.policy_from_config(cfg).get("_week_pattern"))
+        if match is None or match["grade"] not in {"full", "partial"}:
+            raise Refusal("rat-record-stale: sheet no longer aligns")
+        pg = page_entry(page)
+        pg["rat"] = True
+        for number, cap in enumerate(page["items"], 1):
+            iid = cap["item_id"]
+            if iid in exclude or (only_items is not None and iid not in only_items):
+                continue
+            if cap.get("attempts") == "single" and iid not in appr:
+                refused.append({"item": iid, "page": idx, "reason": "refused-single-attempt"})
+                continue
+            if iid not in planned or not planned[iid][1]["fillable"]:
+                continue
+            row = match["mapping"][number-1] if number <= len(match["mapping"]) else {"status": "unaligned"}
+            if row["status"] != "answered":
+                todo.append({"item": iid, "page": idx, "panel_key": str(cap["panel_key"]), "kind": "rat-sheet",
+                             "blocker": f"Question {number} has {row['status']} answer in {ref['name']}",
+                             "placement": f"page {idx}, panel {cap['panel_key']}"})
+                continue
+            if replace:
+                raise Refusal("RAT sheet entry cannot replace an occupied answer")
+            selected = row["selected"]
+            job = {"item": iid, "panel_key": str(cap["panel_key"]), "plugin_key": cap.get("plugin_key"),
+                   "type": cap["type"], "kind": "select", "want": selected,
+                   "want_text": [cap["options"][k]["text"] for k in selected], "source": "rat-sheet",
+                   "sheet": dict({k: ref[k] for k in ("root", "name", "sha256")}, question=number)}
+            if iid in appr:
+                job.update(single_attempt_approved=True, approval_id=appr[iid]["approval_id"])
+            pg["jobs"].append(job)
+
     if getattr(args, "pages", None):
         notes.append(f"--pages {args.pages}: items outside it are not emitted")
     if exclude:
@@ -639,12 +704,14 @@ def build_jobs(mod: dict, ans: dict, args, cfg, *, approvals_path: Path | None,
         "module": {"path": str(args.module), "sha256": sha256(Path(args.module)),
                    "question_digest": question_digest(mod)},
         "answers": {"path": str(args.answers), "sha256": sha256(Path(args.answers))},
+        "source_page_kinds": ({"path": str((_open_store(args, cfg).run_dir(mod["module_id"]) / "page-kinds.json").resolve()),
+                               "sha256": page_kinds.record_hash(record)} if record else None),
         "against": ({"path": str(against), "sha256": sha256(Path(against))} if replace else None),
         "stop_before_page": plan["stop_before_page"],
         "never_navigated_pages": plan["never_navigated_pages"],
         "plan": plan,
         "notes": notes,
-        "pages": dict(sorted(pages.items(), key=lambda kv: int(kv[0]))),
+        "pages": dict(sorted(pages.items(), key=lambda kv: (bool(kv[1].get("rat")), int(kv[0])))),
         "todo": todo,
         "refused": refused,
         "not_emitted": not_emitted,
@@ -792,7 +859,7 @@ def cmd_payload(args, cfg) -> int:
     for r in pay["refused"]:
         print(f"  REFUSED {r['item']:<12} {r['reason']}" + (f" ({r['detail']})" if r.get("detail") else ""))
     for t in pay["todo"]:
-        print(f"  TODO    {t['item']:<12} {t['kind']}: {t['note']}")
+        print(f"  TODO    {t['item']:<12} {t['kind']}: {t.get('note', t.get('blocker', 'manual TODO'))}")
     for note in pay["notes"]:
         print(f"  note    {note}")
     print(f"plan for check-url: {dest.parent / 'plan.json'}")
@@ -947,7 +1014,7 @@ def save_wait(cfg, save_rec: dict | None) -> tuple[dict, list[str]]:
 def cfg_base(pay: dict, sw: dict) -> dict:
     return {"module_id": pay["module_id"], "run_id": pay["run_id"], "instance": pay.get("instance"),
             "course_id": pay.get("course_id"), "origin": pay.get("origin"), "mode": pay["mode"],
-            "save_wait": sw}
+            "save_wait": sw, "source_payload_sha256": pay.get("_source_payload_sha256")}
 
 
 def cfg_page(pay: dict, sw: dict, page: str, pg: dict, ticket: str | None = None) -> dict:
@@ -1026,11 +1093,11 @@ def script_body(call: str, lib_url: str | None) -> str:
 def group_pages(pay: dict, requested: int, cap: int, save_rec, cross, only_singles: bool,
                 only_pages: set[int] | None = None) -> tuple[list[list[str]], list[str]]:
     """Pages with jobs, grouped into calls by the calibration state. Returns (groups, notes)."""
-    pages = [k for k, v in pay["pages"].items() if v["jobs"] and (only_pages is None or int(k) in only_pages)]
+    pages = [k for k, v in sorted(pay["pages"].items(), key=lambda kv: (bool(kv[1].get("rat")), int(kv[0]))) if v["jobs"] and (only_pages is None or int(k) in only_pages)]
     n = max(1, min(requested, cap)) if requested > 0 else 1
     notes = []
     origin = pay.get("origin") or "this origin"
-    batchable = {k for k in pages if all(j["kind"] in SET_KINDS for j in pay["pages"][k]["jobs"])}
+    batchable = {k for k in pages if not pay["pages"][k].get("rat") and all(j["kind"] in SET_KINDS for j in pay["pages"][k]["jobs"])}
     singles = [[k] for k in pages]
     if only_singles or n == 1:
         return singles, notes
@@ -1108,6 +1175,8 @@ def write_scripts(pay: dict, out: Path, ppath: Path, cfg, st, *, requested: int,
     trial batch when it has a save record and no cross_page record."""
     psha = sha256(ppath)[:16]
     full_sha = sha256(ppath)
+    if pay.get("source_page_kinds"):
+        pay = dict(pay, _source_payload_sha256=full_sha)
     mid = pay["module_id"]
     origin = pay.get("origin")
     prefix = prefix or ("_replace" if pay["mode"] == "replace" else "_fill")
@@ -1174,14 +1243,14 @@ def write_scripts(pay: dict, out: Path, ppath: Path, cfg, st, *, requested: int,
         if len(g) == 1:
             page = g[0]
             pg = pay["pages"][page]
-            name = f"{prefix}-{mid}-p{page}.js"
+            name = f"{prefix}-{mid}-{'rat-' if pg.get('rat') else ''}p{page}.js"
             head = (f"// {name}: generated by emit_fill.py from {ppath.name} (sha256 {psha}...). Do not edit; regenerate.\n"
                     f"// {mid} run {pay['run_id']} page {page}: {jobs_n} job(s), {len(pg.get('todo', []))} todo, "
                     f"mode {pay['mode']}, save wait {'calibrated' if sw['calibration'] else 'fallback'}.\n"
                     f"// Run the rendered file on {pg.get('url') or 'page ' + page} with the browser tool's evaluate-file action.\n")
             call = ("LtFillLib.fillPage(" + json.dumps(cfg_page(pay, sw, page, pg, ticket), ensure_ascii=False) + ", "
                     + json.dumps(pg["jobs"], ensure_ascii=False) + ")")
-            vname = f"_verify-{mid}-p{page}.js"
+            vname = f"_verify-{mid}-{'rat-' if pg.get('rat') else ''}p{page}.js"
         else:
             k += 1
             name = f"{prefix}-{mid}-b{k}.js"
@@ -1257,6 +1326,237 @@ def cmd_scripts(args, cfg) -> int:
     return 0 if man["calls"] else 2
 
 
+# ---- Check Answer: explicit opt-in; historical receipts always remain recordable ----
+def _check_body():
+    source = (BROWSER / 'check_answer.js').read_text(encoding='utf-8')
+    return source.rsplit('return await LtCheck.run(__LT_ARGS__.cfg, __LT_ARGS__.jobs);', 1)[0]
+
+
+def _check_receipts(paths, mid):
+    result=[]
+    for path in paths or []:
+        receipt=_receipt(path)
+        if receipt.get('module') != mid or receipt.get('mode') != 'check':
+            raise Refusal('check receipt module or mode mismatch')
+        if not isinstance(receipt.get('items'),list):
+            raise Refusal('check receipt has no item records')
+        result.append((Path(path),receipt))
+    return result
+
+
+def _check_job(job, cap, owned=None):
+    from ltcore import check_answer as ca
+    j=copy.deepcopy(job)
+    j.update(type=cap['type'],attempts=cap.get('attempts'),multiselect=ca.multiselect(cap),
+             opt_h=[djb2(page_text(o['text'])) for o in cap.get('options',[])],
+             pool_h=[djb2(page_text(s)) for s in ca.pool_for(cap)],targets=ca.target_count(cap))
+    if j['kind']=='select':
+        if (cap.get('constraints') or {}).get('note') not in {'single-select','multiselect'}:
+            raise Refusal('shape-changed: capture has no explicit selection policy')
+        values=j['want']
+    else:
+        try:
+            pool=ca.ordered_pool(cap,owned['pool_h'])
+            values=ca.decode(j['kind'],owned['index_state'])
+            j['pool_h']=owned['pool_h']
+        except (ValueError,KeyError,TypeError):
+            raise Refusal('draft-index-unknown: use a fill receipt with pool hashes and index_state')
+    j['draft_state']=ca.encode(j['kind'],values)
+    j['draft_h']=ca.hashes(j['kind'],j['draft_state'],pool if j['kind']!='select' else [])
+    if str(expected_hash(job))!=j['draft_h'].split('/')[0]:
+        raise Refusal('check draft hash does not match payload')
+    return j
+
+
+def cmd_check(args,cfg):
+    from ltcore import check_answer as ca
+    if cfg.get('fill.check_answer.enabled',False) is not True:
+        raise ConfigRefusal('fill.check_answer.enabled is false')
+    if ca.VERDICT_MAX_MS+cfg.get('fill.dialog.max_ms')+cfg.get('fill.save_wait.max_ms')>ca.CALL_DEADLINE_MS:
+        raise Refusal('check reserve exceeds CALL_DEADLINE_MS')
+    mod=load_module(args.module);st=_open_store(args,cfg);mid=mod['module_id']
+    out=Path(args.out) if args.out else st.fill_js_dir(mid)
+    ppath=Path(args.payload) if args.payload else out/'fill-payload.json'
+    pay=load(ppath)
+    if pay.get('schema')!=PAYLOAD_SCHEMA or pay.get('module_id')!=mid:
+        raise Refusal('check needs this module’s fill-payload.json')
+    apath=Path(args.answers or pay['answers']['path']); ans=load(apath)
+    check_binding(mod,ans)
+    if pay['answers']['sha256']!=sha256(apath) or pay['module']['question_digest']!=question_digest(mod):
+        raise Refusal('check payload binding is stale')
+    record=page_kinds.load_current(mod,cfg,ans,data_dir=args.data_dir,answers_sha256=sha256(apath))
+    if record is None and any(page_kinds.is_candidate(p,rat.policy_from_config(cfg)) for p in mod['pages']):
+        raise Refusal('rat-record-stale: run page_kinds.py classify --json')
+    statuses={s['page_index']:s for s in page_kinds.page_status(mod,record,policy=rat.policy_from_config(cfg))}
+    pl=plan_fill.plan(mod,ans,False,cfg,record=record,data_dir=args.data_dir,answers_sha256=sha256(apath))
+    singles=(mod.get('commit_boundaries') or {}).get('single_attempt_items',[])
+    pl['single_attempt_items']=singles
+    written={}
+    saved=st.run_dir(mid)/'fill-results.json'
+    for entry in load(saved).get('items',[]) if saved.exists() else []:
+        written[entry['item_id']]=entry
+    for path in args.fill or []:
+        receipt=_receipt(path)
+        if receipt.get('module')!=mid:
+            raise Refusal('fill receipt module mismatch')
+        for r in receipt.get('items',[]):
+            written[r['item']]=dict(r)
+    receipt_path=Path(args.receipts) if args.receipts else st.run_dir(mid)/'receipts.json'
+    verified={}
+    for r in load(receipt_path).get('receipts',[]) if receipt_path.exists() else []:
+        iid=r['item_id']
+        if iid not in verified or r['observed_at']>=verified[iid]['observed_at']:
+            verified[iid]=r
+    save,_,_=calibration_state(load_calibration(st.calibration_path),origin_of(mod.get('source_url')))
+    sw,_=save_wait(cfg,save)
+    prior={}
+    for path,receipt in _check_receipts(args.resume,mid):
+        for r in receipt['items']:
+            prior[r['item_id']]=r
+    jobs={j['item']:j for p in pay['pages'].values() if not p.get('rat') for j in p['jobs'] if j.get('source')!='rat-sheet'}
+    pages={}; refused=[]; only=parse_pages(args.pages)
+    for page in mod['pages']:
+        index=page['page_index']
+        for cap in page['items']:
+            iid=cap['item_id'];job=jobs.get(iid);v=verified.get(iid,{})
+            owned=written.get(iid,{}).get('result') in {'written','replaced'}
+            valid=bool(job and str(v.get('expected_hash'))==str(expected_hash(job)) and v.get('observed_hash')==v.get('expected_hash'))
+            reason=ca.eligibility(cap,page,pl,statuses[index],written=owned,verified=valid,calibrated=save is not None)
+            if args.resume and iid in prior and prior[iid]['stop']=='not-finished':
+                # The preceding call carries ownership over its own saved index state.
+                reason=ca.eligibility(cap,page,pl,statuses[index],written=owned,verified=True,calibrated=save is not None)
+            if not reason and job and job['kind']!='select' and not {'pool_h','index_state'} <= set(written.get(iid,{})):
+                reason='draft-index-unknown'
+            if reason or not job:
+                refused.append({'item':iid,'page':index,'reason':reason or 'draft-not-written'})
+                continue
+            if only is not None and index not in only:
+                continue
+            if args.resume and (iid not in prior or prior[iid]['stop']!='not-finished'):
+                continue
+            j=_check_job(job,cap,written.get(iid))
+            if iid in prior:
+                r=prior[iid]
+                if r['draft_h']!=j['draft_h']:
+                    raise Refusal('resume draft binding differs')
+                j['resume']=dict(r,presses_before=r.get('presses_before',0)+len(r['presses']))
+            pages.setdefault(str(index),[]).append(j)
+    checkplan=plan_fields(pl,mod)
+    checkplan['check_answer_keys']=[[int(p),str(j['panel_key'])] for p,js in pages.items() for j in js]
+    prior_drafts=[]
+    for page in mod['pages']:
+        status=statuses[page['page_index']]
+        ids=[i['item_id'] for i in page['items'] if written.get(i['item_id'],{}).get('result') in {'written','replaced'}]
+        if status['rat'] is True and ids:
+            prior_drafts.append({'page':page['page_index'],'kind':status['kind'],'sources':status['sources'],'items':ids})
+    checkplan.update(refused=refused,rat_pages=list(statuses.values()),prior_drafts_on_rat=prior_drafts)
+    checkplan['policy']={'enabled':True,'config':hashlib.sha256(json.dumps(cfg.values,sort_keys=True).encode()).hexdigest()}
+    out.mkdir(parents=True,exist_ok=True)
+    write_json(out/'check-plan.json',checkplan)
+    all_pages=copy.deepcopy(pages)
+    previous_jobs=out/'check-jobs.json'
+    if previous_jobs.exists():
+        old=load(previous_jobs)
+        if args.resume and old.get('answers_sha256')!=sha256(apath):
+            raise Refusal('resume job binding differs')
+        for p,js in (old.get('pages',{}) if old.get('answers_sha256')==sha256(apath) else {}).items():
+            by={j['item']:j for j in js}
+            by.update({j['item']:j for j in all_pages.get(p,[])})
+            all_pages[p]=list(by.values())
+    write_json(previous_jobs,{'module_id':mid,'pages':all_pages,'answers_sha256':sha256(apath)})
+    policy={'enabled':True,'config':hashlib.sha256(json.dumps(cfg.values,sort_keys=True).encode()).hexdigest()}
+    for p,js in pages.items():
+        c=dict(cfg_base(pay,sw),enabled=True,page=int(p),policy=policy,rat_page=statuses[int(p)],
+               classification_pin=ca.classification_pin(next(pg for pg in mod['pages'] if pg['page_index']==int(p))),
+               drop_text_patterns=cfg.get('capture.drop_text_patterns'),
+               single_attempt_keys=pay['pages'][p].get('single_attempt_keys',[]),
+               single_attempt_locked=[[s['page_index'],str(next(i['panel_key'] for pg in mod['pages'] for i in pg['items'] if i['item_id']==s['item_id']))] for s in pl['boundary_map'].get('single_attempts_passed',[]) if s['page_index']<=int(p)],
+               dialog_max_ms=cfg.get('fill.dialog.max_ms'),resumed=bool(args.resume))
+        source=out/f'_check-{mid}-p{p}.js'
+        source.write_text(LIB.read_text()+ '\n'+ _check_body()+'\nreturn await LtCheck.run('+json.dumps(c)+','+json.dumps(js)+');\n',encoding='utf-8')
+        if not args.no_render:
+            r=render_script(source,form=args.form,stub=True if args.stub else False if args.no_stub else None,cfg=cfg,plan=checkplan,out_dir=str(out))
+            print(r['path'] if 'path' in r else r)
+        else:
+            print(source)
+    print(f'Check Answer: {sum(map(len,pages.values()))} items on pages '+(', '.join(pages) or 'none'))
+    for r in refused:
+        print(f"{r['item']}: {r['reason']}")
+    return 0 if pages else 2
+
+
+def cmd_check_verify(args,cfg):
+    mod=load_module(args.module);st=_open_store(args,cfg);mid=mod['module_id']
+    out=Path(args.out) if args.out else st.fill_js_dir(mid)
+    recorded=_check_receipts(args.check,mid)
+    jobsdoc=load(out/'check-jobs.json');jobs={j['item']:j for js in jobsdoc['pages'].values() for j in js}
+    latest={}
+    for _,call in recorded:
+        for row in call['items']:
+            if row['presses'] or row.get('wrote') or row.get('presses_before'):
+                latest[row['item_id']]=(call,row)
+    pages={}
+    for iid,(call,row) in latest.items():
+        if iid not in jobs:
+            raise Refusal('check-verify needs the matching check-jobs.json')
+        job=dict(jobs[iid],final_h=row['final_h'])
+        pages.setdefault(str(call['page']),[]).append(job)
+    if not pages:
+        return 2
+    source=out/f'_verify-check-{mid}.js'
+    c={'module_id':mid,'run_id':mod['run_id'],'origin':origin_of(mod['source_url']),'instance':mod.get('instance'),'course_id':mod.get('course_id')}
+    source.write_text(LIB.read_text()+'\n'+_check_body()+'\nreturn await LtCheck.verify('+json.dumps(c)+','+json.dumps(pages)+');\n',encoding='utf-8')
+    if not args.no_render:
+        print(render_script(source,form=args.form,stub=True if args.stub else False if args.no_stub else None,cfg=cfg,plan=load(out/'check-plan.json'),out_dir=str(out)))
+    else:
+        print(source)
+    return 0
+
+
+def record_check(args,cfg,mod,st):
+    mid=mod['module_id'];calls=_check_receipts(args.check,mid)
+    if not args.verify:
+        raise Refusal('record --check needs --verify from a fresh load')
+    ver=_receipt(args.verify)
+    if ver.get('ok') is not True or ver.get('fresh_load') is not True or ver.get('module')!=mid or ver.get('mode')!='check-verify':
+        raise Refusal('check verify needs a matching fresh-load receipt')
+    rows={r[0]:r for r in ver.get('items',[]) if isinstance(r,list) and len(r)>=4}
+    latest={};ledger=[];last_write={}
+    for path,call in calls:
+        if call.get('doc_id') and call.get('doc_id')==ver.get('doc_id'):
+            raise Refusal('check verify ran in the checking document')
+        ledger.append({'receipt':path.name,'receipt_sha256':sha256(path),'page':call['page'],
+                       'policy':call.get('policy'),'rat_page':call.get('rat_page'),'items':call['items']})
+        for row in call['items']:
+            if row.get('wrote'):last_write[row['item_id']]=row.get('save_signal')
+            if row['presses'] or row.get('wrote') or row.get('presses_before'):
+                latest[row['item_id']]=(call,row)
+    records=[];misses=[];drop=False
+    for iid,(call,row) in latest.items():
+        vr=rows.get(iid)
+        # Shape failures can retain the expected selection hashes. Keep their
+        # failed status in the receipt so hash-only report readers also fail.
+        observed=vr[3] if vr and vr[1]=='ok' else 'verify-'+str(vr[1]) if vr else 'missing'
+        records.append({'item_id':iid,'expected_hash':row['final_h'],'observed_hash':observed,
+                        'observed_at':ver.get('observed_at') or now_utc()})
+        if observed!=row['final_h']:
+            misses.append(iid)
+            if last_write.get(iid) in {'model','net'}:
+                drop=True
+    run=st.run_dir(mid)
+    _append_unique(run/'check-answer.json','checks',ledger,lambda r:r['receipt_sha256'])
+    _append_unique(run/'receipts.json','receipts',records,lambda r:(r['item_id'],r['observed_at']))
+    if drop:
+        origin=origin_of(mod['source_url']);cal=load_calibration(st.calibration_path);state=cal.get(origin,{})
+        state.pop('save',None)
+        _history(state,'check-verify-miss','calibrated check write did not persist')
+        write_json(st.calibration_path,cal)
+    print(f'Check receipts recorded: {len(ledger)}; verify misses: {len(misses)}')
+    for iid in misses:
+        print(f'{iid}: '+('post-check verify miss; calibration dropped' if drop else 'lt-changed-state; calibration unchanged'))
+    return 0
+
+
 # ---- approve ----------------------------------------------------------------------------------
 def cmd_approve(args, cfg) -> int:
     mod = load_module(args.module)
@@ -1298,12 +1598,14 @@ def _payload_jobs(paths: list[Path]) -> dict[str, dict]:
     for p in paths:
         if not p.is_file():
             continue
-        pay = load(p)
+        raw = p.read_bytes()
+        pay = json.loads(raw)
+        binding = {"path": str(p.resolve()), "sha256": hashlib.sha256(raw).hexdigest()}
         if pay.get("schema") != PAYLOAD_SCHEMA:
             continue
         for pg in pay.get("pages", {}).values():
             for j in pg.get("jobs", []):
-                jobs[j["item"]] = j
+                jobs[j["item"]] = dict(j, _source_payload=binding)
     return jobs
 
 
@@ -1626,6 +1928,8 @@ def calibrate_from(state: dict, pending: dict, fpath: Path, f: dict, vpath: Path
 def cmd_record(args, cfg) -> int:
     mod = load_module(args.module)
     st = _open_store(args, cfg)
+    if getattr(args, 'check', None):
+        return record_check(args,cfg,mod,st)
     if args.dialog:
         return record_dialog(args, cfg, st, mod)
     if not args.fill or not args.verify:
@@ -1648,6 +1952,8 @@ def cmd_record(args, cfg) -> int:
     fjs = st.fill_js_dir(mid)
     ppaths = [Path(p) for p in args.payload] if args.payload else [
         fjs / "fill-payload.json", fjs / "replace-payload.json", fjs / "calibrate-payload.json"]
+    if any(rat.within(p, root) for p in ppaths for _, root in rat.effective_roots(rat.policy_from_config(cfg))):
+        raise Refusal("RAT receipt binding: payload path is inside a quarantined RAT root")
     jobs = _payload_jobs(ppaths)
     vrows = {str(row[0]): row for row in ver.get("items", []) if isinstance(row, list) and row}
     observed_at = ver.get("observed_at") or now_utc()
@@ -1665,20 +1971,30 @@ def cmd_record(args, cfg) -> int:
                 continue
             iid = rec["item"]
             row = vrows.get(iid)
+            if iid in jobs and jobs[iid].get("source") == "rat-sheet":
+                binding = jobs[iid]["_source_payload"]
+                if (f.get("source_payload_sha256") != binding["sha256"] or
+                        ver.get("source_payload_sha256") != binding["sha256"]):
+                    raise Refusal("RAT receipt binding: fill and verify must name the executed payload")
             if row is None or row[1] != "ok":
                 misses.append(f"{iid} {row[1] if row else 'not in the verify'}")
             if iid in jobs and row is not None and len(row) >= 4:
                 receipts.append({"item_id": iid, "expected_hash": expected_hash(jobs[iid]),
-                                 "observed_hash": row[3], "observed_at": observed_at})
+                                 "observed_hash": row[3], "observed_at": observed_at,
+                                 **({"source_payload": jobs[iid]["_source_payload"]} if jobs[iid].get("source") == "rat-sheet" else {})})
             elif row is not None and row[1] in ("no-page", "no-panel") and iid in jobs:
                 receipts.append({"item_id": iid, "expected_hash": expected_hash(jobs[iid]),
-                                 "observed_hash": row[1], "observed_at": observed_at})
+                                 "observed_hash": row[1], "observed_at": observed_at,
+                                 **({"source_payload": jobs[iid]["_source_payload"]} if jobs[iid].get("source") == "rat-sheet" else {})})
 
     run_dir = st.run_dir(mid)
     nr = _append_unique(run_dir / "receipts.json", "receipts", receipts,
                         lambda r: (r["item_id"], r["observed_at"]))
     nw = _append_unique(run_dir / "save-waits.json", "save_waits", waits,
                         lambda r: r["receipt_sha256"])
+    _append_unique(run_dir / 'fill-results.json', 'items',
+        [{'item_id':r['item'], 'result':r.get('result'), 'receipt_sha256':sha256(p), **{k:r[k] for k in ('pool_h','index_state') if k in r}} for p,f in fills for r in f.get('items',[])],
+        lambda r:(r['item_id'],r['receipt_sha256']))
     print(f"{run_dir / 'receipts.json'}: {nr} receipt(s) added; {run_dir / 'save-waits.json'}: {nw} wait(s) added")
 
     origin = origin_of(mod.get("source_url"))
@@ -1899,6 +2215,21 @@ def main(argv=None) -> int:
     s.add_argument("--lib-url", help="served mode: where `emit_fill.py serve` listens")
     _render_opts(s)
     _common(s)
+    for name,func in (("check",cmd_check),("check-verify",cmd_check_verify)):
+        c = sub.add_parser(name)
+        c.add_argument("--module",required=True)
+        c.add_argument("--out")
+        if name=="check":
+            c.add_argument("--answers")
+            c.add_argument("--payload")
+            c.add_argument("--fill",nargs="+")
+            c.add_argument("--receipts")
+            c.add_argument("--resume",nargs="+")
+            c.add_argument("--pages")
+        else:
+            c.add_argument("--check",nargs="+",required=True)
+        _render_opts(c)
+        _common(c)
     a = sub.add_parser("approve", help="record the user's approval of one single-attempt item")
     a.add_argument("--module", required=True)
     a.add_argument("--item", required=True)
@@ -1911,6 +2242,7 @@ def main(argv=None) -> int:
     r.add_argument("--fill", nargs="+", help="fill receipt(s): the JSON the fill script returned")
     r.add_argument("--verify", help="the verify receipt from a fresh load")
     r.add_argument("--payload", nargs="+", help="payload(s) holding the jobs (default: those in fill-js)")
+    r.add_argument("--check", nargs="+", help="check receipt(s), preserving historical policy")
     r.add_argument("--dialog", help="a confirm_dialog.js receipt, to calibrate the dialog wait")
     _common(r)
     c = sub.add_parser("calibrate", help="a one-item payload and script on the fallback wait")
@@ -1946,7 +2278,7 @@ def main(argv=None) -> int:
         print(f"REFUSED: {e}", file=sys.stderr)
         return 3
     try:
-        return {"payload": cmd_payload, "scripts": cmd_scripts, "approve": cmd_approve,
+        return {"check":cmd_check,"check-verify":cmd_check_verify,"payload": cmd_payload, "scripts": cmd_scripts, "approve": cmd_approve,
                 "record": cmd_record, "calibrate": cmd_calibrate, "dialog-args": cmd_dialog_args,
                 "save-model-answer": cmd_save_model_answer, "serve": cmd_serve,
                 "djb2": cmd_djb2}[args.cmd](args, cfg)
@@ -1955,6 +2287,9 @@ def main(argv=None) -> int:
         return 4
     except Refusal as e:
         print(f"REFUSED: {e}", file=sys.stderr)
+        return 3
+    except (OSError, ValueError, KeyError, TypeError):
+        print("REFUSED: invalid input or receipt", file=sys.stderr)
         return 3
 
 

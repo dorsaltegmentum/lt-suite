@@ -139,3 +139,8 @@ a fetch reference taken before the hooks. Two controls (no wait, and a rule that
 key on the first request) must lose writes. `tests/fill/test_emit_fill.py` covers the
 calibration outcomes: auto-calibration, a failed calibration that keeps the fallback, a
 cross-page success and a cross-page miss that falls back to one page per call.
+
+
+## Check Answer
+
+Check Answer processes one displayed page per call with one press in flight. There is no press cap. Finite candidates, never-repeated states and the decided-part progress rule bound each item. Event waits end at a 90,000 ms deadline; each write or press reserves 10,000 ms plus dialog and save caps. Retry saves must end model or net. Check calls never grant calibration; a failed post-write verify drops the save record.

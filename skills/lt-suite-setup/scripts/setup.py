@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # SPDX-FileCopyrightText: 2026 dorsaltegmentum
 # SPDX-License-Identifier: AGPL-3.0-or-later
-"""lt-suite first-time setup: bootstrap, locate, write, set, fetch-font, ping, doctor.
+"""lt-suite first-time setup: bootstrap, locate, write, set, fetch-font, ping, lt-chrome, doctor.
 
 This file starts on Python 3.8 and imports nothing outside the standard library
 until a command needs the shared core (``ltcore``), which needs Python 3.11.
@@ -18,6 +18,7 @@ Commands (global flags --config and --data-dir go before or after the command):
   set         change one key in the existing config file
   fetch-font  download one catalog font into <data>/fonts after explicit approval
   ping        render the browser-check script and verify the browser tool's reply
+  lt-chrome   plan browser startup, install a stable launcher or print a host snippet
   doctor      check Python, packages, binaries, fonts, palettes, data folder, browser
 
 Exit codes: 0 ok, 1 a check or an action failed, 2 usage error or crash,
@@ -56,6 +57,9 @@ requirement_applies = _req_module.requirement_applies
 MIN_PYTHON = (3, 11)
 GUARD_ENV = "LT_SUITE_BOOTSTRAPPED"
 MCP_PACKAGE = "chrome-devtools-mcp@1.12.0"
+# BEGIN generated lt-chrome host data from packaging/plugin.toml and shared/schemas/config.schema.json
+CHROME_HOST_DATA = {'browser_keys': ['adapter', 'chromium', 'chromium_user_data_dir', 'devtools_url', 'js_tmp_dir', 'lib_mode', 'lib_port', 'sink_port', 'transport'], 'enabled': ['list_pages', 'select_page', 'navigate_page', 'evaluate_script', 'take_screenshot', 'wait_for'], 'disabled': ['new_page', 'click', 'click_at', 'drag', 'fill', 'fill_form', 'hover', 'press_key', 'type_text', 'upload_file', 'handle_dialog'], 'integrity': 'sha512-lAGpH0zXT1ZdaPefP1KK/MvxwihOlu7VGQ7p4wbhD9OhN17vUC4KWk/ImUYR9DE4s+7r4r0ySV4xr2OkTa7ZMA==', 'node_gate': {'min_major': 20, '20': 19, '22': 12}, 'version': '0.2.0', 'fixed_args': ['--no-usage-statistics', '--no-performance-crux', '--no-category-input', '--no-category-network', '--no-category-memory', '--no-category-performance', '--no-category-emulation', '--redact-network-headers']}
+# END generated lt-chrome host data
 KNOWN_SKILLS = ("lt-suite-setup", "lt-module-capture", "lt-module-answer",
                 "lt-module-fill", "lt-module-export", "mechanistic-diagram")
 
@@ -113,11 +117,11 @@ def quote_command(argv):
     return " ".join(shlex.quote(a) for a in argv)
 
 
-def run(argv, timeout=60, env=None):
+def run(argv, timeout=60, env=None, cwd=None):
     """Run a program; return (code, stdout, stderr). A missing program gives code 127."""
     try:
         p = subprocess.run([str(a) for a in argv], stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                           universal_newlines=True, timeout=timeout, env=env)
+                           universal_newlines=True, timeout=timeout, env=env, cwd=cwd)
         return p.returncode, p.stdout, p.stderr
     except FileNotFoundError:
         return 127, "", "not found: " + str(argv[0])
@@ -879,6 +883,7 @@ def cmd_fetch_font(a, opener=None):
     for p in written:
         say("wrote %s" % p)
     say("Use it with: setup.py set fonts.%s \"%s\"" % (entry.get("role", "sans"), entry["family"]))
+    say("For diagrams: setup.py set fonts.diagram.%s \"%s\"" % (entry.get("role", "sans"), entry["family"]))
     return 0
 
 
@@ -1062,6 +1067,7 @@ def check_config(ctx):
         out.append(Result("config", "WARN", w))
     if not cfg.get("lt.origin", ""):
         out.append(Result("config", "WARN", "lt.origin is not set; capture and fill need it"))
+    out.append(Result("config", "PASS", "fill.check_answer.enabled = %s" % str(cfg.get("fill.check_answer.enabled")).lower()))
     ctx["cfg"] = cfg
     return out
 
@@ -1078,38 +1084,251 @@ def check_palettes(ctx):
     return [Result("palettes", s, t) for s, t in _catalog.check_palettes(ctx.get("cfg"))]
 
 
+def chrome_launcher():
+    return SHARED_DIR / "lt_chrome" / "lt-chrome.cjs"
+
+
+def chrome_plan(config_path=None):
+    node = shutil.which("node")
+    if not node:
+        raise ValueError("no node on PATH: lt-chrome cannot start")
+    env = dict(os.environ)
+    if config_path:
+        env["LT_SUITE_CONFIG"] = str(config_path)
+    rc, output, _ = run([node, chrome_launcher(), "--plan", "--redact"], env=env)
+    if rc:
+        raise ValueError("lt-chrome plan failed; reinstall lt-suite and check Node.js")
+    try:
+        return json.loads(output)
+    except ValueError:
+        raise ValueError("lt-chrome plan returned invalid JSON; reinstall lt-suite")
+
+
+def cmd_lt_chrome(a):
+    ensure_modern_python(a.argv)
+    import_ltcore(a.argv)
+    from ltcore import paths
+    target = Path(str(paths.config_dir())) / "lt-chrome.cjs"
+    if a.chrome_cmd == "plan":
+        try:
+            result = chrome_plan(a.config)
+        except ValueError as exc:
+            err(str(exc))
+            return 1
+        say(json.dumps(result, indent=2))
+        return 0
+    if a.chrome_cmd == "install":
+        if target.is_symlink():
+            err("lt-chrome install refuses a symlink target")
+            return 1
+        target.parent.mkdir(parents=True, exist_ok=True)
+        name = None
+        try:
+            with tempfile.NamedTemporaryFile(dir=target.parent, prefix=".lt-chrome-", delete=False) as temp:
+                name = Path(temp.name)
+                temp.write(chrome_launcher().read_bytes())
+                os.fchmod(temp.fileno(), 0o644) if hasattr(os, "fchmod") else os.chmod(name, 0o644)
+            if target.is_symlink():
+                err("lt-chrome install refuses a symlink target")
+                return 1
+            os.replace(name, target)
+        finally:
+            if name is not None and name.exists():
+                name.unlink()
+        say(str(target))
+        return 0
+    server = {"command": "node", "args": [str(target)]}
+    forward = ["LT_SUITE_CONFIG", "XDG_CONFIG_HOME", "XDG_CACHE_HOME", "APPDATA", "LOCALAPPDATA"]
+    if a.host == "codex":
+        server.update(enabled_tools=CHROME_HOST_DATA["enabled"], startup_timeout_sec=30,
+                      default_tools_approval_mode="prompt", env_vars=forward)
+        say('[mcp_servers."lt-chrome"]')
+        for key, value in server.items():
+            say("%s = %s" % (key, json.dumps(value)))
+    else:
+        if a.host == "gemini-settings":
+            server.update(excludeTools=CHROME_HOST_DATA["disabled"], trust=False)
+        elif a.host == "antigravity":
+            server["disabledTools"] = CHROME_HOST_DATA["disabled"]
+        if a.host in ("vscode", "copilot"):
+            server["type"] = "stdio"
+        say(json.dumps({"servers" if a.host == "vscode" else "mcpServers": {"lt-chrome": server}}, indent=2))
+    return 0
+
+
+def check_devtools_file(folder, browser):
+    out = []
+    folder = Path(folder)
+    if not folder.is_dir():
+        out.append(Result("browser", "WARN", 'folder %s not found: choose browser.chromium = "other" and set '
+                          'browser.chromium_user_data_dir (Snap and Flatpak keep profiles elsewhere)' % folder))
+    try:
+        lines = (folder / "DevToolsActivePort").read_text(encoding="utf-8").splitlines()
+    except FileNotFoundError:
+        text = ("no DevToolsActivePort in %s: start %s, open chrome://inspect/#remote-debugging "
+                "and turn on remote debugging" % (folder, browser))
+        out.append(Result("browser", "WARN", text))
+        return out
+    except (OSError, UnicodeError):
+        return out + [Result("browser", "FAIL", "DevToolsActivePort in %s cannot be read" % folder)]
+    if len(lines) < 2 or not re.fullmatch(r"/devtools/browser/[A-Za-z0-9-]{1,64}", lines[1]):
+        out.append(Result("browser", "FAIL", "DevToolsActivePort in %s has an unexpected second line" % folder))
+    elif not re.fullmatch(r"[0-9]{1,5}", lines[0]) or not 1 <= int(lines[0]) <= 65535:
+        out.append(Result("browser", "FAIL", "DevToolsActivePort in %s has an invalid port" % folder))
+    else:
+        out.append(Result("browser", "PASS", "DevToolsActivePort found, port %d" % int(lines[0])))
+    return out
+
+
+def probe_devtools(url):
+    # No proxies and no redirects: only the explicitly configured loopback listener.
+    import urllib.request
+    from urllib.parse import urlsplit
+    class NoRedirect(urllib.request.HTTPRedirectHandler):
+        def redirect_request(self, req, fp, code, msg, headers, newurl):
+            return None
+    port = urlsplit(url).port
+    try:
+        opener = urllib.request.build_opener(urllib.request.ProxyHandler({}), NoRedirect())
+        with opener.open(url.rstrip("/") + "/json/version", timeout=3) as response:
+            data = json.loads(response.read(65537))
+        ws = urlsplit(data.get("webSocketDebuggerUrl", ""))
+        loopback = (ws.scheme in ("ws", "wss") and ws.hostname in ("127.0.0.1", "::1")
+                    and not ws.username and not ws.password)
+        return Result("browser", "PASS" if loopback else "FAIL",
+                      "/json/version on port %d names a %s WebSocket" % (port, "loopback" if loopback else "non-loopback"))
+    except (OSError, ValueError, TypeError, AttributeError):
+        return Result("browser", "FAIL", "/json/version on port %d could not be checked" % port)
+
+
 def check_browser(ctx):
     cfg = ctx.get("cfg")
     adapter = cfg.get("browser.adapter", "auto") if cfg is not None else "auto"
+    from ltcore import paths
     out = []
+    def add(status, text):
+        out.append(Result("browser", status, text))
+    config_path = ctx.get("config")
+    try:
+        plan = chrome_plan(config_path)
+    except ValueError as exc:
+        add("WARN", str(exc))
+        plan = None
+    if plan:
+        add("FAIL" if plan["action"] == "refuse" else "PASS", "lt-chrome plan: %s (config %s, %s)" %
+            (plan["action"], plan["config"], plan["config_source"]))
+        if plan["reason"]:
+            add("FAIL" if plan["action"] == "refuse" else "WARN", plan["reason"])
+        version = plan["node_version"]
+        major, minor = [int(v) for v in version.split(".")[:2]]
+        gate = CHROME_HOST_DATA["node_gate"]
+        old = major < gate["min_major"] or (str(major) in gate and minor < gate[str(major)])
+        add("FAIL" if old else "WARN" if major == 21 else "PASS",
+            "node %s%s" % (version, " is too old" if old else
+                " is outside chrome-devtools-mcp's supported range" if major == 21 else ""))
+        if cfg is not None and getattr(cfg, "path", None) and plan["action"] != "refuse":
+            for key, value in plan["browser"].items():
+                expected = cfg.get("browser." + key, "")
+                if key == "devtools_url":
+                    import hashlib
+                    digest = hashlib.sha256(expected.encode("utf-8")).hexdigest()
+                    if digest != plan.get("devtools_url_sha256"):
+                        add("FAIL", "lt-chrome reads value hidden but lt-suite reads value hidden for browser.devtools_url")
+                    continue
+                elif key == "chromium_user_data_dir" and value:
+                    value = (plan["profile_dir"] if plan["action"] == "start" and plan["route"] == "auto-connect"
+                             else paths.expand(value, Path(plan["config"]).parent))
+                if value != expected:
+                    add("FAIL", "lt-chrome reads %s but lt-suite reads %s for browser.%s" % (value, expected, key))
+    quiet = adapter in ("claude-in-chrome", "playwright-mcp", "manual-paste") or (plan and plan["action"] == "serve-none")
+    if quiet:
+        add("PASS", "adapter %s: lt-chrome serves no tools%s" % (adapter,
+            "; setup step 7 checks Claude in Chrome" if adapter == "claude-in-chrome" else ""))
+    elif adapter == "auto":
+        add("PASS", "adapter auto: the agent picks Claude in Chrome, then lt-chrome (%s), then Playwright MCP, then manual paste" % MCP_PACKAGE)
     npx = shutil.which("npx")
-    if adapter in ("auto", "chrome-devtools-mcp", "playwright-mcp"):
-        if npx:
-            out.append(Result("browser", "PASS", "npx found at %s" % npx))
-        else:
-            out.append(Result("browser", "WARN", "npx not found; the lt-chrome and Playwright "
-                              "servers start through npx (install Node.js 22 or newer)"))
-    if adapter == "auto":
-        out.append(Result("browser", "PASS", "adapter auto: the agent picks Claude in Chrome, "
-                          "then lt-chrome (%s), then Playwright MCP, then manual paste" % MCP_PACKAGE))
-    else:
-        out.append(Result("browser", "PASS", "adapter %s" % adapter))
-    if adapter == "chrome-devtools-mcp" or ctx.get("prefetch_mcp"):
-        if not npx:
-            out.append(Result("browser", "WARN", "cannot pre-fetch %s without npx" % MCP_PACKAGE))
-        else:
-            start = time.time()
-            rc, o, e = run([npx, "-y", MCP_PACKAGE, "--version"], timeout=240)
-            secs = time.time() - start
-            if rc == 0:
-                out.append(Result("browser", "PASS", "%s pre-fetched (%.0f s), version %s"
-                                  % (MCP_PACKAGE, secs, o.strip().splitlines()[-1] if o.strip() else "?")))
+    if not quiet or adapter == "playwright-mcp":
+        add("PASS" if npx else "WARN", "npx found at %s" % npx if npx else "npx not found; install Node.js with npm")
+    starts = bool(plan and plan["action"] == "start" and not quiet)
+    cache = Path(plan["cache_dir"]) if plan else Path(str(paths.cache_dir()))
+    records = []
+    for pattern in ("last-start-*.json", "last-fallback-*.json"):
+        for file in sorted((cache / "lt-chrome").glob(pattern)):
+            try:
+                record = json.loads(file.read_text(encoding="utf-8"))
+            except (OSError, ValueError):
+                add("WARN", "lt-chrome start record cannot be read")
+                continue
+            records.append(record)
+            via, when = record.get("via", "unknown"), record.get("time", "unknown")
+            if record.get("action") == "fallback":
+                matches = starts and plan["browser"] == {"adapter":adapter, "chromium":"chrome", "chromium_user_data_dir":"", "devtools_url":""}
+                if matches:
+                    add("PASS", "lt-chrome started the 0.1.0 fallback via %s at %s; that matches your browser settings" % (via, when))
+                else:
+                    text = ("lt-chrome started the 0.1.0 fallback via %s at %s: that agent did not pass the plugin folder, "
+                            "so it ignored browser.adapter = %s and browser.chromium = %s and offers up to 15 tools. "
+                            "Run setup.py lt-chrome snippet --host <host>, or turn lt-chrome off in that agent." %
+                            (via, when, adapter, cfg.get("browser.chromium", "chrome") if cfg else "chrome"))
+                    if cfg is not None and cfg.get("browser.devtools_url", ""):
+                        text += " browser.devtools_url is set."
+                    if record.get("reason") == "no lt-chrome launcher under the plugin folder":
+                        text += "; the plugin folder lacks the launcher: reinstall lt-suite"
+                    add("WARN", text)
             else:
-                out.append(Result("browser", "WARN", "could not pre-fetch %s: %s"
-                                  % (MCP_PACKAGE, tail(e or o, 3).replace("\n", " "))))
-    else:
-        out.append(Result("browser", "PASS", "pre-fetch of %s skipped (use --prefetch-mcp or set "
-                          "browser.adapter = \"chrome-devtools-mcp\")" % MCP_PACKAGE))
+                add("PASS", "lt-chrome last start via %s at %s: %s" % (via, when, record.get("action")))
+                current = str(getattr(cfg, "path", None) or config_path or "")
+                if str(record.get("config") or "") != current:
+                    add("WARN", "lt-chrome last started with config %s, but lt-suite reads %s: the agent runs lt-chrome from another folder; set LT_SUITE_CONFIG or use the platform config" % (record.get("config"), current))
+    if starts and not records:
+        add("WARN", "lt-chrome has no start record: no agent session has started it yet, the agent could not run node, or the cache folder is not writable.")
+    if starts:
+        folder = cache / "lt-chrome" / "run"
+        add("WARN" if plan["reason"] else "PASS", "%s cannot be written: lt-chrome's npx runs in the agent's working folder, as in 0.1.0" % folder if plan["reason"] else "npx working folder %s" % folder)
+        if plan["route"] == "auto-connect":
+            add("PASS", "auto-connect to %s, user data folder %s" % (plan["browser"]["chromium"], plan["profile_dir"]))
+            out.extend(check_devtools_file(plan["profile_dir"], plan["browser"]["chromium"]))
+        else:
+            from urllib.parse import urlsplit
+            url = cfg.get("browser.devtools_url", "") if cfg else ""
+            if url:
+                add("PASS", "browser-url on loopback port %d" % urlsplit(url).port)
+                if ctx.get("probe_devtools"):
+                    out.append(probe_devtools(url))
+    if plan and any(r.get("action") == "fallback" for r in records):
+        stable = plan["chrome_stable_profile_dir"]
+        if not (starts and plan["profile_dir"] == stable):
+            out.extend(check_devtools_file(stable, "chrome"))
+    prefetch = not quiet and (adapter in ("chrome-devtools-mcp", "antigravity") or ctx.get("prefetch_mcp"))
+    if prefetch and starts:
+        # The launcher's command contains the hardened npx prefix, without browser flags.
+        prefix = plan["argv"][:plan["argv"].index("-y") + 2]
+        env = dict(os.environ)
+        for key in plan["env_removed"]:
+            env.pop(key, None)
+        env.update(plan["env_set"])
+        rc, _, _ = run(prefix + ["--version"], env=env, timeout=240, cwd=plan["cwd"])
+        add("PASS" if rc == 0 else "WARN", "%s pre-fetched" % MCP_PACKAGE if rc == 0 else "could not pre-fetch %s" % MCP_PACKAGE)
+        npm = shutil.which("npm")
+        if npm:
+            rc, integrity, _ = run([npm, "view", MCP_PACKAGE, "dist.integrity"], env=env, cwd=plan["cwd"], timeout=30)
+            matches = rc == 0 and integrity.strip() == CHROME_HOST_DATA["integrity"]
+            add("PASS" if matches else "WARN", "registry integrity %s the pinned sha512" % ("matches" if matches else "differs from"))
+    elif not quiet:
+        add("PASS", "pre-fetch of %s skipped (use --prefetch-mcp)" % MCP_PACKAGE)
+    stable_launcher = Path(str(paths.config_dir())) / "lt-chrome.cjs"
+    if stable_launcher.is_file():
+        node = shutil.which("node")
+        if node:
+            rc, output, _ = run([node, stable_launcher, "--print-pins"])
+            try:
+                pins = json.loads(output) if rc == 0 else {}
+            except ValueError:
+                pins = {}
+            expected = {"browser_keys": CHROME_HOST_DATA["browser_keys"], "lt_suite_version": CHROME_HOST_DATA["version"], "package": MCP_PACKAGE,
+                        "fixed_args": CHROME_HOST_DATA["fixed_args"], "node_gate": CHROME_HOST_DATA["node_gate"]}
+            if pins != expected:
+                add("WARN", "stable launcher %s is %s; run setup.py lt-chrome install" % (stable_launcher, pins.get("lt_suite_version", "unknown version")))
     from ltcore import ltjs
     tmp = ltjs.out_dir_for(cfg)
     try:
@@ -1120,6 +1339,21 @@ def check_browser(ctx):
         ok, detail = probe_dir(tmp)
         out.append(Result("browser", "PASS" if ok else "FAIL", "js_tmp_dir %s: %s" % (tmp, detail)))
     return out
+
+
+def check_rat(ctx):
+    from ltcore import config, rat, page_kinds  # shared closure for standalone setup
+    try:
+        cfg = config.load(ctx["config"])
+        report = rat.roots(rat.policy_from_config(cfg))
+    except (config.ConfigError, rat.RatError):
+        return [Result("config", "FAIL", "RAT root configuration is invalid")]
+    rows = [Result("config", "PASS", "RAT reading: irat=%s trat=%s" %
+                   (report["read"]["irat"], report["read"]["trat"]))]
+    for root in report["roots"]:
+        rows.append(Result("config", "PASS" if root["exists"] else "WARN",
+                           "%s: exists=%s files=%d" % (root["key"], root["exists"], root["files_seen"])))
+    return rows
 
 
 def cmd_doctor(a):
@@ -1134,10 +1368,10 @@ def cmd_doctor(a):
     import_ltcore(a.argv)
     skills_dir = Path(a.skills_dir) if a.skills_dir else SKILL_DIR.parent
     ctx = {"data": data, "data_src": src, "skills_dir": skills_dir, "config": a.config,
-           "prefetch_mcp": a.prefetch_mcp}
+           "prefetch_mcp": a.prefetch_mcp, "probe_devtools": a.probe_devtools}
     results = []
     for fn in (check_python, check_packages, check_binaries, check_data, check_config,
-               check_fonts, check_palettes, check_browser):
+               check_fonts, check_palettes, check_browser, check_rat):
         try:
             results.extend(fn(ctx))
         except Exception as exc:
@@ -1225,10 +1459,19 @@ def build_parser():
     g.add_argument("--reply-file", help="a file holding that JSON")
     v.add_argument("--record-dir", help="on success, store this folder as browser.js_tmp_dir")
 
+    p = sub.add_parser("lt-chrome", parents=[common], help="configure browser server startup")
+    chrome = p.add_subparsers(dest="chrome_cmd", required=True)
+    r = chrome.add_parser("plan", parents=[common], help="show the redacted launcher plan")
+    r.add_argument("--json", action="store_true")
+    chrome.add_parser("install", parents=[common], help="copy a stable launcher after user approval")
+    r = chrome.add_parser("snippet", parents=[common], help="print a settings-aware host config")
+    r.add_argument("--host", required=True, choices=("codex", "cursor", "vscode", "copilot", "gemini-settings", "antigravity"))
+
     p = sub.add_parser("doctor", parents=[common], help="check the install")
     p.add_argument("--require", action="append", choices=PARTS + ("all",),
                    help="turn WARN lines of this part into FAIL (repeatable)")
     p.add_argument("--skills-dir", help="folder that holds the installed skill folders")
+    p.add_argument("--probe-devtools", action="store_true", help="probe the configured loopback /json/version endpoint")
     p.add_argument("--prefetch-mcp", action="store_true",
                    help="run npx -y %s --version now" % MCP_PACKAGE)
     p.add_argument("--json", action="store_true")
@@ -1248,7 +1491,7 @@ def main(argv=None):
     a.argv = argv
     handlers = {"bootstrap": cmd_bootstrap, "locate": cmd_locate, "write": cmd_write,
                 "set": cmd_set, "fetch-font": cmd_fetch_font, "ping": cmd_ping,
-                "doctor": cmd_doctor}
+                "doctor": cmd_doctor, "lt-chrome": cmd_lt_chrome}
     try:
         return handlers[a.cmd](a)
     except KeyboardInterrupt:

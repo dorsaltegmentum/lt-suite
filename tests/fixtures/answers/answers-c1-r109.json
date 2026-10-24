@@ -1,0 +1,104 @@
+{
+ "schema_version": 2,
+ "module_id": "c1-r109",
+ "run_id": 109,
+ "drafted_at": "2000-01-01T00:00:00Z",
+ "source_module": {
+  "path": "../modules/module-c1-r109.json",
+  "sha256": "6f57d2ec121531a94ccff431e74c3fc10a56a0b1d687cd717f6788010431d0dc",
+  "question_digest": "67d7a1a015eacbe8d63f154e27573dea3e0d7201dae791398358e7eb46538170"
+ },
+ "tier1_corpus": [],
+ "items": [
+  {
+   "item_id": "p2-81",
+   "status": "skipped",
+   "skip_reason": "irat-policy"
+  },
+  {
+   "item_id": "p2-82",
+   "status": "skipped",
+   "skip_reason": "irat-policy"
+  },
+  {
+   "item_id": "p2-83",
+   "status": "skipped",
+   "skip_reason": "irat-policy"
+  },
+  {
+   "item_id": "p2-84",
+   "status": "skipped",
+   "skip_reason": "irat-policy"
+  },
+  {
+   "item_id": "p2-85",
+   "status": "skipped",
+   "skip_reason": "irat-policy"
+  },
+  {
+   "item_id": "p3-81",
+   "status": "skipped",
+   "skip_reason": "rat-sheet"
+  },
+  {
+   "item_id": "p3-82",
+   "status": "skipped",
+   "skip_reason": "rat-sheet"
+  },
+  {
+   "item_id": "p3-83",
+   "status": "skipped",
+   "skip_reason": "rat-sheet"
+  },
+  {
+   "item_id": "p3-84",
+   "status": "skipped",
+   "skip_reason": "rat-sheet"
+  },
+  {
+   "item_id": "p3-85",
+   "status": "skipped",
+   "skip_reason": "rat-sheet"
+  },
+  {
+   "item_id": "p4-11",
+   "status": "skipped",
+   "skip_reason": "user-excluded"
+  },
+  {
+   "item_id": "p5-1",
+   "status": "skipped",
+   "skip_reason": "user-excluded"
+  },
+  {
+   "item_id": "p5-2",
+   "status": "skipped",
+   "skip_reason": "user-excluded"
+  },
+  {
+   "item_id": "p5-3",
+   "status": "skipped",
+   "skip_reason": "user-excluded"
+  },
+  {
+   "item_id": "p6-1",
+   "status": "skipped",
+   "skip_reason": "user-excluded"
+  },
+  {
+   "item_id": "p6-2",
+   "status": "skipped",
+   "skip_reason": "user-excluded"
+  },
+  {
+   "item_id": "p6-3",
+   "status": "skipped",
+   "skip_reason": "user-excluded"
+  },
+  {
+   "item_id": "p6-4",
+   "status": "skipped",
+   "skip_reason": "user-excluded"
+  }
+ ]
+}

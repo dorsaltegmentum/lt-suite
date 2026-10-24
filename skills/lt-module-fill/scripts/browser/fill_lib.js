@@ -262,7 +262,7 @@
   /* Recursive: subpage children live under panelState.content.subpages[].rows[].cells[] and
    * their columns, as capture.js walks them; pa.content is kept from an older walk. */
   const panelsOf = page => {
-    const byKey = {};
+    const byKey = Object.create(null);
     const walk = (raw, depth) => {
       if (!raw || depth > 5) return;
       const pa = A(raw) || {};
@@ -352,6 +352,12 @@
   /* The keyboard route Lt ships for labelling is currentInputModel().addAnswer. Which
    * object carries currentInputModel is not measured for every page shape, so the panel's
    * own view model is tried first and the input model second; `via` names the one used. */
+  const liveIndexState = (job, raw) => {
+    const inp = inputOf(raw);
+    if (job.kind === 'select') return liveSelection(inp).slice().sort((a,b) => a-b).join(',');
+    const pairs = job.kind === 'labels' ? liveLinks(inp) : livePlacements(inp).map(p => [p[1],p[0]]);
+    return pairs.slice().sort((a,b) => a[0]-b[0] || a[1]-b[1]).map(p => p.join(':')).join(',');
+  };
   const addAnswerTarget = raw => {
     const pa = A(raw) || {};
     for (const [via, o] of [['panel', raw], ['panel-attributes', pa]]) {
@@ -453,6 +459,14 @@
   /* ---- the writer shared by fillPage and fillPages: rails 3 to 6 per job ----
    * ctx: {replace, singleKeys, occ (probe entries by key, or null), onPage, ck, sw, w (write
    * state)}. Returns the job's record; a write registers its key and a read-back closure. */
+  const writeModel = (w, ck, key, model, parent, fn) => {
+    if (w.net) w.net.expect(key, model, parent);
+    w.keys.add(key);
+    w.last = ck.now();
+    G.__ltFillLastWrite = w.last;
+    w.writes++;
+    try { fn(); return true; } catch (e) { w.threw++; return false; }
+  };
   const writeJob = async (ctx, job, byKey) => {
     const rec = { item: job.item, result: null };
     if (ctx.pageTag != null) rec.page = ctx.pageTag;
@@ -487,14 +501,7 @@
     const skey = saveKeyOf(raw);
     /* Every write goes through here: the ledger entry first, then the write. A throw (a guard
      * refusing a commit mutator, a model rejecting the value) is recorded, never rethrown. */
-    const write = (model, fn) => {
-      if (w.net) w.net.expect(skey, model, parent);
-      w.keys.add(skey);
-      w.last = ck.now();
-      G.__ltFillLastWrite = w.last;
-      w.writes++;
-      try { fn(); return true; } catch (e) { w.threw++; return false; }
-    };
+    const write = (model, fn) => writeModel(w, ck, skey, model, parent, fn);
 
     if (job.kind === 'text') {
       const before = pageText(U((A(inp) || {}).answer));
@@ -552,6 +559,10 @@
       w.pending.push(() => {
         const live2 = liveHash(job, raw);
         rec.h = live2.h; rec.n = live2.n;
+        if (job.kind === 'labels' || job.kind === 'categories') {
+          rec.pool_h = labelPool(c).map(t => djb2(pageText(t)));
+          rec.index_state = liveIndexState(job, raw);
+        }
         rec.result = live2.h === job.h ? 'written' : 'write-mismatch';
       });
     } else if (job.kind === 'labels') {
@@ -590,6 +601,10 @@
       w.pending.push(() => {
         const live2 = liveHash(job, raw);
         rec.h = live2.h; rec.n = live2.n;
+        if (job.kind === 'labels' || job.kind === 'categories') {
+          rec.pool_h = labelPool(c).map(t => djb2(pageText(t)));
+          rec.index_state = liveIndexState(job, raw);
+        }
         rec.result = live2.h === job.h ? 'written' : (threw ? 'write-threw' : (live2.n ? 'write-mismatch' : 'write-not-visible'));
         if (threw) rec.threw = threw;
       });
@@ -627,6 +642,10 @@
       w.pending.push(() => {
         const live2 = liveHash(job, raw);
         rec.h = live2.h; rec.n = live2.n;
+        if (job.kind === 'labels' || job.kind === 'categories') {
+          rec.pool_h = labelPool(c).map(t => djb2(pageText(t)));
+          rec.index_state = liveIndexState(job, raw);
+        }
         rec.result = live2.h === job.h ? 'written' : (live2.n ? (threw ? 'write-threw' : 'write-mismatch') : 'write-not-visible');
         if (threw) rec.threw = threw;
       });
@@ -720,6 +739,7 @@
     const ck = clock();
     const sw = saveWaitOf(cfg);
     const head = Object.assign({ module: cfg.module_id, run: cfg.run_id, page: cfg.page, mode: cfg.mode || 'fill' }, ids(cfg));
+    if (cfg.source_payload_sha256) head.source_payload_sha256 = cfg.source_payload_sha256;
     const fatal = (reason, extra) => Object.assign({ ok: false, fatal: reason }, head, extra || {}, { writes: 0, guard_trips: guardTrips() });
 
     const loc = checkLocation(cfg, cfg.page);
@@ -774,6 +794,7 @@
     const sw = saveWaitOf(cfg);
     const pagesWanted = (plan || []).map(e => Number(e.page));
     const head = Object.assign({ module: cfg.module_id, run: cfg.run_id, batch: pagesWanted, mode: cfg.mode || 'fill' }, ids(cfg));
+    if (cfg.source_payload_sha256) head.source_payload_sha256 = cfg.source_payload_sha256;
     const fatal = (reason, extra) => Object.assign({ ok: false, fatal: reason }, head, extra || {}, { writes: 0, guard_trips: guardTrips() });
 
     const loc = checkLocation(cfg, null);
@@ -868,6 +889,7 @@
     const ck = clock();
     const sw = saveWaitOf(cfg);
     const head = { module: cfg.module_id, run: cfg.run_id, mode: cfg.mode || 'fill', doc_id: docId(), client_sig: clientSig() };
+    if (cfg.source_payload_sha256) head.source_payload_sha256 = cfg.source_payload_sha256;
     const loc = checkLocation(cfg, null);
     if (loc.fatal) return Object.assign({ ok: false, fatal: loc.fatal }, head);
     const root = rootOf();
@@ -935,7 +957,10 @@
   const LtFillLib = {
     version: 2, fillPage, fillPages, verify,
     // exposed for the parity test and for the emitted scripts; nothing here writes
-    pageText, djb2, canon, checkLocation, titleHash, tableHash
+    pageText, djb2, canon, checkLocation, titleHash, tableHash,
+    write: writeModel, liveSelection, liveLinks, livePlacements, labelPool, liveIndexState,
+    rootOf, flatPages, pageAt, panelsOf, inputOf, contentOf, stateOf, stateModelOf,
+    saveKeyOf, addAnswerTarget, liveHash, clientSig, staleReason, ids, models, A, U, checkPassedSingles
   };
   G.LtFillLib = Object.assign(G.LtFillLib || {}, LtFillLib);
 })();

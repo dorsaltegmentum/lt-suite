@@ -43,6 +43,59 @@ The `browser.adapter = "auto"` setting chooses the first available adapter in th
 | Cursor, `lt-chrome` | `list_pages`, `select_page` | `navigate_page` | `evaluate_script`, function file through `sourcePath` | Page JS through `eval_file` | `take_screenshot` |
 | Manual paste, any agent | User opens the Lt tab | User navigates after `check-url` passes | User pastes the expression into DevTools and returns JSON | User uploads the checked image | User captures the image |
 
+
+### Configurable lt-chrome startup
+
+`browser.adapter` controls lt-chrome when the host passes its plugin folder.
+`auto`, `chrome-devtools-mcp` and `antigravity` start the pinned 1.12.0 server.
+`claude-in-chrome`, `playwright-mcp` and `manual-paste` serve zero tools without npx or network access.
+Restart the agent after changing the config.
+A workspace `lt-suite.toml` cannot start lt-chrome when the platform config chose a quiet adapter.
+An explicit `LT_SUITE_CONFIG` takes precedence over both files.
+
+Choose `browser.chromium` from this table. A nonempty `browser.chromium_user_data_dir` overrides every folder and channel.
+Use the folder above the Profile Path displayed at `chrome://version`.
+Linux uses absolute `$XDG_CONFIG_HOME`, falling back to `~/.config`.
+The folder names for browsers other than Chrome remain unverified until doctor finds the file.
+
+| Browser value | Linux folder under config home | macOS folder under ~/Library/Application Support | Windows folder under %LOCALAPPDATA% |
+|---|---|---|---|
+| `chrome`, `chrome-beta`, `chrome-dev`, `chrome-canary` | Chrome resolves its channel folder | Chrome resolves its channel folder | Chrome resolves its channel folder |
+| `chromium` | `chromium` | `Chromium` | `Chromium/User Data` |
+| `edge` | `microsoft-edge` | `Microsoft Edge` | `Microsoft/Edge/User Data` |
+| `brave` | `BraveSoftware/Brave-Browser` | `BraveSoftware/Brave-Browser` | `BraveSoftware/Brave-Browser/User Data` |
+| `vivaldi` | `vivaldi` | `Vivaldi` | `Vivaldi/User Data` |
+| `other` | Supply `browser.chromium_user_data_dir` | Supply the folder | Supply the folder |
+
+Auto-connect uses remote debugging at `chrome://inspect/#remote-debugging`, available in Chrome 144+.
+Doctor reads only DevToolsActivePort's port and path line; it never reads browser cookies or page data.
+
+`browser.devtools_url` selects HTTP discovery instead of auto-connect.
+Only `http://127.0.0.1:<port>` or `http://[::1]:<port>`, optionally ending in `/`, is accepted.
+Ports range from 1 to 65535; credentials, other hosts and other schemes are refused.
+Start that browser yourself with `--remote-debugging-port` and a separate `--user-data-dir`, then sign in to Lt.
+lt-suite creates no browser or profile. Turn remote debugging off after the session.
+
+The loopback rule constrains the configured first hop.
+The pinned server follows the listener's WebSocket address and redirects; auto-connect trusts DevToolsActivePort.
+A local process controlling that listener or profile can redirect the connection.
+Doctor checks the path line and, only with `--probe-devtools`, checks HTTP discovery's WebSocket host.
+`lt.allowed_url_patterns` remains unwired.
+
+The launcher disables the server's own cd4a config discovery and removes its inherited feature variables.
+It runs `npx --no-workspaces` under the platform cache's `lt-chrome/run` folder with a `package.json` stop file.
+An unwritable cache restores 0.1.0's agent working folder and prints a warning.
+npm still searches ancestor `node_modules/.bin` for `node` and `sh`; the environment and the user's folders remain trusted inputs.
+
+Hosts that expose no usable plugin folder run the 0.1.0 auto-connect fallback, ignoring browser settings.
+One stderr line explains the fallback; doctor reports its separate last-fallback record.
+Plugin-folder expansion in Codex, Antigravity, Copilot and VS Code remains unverified.
+For paste-in hosts, approve `setup.py lt-chrome install`, then merge `setup.py lt-chrome snippet --host <host>` output.
+Supported hosts: `codex`, `cursor`, `vscode`, `copilot`, `gemini-settings`, `antigravity`.
+Static `examples/mcp/` entries remain a hardened 0.1.0 fallback and ignore browser settings.
+`setup.py lt-chrome plan --json` prints the redacted startup decision.
+Run `lt-chrome install` again after upgrading the skill; doctor warns when the stable copy is stale.
+
 ### `lt-chrome` (chrome-devtools-mcp 1.12.0)
 
 The `lt-chrome` server pins chrome-devtools-mcp 1.12.0.
@@ -327,40 +380,16 @@ The `upload` receipt identifies assigned bytes; fresh-load verification checks t
 | Chrome debug switches | Chrome 136 or later ignores them on the default profile | Use the existing-browser connection; never copy a signed-in profile. |
 | Manual paste | The agent cannot execute browser calls directly | The user pastes expressions and returns each JSON receipt. |
 
-The `setup.py doctor` command prefetches chrome-devtools-mcp 1.12.0 before the first MCP startup.
+Doctor pre-fetches chrome-devtools-mcp 1.12.0 for explicit Chromium and Antigravity adapters.
+Quiet adapters skip npx and pre-fetch; Automatic can opt in with `--prefetch-mcp`.
 Live Lt capture, fill, upload, and boundary compatibility across these adapters remains unverified.
 
 ## Codex configuration example
 
-This illustrative Codex `config.toml` block enables `lt-chrome` with tool approval prompts.
-
-```toml
-[mcp_servers."lt-chrome"]
-command = "npx"
-args = [
-  "-y",
-  "chrome-devtools-mcp@1.12.0",
-  "--autoConnect",
-  "--no-usage-statistics",
-  "--no-performance-crux",
-  "--no-category-input",
-  "--no-category-network",
-  "--no-category-memory",
-  "--no-category-performance",
-  "--no-category-emulation",
-  "--redact-network-headers",
-]
-startup_timeout_sec = 30
-default_tools_approval_mode = "prompt"
-enabled_tools = [
-  "list_pages",
-  "select_page",
-  "navigate_page",
-  "evaluate_script",
-  "take_screenshot",
-  "wait_for",
-]
-```
+Approve `setup.py lt-chrome install`, then merge `setup.py lt-chrome snippet --host codex` into your config.
+The snippet keeps the 6-tool allowlist, a 30-second startup timeout and approval prompts.
+It forwards the config and platform-directory environment variables.
+Use `examples/mcp/codex-config.toml` only for the static fallback, which ignores browser settings.
 
 On Chrome 149 or later, you may add `--allowedUrlPattern` with your Lt host, for example `https://example.lt.app`, in place of the `--blockedUrlPattern` pair.
 That allowlist also blocks subresources, so list the Lt asset and API hosts too.
