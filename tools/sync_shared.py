@@ -83,9 +83,9 @@ def _parse(path: Path, errors: list[str], root: Path) -> ast.Module | None:
     try:
         return ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
     except SyntaxError as exc:
-        errors.append(f"{path.relative_to(root)}: cannot parse: {exc.msg} (line {exc.lineno})")
+        errors.append(f"{path.relative_to(root).as_posix()}: cannot parse: {exc.msg} (line {exc.lineno})")
     except (OSError, UnicodeDecodeError) as exc:
-        errors.append(f"{path.relative_to(root)}: cannot read: {exc}")
+        errors.append(f"{path.relative_to(root).as_posix()}: cannot read: {exc}")
     return None
 
 

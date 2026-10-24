@@ -10,6 +10,7 @@ import os
 import shutil
 import subprocess
 import threading
+import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
@@ -19,6 +20,10 @@ SOURCE = Path(__file__).resolve().parents[2] / 'skills/lt-module-capture/scripts
 TOKEN = 'browser-test-secret'
 ROUTE = '/i/example/student/courses/1/runs/1/run/page/1'
 BROWSER = os.environ.get('CAPTURE_TEST_FIREFOX', 'firefox')
+# The first browser start on a fresh CI runner can take over 30 s, probably from cold caches.
+# Startup ends when the browser requests ROUTE; the capture budget covers page load and script.
+STARTUP_S = 120
+CAPTURE_S = 30
 
 
 @pytest.mark.requires_bin(BROWSER)
@@ -38,6 +43,7 @@ BROWSER = os.environ.get('CAPTURE_TEST_FIREFOX', 'firefox')
 def test_browser_inert_parser_discards_head_scripts_and_hidden_subtrees(
         tmp_path, html, expected_text, hidden_count, flags):
     source = SOURCE.read_text()
+    loaded = threading.Event()
     done = threading.Event()
     docs = {}
     result = {}
@@ -57,6 +63,8 @@ def test_browser_inert_parser_discards_head_scripts_and_hidden_subtrees(
                 origin = self.headers['Origin'] if self.headers.get('Origin') else base
                 proof = hmac.new(TOKEN.encode(), f'lt-suite-sink|{n}|{origin}'.encode(), 'sha256').hexdigest()
                 return self.reply({'proof': proof})
+            if self.path == ROUTE:
+                loaded.set()
             script = f'''
 const root = {{lessonFlowPages: () => [{{title:'Questions', allPanels:[{{
 pluginKey:()=>'text-question', panelKey:()=>'1',
@@ -99,11 +107,28 @@ await fetch('/done', {{method:'POST', body:JSON.stringify({{receipt, executed:gl
     profile = tmp_path / 'browser-profile'
     profile.mkdir()
     env = dict(os.environ, MOZ_CRASHREPORTER_DISABLE='1')
-    proc = subprocess.Popen([shutil.which(BROWSER), '--headless', '--no-remote',
-                             '--profile', str(profile), base + ROUTE], env=env,
-                            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    log = tmp_path / 'browser.log'
+    with log.open('wb') as out:
+        proc = subprocess.Popen([shutil.which(BROWSER), '--headless', '--no-remote',
+                                 '--profile', str(profile), base + ROUTE], env=env,
+                                stdout=out, stderr=subprocess.STDOUT)
+
+    def wait(event, seconds):
+        # Poll the process too, so a browser that exits fails at once instead of at the deadline.
+        deadline = time.monotonic() + seconds
+        while not event.wait(0.25):
+            if proc.poll() is not None or time.monotonic() > deadline:
+                return event.is_set()
+        return True
+
+    def browser_state():
+        code = proc.poll()
+        status = 'still running' if code is None else f'exited with status {code}'
+        return f'; browser {status}, output:\n' + log.read_text(errors='replace')[-2000:]
+
     try:
-        assert done.wait(30), 'headless browser did not complete the capture'
+        assert wait(loaded, STARTUP_S), 'headless browser did not load the page' + browser_state()
+        assert wait(done, CAPTURE_S), 'headless browser did not complete the capture' + browser_state()
         assert 'error' not in result, result
         assert result['receipt']['ok'] is True, result
         assert result['executed'] is False

@@ -50,7 +50,8 @@ const KO = { isObservable: isObs };
 const fastTimers = () => ({
   setTimeout: (fn, ms) => {
     if (ms >= 1000) { const t = setTimeout(() => {}, 0); clearTimeout(t); return t; }
-    const t = setTimeout(fn, 0); if (t.unref) t.unref(); return t;
+    // Keep the timer referenced: Node 22 ends the event loop before an unreferenced timer fires.
+    return setTimeout(fn, 0);
   },
   clearTimeout: t => clearTimeout(t)
 });

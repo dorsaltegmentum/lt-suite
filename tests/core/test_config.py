@@ -113,7 +113,9 @@ def test_style_defaults_layer(tmp_path, monkeypatch):
 # ----------------------------------------------------------------- relative paths
 
 def test_relative_paths_resolve_against_the_config_file(tmp_path, monkeypatch):
-    monkeypatch.setenv("HOME", str(tmp_path / "home"))
+    # "~" reads HOME on Linux and macOS and USERPROFILE on Windows.
+    for name in ("HOME", "USERPROFILE"):
+        monkeypatch.setenv(name, str(tmp_path / "home"))
     d = tmp_path / "cfgdir"
     f = write(d / "c.toml", '[paths]\ndata_dir = "data"\ncache_dir = "~/cache"\n'
               'captures_dir = "caps"\n[curriculum]\nroot = "../course"\n'
@@ -234,7 +236,10 @@ def test_locate_report_all_probes_pass(tmp_path):
 def test_locate_report_failed_probe_proposes_workspace(tmp_path, monkeypatch):
     blocker = tmp_path / "file-not-dir"
     blocker.write_text("x", encoding="utf-8")
-    monkeypatch.setenv("XDG_CONFIG_HOME", str(blocker / "sub"))   # parent is a file
+    # Put the platform config folder under a file on every OS: Linux reads XDG_CONFIG_HOME,
+    # Windows reads APPDATA, macOS builds ~/Library/Application Support from HOME.
+    for name in ("XDG_CONFIG_HOME", "APPDATA", "HOME"):
+        monkeypatch.setenv(name, str(blocker / "sub"))
     rep = config.locate_report(cwd=tmp_path)
     assert rep["probes"]["config_dir"]["ok"] is False
     prop = rep["proposal"]

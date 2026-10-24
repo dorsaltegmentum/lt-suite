@@ -18,7 +18,8 @@ TOOL = REPO / "tools" / "sync_shared.py"
 
 def w(p: Path, text: str) -> Path:
     p.parent.mkdir(parents=True, exist_ok=True)
-    p.write_text(text, encoding="utf-8")
+    # LF on every OS, like a checkout under .gitattributes eol=lf; the tool copies bytes.
+    p.write_text(text, encoding="utf-8", newline="\n")
     return p
 
 
@@ -183,6 +184,15 @@ def test_unpinned_dist_is_an_error(fake):
     w(fake / "skills" / "demo" / "scripts" / "bad.py", "import scipy\n")
     r = run(fake, "--skill", "demo")
     assert r.returncode == 1 and "scipy (import scipy) is not pinned" in r.stdout
+
+
+def test_unreadable_skill_source_is_an_error(fake):
+    bad = w(fake / "skills" / "demo" / "scripts" / "bad.py", "def (:\n")
+    r = run(fake, "--skill", "demo")
+    assert r.returncode == 1 and "skills/demo/scripts/bad.py: cannot parse" in r.stdout
+    bad.write_bytes(b"\xff\xfe not utf-8\n")
+    r = run(fake, "--skill", "demo")
+    assert r.returncode == 1 and "skills/demo/scripts/bad.py: cannot read" in r.stdout
 
 
 def test_all_skills_and_unknown_skill(fake):

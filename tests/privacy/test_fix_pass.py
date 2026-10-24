@@ -136,6 +136,15 @@ def test_ci_refuses_excerpts_before_any_output(run_gate, tmp_path, ci):
     assert LEAK not in r.stderr
 
 
+def test_run_gate_drops_inherited_ci(run_gate, tmp_path, monkeypatch):
+    """GitHub Actions sets CI, so every --excerpt test exited 2 there until run_gate dropped it."""
+    monkeypatch.setenv('CI', 'true')
+    target = tmp_path / 'a.txt'
+    target.write_text(LEAK)
+    r = run_gate('--paths', str(target), '--excerpt')
+    assert r.returncode == 1 and LEAK in r.stdout, r.stdout + r.stderr
+
+
 @pytest.mark.parametrize('tag', [b'meta', b'ZZZZ'])
 @pytest.mark.parametrize('kind', ['ttf', 'woff'])
 def test_all_font_tables_are_scanned(run_gate, tmp_path, tag, kind):

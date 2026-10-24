@@ -83,6 +83,8 @@ def test_monkeypatched_sys_platform(monkeypatch, plat):
         assert got == want
 
 
+@pytest.mark.skipif(sys.platform == "win32",
+                    reason="XDG_CONFIG_HOME must be a POSIX absolute path; a Windows temp folder is not")
 def test_linux_downloads_from_user_dirs(tmp_path):
     cfg = tmp_path / "cfg"
     cfg.mkdir()
@@ -94,7 +96,9 @@ def test_linux_downloads_from_user_dirs(tmp_path):
 
 
 def test_expand(tmp_path, monkeypatch):
-    monkeypatch.setenv("HOME", str(tmp_path))
+    # "~" reads HOME on Linux and macOS and USERPROFILE on Windows.
+    for name in ("HOME", "USERPROFILE"):
+        monkeypatch.setenv(name, str(tmp_path))
     assert paths.expand("") == ""
     assert paths.expand("~/a") == str(tmp_path / "a")
     assert paths.expand("rel/x", base=tmp_path / "b") == str(tmp_path / "b" / "rel" / "x")

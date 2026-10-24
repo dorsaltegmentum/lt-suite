@@ -5,7 +5,8 @@
 - ``gate``: tools/privacy_gate.py imported as a module.
 - ``run_gate``: run the gate as a subprocess. LT_PRIVACY_DIR points at an empty temp
   folder and PRIVACY_PATTERNS_B64 is removed, so no test reads the real private layer
-  unless it passes its own.
+  unless it passes its own. CI is removed too, because the gate refuses --excerpt when
+  CI is set and GitHub Actions sets it; a test that checks that refusal passes its own.
 - Builders for planted binaries: ``make_pdf``, ``make_png``, ``make_font``, ``make_woff``.
 """
 from __future__ import annotations
@@ -44,7 +45,7 @@ def empty_private(tmp_path) -> Path:
 def run_gate(empty_private):
     def _run(*args: str, env: dict | None = None, cwd: Path | None = None,
              timeout: int = 300) -> subprocess.CompletedProcess:
-        e = {k: v for k, v in os.environ.items() if k not in ("LT_PRIVACY_DIR", "PRIVACY_PATTERNS_B64")}
+        e = {k: v for k, v in os.environ.items() if k not in ("LT_PRIVACY_DIR", "PRIVACY_PATTERNS_B64", "CI")}
         e["LT_PRIVACY_DIR"] = str(empty_private)
         e.update(env or {})
         return subprocess.run([sys.executable, str(GATE), *args], capture_output=True, text=True,

@@ -12,13 +12,14 @@ with %PDF- and keeps its page count). A failure or timeout leaves it untouched.
 The built-in strip (``pdf.strip_metadata``, on by default) removes the document
 info dictionary, XMP and PieceInfo from every object and the Exif, XMP, IPTC and
 comment segments of each JPEG whose decoded pixels stay equal (pikepdf and
-Pillow), runs ``exiftool -all=`` when present, then rewrites the file with a
-content-derived /ID (pikepdf, else the qpdf command), so the same draft always
-gives the same bytes. It then reads every object again (pikepdf, else ``qpdf
---json``) and reports "cleaned" only when no Info dictionary, XMP stream (at
-document or page level) or PieceInfo is left. When neither tool can do that
-check, or page text, image pixels, link targets or the page count differ
-afterwards, the result is "failed" and the original is kept.
+Pillow), runs ``exiftool -all=`` when present, then rewrites the file without
+/Info, catalog XMP or the old /ID and with a content-derived /ID (pikepdf, else a
+qpdf 11.0 or newer JSON update), so the same draft always gives the same bytes.
+It then reads every object again (pikepdf, else ``qpdf --json``) and reports
+"cleaned" only when no Info dictionary, XMP stream (at document or page level) or
+PieceInfo is left. When neither tool can do that check, or page text, image
+pixels, link targets or the page count differ afterwards, the result is "failed"
+and the original is kept.
 
 API: ``cleaners_for(stage, cfg)`` (entries in config order); ``run_cleaner(entry,
 path)`` (temporary copies, atomic replace, never raises: a Result with status
@@ -43,6 +44,7 @@ if __name__ == "__main__" and not __package__:
     sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import argparse
+import decimal
 import hashlib
 import importlib
 import io
@@ -382,6 +384,81 @@ def strip_pdf_bytes(data: bytes) -> tuple[bytes, int]:
         return output.getvalue(), cut
 
 
+def _qpdf_json(executable: str, path: Path, *, warnings_ok: bool = False) -> list:
+    """[header, objects] from ``qpdf --json --json-key=qpdf`` (JSON v2, qpdf 11.0 or
+    newer): objects maps "trailer" and "obj:N G R" to their values, without stream
+    data. Reals load as Decimal so ``_json_text`` writes their digits unchanged.
+    Raises CleanerError on a qpdf failure or an incomplete document."""
+    # qpdf writes UTF-8. Text mode alone decodes with the locale code page (cp1252 on
+    # Windows), which fails on some bytes and turns others into different characters.
+    completed = subprocess.run([executable, "--json", "--json-key=qpdf", str(path)],
+                               capture_output=True, encoding="utf-8", timeout=60)
+    # qpdf exits 3 when it repaired the file with warnings; the JSON is still complete.
+    if completed.returncode not in ((0, 3) if warnings_ok else (0,)):
+        raise CleanerError(f"qpdf --json exit {completed.returncode}: {completed.stderr.strip()}")
+    try:
+        doc = json.loads(completed.stdout, parse_float=decimal.Decimal)
+        objects = doc["qpdf"]
+        complete = (doc["version"] == 2 and len(objects) == 2
+                    and isinstance(objects[1], dict) and "trailer" in objects[1])
+    except (ValueError, KeyError, TypeError) as exc:
+        raise CleanerError(f"qpdf --json output unreadable: {exc}") from exc
+    if not complete:
+        raise CleanerError("qpdf --json output is not a complete JSON v2 document")
+    return objects
+
+
+def _json_text(value) -> str:
+    """JSON text in which Decimal values keep the exact digits qpdf wrote."""
+    if isinstance(value, decimal.Decimal):
+        return format(value, "f")
+    if isinstance(value, dict):
+        return "{" + ",".join(f"{json.dumps(key)}:{_json_text(item)}"
+                              for key, item in value.items()) + "}"
+    if isinstance(value, list):
+        return "[" + ",".join(_json_text(item) for item in value) + "]"
+    return json.dumps(value)
+
+
+def _qpdf_rewrite(executable: str, data: bytes) -> bytes:
+    """One qpdf pass: linearized, without /Info, the old /ID or catalog XMP."""
+    with tempfile.TemporaryDirectory(prefix="lt-pdf-") as directory:
+        src, dst = Path(directory) / "in.pdf", Path(directory) / "out.pdf"
+        update = Path(directory) / "update.json"
+        src.write_bytes(data)
+        # --remove-info and --remove-metadata arrived in qpdf 11.10, and --remove-info
+        # keeps /ModDate and the first /ID string. A JSON v2 update (qpdf 11.0 and newer)
+        # replaces the trailer without /Info and /ID, so qpdf derives both /ID strings
+        # from the content, as the pikepdf branch of qpdf_settle does.
+        header, objects = _qpdf_json(executable, src, warnings_ok=True)
+        trailer = objects["trailer"].get("value")
+        root = trailer.get("/Root") if isinstance(trailer, dict) else None
+        catalog = objects.get(f"obj:{root}", {}).get("value") if isinstance(root, str) else None
+        if not isinstance(catalog, dict):
+            raise CleanerError("qpdf --json shows no trailer /Root catalog dictionary")
+        changes = {"trailer": {"value": {key: item for key, item in trailer.items()
+                                         if key not in ("/ID", "/Info")}}}
+        xmp = catalog.get("/Metadata")
+        stream = objects.get(f"obj:{xmp}", {}).get("stream") if isinstance(xmp, str) else None
+        if isinstance(stream, dict) and stream.get("dict", {}).get("/Type") == "/Metadata":
+            # qpdf writes no key whose value is a null object, so a null XMP stream drops
+            # the catalog's /Metadata and leaves its other bytes alone. A catalog written
+            # back from JSON stores UTF-16 strings that fit PDFDocEncoding as
+            # PDFDocEncoding, which changes name tree keys.
+            changes[f"obj:{xmp}"] = {"value": None}
+        elif xmp is not None:
+            changes[f"obj:{root}"] = {"value": {key: item for key, item in catalog.items()
+                                                if key != "/Metadata"}}
+        update.write_text(_json_text({"qpdf": [header, changes]}), encoding="utf-8")
+        completed = subprocess.run(
+            [executable, str(src), f"--update-from-json={update}", "--linearize",
+             "--deterministic-id", str(dst)],
+            capture_output=True, text=True, timeout=60)
+        if completed.returncode not in (0, 3):
+            raise CleanerError(f"qpdf failed: {completed.stderr.strip()}")
+        return dst.read_bytes()
+
+
 def qpdf_settle(data: bytes) -> bytes:
     """Rewrite metadata edits and use a content-derived document identifier."""
     pikepdf = _optional("pikepdf")
@@ -398,16 +475,16 @@ def qpdf_settle(data: bytes) -> bytes:
     executable = shutil.which("qpdf")
     if executable is None:
         raise CleanerError("PDF rewrite needs pikepdf or qpdf")
-    with tempfile.TemporaryDirectory(prefix="lt-pdf-") as directory:
-        src, dst = Path(directory) / "in.pdf", Path(directory) / "out.pdf"
-        src.write_bytes(data)
-        completed = subprocess.run(
-            [executable, "--remove-info", "--remove-metadata", "--linearize",
-             "--deterministic-id", str(src), str(dst)],
-            capture_output=True, text=True, timeout=60)
-        if completed.returncode not in (0, 3):
-            raise CleanerError(f"qpdf failed: {completed.stderr.strip()}")
-        return dst.read_bytes()
+    # qpdf (11.9 and 12.4 alike) writes /Filter after /Length in a stream it has just
+    # compressed and sorts the keys when it reads the file back, so a second pass
+    # changes the bytes once more. Rewriting until a pass changes nothing keeps a
+    # cleaned file unchanged by the next strip.
+    for _ in range(3):
+        settled = _qpdf_rewrite(executable, data)
+        if settled == data:
+            break
+        data = settled
+    return data
 
 
 def pdf_content(data: bytes):
@@ -487,17 +564,7 @@ def metadata_left(data: bytes) -> list[str] | None:
             with tempfile.TemporaryDirectory(prefix="lt-meta-check-") as directory:
                 path = Path(directory) / "document.pdf"
                 path.write_bytes(data)
-                completed = subprocess.run(
-                    [executable, "--json", "--json-key=qpdf", str(path)],
-                    capture_output=True, text=True, timeout=60)
-            if completed.returncode != 0:
-                return None
-            doc = json.loads(completed.stdout)
-            objects = doc["qpdf"]
-            if doc["version"] != 2 or len(objects) != 2 or not isinstance(objects[1], dict):
-                return None
-            if "trailer" not in objects[1]:
-                return None
+                objects = _qpdf_json(executable, path)
             left = []
 
             def inspect(value):
@@ -516,7 +583,7 @@ def metadata_left(data: bytes) -> list[str] | None:
 
             inspect(objects[1])
             return sorted(set(left))
-        except (OSError, subprocess.TimeoutExpired, ValueError, KeyError, TypeError):
+        except (OSError, subprocess.TimeoutExpired, CleanerError, ValueError, KeyError, TypeError):
             return None
     left = []
     with pikepdf.open(io.BytesIO(data)) as pdf:
@@ -535,7 +602,8 @@ def metadata_left(data: bytes) -> list[str] | None:
 def strip_pdf_metadata(path) -> Result:
     """Strip a PDF's metadata in place: no /Info, no XMP packet, a content-derived /ID.
     Steps: pikepdf object and JPEG strip, ``exiftool -all=``, then a rewrite with
-    pikepdf (else qpdf), so exiftool's incremental update leaves no old revision.
+    pikepdf (else qpdf 11.0 or newer), so exiftool's incremental update leaves no old
+    revision.
     The file is replaced atomically, and only when page text, image pixels and link
     targets are unchanged. Returns a Result with status cleaned, unchanged, failed,
     or timeout. Missing metadata validation tools produce a failed result."""

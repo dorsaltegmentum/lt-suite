@@ -321,8 +321,6 @@
   "skills/mechanistic-diagram/engine/variant_build.py",
   "skills/mechanistic-diagram/examples/toy-case/.gitignore",
   "skills/mechanistic-diagram/examples/toy-case/artifact_content.py",
-  "skills/mechanistic-diagram/examples/toy-case/assets/clearance-petroff-10-on-primer-dark-high-contrast.svg",
-  "skills/mechanistic-diagram/examples/toy-case/assets/clearance-tol-bright.svg",
   "skills/mechanistic-diagram/examples/toy-case/assets/clearance.svg",
   "skills/mechanistic-diagram/examples/toy-case/case.json",
   "skills/mechanistic-diagram/examples/toy-case/content.py",

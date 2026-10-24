@@ -155,11 +155,11 @@ def test_check_skills_size_count_symlink(skills_root):
     assert r.returncode == 1 and "MB; the limit is 10 MB" in r.stdout
     (d / "assets" / "big.bin").unlink()
     try:
-        os.symlink(d / "SKILL.md", d / "link.md")
+        os.symlink(d / "SKILL.md", d / "assets" / "link.md")
     except (OSError, NotImplementedError):
         pytest.skip("this platform cannot create symlinks here")
     r = tool("check_skills.py", "--root", str(skills_root), str(d))
-    assert r.returncode == 1 and "symlink link.md" in r.stdout
+    assert r.returncode == 1 and "symlink assets/link.md" in r.stdout
 
 
 def test_check_skills_missing_skill_md(skills_root):
@@ -301,9 +301,11 @@ def commit(cwd: Path, msg: str, *, name=ID_NAME, email=ID_EMAIL, date="2000-01-0
            "GIT_AUTHOR_DATE": author_date or date, "GIT_COMMITTER_DATE": committer_date or date}
     # Build fixture objects directly; never stage files or invoke git commit.
     def object_id(*args, data):
-        r = subprocess.run(["git", "-C", str(cwd), *args], input=data, text=True,
+        # Bytes in: a text-mode pipe on Windows writes "\r\n", and git refuses a commit
+        # whose "tree" line ends in "\r" (badTreeSha1, exit 128).
+        r = subprocess.run(["git", "-C", str(cwd), *args], input=data.encode("utf-8"),
                            capture_output=True, check=True)
-        return r.stdout.strip()
+        return r.stdout.decode("utf-8").strip()
 
     tree = object_id("mktree", data="")
     parent = subprocess.run(["git", "-C", str(cwd), "rev-parse", "--verify", "HEAD"],
@@ -389,9 +391,11 @@ def test_check_release_placeholder_and_generators(tmp_path):
     w(root / "a.txt", "fine\n")
     w(root / "b.md", "value: " + "T" + "BD\n")
     w(root / "c.bin", "\0binary " + "T" + "BD")
+    w(root / "docs" / "d.md", "fine\nvalue: " + "T" + "BD\n")
     r = tool("check_release.py", "--root", str(root), "--skip-history")
     assert r.returncode == 1
     assert "b.md:1: placeholder token" in r.stdout and "c.bin" not in r.stdout
+    assert "docs/d.md:2: placeholder token" in r.stdout
     assert "tools/gen_manifests.py: generator missing" in r.stdout
 
 
@@ -432,7 +436,7 @@ def test_release_rejects_unresolved_html_review_markers(tmp_path):
     """Review markers in prose must fail even when no placeholder token remains."""
     w(tmp_path / "docs" / "guide.md", "Reviewed.\n<!-- " + "VERIFY" + " -->\n")
     r = tool("check_release.py", "--root", str(tmp_path), "--skip-generators", "--skip-history")
-    assert r.returncode == 1 and "unresolved review marker" in r.stdout, r.stdout + r.stderr
+    assert r.returncode == 1 and "docs/guide.md:2: unresolved review marker" in r.stdout, r.stdout + r.stderr
 
 
 def test_release_tag_requires_date_and_workflow_gates(tmp_path):

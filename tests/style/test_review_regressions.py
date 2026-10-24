@@ -301,6 +301,116 @@ def test_pdf_page_count_check_works_with_qpdf_alone(tmp_path, monkeypatch, pages
         assert path.read_bytes() == original
 
 
+def _hand_built_pdf(objects, trailer):
+    """PDF 1.4 bytes: objects numbered from 1, exact xref offsets, /Size added to trailer."""
+    data = bytearray(b'%PDF-1.4\n')
+    offsets = []
+    for i, obj in enumerate(objects, 1):
+        offsets.append(len(data))
+        data.extend(f'{i} 0 obj\n'.encode() + obj + b'\nendobj\n')
+    start = len(data)
+    data.extend(f'xref\n0 {len(objects) + 1}\n0000000000 65535 f \n'.encode())
+    for off in offsets:
+        data.extend(f'{off:010d} 00000 n \n'.encode())
+    data.extend(f'trailer\n<< /Size {len(objects) + 1} {trailer} >>\n'
+                f'startxref\n{start}\n%%EOF\n'.encode())
+    return bytes(data)
+
+
+@pytest.mark.requires_bin('qpdf')
+def test_qpdf_rewrite_works_before_qpdf_11_10(tmp_path, monkeypatch):
+    # Ubuntu 24.04 ships qpdf 11.9; --remove-info and --remove-metadata arrived in 11.10.
+    objects = [b'<< /Type /Catalog /Pages 2 0 R /Metadata 5 0 R /LTReal 0.00001 >>',
+               b'<< /Type /Pages /Kids [3 0 R] /Count 1 >>',
+               b'<< /Type /Page /Parent 2 0 R /MediaBox [0 0 10 10] /Contents 4 0 R >>',
+               b'<< /Length 0 >>\nstream\n\nendstream',
+               b'<< /Type /Metadata /Subtype /XML /Length 4 >>\nstream\n<x/>\nendstream',
+               b'<< /Author (Somebody) /ModDate (D:20260101000000Z) >>']
+    old_id = 'ab' * 16
+    path = tmp_path / 'doc.pdf'
+    path.write_bytes(_hand_built_pdf(objects, f'/Root 1 0 R /Info 6 0 R /ID [<{old_id}> <{old_id}>]'))
+    real_run, real_which, real_optional = subprocess.run, C.shutil.which, C._optional
+
+    def qpdf_11_9(argv, *args, **kwargs):
+        if {'--remove-info', '--remove-metadata'} & set(argv):
+            return subprocess.CompletedProcess(argv, 2, '', 'qpdf: unrecognized argument')
+        return real_run(argv, *args, **kwargs)
+    monkeypatch.setattr(C.subprocess, 'run', qpdf_11_9)
+    # The qpdf rewrite alone has to remove the document information, ModDate included.
+    monkeypatch.setattr(C.shutil, 'which', lambda name: None if name == 'exiftool' else real_which(name))
+    monkeypatch.setattr(C, '_optional', lambda name: None if name == 'pikepdf' else real_optional(name))
+    first = C.strip_pdf_metadata(path)
+    assert first.status == 'cleaned', first.detail
+    cleaned = path.read_bytes()
+    for leftover in (b'Somebody', b'ModDate', b'/Metadata', old_id.encode()):
+        assert leftover not in cleaned
+    assert b'/LTReal 0.00001' in cleaned
+    assert C.metadata_left(cleaned) == []
+    second = C.strip_pdf_metadata(path)
+    assert second.status == 'unchanged', second.detail
+    assert path.read_bytes() == cleaned
+
+
+@pytest.mark.requires_bin('qpdf')
+def test_qpdf_rewrite_keeps_catalog_strings_under_a_legacy_code_page(tmp_path, monkeypatch):
+    # The UTF-16 name tree key fits PDFDocEncoding, so a catalog written back from JSON
+    # would store it as (A) and the link's <feff0041> would no longer match it. The
+    # L with stroke is C5 81 in qpdf's UTF-8 JSON; cp1252, the Windows default for
+    # text mode, has no character for 0x81.
+    objects = [b'<< /Type /Catalog /Pages 2 0 R /Metadata 5 0 R /Lang <feff0065006e>'
+               b' /Names << /Dests << /Names [<feff0041> [3 0 R /Fit]] >> >> >>',
+               b'<< /Type /Pages /Kids [3 0 R] /Count 1 >>',
+               b'<< /Type /Page /Parent 2 0 R /MediaBox [0 0 10 10] /Resources << >>'
+               b' /Contents 4 0 R /Annots [7 0 R] >>',
+               b'<< /Length 0 >>\nstream\n\nendstream',
+               b'<< /Type /Metadata /Subtype /XML /Length 4 >>\nstream\n<x/>\nendstream',
+               b'<< /Author (Somebody) >>',
+               b'<< /Type /Annot /Subtype /Link /Rect [0 0 5 5] /Dest <feff0041>'
+               b' /Contents <feff014100f3> >>']
+    path = tmp_path / 'doc.pdf'
+    path.write_bytes(_hand_built_pdf(objects, '/Root 1 0 R /Info 6 0 R'))
+    real_run, real_which, real_optional = subprocess.run, C.shutil.which, C._optional
+
+    def legacy_code_page(argv, *args, **kwargs):
+        if kwargs.get('text') and not kwargs.get('encoding'):
+            kwargs['encoding'] = 'cp1252'
+        return real_run(argv, *args, **kwargs)
+    monkeypatch.setattr(C.subprocess, 'run', legacy_code_page)
+    monkeypatch.setattr(C.shutil, 'which', lambda name: None if name == 'exiftool' else real_which(name))
+    monkeypatch.setattr(C, '_optional', lambda name: None if name == 'pikepdf' else real_optional(name))
+    result = C.strip_pdf_metadata(path)
+    assert result.status == 'cleaned', result.detail
+    cleaned = path.read_bytes()
+    for kept in (b'/Dests << /Names [ <feff0041>', b'/Dest <feff0041>', b'/Lang <feff0065006e>',
+                 b'<feff014100f3>'):
+        assert kept in cleaned
+    for leftover in (b'Somebody', b'/Metadata'):
+        assert leftover not in cleaned
+    assert C.metadata_left(cleaned) == []
+
+
+@pytest.mark.requires_bin('qpdf')
+def test_qpdf_without_json_v2_fails_closed(tmp_path, monkeypatch):
+    # qpdf 10 has no JSON v2, so it rejects --json-key=qpdf.
+    from tests.style.test_cleaners import _minimal_pdf
+    path = tmp_path / 'doc.pdf'
+    original = _minimal_pdf()
+    path.write_bytes(original)
+    real_run, real_which, real_optional = subprocess.run, C.shutil.which, C._optional
+
+    def qpdf_10(argv, *args, **kwargs):
+        if '--json-key=qpdf' in argv:
+            return subprocess.CompletedProcess(argv, 2, '', 'qpdf: unrecognized argument')
+        return real_run(argv, *args, **kwargs)
+    monkeypatch.setattr(C.subprocess, 'run', qpdf_10)
+    monkeypatch.setattr(C.shutil, 'which', lambda name: None if name == 'exiftool' else real_which(name))
+    monkeypatch.setattr(C, '_optional', lambda name: None if name == 'pikepdf' else real_optional(name))
+    assert C.metadata_left(original) is None
+    result = C.strip_pdf_metadata(path)
+    assert result.status == 'failed' and 'qpdf --json exit 2' in result.detail, result.detail
+    assert path.read_bytes() == original
+
+
 @pytest.mark.requires_bin('rsvg-convert')
 def test_read_only_svg_folder_renders_with_a_warning(tmp_path):
     pytest.importorskip('fontTools')

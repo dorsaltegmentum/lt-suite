@@ -180,14 +180,16 @@ def check_skill(skill_dir: Path, block: str) -> tuple[list[str], list[str]]:
     for d in docs:
         for n, line in enumerate(d.read_text(encoding="utf-8").splitlines(), 1):
             if LOOPBACK.search(line):
-                fails.append(f"{d.relative_to(skill_dir)}:{n}: tells the agent to fetch a loopback address")
+                fails.append(f"{d.relative_to(skill_dir).as_posix()}:{n}: "
+                             "tells the agent to fetch a loopback address")
     total = 0
     count = 0
     for p in skill_dir.rglob("*"):
         if "__pycache__" in p.parts:
             continue
         if p.is_symlink():
-            fails.append(f"symlink {p.relative_to(skill_dir)}: skill folders carry real files only")
+            fails.append(f"symlink {p.relative_to(skill_dir).as_posix()}: "
+                         "skill folders carry real files only")
             continue
         if p.is_file():
             count += 1

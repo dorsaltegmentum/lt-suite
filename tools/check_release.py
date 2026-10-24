@@ -71,12 +71,13 @@ def check_placeholders(root: Path) -> list[str]:
         if b"\0" in data[:8192]:
             continue
         text = data.decode("utf-8", "replace")
+        rel = p.relative_to(root).as_posix()
         for n, line in enumerate(text.splitlines(), 1):
             if PLACEHOLDER.search(line):
-                fails.append(f"{p.relative_to(root)}:{n}: placeholder token")
+                fails.append(f"{rel}:{n}: placeholder token")
         for marker in REVIEW_MARKER.finditer(text):
             line = text.count("\n", 0, marker.start()) + 1
-            fails.append(f"{p.relative_to(root)}:{line}: unresolved review marker")
+            fails.append(f"{rel}:{line}: unresolved review marker")
     return fails
 
 
