@@ -28,7 +28,6 @@ jobs:
     env:
       # Public CI never receives or loads a private pattern layer.
       PRIVACY_PATTERNS_B64: ""
-      LT_PRIVACY_DIR: ${{ runner.temp }}/lt-suite-public-privacy
       LT_REQUIRE_PRIVATE: "0"
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -41,6 +40,9 @@ jobs:
       - run: sudo apt-get update && sudo apt-get install -y poppler-utils
       - run: python -m pip install fonttools
       - name: Scan public patterns and full commit history without excerpts
+        # The runner context exists only at step level.
+        env:
+          LT_PRIVACY_DIR: ${{ runner.temp }}/lt-suite-public-privacy
         run: python3 tools/privacy_gate.py --all --history --public-history
 
   drift:
@@ -217,7 +219,6 @@ jobs:
   release-check:
     env:
       LT_REQUIRE_PRIVATE: "0"
-      LT_PRIVACY_DIR: ${{ runner.temp }}/lt-suite-public-privacy
     timeout-minutes: 30
     runs-on: ubuntu-latest
     steps:
@@ -231,7 +232,9 @@ jobs:
       - run: python -m pip install --upgrade "pip>=25.1"
       - run: python -m pip install uv==0.13.5
       - run: python packaging/ci.py install-ci
-      - run: |
+      - env:
+          LT_PRIVACY_DIR: ${{ runner.temp }}/lt-suite-public-privacy
+        run: |
           if git rev-parse --verify -q refs/tags/v0.1.0 >/dev/null; then
             python3 tools/check_release.py --public-history --initial-release-ref v0.1.0
           else
