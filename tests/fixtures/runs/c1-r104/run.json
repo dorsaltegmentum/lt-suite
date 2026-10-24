@@ -1,0 +1,42 @@
+{
+ "schema_version": 1,
+ "run_ts": "2000-01-01T00:00:00Z",
+ "module_id": "c1-r104",
+ "tool_version": "0.1.0",
+ "config_digest": "2d654a20ec10a7aa978f2bb34c5d9ede8aeb0582397773d8866f11b896692482",
+ "institution_profile": "generic",
+ "unit_code": "X101",
+ "skills_invoked": [
+  "lt-module-capture",
+  "lt-module-answer",
+  "lt-module-fill"
+ ],
+ "timings": {
+  "lt-module-capture": 10000,
+  "lt-module-answer": 20000,
+  "lt-module-fill": 30000
+ },
+ "token_cost": {
+  "lt-module-capture": 2000,
+  "lt-module-answer": 3000,
+  "lt-module-fill": 4000
+ },
+ "question_type_census": {
+  "text-response": 7,
+  "multiple-choice": 17,
+  "subpage": 2,
+  "table-completion": 5
+ },
+ "diff_classification": [
+  {
+   "item_id": "p9-72",
+   "class": "factual",
+   "before": "Store C holds quillic acid.",
+   "after": "Store C holds quillic acid and orm salt.",
+   "steered_run_wrong": true,
+   "note": "The draft named one substance where the slide names two."
+  }
+ ],
+ "outcome": "stopped-at-boundary",
+ "notes": "Synthetic fixture record."
+}

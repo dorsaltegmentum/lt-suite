@@ -1,0 +1,77 @@
+{
+ "started_at": "2000-01-01T00:00:00Z",
+ "ended_at": "2000-01-01T00:00:00Z",
+ "approval_mode": "manual",
+ "boundary_reached": {
+  "stopped": true,
+  "class": "run-level-commit",
+  "page_index": null,
+  "item_id": null,
+  "detail": "Writable panels are complete. Navigation stops before the final completion route."
+ },
+ "pages_filled": [
+  2,
+  3,
+  4
+ ],
+ "never_navigated": [
+  {
+   "route": "complete",
+   "reason": "Final completion controls remain outside automatic navigation."
+  }
+ ],
+ "items": {
+  "p2-11": {
+   "method": "view-model"
+  },
+  "p2-12": {
+   "method": "view-model"
+  },
+  "p2-13": {
+   "method": "view-model"
+  },
+  "p3-21": {
+   "result": "todo",
+   "attempted": false,
+   "method": "manual-todo",
+   "stopped_reason": "Single-attempt item with no recorded approval. The suite writes one only with the user's approval and never submits it.",
+   "todo": {
+    "blocker": "Single-attempt item with no recorded approval. The suite writes one only with the user's approval and never submits it.",
+    "placement": "Page 3, panel 21. Type the draft by hand, or record an approval and fill again."
+   }
+  },
+  "p3-22": {
+   "method": "view-model",
+   "lt_conflict": {
+    "observed_via": "model-answer",
+    "held_answer": "Release changes with the time of day.",
+    "lt_indicated": "Release changes with the cell count.",
+    "draft_ref": "p1",
+    "note": "The invented slide describes daily timing. Keep that sourced claim and record the model-answer discrepancy separately."
+   }
+  },
+  "p3-23": {
+   "result": "todo",
+   "attempted": false,
+   "method": "manual-todo",
+   "stopped_reason": "No supported writer handles this rating-scale panel. It requires manual entry.",
+   "todo": {
+    "blocker": "No supported writer handles this rating-scale panel. It requires manual entry.",
+    "placement": "Enter the draft in panel 23 on page 3 using the browser."
+   }
+  },
+  "p4-31": {
+   "method": "view-model"
+  },
+  "p4-32": {
+   "result": "skipped",
+   "attempted": false,
+   "stopped_reason": "Captured response already present."
+  },
+  "p4-33": {
+   "result": "skipped",
+   "attempted": false,
+   "stopped_reason": "Captured response already present."
+  }
+ }
+}

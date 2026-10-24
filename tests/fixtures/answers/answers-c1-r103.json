@@ -1,0 +1,358 @@
+{
+ "schema_version": 2,
+ "module_id": "c1-r103",
+ "run_id": 103,
+ "drafted_at": "2000-01-01T00:00:00Z",
+ "source_module": {
+  "path": "../modules/module-c1-r103.json",
+  "sha256": "7b2fe975e171ef0a7ebc3bd8d31069725692be827e33e0ea586e82146bf264e7",
+  "question_digest": "2d7aabcdb394b73bdfb470388b4f880c8d2377a23d53824787d4ac6a64988ac2"
+ },
+ "tier1_corpus": [],
+ "items": [
+  {
+   "item_id": "p2-11",
+   "status": "drafted",
+   "segments": [
+    {
+     "kind": "claim",
+     "text": "The fold sits above the duct in the Zeta section.",
+     "provenance_refs": [
+      "p1"
+     ]
+    }
+   ],
+   "provenance": [
+    {
+     "ref": "p1",
+     "tier": 4,
+     "source_id": "10.5555/fixture.0001",
+     "locator": "figure 1",
+     "tag": "[T4:10.5555/fixture.0001]"
+    }
+   ],
+   "confidence": "high",
+   "tier_descent": [
+    {
+     "from_tier": 1,
+     "to_tier": 2,
+     "reason": "absent"
+    },
+    {
+     "from_tier": 2,
+     "to_tier": 3,
+     "reason": "absent"
+    },
+    {
+     "from_tier": 3,
+     "to_tier": 4,
+     "reason": "absent"
+    }
+   ],
+   "needs_diagram": true,
+   "diagram_brief": {
+    "intent": "Show the duct layout of the Zeta section.",
+    "nodes": [
+     "cap",
+     "duct",
+     "fold"
+    ],
+    "edges": [
+     {
+      "from": "cap",
+      "to": "duct",
+      "role": "stimulation"
+     },
+     {
+      "from": "fold",
+      "to": "duct",
+      "role": "modulation"
+     }
+    ]
+   },
+   "asset_refs": [
+    "diagram-p2-11.png"
+   ],
+   "asset_captions": {
+    "diagram-p2-11.png": "Fold above duct, drawn for the fixture."
+   }
+  },
+  {
+   "item_id": "p2-12",
+   "status": "drafted",
+   "segments": [
+    {
+     "kind": "claim",
+     "text": "The duct runs from the cap to the fold.",
+     "provenance_refs": [
+      "p1"
+     ]
+    }
+   ],
+   "provenance": [
+    {
+     "ref": "p1",
+     "tier": 4,
+     "source_id": "10.5555/fixture.0001",
+     "locator": "figure 2",
+     "tag": "[T4:10.5555/fixture.0001]"
+    }
+   ],
+   "confidence": "high",
+   "tier_descent": [
+    {
+     "from_tier": 1,
+     "to_tier": 2,
+     "reason": "absent"
+    },
+    {
+     "from_tier": 2,
+     "to_tier": 3,
+     "reason": "absent"
+    },
+    {
+     "from_tier": 3,
+     "to_tier": 4,
+     "reason": "absent"
+    }
+   ],
+   "needs_diagram": true,
+   "diagram_brief": {
+    "intent": "Show the duct layout of the Zeta section.",
+    "nodes": [
+     "cap",
+     "duct",
+     "fold"
+    ],
+    "edges": [
+     {
+      "from": "cap",
+      "to": "duct",
+      "role": "stimulation"
+     },
+     {
+      "from": "fold",
+      "to": "duct",
+      "role": "modulation"
+     }
+    ]
+   },
+   "asset_refs": [
+    "diagram-p2-12.png"
+   ]
+  },
+  {
+   "item_id": "p2-13",
+   "status": "blocked",
+   "todo": {
+    "blocker": "Marking this provided image requires manual interaction; an annotation writer is unavailable.",
+    "placement": "Page 2, panel 13. Mark the fold on the supplied section by hand."
+   }
+  },
+  {
+   "item_id": "p2-14",
+   "status": "blocked",
+   "todo": {
+    "blocker": "Marking this provided image requires manual interaction; an annotation writer is unavailable.",
+    "placement": "Page 2, panel 14. Mark the duct on the supplied section by hand."
+   }
+  },
+  {
+   "item_id": "p3-21",
+   "status": "drafted",
+   "segments": [
+    {
+     "kind": "claim",
+     "text": "Four of the five names mark a zone; the stalk is a distractor.",
+     "provenance_refs": [
+      "p1"
+     ]
+    }
+   ],
+   "provenance": [
+    {
+     "ref": "p1",
+     "tier": 4,
+     "source_id": "10.5555/fixture.0001",
+     "locator": "figure 3",
+     "tag": "[T4:10.5555/fixture.0001]"
+    }
+   ],
+   "confidence": "medium",
+   "tier_descent": [
+    {
+     "from_tier": 1,
+     "to_tier": 2,
+     "reason": "absent"
+    },
+    {
+     "from_tier": 2,
+     "to_tier": 3,
+     "reason": "absent"
+    },
+    {
+     "from_tier": 3,
+     "to_tier": 4,
+     "reason": "absent"
+    }
+   ],
+   "label_placements": [
+    {
+     "label": "Fold",
+     "target": "the upper left fold, anchor 0 at 20.0% across, 20.0% down",
+     "confidence": "high"
+    },
+    {
+     "label": "Lobe",
+     "target": "the upper right lobe, anchor 1 at 70.0% across, 25.0% down",
+     "confidence": "high"
+    },
+    {
+     "label": "Duct",
+     "target": "the tube at lower left, anchor 2 at 30.0% across, 75.0% down",
+     "confidence": "medium",
+     "alternative": "the stalk at lower left"
+    },
+    {
+     "label": "Cap",
+     "target": "the cap at lower right, anchor 3 at 80.0% across, 70.0% down",
+     "confidence": "high"
+    }
+   ]
+  },
+  {
+   "item_id": "p3-22",
+   "status": "drafted",
+   "segments": [
+    {
+     "kind": "claim",
+     "text": "Fluid enters at the inlet, passes the valve and leaves at the outlet.",
+     "provenance_refs": [
+      "p1"
+     ]
+    }
+   ],
+   "provenance": [
+    {
+     "ref": "p1",
+     "tier": 4,
+     "source_id": "10.5555/fixture.0001",
+     "locator": "figure 4",
+     "tag": "[T4:10.5555/fixture.0001]"
+    }
+   ],
+   "confidence": "high",
+   "tier_descent": [
+    {
+     "from_tier": 1,
+     "to_tier": 2,
+     "reason": "absent"
+    },
+    {
+     "from_tier": 2,
+     "to_tier": 3,
+     "reason": "absent"
+    },
+    {
+     "from_tier": 3,
+     "to_tier": 4,
+     "reason": "absent"
+    }
+   ],
+   "label_placements": [
+    {
+     "label": "Inlet",
+     "target": "the left opening, anchor 0 at 15.0% across, 50.0% down",
+     "confidence": "high"
+    },
+    {
+     "label": "Valve",
+     "target": "the gate at the top, anchor 1 at 50.0% across, 20.0% down",
+     "confidence": "high"
+    },
+    {
+     "label": "Outlet",
+     "target": "the right opening, anchor 2 at 85.0% across, 50.0% down",
+     "confidence": "high"
+    }
+   ]
+  },
+  {
+   "item_id": "p3-23",
+   "status": "drafted",
+   "segments": [
+    {
+     "kind": "claim",
+     "text": "Warm-up and burst are early; recovery and rest are late.",
+     "provenance_refs": [
+      "p1"
+     ]
+    }
+   ],
+   "provenance": [
+    {
+     "ref": "p1",
+     "tier": 4,
+     "source_id": "10.5555/fixture.0001",
+     "locator": "table 1",
+     "tag": "[T4:10.5555/fixture.0001]"
+    }
+   ],
+   "confidence": "high",
+   "tier_descent": [
+    {
+     "from_tier": 1,
+     "to_tier": 2,
+     "reason": "absent"
+    },
+    {
+     "from_tier": 2,
+     "to_tier": 3,
+     "reason": "absent"
+    },
+    {
+     "from_tier": 3,
+     "to_tier": 4,
+     "reason": "absent"
+    }
+   ],
+   "label_placements": [
+    {
+     "label": "warm-up",
+     "target": "Early",
+     "target_index": 0,
+     "confidence": "high"
+    },
+    {
+     "label": "burst",
+     "target": "Early",
+     "target_index": 0,
+     "confidence": "high"
+    },
+    {
+     "label": "peak",
+     "target": "Early",
+     "target_index": 0,
+     "confidence": "high"
+    },
+    {
+     "label": "recovery",
+     "target": "Late",
+     "target_index": 1,
+     "confidence": "high"
+    },
+    {
+     "label": "rest",
+     "target": "Late",
+     "target_index": 1,
+     "confidence": "high"
+    }
+   ]
+  },
+  {
+   "item_id": "p4-31",
+   "status": "skipped",
+   "skip_reason": "single-attempt-drag"
+  }
+ ]
+}

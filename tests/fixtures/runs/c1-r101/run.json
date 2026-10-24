@@ -1,0 +1,33 @@
+{
+ "schema_version": 1,
+ "run_ts": "2000-01-01T00:00:00Z",
+ "module_id": "c1-r101",
+ "tool_version": "0.1.0",
+ "config_digest": "2d654a20ec10a7aa978f2bb34c5d9ede8aeb0582397773d8866f11b896692482",
+ "institution_profile": "generic",
+ "unit_code": "X101",
+ "skills_invoked": [
+  "lt-module-capture",
+  "lt-module-answer",
+  "lt-module-export"
+ ],
+ "timings": {
+  "lt-module-capture": 10000,
+  "lt-module-answer": 20000,
+  "lt-module-export": 30000
+ },
+ "token_cost": {
+  "lt-module-capture": 2000,
+  "lt-module-answer": 3000,
+  "lt-module-export": 4000
+ },
+ "question_type_census": {
+  "text-response": 3,
+  "multiple-choice": 2,
+  "table-completion": 1,
+  "image-labeling": 1,
+  "categorization": 1
+ },
+ "outcome": "complete",
+ "notes": "Synthetic fixture record."
+}

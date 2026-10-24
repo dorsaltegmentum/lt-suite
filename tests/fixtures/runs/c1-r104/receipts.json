@@ -1,0 +1,92 @@
+[
+ {
+  "item_id": "p9-71",
+  "expected_hash": 890495101,
+  "observed_hash": 890495101,
+  "observed_at": "2000-01-01T00:00:00Z"
+ },
+ {
+  "item_id": "p9-72",
+  "expected_hash": 2270141005,
+  "observed_hash": 2270141005,
+  "observed_at": "2000-01-01T00:00:00Z"
+ },
+ {
+  "item_id": "p9-73",
+  "expected_hash": 1263065865,
+  "observed_hash": 1263065865,
+  "observed_at": "2000-01-01T00:00:00Z"
+ },
+ {
+  "item_id": "p9-74",
+  "expected_hash": 2734036352,
+  "observed_hash": 2734036352,
+  "observed_at": "2000-01-01T00:00:00Z"
+ },
+ {
+  "item_id": "p9-75",
+  "expected_hash": 1514441421,
+  "observed_hash": 1514441421,
+  "observed_at": "2000-01-01T00:00:00Z"
+ },
+ {
+  "item_id": "p9-76",
+  "expected_hash": 2672636476,
+  "observed_hash": 2672636476,
+  "observed_at": "2000-01-01T00:00:00Z"
+ },
+ {
+  "item_id": "p9-77",
+  "expected_hash": 3722054475,
+  "observed_hash": 3722054475,
+  "observed_at": "2000-01-01T00:00:00Z"
+ },
+ {
+  "item_id": "p9-78",
+  "expected_hash": 2144911287,
+  "observed_hash": 2144911287,
+  "observed_at": "2000-01-01T00:00:00Z"
+ },
+ {
+  "item_id": "p9-79",
+  "expected_hash": 3509752575,
+  "observed_hash": 3509752575,
+  "observed_at": "2000-01-01T00:00:00Z"
+ },
+ {
+  "item_id": "p9-80",
+  "expected_hash": 3934428583,
+  "observed_hash": 3934428583,
+  "observed_at": "2000-01-01T00:00:00Z"
+ },
+ {
+  "item_id": "p9-81",
+  "expected_hash": 3032010770,
+  "observed_hash": 3032010770,
+  "observed_at": "2000-01-01T00:00:00Z"
+ },
+ {
+  "item_id": "p9-82",
+  "expected_hash": 3282420592,
+  "observed_hash": 3282420592,
+  "observed_at": "2000-01-01T00:00:00Z"
+ },
+ {
+  "item_id": "p9-83",
+  "expected_hash": 780799301,
+  "observed_hash": 780799301,
+  "observed_at": "2000-01-01T00:00:00Z"
+ },
+ {
+  "item_id": "p9-84",
+  "expected_hash": 373265349,
+  "observed_hash": 373265349,
+  "observed_at": "2000-01-01T00:00:00Z"
+ },
+ {
+  "item_id": "p9-85",
+  "expected_hash": 1454909180,
+  "observed_hash": 1454909180,
+  "observed_at": "2000-01-01T00:00:00Z"
+ }
+]

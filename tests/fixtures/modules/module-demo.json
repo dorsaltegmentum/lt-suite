@@ -1,0 +1,292 @@
+{
+ "schema_version": 1,
+ "module_id": "c1-r107",
+ "instance": "inst0001",
+ "course_id": 1,
+ "run_id": 107,
+ "lesson_id": 1,
+ "source_url": "https://lt.example.invalid/i/inst0001/student/courses/1/runs/107/run/page/1",
+ "captured_at": "2000-01-01T00:00:00Z",
+ "capture_method": "view-model",
+ "lesson": {
+  "title": "Demo: Quick tour",
+  "course_title": "Example Course 2000 (X101)",
+  "page_count": 2,
+  "has_completion_page": false,
+  "run_locked": false,
+  "show_page_menu_page_remaining": false,
+  "remaining_flow_pages_without_checkpoints": 0,
+  "completion_route": null
+ },
+ "commit_boundaries": {
+  "checkpoint_pages": [],
+  "checkpoints": [],
+  "checkpoints_container_present": true,
+  "single_attempt_items": [],
+  "run_level_commit": {
+   "present": false,
+   "route": null,
+   "note": "hasCompletionPage exposes the final route; capture leaves that route unopened."
+  },
+  "unmapped": [
+   {
+    "page_index": 1,
+    "item_id": "p1-16",
+    "reason": "Notebook content stays private to the learner. Capture records an unmapped panel with a permanent manual task; it reads and writes no notebook text."
+   }
+  ]
+ },
+ "census": {
+  "pages_total": 2,
+  "captured_total": 8,
+  "answerable_total": 7,
+  "by_type": {
+   "text-response": 2,
+   "upload-and-annotate": 1,
+   "subpage": 1,
+   "unmapped": 1,
+   "multiple-choice": 3
+  },
+  "confirmed_by": "panel walk over lessonFlowPages with subpage recursion; answerable = panelState carries an input key"
+ },
+ "pages": [
+  {
+   "page_index": 1,
+   "page_no": 1,
+   "route": null,
+   "url": "https://lt.example.invalid/i/inst0001/student/courses/1/runs/107/run/page/1",
+   "title": "Start",
+   "is_report_page": false,
+   "is_checkpoint": false,
+   "content": [
+    {
+     "panel_key": "1",
+     "plugin_key": "kcTextArea",
+     "kind": "text",
+     "text": "A short tour of the question types."
+    }
+   ],
+   "items": [
+    {
+     "item_id": "p1-11",
+     "panel_key": "11",
+     "plugin_key": "text-question",
+     "type": "text-response",
+     "prompt_text": "Why does the tour exist?",
+     "attempts": "multi",
+     "assessment_type": "noAssessment",
+     "maximum_grade": null,
+     "commit_state": "open",
+     "read_only": null,
+     "automation": "structured-path",
+     "answered": false,
+     "parent_item_id": null
+    },
+    {
+     "item_id": "p1-12",
+     "panel_key": "12",
+     "plugin_key": "image-annotation",
+     "type": "upload-and-annotate",
+     "prompt_text": "",
+     "attempts": "multi",
+     "assessment_type": "noAssessment",
+     "maximum_grade": null,
+     "commit_state": "open",
+     "read_only": null,
+     "automation": "degrade-todo",
+     "answered": false,
+     "parent_item_id": null,
+     "input_mode": "allowImageAndAnnotation",
+     "media": [
+      {
+       "kind": "image",
+       "role": "student-upload",
+       "key": null,
+       "alt": null,
+       "url": null,
+       "width": null,
+       "height": null,
+       "local_path": null
+      }
+     ],
+     "target_geometry": {
+      "presented_ratio": null,
+      "accepts_upload": true,
+      "geometry_source": "unavailable-until-presented",
+      "image_key": null,
+      "annotations_key": null
+     },
+     "degrade": {
+      "class": "lifts-at-fill",
+      "reason": "geometry-unknown-until-presented",
+      "note": "An empty upload slot has no geometry. Read presentedRatio after saving the first image to obtain its stored proportions."
+     }
+    },
+    {
+     "item_id": "p1-13",
+     "panel_key": "13",
+     "plugin_key": "subpage",
+     "type": "subpage",
+     "prompt_text": "",
+     "attempts": "multi",
+     "assessment_type": "noAssessment",
+     "commit_state": "open",
+     "automation": "structured-path",
+     "answered": false,
+     "parent_item_id": null
+    },
+    {
+     "item_id": "p1-14",
+     "panel_key": "14",
+     "plugin_key": "text-question",
+     "type": "text-response",
+     "prompt_text": "Add one detail inside the subpage.",
+     "attempts": "multi",
+     "assessment_type": "noAssessment",
+     "maximum_grade": null,
+     "commit_state": "open",
+     "read_only": null,
+     "automation": "structured-path",
+     "answered": false,
+     "parent_item_id": "p1-13"
+    },
+    {
+     "item_id": "p1-16",
+     "panel_key": "16",
+     "plugin_key": "notebook",
+     "type": "unmapped",
+     "prompt_text": "Your notes",
+     "attempts": "multi",
+     "assessment_type": "noAssessment",
+     "maximum_grade": null,
+     "commit_state": "open",
+     "read_only": null,
+     "automation": "degrade-todo",
+     "answered": false,
+     "parent_item_id": null,
+     "capture_note": "Notebook content stays private to the learner. Capture records an unmapped panel with a permanent manual task; it reads and writes no notebook text.",
+     "degrade": {
+      "class": "permanent",
+      "reason": "notebook-never-written",
+      "note": "Notebook editing always remains a manual task."
+     }
+    }
+   ]
+  },
+  {
+   "page_index": 2,
+   "page_no": 2,
+   "route": null,
+   "url": "https://lt.example.invalid/i/inst0001/student/courses/1/runs/107/run/page/2",
+   "title": "Check",
+   "is_report_page": false,
+   "is_checkpoint": false,
+   "content": [],
+   "items": [
+    {
+     "item_id": "p2-21",
+     "panel_key": "21",
+     "plugin_key": "select",
+     "type": "multiple-choice",
+     "prompt_text": "Which colour is used for stage one?",
+     "attempts": "multi",
+     "assessment_type": "noAssessment",
+     "maximum_grade": null,
+     "commit_state": "open",
+     "read_only": null,
+     "automation": "structured-path",
+     "answered": false,
+     "parent_item_id": null,
+     "options": [
+      {
+       "option_id": "o1",
+       "text": "Blue"
+      },
+      {
+       "option_id": "o2",
+       "text": "Red"
+      },
+      {
+       "option_id": "o3",
+       "text": "Green"
+      }
+     ],
+     "constraints": {
+      "options_count": 3,
+      "note": "single-select"
+     }
+    },
+    {
+     "item_id": "p2-22",
+     "panel_key": "22",
+     "plugin_key": "select",
+     "type": "multiple-choice",
+     "prompt_text": "Which colour is used for stage two?",
+     "attempts": "multi",
+     "assessment_type": "noAssessment",
+     "maximum_grade": null,
+     "commit_state": "open",
+     "read_only": null,
+     "automation": "structured-path",
+     "answered": false,
+     "parent_item_id": null,
+     "options": [
+      {
+       "option_id": "o1",
+       "text": "Blue"
+      },
+      {
+       "option_id": "o2",
+       "text": "Red"
+      },
+      {
+       "option_id": "o3",
+       "text": "Green"
+      }
+     ],
+     "constraints": {
+      "options_count": 3,
+      "note": "single-select"
+     }
+    },
+    {
+     "item_id": "p2-23",
+     "panel_key": "23",
+     "plugin_key": "select",
+     "type": "multiple-choice",
+     "prompt_text": "Which colour is used for stage three?",
+     "attempts": "multi",
+     "assessment_type": "noAssessment",
+     "maximum_grade": null,
+     "commit_state": "open",
+     "read_only": null,
+     "automation": "structured-path",
+     "answered": false,
+     "parent_item_id": null,
+     "options": [
+      {
+       "option_id": "o1",
+       "text": "Blue"
+      },
+      {
+       "option_id": "o2",
+       "text": "Red"
+      },
+      {
+       "option_id": "o3",
+       "text": "Green"
+      }
+     ],
+     "constraints": {
+      "options_count": 3,
+      "note": "single-select"
+     }
+    }
+   ],
+   "rat_candidate": {
+    "basis": "One page contains only multiple-choice panels: this page, with 3 questions.",
+    "note": "Question types alone cannot distinguish team and individual tests. Inspect the page instructions. Team entry requires user-supplied answers in rat.answers_dir; individual tests remain excluded. Keep the capture immutable."
+   }
+  }
+ ]
+}

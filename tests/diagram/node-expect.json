@@ -1,0 +1,5 @@
+{
+  "files": 2,
+  "min_tests": 18,
+  "groups": {"built page": 1, "present": 1, "trace": 4, "quiz": 2, "the Palette switch": 1}
+}

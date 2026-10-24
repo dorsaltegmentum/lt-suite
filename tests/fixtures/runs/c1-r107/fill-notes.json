@@ -1,0 +1,54 @@
+{
+ "started_at": "2000-01-01T00:00:00Z",
+ "ended_at": "2000-01-01T00:00:00Z",
+ "approval_mode": "manual",
+ "boundary_reached": {
+  "stopped": false,
+  "class": null,
+  "page_index": null,
+  "item_id": null,
+  "detail": "Nothing stopped the run; every fillable item was written or listed."
+ },
+ "pages_filled": [
+  1
+ ],
+ "never_navigated": [],
+ "items": {
+  "p1-11": {
+   "method": "view-model"
+  },
+  "p1-12": {
+   "result": "todo",
+   "attempted": false,
+   "method": "manual-todo",
+   "stopped_reason": "The slot is empty, so its image geometry is unknown until a first upload is read back.",
+   "todo": {
+    "blocker": "The slot is empty, so its image geometry is unknown until a first upload is read back.",
+    "placement": "Page 1, panel 12. Upload the prepared sketch by hand."
+   }
+  },
+  "p1-14": {
+   "method": "view-model"
+  },
+  "p1-16": {
+   "result": "skipped",
+   "attempted": false,
+   "stopped_reason": "Notebook panel: the suite never writes to it."
+  },
+  "p2-21": {
+   "result": "skipped",
+   "attempted": false,
+   "stopped_reason": "Team readiness test; the answers have not been supplied."
+  },
+  "p2-22": {
+   "result": "skipped",
+   "attempted": false,
+   "stopped_reason": "Team readiness test; the answers have not been supplied."
+  },
+  "p2-23": {
+   "result": "skipped",
+   "attempted": false,
+   "stopped_reason": "Team readiness test; the answers have not been supplied."
+  }
+ }
+}

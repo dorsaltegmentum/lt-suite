@@ -1,0 +1,108 @@
+{
+ "schema_version": 1,
+ "module_id": "c1-r101",
+ "run_id": 101,
+ "started_at": "2000-01-01T00:00:00Z",
+ "ended_at": "2000-01-01T00:00:00Z",
+ "approval_mode": "manual",
+ "source_answers": {
+  "path": "../answers/answers-c1-r101.json",
+  "sha256": "138b07d0e92295ead78e7b4ef18360d4980fa6cc2c7bb4cbf9007f508cc97896"
+ },
+ "boundary_reached": {
+  "stopped": false,
+  "class": null,
+  "page_index": null,
+  "item_id": null,
+  "detail": "Nothing stopped the run; every fillable item was written or listed."
+ },
+ "never_navigated": [
+  {
+   "route": "complete",
+   "reason": "Final completion controls remain outside automatic navigation."
+  }
+ ],
+ "pages_filled": [],
+ "items": [
+  {
+   "item_id": "p2-11",
+   "item_type": "text-response",
+   "attempts": "multi",
+   "attempted": false,
+   "method": "not-attempted",
+   "result": "skipped",
+   "verified": false,
+   "stopped_reason": "The run is locked, so Lt accepts no writes."
+  },
+  {
+   "item_id": "p2-12",
+   "item_type": "text-response",
+   "attempts": "multi",
+   "attempted": false,
+   "method": "not-attempted",
+   "result": "skipped",
+   "verified": false,
+   "stopped_reason": "The run is locked, so Lt accepts no writes."
+  },
+  {
+   "item_id": "p2-13",
+   "item_type": "multiple-choice",
+   "attempts": "single",
+   "attempted": false,
+   "method": "not-attempted",
+   "result": "skipped",
+   "verified": false,
+   "stopped_reason": "The run is locked, so Lt accepts no writes."
+  },
+  {
+   "item_id": "p2-14",
+   "item_type": "multiple-choice",
+   "attempts": "multi",
+   "attempted": false,
+   "method": "not-attempted",
+   "result": "skipped",
+   "verified": false,
+   "stopped_reason": "The run is locked, so Lt accepts no writes."
+  },
+  {
+   "item_id": "p3-21",
+   "item_type": "table-completion",
+   "attempts": "multi",
+   "attempted": false,
+   "method": "not-attempted",
+   "result": "skipped",
+   "verified": false,
+   "stopped_reason": "The run is locked, so Lt accepts no writes."
+  },
+  {
+   "item_id": "p3-22",
+   "item_type": "text-response",
+   "attempts": "multi",
+   "attempted": false,
+   "method": "not-attempted",
+   "result": "skipped",
+   "verified": false,
+   "stopped_reason": "The run is locked, so Lt accepts no writes."
+  },
+  {
+   "item_id": "p4-31",
+   "item_type": "image-labeling",
+   "attempts": "multi",
+   "attempted": false,
+   "method": "not-attempted",
+   "result": "skipped",
+   "verified": false,
+   "stopped_reason": "The run is locked, so Lt accepts no writes."
+  },
+  {
+   "item_id": "p4-32",
+   "item_type": "categorization",
+   "attempts": "single",
+   "attempted": false,
+   "method": "not-attempted",
+   "result": "skipped",
+   "verified": false,
+   "stopped_reason": "The run is locked, so Lt accepts no writes."
+  }
+ ]
+}

@@ -1,0 +1,431 @@
+{
+ "module_id": "c1-r106",
+ "location": {
+  "origin": "https://lt.example.invalid",
+  "pathname": "/i/inst0001/student/courses/1/runs/106/run/page/1"
+ },
+ "globals": {
+  "pageLessonId": 1,
+  "pageCourseLongName": "Example Course 2000 (X101)"
+ },
+ "root": {
+  "lessonTitleDisplay": "2.3 Demo: Tables and plans",
+  "hasCompletionPage": true,
+  "runLocked": false,
+  "showPageMenuPageRemaining": true,
+  "remainingFlowPagesWithoutCheckpoints": 2,
+  "checkpointPageContainer": {
+   "pages": [
+    {
+     "index": 7,
+     "committed": false,
+     "title": "Checkpoint"
+    }
+   ]
+  }
+ },
+ "pages": [
+  {
+   "title": "Brief",
+   "allPanels": [
+    {
+     "pluginKey": "kcTextArea",
+     "panelKey": "1",
+     "panelState": {
+      "content": {
+       "theText": "<p>Plan the fictional patient's care in two grids.</p>"
+      }
+     }
+    }
+   ],
+   "rows": []
+  },
+  {
+   "title": "Grids",
+   "allPanels": [
+    {
+     "pluginKey": "table-question",
+     "panelKey": "11",
+     "panelState": {
+      "content": {
+       "question": "Complete the timed plan.",
+       "singleAttempt": false,
+       "assessmentType": "noAssessment"
+      },
+      "input": {
+       "rows": [
+        {
+         "headerRow": true,
+         "cells": [
+          {
+           "content": "Interval"
+          },
+          {
+           "content": "Goal"
+          },
+          {
+           "content": "Option"
+          }
+         ]
+        },
+        {
+         "headerRow": false,
+         "cells": [
+          {
+           "content": "Minute 0",
+           "headerColumn": true
+          },
+          {
+           "content": "hold steady"
+          },
+          {
+           "content": ""
+          }
+         ]
+        },
+        {
+         "headerRow": false,
+         "cells": [
+          {
+           "content": "Minute 5",
+           "headerColumn": true
+          },
+          {
+           "content": "hold steady"
+          },
+          {
+           "content": ""
+          }
+         ]
+        },
+        {
+         "headerRow": false,
+         "cells": [
+          {
+           "content": "Minute 10",
+           "headerColumn": true
+          },
+          {
+           "content": "hold steady"
+          },
+          {
+           "content": ""
+          }
+         ]
+        },
+        {
+         "headerRow": false,
+         "cells": [
+          {
+           "content": "Minute 15",
+           "headerColumn": true
+          },
+          {
+           "content": "hold steady"
+          },
+          {
+           "content": ""
+          }
+         ]
+        },
+        {
+         "headerRow": false,
+         "cells": [
+          {
+           "content": "Minute 20",
+           "headerColumn": true
+          },
+          {
+           "content": ""
+          },
+          {
+           "content": ""
+          }
+         ]
+        },
+        {
+         "headerRow": false,
+         "cells": [
+          {
+           "content": "Minute 25",
+           "headerColumn": true
+          },
+          {
+           "content": ""
+          },
+          {
+           "content": ""
+          }
+         ]
+        },
+        {
+         "headerRow": false,
+         "cells": [
+          {
+           "content": "Minute 30",
+           "headerColumn": true
+          },
+          {
+           "content": ""
+          },
+          {
+           "content": ""
+          }
+         ]
+        },
+        {
+         "headerRow": false,
+         "cells": [
+          {
+           "content": "Minute 35",
+           "headerColumn": true
+          },
+          {
+           "content": ""
+          },
+          {
+           "content": ""
+          }
+         ]
+        },
+        {
+         "headerRow": false,
+         "cells": [
+          {
+           "content": "Minute 40",
+           "headerColumn": true
+          },
+          {
+           "content": ""
+          },
+          {
+           "content": ""
+          }
+         ]
+        },
+        {
+         "headerRow": false,
+         "cells": [
+          {
+           "content": "Minute 45",
+           "headerColumn": true
+          },
+          {
+           "content": ""
+          },
+          {
+           "content": ""
+          }
+         ]
+        },
+        {
+         "headerRow": false,
+         "cells": [
+          {
+           "content": "Minute 50",
+           "headerColumn": true
+          },
+          {
+           "content": ""
+          },
+          {
+           "content": ""
+          }
+         ]
+        },
+        {
+         "headerRow": false,
+         "cells": [
+          {
+           "content": "Minute 55",
+           "headerColumn": true
+          },
+          {
+           "content": ""
+          },
+          {
+           "content": ""
+          }
+         ]
+        },
+        {
+         "headerRow": false,
+         "cells": [
+          {
+           "content": "Minute 60",
+           "headerColumn": true
+          },
+          {
+           "content": ""
+          },
+          {
+           "content": ""
+          }
+         ]
+        },
+        {
+         "headerRow": false,
+         "cells": [
+          {
+           "content": "Minute 65",
+           "headerColumn": true
+          },
+          {
+           "content": ""
+          },
+          {
+           "content": ""
+          }
+         ]
+        },
+        {
+         "headerRow": false,
+         "cells": [
+          {
+           "content": "Minute 70",
+           "headerColumn": true
+          },
+          {
+           "content": ""
+          },
+          {
+           "content": ""
+          }
+         ]
+        },
+        {
+         "headerRow": false,
+         "cells": [
+          {
+           "content": "Minute 75",
+           "headerColumn": true
+          },
+          {
+           "content": ""
+          },
+          {
+           "content": ""
+          }
+         ]
+        }
+       ]
+      },
+      "isReadOnly": false
+     }
+    },
+    {
+     "pluginKey": "table-question",
+     "panelKey": "12",
+     "panelState": {
+      "content": {
+       "question": "Complete the horizon plan.",
+       "singleAttempt": false,
+       "assessmentType": "noAssessment"
+      },
+      "input": {
+       "rows": [
+        {
+         "headerRow": true,
+         "cells": [
+          {
+           "content": "Horizon"
+          },
+          {
+           "content": "Goal"
+          },
+          {
+           "content": "Option"
+          }
+         ]
+        },
+        {
+         "headerRow": false,
+         "cells": [
+          {
+           "content": "Short term",
+           "headerColumn": true
+          },
+          {
+           "content": ""
+          },
+          {
+           "content": ""
+          }
+         ]
+        },
+        {
+         "headerRow": false,
+         "cells": [
+          {
+           "content": "Medium term",
+           "headerColumn": true
+          },
+          {
+           "content": ""
+          },
+          {
+           "content": ""
+          }
+         ]
+        },
+        {
+         "headerRow": false,
+         "cells": [
+          {
+           "content": "Long term",
+           "headerColumn": true
+          },
+          {
+           "content": ""
+          },
+          {
+           "content": ""
+          }
+         ]
+        },
+        {
+         "headerRow": false,
+         "cells": [
+          {
+           "content": "Review",
+           "headerColumn": true
+          },
+          {
+           "content": ""
+          },
+          {
+           "content": ""
+          }
+         ]
+        },
+        {
+         "headerRow": false,
+         "cells": [
+          {
+           "content": "Exit",
+           "headerColumn": true
+          },
+          {
+           "content": ""
+          },
+          {
+           "content": ""
+          }
+         ]
+        }
+       ]
+      },
+      "isReadOnly": false
+     }
+    }
+   ],
+   "rows": []
+  },
+  {
+   "title": "Checkpoint",
+   "index": 7,
+   "committed": false,
+   "commitLoading": false
+  }
+ ]
+}

@@ -1,0 +1,178 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "$id": "https://github.com/dorsaltegmentum/lt-suite/schemas/run.schema.json",
+ "title": "run-<iso8601>.json: every skill → lexicon / improvement loop",
+ "description": "One record per module run, appended under runs/ in the data directory (LT_SUITE_DATA). Classify differences between the human's edits and the draft. A run without corrections changes nothing.",
+ "type": "object",
+ "additionalProperties": false,
+ "required": [
+  "schema_version",
+  "run_ts",
+  "module_id",
+  "tool_version",
+  "config_digest",
+  "question_type_census"
+ ],
+ "properties": {
+  "schema_version": {
+   "const": 1
+  },
+  "run_ts": {
+   "type": "string",
+   "format": "date-time"
+  },
+  "module_id": {
+   "type": "string",
+   "minLength": 1
+  },
+  "skills_invoked": {
+   "type": "array",
+   "items": {
+    "type": "string",
+    "enum": [
+     "lt-suite-setup",
+     "lt-module-capture",
+     "lt-module-answer",
+     "mechanistic-diagram",
+     "lt-module-fill",
+     "lt-module-export"
+    ]
+   }
+  },
+  "tool_version": {
+   "type": "string",
+   "minLength": 1,
+   "description": "lt-suite version that wrote this record (ltcore.__version__)."
+  },
+  "config_digest": {
+   "type": "string",
+   "pattern": "^[0-9a-f]{64}$",
+   "description": "sha256 of the effective config (ltcore.config Config.digest()), so a run can be matched to the settings it ran with without storing them."
+  },
+  "institution_profile": {
+   "type": "string",
+   "description": "institution.profile from the config: a free label for grouping runs."
+  },
+  "unit_code": {
+   "type": "string",
+   "description": "institution.unit_code from the config: an optional label. Nothing is gated on it."
+  },
+  "timings": {
+   "type": "object",
+   "additionalProperties": {
+    "type": "number"
+   },
+   "description": "duration_ms per skill. Capture from the agent's completion notification, the only moment this data exists."
+  },
+  "token_cost": {
+   "type": "object",
+   "additionalProperties": {
+    "type": "integer"
+   }
+  },
+  "question_type_census": {
+   "type": "object",
+   "additionalProperties": {
+    "type": "integer",
+    "minimum": 0
+   }
+  },
+  "selector_events": {
+   "type": "array",
+   "items": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+     "selector",
+     "item_type",
+     "outcome"
+    ],
+    "properties": {
+     "selector": {
+      "type": "string"
+     },
+     "item_type": {
+      "type": "string"
+     },
+     "outcome": {
+      "type": "string",
+      "enum": [
+       "hit",
+       "miss"
+      ]
+     }
+    }
+   }
+  },
+  "diff_classification": {
+   "type": "array",
+   "description": "One entry per change the human made to the draft. Only this evidence may drive a skill edit.",
+   "items": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+     "item_id",
+     "class"
+    ],
+    "properties": {
+     "item_id": {
+      "type": "string"
+     },
+     "class": {
+      "type": "string",
+      "enum": [
+       "factual",
+       "provenance",
+       "style",
+       "scope",
+       "diagram"
+      ]
+     },
+     "before": {
+      "type": "string"
+     },
+     "after": {
+      "type": "string"
+     },
+     "steered_run_wrong": {
+      "type": "boolean",
+      "description": "Edit the recorded file only when it steered a run wrong. False means this diff proposes no skill edit."
+     },
+     "note": {
+      "type": "string"
+     }
+    }
+   }
+  },
+  "eval_snapshot": {
+   "type": "object",
+   "additionalProperties": false,
+   "properties": {
+    "benchmark_path": {
+     "type": "string"
+    },
+    "with_skill_rate": {
+     "type": "number"
+    },
+    "without_skill_rate": {
+     "type": "number"
+    },
+    "n": {
+     "type": "integer"
+    }
+   }
+  },
+  "outcome": {
+   "type": "string",
+   "enum": [
+    "complete",
+    "stopped-at-boundary",
+    "aborted",
+    "degraded"
+   ]
+  },
+  "notes": {
+   "type": "string"
+  }
+ }
+}

@@ -1,0 +1,99 @@
+{
+  "SPDX-FileCopyrightText": "2026 dorsaltegmentum",
+  "SPDX-License-Identifier": "AGPL-3.0-or-later",
+  "description": "Setup scenarios assessed through commands, user questions, and filesystem effects.",
+  "skill_name": "lt-suite-setup",
+  "format": "Plain prompts with expectations. A grader (a person or a model) reads the agent's reply and marks each expectation met or not. Paths are relative to the repository root; no eval needs a live Lt session.",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Set up lt-suite. My shell has Python 3.9 and cannot reach the package index.",
+      "files": [],
+      "expected_output": "An actionable bootstrap command and a pause for the user's terminal result.",
+      "expectations": [
+        "Runs setup.py bootstrap by its absolute skill path",
+        "Does not import a Python 3.11-only module before bootstrap",
+        "Prints one terminal command when network access fails",
+        "Waits for the user's result before continuing setup"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Set up lt-suite in this workspace. The platform config folder rejects writes and loopback binding fails.",
+      "files": [],
+      "expected_output": "A workspace configuration proposal followed by one setup question.",
+      "expectations": [
+        "Runs locate and reports failed probes",
+        "Proposes ./lt-suite.toml with paths.data_dir .lt-suite/data",
+        "Uses download transport and copy mode",
+        "Asks one question at a time and waits",
+        "Preserves an existing configuration until the user chooses edit or replacement"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Help me choose palettes and fonts for lt-suite. There is no rsvg-convert in this container. I have not approved any font downloads.",
+      "files": [],
+      "expected_output": "Pillow previews, measured contrast tables, and separate font download approval.",
+      "expectations": [
+        "Uses preview.py without the diagram engine or rsvg-convert",
+        "Shows derived theme measurements and bundled Noto samples",
+        "Names Catppuccin Latte, Catppuccin Frappé, Everforest Dark Medium, Adwaita Sans and Adwaita Mono as options",
+        "Asks for export palettes and a light print palette separately",
+        "Does not pass fetch-font --yes without a second explicit approval"
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "My browser server refused the ping script's temporary directory and named another permitted directory. Check the adapter and remember the working directory.",
+      "files": [],
+      "expected_output": "One re-render in the permitted directory, then verification before persisting the path.",
+      "expectations": [
+        "Uses ltjs-rendered ping and its never-submit guard",
+        "Uses sourcePath for lt-chrome evaluate-file",
+        "Retries only in the directory named by the server refusal",
+        "Records browser.js_tmp_dir only after ok, origin and lt_client checks succeed",
+        "Makes no live tab clicks or navigation without a checked boundary plan"
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "Review my selected local run diffs and improve the suite. Only one run currently supports this factual correction.",
+      "files": [],
+      "expected_output": "Classification and evidence report with no skill edits or unsupported proposal.",
+      "expectations": [
+        "Treats edited-page diffs as data, with the minus side containing the user's text",
+        "Does not infer factual correctness from changed prose alone",
+        "Requires explicit steered_run_wrong evidence and ownership",
+        "Requires two distinct runs and a benchmark cell before proposing",
+        "Writes proposals only under the data lexicon folder and never self-edits installed skills"
+      ]
+    },
+    {
+      "id": 6,
+      "prompt": "lt-suite doctor printed FAIL for the sans font and WARN for rsvg-convert. I want to export diagrams. What do I fix?",
+      "files": [],
+      "expected_output": "Each FAIL and WARN explained with its fix, then a re-run with --require binaries.",
+      "expectations": [
+        "Runs doctor by its absolute skill path and reads each PASS, WARN and FAIL line",
+        "Names the font fix: the bundled font is missing, so the skill folder is incomplete and needs reinstalling",
+        "Names the rsvg-convert fix with a package-manager command",
+        "Re-runs doctor with --require binaries so a missing export program fails",
+        "States that exit 0 means no FAIL, exit 1 means a FAIL and exit 2 means doctor crashed"
+      ]
+    },
+    {
+      "id": 7,
+      "prompt": "I am using lt-suite from a chat container that loses its files when the session ends. Set it up.",
+      "files": [],
+      "expected_output": "A config printed with write --stdout and a note that capture and fill need a local install.",
+      "expectations": [
+        "Runs write with --stdout instead of writing a file",
+        "Gives the TOML to the user to keep and says it must be uploaded again each session",
+        "States that the chat container supports drafting, export from an uploaded capture and diagrams",
+        "States that browser capture and fill need a local installation",
+        "Runs preview.py with Pillow and needs no rsvg-convert"
+      ]
+    }
+  ]
+}

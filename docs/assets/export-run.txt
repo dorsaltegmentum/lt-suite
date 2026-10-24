@@ -1,0 +1,34 @@
+SPDX-FileCopyrightText: 2026 dorsaltegmentum
+SPDX-License-Identifier: AGPL-3.0-or-later
+
+Synthetic data. Output of the command below, with paths shortened to $WORK and $REPO.
+
+$ python3 skills/lt-module-export/scripts/export_module.py --config $WORK/proof-config.toml --data-dir $WORK/data --module $WORK/fill-example/module.example.json --answers $WORK/fill-example/answers.example.json --fill-report $WORK/fill-example/fill-report.example.json --week 1 --out-dir $WORK/export-fill --pdf
+
+note: Sans-I not found; using the Sans file
+note: Sans-BI not found; using the Sans-B file
+note: Mono-I not found; using the Mono file
+note: ⚠ is not in the sans font; drawn from the Sym font
+note: tol-bright: moved blue, peach, red, green, yellow toward the text colour to reach 4.5:1
+note: petroff-10-on-primer-dark-high-contrast: moved blue, mauve, red toward the text colour to reach 4.5:1
+tol-bright   1 pages  1 pass(es)  breaks none  1 Example module (synthetic) (tol-bright, print).pdf
+petroff-10-on-primer-dark-high-contrast   1 pages  1 pass(es)  breaks none  1 Example module (synthetic) (petroff-10-on-primer-dark-high-contrast, screen).pdf
+QC  22 content strings, 0 images, 2 flavours
+    tol-bright       1 pages  missing 0  defects 0  thin none  text 32ad56ee120aa442
+    petroff-10-on-primer-dark-high-contrast   1 pages  missing 0  defects 0  thin none  text 32ad56ee120aa442
+QC  PASS
+final check 1 Example module (synthetic) (tol-bright, print).pdf: 1 page(s), renders as the draft did
+final check 1 Example module (synthetic) (petroff-10-on-primer-dark-high-contrast, screen).pdf: 1 page(s), renders as the draft did
+final: 2 cleaned, 0 already clean; the PDFs in $WORK/export-fill/pdf are final
+module   c1-r101  —  1 Example module (synthetic)
+page     Lt/1 Example module (synthetic)
+stamp    lt-module:: c1-r101
+ILO      curriculum.learning_outcomes_file is not set
+links    0 to existing graph pages
+run record   $WORK/data/runs/c1-r101/run.json
+skipped  page 5   report-page        Report  (0 item(s))
+wrote    $WORK/export-fill/module-page.md
+wrote    $WORK/export-fill/pdf/1 Example module (synthetic) (petroff-10-on-primer-dark-high-contrast, screen).pdf
+wrote    $WORK/export-fill/pdf/1 Example module (synthetic) (tol-bright, print).pdf
+
+--install was not passed: the notes graph was not touched.

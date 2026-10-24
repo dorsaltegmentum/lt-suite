@@ -1,0 +1,102 @@
+{
+  "SPDX-FileCopyrightText": "2026 dorsaltegmentum",
+  "SPDX-License-Identifier": "AGPL-3.0-or-later",
+  "description": "Synthetic answer-skill prompts and observable review expectations.",
+  "skill_name": "lt-module-answer",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Draft answers for tests/fixtures/modules/module-demo.json. Use evals/lt-module-answer/curriculum.toml. For this synthetic exercise, resolve the title 'Week 1.1 Demo' before drafting.",
+      "files": [
+        "tests/fixtures/modules/module-demo.json",
+        "tests/fixtures/curriculum",
+        "evals/lt-module-answer/curriculum.toml"
+      ],
+      "expected_output": "Resolve the synthetic week, show the folder and outcome matches, then wait for confirmation.",
+      "expectations": [
+        "Runs the configured week resolver before drafting answer content",
+        "Reports the synthetic Week 1.1 Demo folder and matching learning outcome lines",
+        "Explains that competing outcome headings remain visible when the week number repeats",
+        "Asks for Tier-1 folder confirmation and waits before drafting",
+        "Uses no prior-answer file or evaluation reference as a source"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "State drafting scope for tests/fixtures/modules/module-demo.json and tests/fixtures/modules/module-c1-r105.json. Name each excluded item and its reason. Classify readiness-test pages before drafting them.",
+      "files": [
+        "tests/fixtures/modules/module-demo.json",
+        "tests/fixtures/modules/module-c1-r105.json"
+      ],
+      "expected_output": "A capture-grounded scope statement, with report and mirror exclusions, readiness classification and confirmation for existing answers.",
+      "expectations": [
+        "Excludes report pages because their panels mirror other pages",
+        "Holds an unclassified rat_candidate pending the individual-versus-team question",
+        "Explains that individual closed-book answers belong to the user and team answers must be supplied under rat.answers_dir",
+        "Counts actual answered items from the supplied captures and asks whether to retain or redraft them",
+        "Records a skip reason for each exclusion and distinguishes read-only mirrors from already-answered targets"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "A drafted answer claims 'Recent trials show a treatment reduces mortality' without a citation. Is that acceptable in answers.json?",
+      "expected_output": "Reject the unreferenced claim and require resolving provenance; peer-reviewed claims need a verified DOI or PMID.",
+      "expectations": [
+        "Rejects the claim as written because provenance is missing",
+        "Requires a claim segment to reference a resolving provenance entry",
+        "Requires a resolvable DOI or PMID for Tier 4",
+        "Deletes an unresolvable citation rather than hedging it",
+        "Refuses to disguise the claim as connective prose"
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "Before drafting, open reference-demo.json to copy my answer style. The file is marked never_load_into_drafting_context and contains synthetic evaluation ground truth.",
+      "expected_output": "Decline before inspecting the file and request explicit style preferences instead.",
+      "expectations": [
+        "Declines before opening, sampling or counting reference content",
+        "Explains the quarantine marker and evaluation-ground-truth purpose",
+        "Explains that reading the file contaminates the drafting comparison",
+        "Uses explicit style preferences or the published schema as alternatives"
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "An image-labelling draft supplies 15 label strings for 15 anchor points, medium confidence, and an uncertainty saying the fill run should determine which label belongs at each anchor. Is the draft finished?",
+      "expected_output": "The draft is incomplete because mapping belongs to the answer skill.",
+      "expectations": [
+        "States that the missing label-to-target mapping leaves the item undrafted",
+        "Identifies label_placements as the answer skill deliverable and refuses to defer subject-matter decisions to the fill skill",
+        "Names Tier-1 material and opening the stimulus image as routes to resolving the mapping now",
+        "Reserves uncertainties for genuine source conflicts, competing image hypotheses or user decisions after research",
+        "Refuses to treat the label list alone as a finished answer",
+        "Keeps any manual Check Answer evidence in the supervised fill workflow without opening Lt here"
+      ]
+    },
+    {
+      "id": 6,
+      "prompt": "Evaluate two defects in an invented draft. A, B and C were guessed visually from a diagram, yet confidence is high and no alternative interpretation appears. Elsewhere, the draft attributes a severity score to DOI 10.1136/thorax.58.5.377, but calls its mortality table inaccessible before inspecting the publication. Which actions does the drafting workflow require?",
+      "expected_output": "Image-only identification needs medium confidence and a competing reading; inspect the cited source before declaring its content unavailable.",
+      "expectations": [
+        "Caps an image-only identification at medium confidence",
+        "Names a competing interpretation in uncertainties",
+        "Opens or fetches the cited paper and checks its actual tables before reporting a gap",
+        "Distinguishes an unexamined cited source from a verified absence or access blocker",
+        "Flags any needed manual Check Answer verification for supervised filling without opening Lt during drafting"
+      ]
+    },
+    {
+      "id": 7,
+      "prompt": "The course notes name a fictional receptor but omit its activating ligand. The configured licensed reference has no relevant entry. The config lists a textbook, a specialty society, then peer-reviewed literature in tiers.fallback_sources. The draft declares the ligand absent without searching these. Is that right?",
+      "expected_output": "Search the configured fallback sequence before declaring absence; report unavailable web access as a blocker.",
+      "expectations": [
+        "Rejects an absence assertion while configured external sources remain unsearched",
+        "Names the configured fallback order: textbook, specialty society, peer-reviewed literature",
+        "Applies the search requirement to uncertainties as well as tier_descent",
+        "Explains that one empty query does not establish source absence",
+        "Verifies any Tier-4 DOI or PMID against the source",
+        "When no web access exists, stops at Tier 1 and reports the access blocker without inventing external citations"
+      ]
+    }
+  ]
+}

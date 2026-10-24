@@ -1,0 +1,203 @@
+# SPDX-FileCopyrightText: 2026 dorsaltegmentum
+# SPDX-License-Identifier: AGPL-3.0-or-later
+#
+# Built-in defaults for every lt-suite config key except style.* and fonts.*
+# (those live in style.defaults.toml). A user config overrides any key here.
+# shared/schemas/config.schema.json types and documents each key, and
+# tools/gen_config_docs.py renders both into docs/configuration.md.
+
+schema_version = 1
+
+# text_cleaners is an array of tables; none run by default. Example:
+# [[text_cleaners]]
+# name = "my-cleaner"
+# stage = "pdf"
+# argv = ["my-cleaner", "--in-place", "{pdf}"]
+# timeout_s = 60
+text_cleaners = []
+
+[institution]
+profile = "generic"
+name = ""
+unit_code = ""
+locale = "en"
+timezone = ""
+
+[lt]
+origin = ""
+instance = ""
+allowed_url_patterns = []
+
+[paths]
+data_dir = ""
+captures_dir = "captures"
+runs_dir = "runs"
+downloads_dir = ""
+downloads_mode = "move"
+cache_dir = ""
+
+[notes]
+graph_path = ""
+format = "logseq"
+pages_dir = "pages"
+assets_dir = "assets"
+whiteboards_dir = "whiteboards"
+page_namespace = "Lt"
+page_title = "{namespace}/{week} {title}"
+file_name_format = "triple-lowbar"
+stamp_property = "lt-module"
+
+[curriculum]
+root = ""
+learning_outcomes_file = ""
+skip_dirs = []
+text_extensions = [".md", ".txt", ".vtt", ".pdf", ".pptx", ".docx"]
+week_number_pattern = '(?i)\bweek\s*(\d{1,2})\b'
+week_dir_pattern = '^(?i:week\s*)?{num}(?:\D|$)'
+title_stopwords = []
+
+[curriculum.patterns]
+lesson = '(?i)\blesson\s*(\d+)'
+bare_number = '^\d+$'
+ilo_heading = '(?i)^#+\s*learning outcomes?\b'
+ilo_kind = ""
+
+[rat]
+answers_dir = ""
+irat = "skip"
+trat = "ask"
+
+[model_answer]
+read = true
+
+[tiers]
+reference_set = []
+fallback_sources = []
+framing = ""
+
+[[tiers.tier]]
+id = 1
+label = "Course material (slides, transcripts, learning outcomes)"
+tag_template = "[T1:{source}]"
+requires_accessed = false
+issuer_order = []
+access_note = ""
+
+[[tiers.tier]]
+id = 2
+label = "Licensed reference or guideline service"
+tag_template = "[T2:{issuer}:{topic}]"
+requires_accessed = true
+issuer_order = []
+access_note = ""
+
+[[tiers.tier]]
+id = 3
+label = "Published clinical or institutional guidance"
+tag_template = "[T3:{issuer}:{topic}]"
+requires_accessed = false
+issuer_order = []
+access_note = ""
+
+[[tiers.tier]]
+id = 4
+label = "Peer-reviewed literature (DOI or PMID)"
+tag_template = "[T4:{doi_or_pmid}]"
+requires_accessed = false
+issuer_order = []
+access_note = ""
+
+[export.outputs]
+module_page = true
+pdf = true
+notes_graph = false
+whiteboard = false
+ilo_map = false
+flashcard_source = false
+tracker_handoff = false
+
+[export.flashcard_source]
+file = "flashcard-source.md"
+tag_prefix = "Lt::"
+
+[export.citations]
+page_aliases = {}
+url_aliases = {}
+kind_pages = {}
+hidden_skip_reasons = []
+
+[pdf]
+author = ""
+strip_metadata = true
+
+[browser]
+adapter = "auto"
+transport = "sink"
+sink_port = 8731
+lib_mode = "inline"
+lib_port = 8733
+js_tmp_dir = ""
+
+[fill]
+approval_mode = "manual"
+max_pages_per_call = 5
+
+[fill.save_wait]
+quiet_ms = 300
+max_ms = 20000
+fallback_ms = 4000
+render_wait_ms = 5000
+
+[fill.dialog]
+max_ms = 15000
+fallback_ms = 6000
+
+[annotate]
+casing = "#101010"
+ink = "#FFD400"
+margin_fill = "#101010"
+font_path = ""
+naming_rules = []
+
+[diagram]
+floor_path = ""
+rubric_path = ""
+example_case = ""
+
+[diagram.page]
+max_w = 4000
+max_h = 3000
+
+[diagram.header]
+required_fields = ["title"]
+members_order = "as-given"
+
+[diagram.naming]
+case_slug_pattern = "case-{n}"
+eyebrow_template = ""
+
+[diagram.delivery]
+lms_name = ""
+submission_label = ""
+
+[diagram.illustration]
+credit = ""
+
+[diagram.treatment_check]
+provider_label = "treatment guideline"
+ledger_name = "guideline-ledger.json"
+
+[diagram.anki]
+tag_prefix = "Diagram::"
+
+[diagram.layout]
+workers = "auto"
+
+[capture]
+drop_text_patterns = ['^Copyright ©']
+
+[capture.timeouts]
+post_ms = 30000
+
+[improvement]
+benchmark_cells = []

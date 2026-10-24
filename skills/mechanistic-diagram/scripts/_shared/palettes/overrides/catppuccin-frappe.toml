@@ -1,0 +1,53 @@
+# Hand-tuned diagram theme for the Catppuccin Frappé palette (Catppuccin colour values, MIT, Copyright (c) 2021 Catppuccin).
+# ltcore.palettes.derive_theme() uses this file instead of deriving the theme from the
+# catalog roles. Role fills and strokes were built in Oklch at each accent's hue with one
+# fill lightness and one stroke lightness for every role; they pass every contrast check.
+# Their colour-vision separation is reported, not gated (cvd = "report"); role icons,
+# the key and the line styles carry each role without colour.
+id = "catppuccin-frappe"
+name = "Catppuccin Frappé"
+mode = "dark"
+cvd = "report"
+glyph_lc = [0.79, 0.09]
+
+[theme]
+canvas = "#303446"
+cl_fill = "#292c3c"
+cl_stroke = "#737994"
+cl_text = "#c6d0f5"
+key_fill = "#303446"
+key_stroke = "#737994"
+ink = "#c6d0f5"
+muted = "#a5adce"
+label = "#a5adce"
+
+[theme.roles]  # fill, stroke, text
+risk = ["#605032", "#d6b676", "#c6d0f5"]
+mech = ["#305c56", "#72cec2", "#c6d0f5"]
+anat = ["#59504e", "#d0b3ad", "#c6d0f5"]
+sign = ["#6c4747", "#efa3a3", "#c6d0f5"]
+inv = ["#45526f", "#9fbaf5", "#c6d0f5"]
+dx = ["#47593c", "#a4c88c", "#c6d0f5"]
+tx = ["#5c4b67", "#ceaae5", "#c6d0f5"]
+
+[theme.edges]  # dash: false solid, true the "depends on" dash, or an SVG dash pattern
+stim = { colour = "#949cbb", dash = false, head = "arrow" }
+inh = { colour = "#ceaae5", dash = false, head = "tee" }
+excl = { colour = "#949cbb", dash = "1.6 3.4", head = "tee" }
+req = { colour = "#d0b3ad", dash = true, head = "arrow" }
+
+[accents]  # the 14 accent names the glyph layers use
+rosewater = "#f2d5cf"
+flamingo = "#eebebe"
+pink = "#f4b8e4"
+mauve = "#ca9ee6"
+red = "#e78284"
+maroon = "#ea999c"
+peach = "#ef9f76"
+yellow = "#e5c890"
+green = "#a6d189"
+teal = "#81c8be"
+sky = "#99d1db"
+sapphire = "#85c1dc"
+blue = "#8caaee"
+lavender = "#babbf1"

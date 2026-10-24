@@ -1,0 +1,447 @@
+{
+ "schema_version": 2,
+ "module_id": "c1-r104",
+ "run_id": 104,
+ "drafted_at": "2000-01-01T00:00:00Z",
+ "source_module": {
+  "path": "../modules/module-c1-r104.json",
+  "sha256": "ca1413c49e643da6a9baeaa8927d01a21b949eded6fc20ba124a2baeed0e7ac0",
+  "question_digest": "74eb0850eb23a19798b4c27c63f1535f546bff4240d412ca23decc1367c807e5"
+ },
+ "tier1_corpus": [
+  {
+   "source_id": "DEMO-1-3A-SLIDES",
+   "path": "tests/fixtures/curriculum/Block A/Week 1.3 Alpha/Lectures/slides.md",
+   "kind": "slides"
+  }
+ ],
+ "items": [
+  {
+   "item_id": "p3-12",
+   "status": "drafted",
+   "segments": [
+    {
+     "kind": "claim",
+     "text": "Tessin was stored in Store B.",
+     "provenance_refs": [
+      "p1"
+     ]
+    }
+   ],
+   "provenance": [
+    {
+     "ref": "p1",
+     "tier": 1,
+     "source_id": "DEMO-1-3A-SLIDES",
+     "locator": "slide 2",
+     "tag": "[T1:DEMO-1-3A-SLIDES:slide 2]"
+    }
+   ],
+   "confidence": "high",
+   "single_attempt_approval": {
+    "approved_by": "user",
+    "approval_id": "A-4f004ddd"
+   }
+  },
+  {
+   "item_id": "p3-13",
+   "status": "skipped",
+   "skip_reason": "already-answered"
+  },
+  {
+   "item_id": "p3-14",
+   "status": "skipped",
+   "skip_reason": "already-answered"
+  },
+  {
+   "item_id": "p9-71",
+   "status": "drafted",
+   "segments": [
+    {
+     "kind": "claim",
+     "text": "Store B holds tessin in the fictional model.",
+     "provenance_refs": [
+      "p1"
+     ]
+    }
+   ],
+   "provenance": [
+    {
+     "ref": "p1",
+     "tier": 1,
+     "source_id": "DEMO-1-3A-SLIDES",
+     "locator": "slide 2",
+     "tag": "[T1:DEMO-1-3A-SLIDES:slide 2]"
+    }
+   ],
+   "confidence": "high",
+   "proposed_selection": [
+    "o2"
+   ]
+  },
+  {
+   "item_id": "p9-72",
+   "status": "drafted",
+   "segments": [
+    {
+     "kind": "claim",
+     "text": "Store C holds quillic acid in the fictional model.",
+     "provenance_refs": [
+      "p1"
+     ]
+    }
+   ],
+   "provenance": [
+    {
+     "ref": "p1",
+     "tier": 1,
+     "source_id": "DEMO-1-3A-SLIDES",
+     "locator": "slide 3",
+     "tag": "[T1:DEMO-1-3A-SLIDES:slide 3]"
+    }
+   ],
+   "confidence": "high",
+   "proposed_selection": [
+    "o3"
+   ]
+  },
+  {
+   "item_id": "p9-73",
+   "status": "drafted",
+   "segments": [
+    {
+     "kind": "claim",
+     "text": "Store C holds orm salt in the fictional model.",
+     "provenance_refs": [
+      "p1"
+     ]
+    }
+   ],
+   "provenance": [
+    {
+     "ref": "p1",
+     "tier": 1,
+     "source_id": "DEMO-1-3A-SLIDES",
+     "locator": "slide 4",
+     "tag": "[T1:DEMO-1-3A-SLIDES:slide 4]"
+    }
+   ],
+   "confidence": "high",
+   "proposed_selection": [
+    "o3"
+   ]
+  },
+  {
+   "item_id": "p9-74",
+   "status": "drafted",
+   "segments": [
+    {
+     "kind": "claim",
+     "text": "Store A holds pell resin in the fictional model.",
+     "provenance_refs": [
+      "p1"
+     ]
+    }
+   ],
+   "provenance": [
+    {
+     "ref": "p1",
+     "tier": 1,
+     "source_id": "DEMO-1-3A-SLIDES",
+     "locator": "slide 2",
+     "tag": "[T1:DEMO-1-3A-SLIDES:slide 2]"
+    }
+   ],
+   "confidence": "medium",
+   "proposed_selection": [
+    "o1"
+   ]
+  },
+  {
+   "item_id": "p9-75",
+   "status": "drafted",
+   "segments": [
+    {
+     "kind": "claim",
+     "text": "Store C holds zeta wax in the fictional model.",
+     "provenance_refs": [
+      "p1"
+     ]
+    }
+   ],
+   "provenance": [
+    {
+     "ref": "p1",
+     "tier": 1,
+     "source_id": "DEMO-1-3A-SLIDES",
+     "locator": "slide 3",
+     "tag": "[T1:DEMO-1-3A-SLIDES:slide 3]"
+    }
+   ],
+   "confidence": "medium",
+   "proposed_selection": [
+    "o3"
+   ]
+  },
+  {
+   "item_id": "p9-76",
+   "status": "drafted",
+   "segments": [
+    {
+     "kind": "claim",
+     "text": "Store B holds oram gel in the fictional model.",
+     "provenance_refs": [
+      "p1"
+     ]
+    }
+   ],
+   "provenance": [
+    {
+     "ref": "p1",
+     "tier": 1,
+     "source_id": "DEMO-1-3A-SLIDES",
+     "locator": "slide 4",
+     "tag": "[T1:DEMO-1-3A-SLIDES:slide 4]"
+    }
+   ],
+   "confidence": "medium",
+   "proposed_selection": [
+    "o2"
+   ]
+  },
+  {
+   "item_id": "p9-77",
+   "status": "drafted",
+   "segments": [
+    {
+     "kind": "claim",
+     "text": "Store B holds vorlan dust in the fictional model.",
+     "provenance_refs": [
+      "p1"
+     ]
+    }
+   ],
+   "provenance": [
+    {
+     "ref": "p1",
+     "tier": 1,
+     "source_id": "DEMO-1-3A-SLIDES",
+     "locator": "slide 2",
+     "tag": "[T1:DEMO-1-3A-SLIDES:slide 2]"
+    }
+   ],
+   "confidence": "medium",
+   "proposed_selection": [
+    "o2"
+   ]
+  },
+  {
+   "item_id": "p9-78",
+   "status": "drafted",
+   "segments": [
+    {
+     "kind": "claim",
+     "text": "Store B holds quill oil in the fictional model.",
+     "provenance_refs": [
+      "p1"
+     ]
+    }
+   ],
+   "provenance": [
+    {
+     "ref": "p1",
+     "tier": 1,
+     "source_id": "DEMO-1-3A-SLIDES",
+     "locator": "slide 3",
+     "tag": "[T1:DEMO-1-3A-SLIDES:slide 3]"
+    }
+   ],
+   "confidence": "medium",
+   "proposed_selection": [
+    "o2"
+   ]
+  },
+  {
+   "item_id": "p9-79",
+   "status": "drafted",
+   "segments": [
+    {
+     "kind": "claim",
+     "text": "Store D holds fold lime in the fictional model.",
+     "provenance_refs": [
+      "p1"
+     ]
+    }
+   ],
+   "provenance": [
+    {
+     "ref": "p1",
+     "tier": 1,
+     "source_id": "DEMO-1-3A-SLIDES",
+     "locator": "slide 4",
+     "tag": "[T1:DEMO-1-3A-SLIDES:slide 4]"
+    }
+   ],
+   "confidence": "medium",
+   "proposed_selection": [
+    "o4"
+   ]
+  },
+  {
+   "item_id": "p9-80",
+   "status": "drafted",
+   "segments": [
+    {
+     "kind": "claim",
+     "text": "Store C holds cap mist in the fictional model.",
+     "provenance_refs": [
+      "p1"
+     ]
+    }
+   ],
+   "provenance": [
+    {
+     "ref": "p1",
+     "tier": 1,
+     "source_id": "DEMO-1-3A-SLIDES",
+     "locator": "slide 2",
+     "tag": "[T1:DEMO-1-3A-SLIDES:slide 2]"
+    }
+   ],
+   "confidence": "medium",
+   "proposed_selection": [
+    "o3"
+   ]
+  },
+  {
+   "item_id": "p9-81",
+   "status": "drafted",
+   "segments": [
+    {
+     "kind": "claim",
+     "text": "Store D holds duct silt in the fictional model.",
+     "provenance_refs": [
+      "p1"
+     ]
+    }
+   ],
+   "provenance": [
+    {
+     "ref": "p1",
+     "tier": 1,
+     "source_id": "DEMO-1-3A-SLIDES",
+     "locator": "slide 3",
+     "tag": "[T1:DEMO-1-3A-SLIDES:slide 3]"
+    }
+   ],
+   "confidence": "medium",
+   "proposed_selection": [
+    "o4"
+   ]
+  },
+  {
+   "item_id": "p9-82",
+   "status": "drafted",
+   "segments": [
+    {
+     "kind": "claim",
+     "text": "Store A holds lobe tar in the fictional model.",
+     "provenance_refs": [
+      "p1"
+     ]
+    }
+   ],
+   "provenance": [
+    {
+     "ref": "p1",
+     "tier": 1,
+     "source_id": "DEMO-1-3A-SLIDES",
+     "locator": "slide 4",
+     "tag": "[T1:DEMO-1-3A-SLIDES:slide 4]"
+    }
+   ],
+   "confidence": "medium",
+   "proposed_selection": [
+    "o1"
+   ]
+  },
+  {
+   "item_id": "p9-83",
+   "status": "drafted",
+   "segments": [
+    {
+     "kind": "claim",
+     "text": "Store D holds stalk dew in the fictional model.",
+     "provenance_refs": [
+      "p1"
+     ]
+    }
+   ],
+   "provenance": [
+    {
+     "ref": "p1",
+     "tier": 1,
+     "source_id": "DEMO-1-3A-SLIDES",
+     "locator": "slide 2",
+     "tag": "[T1:DEMO-1-3A-SLIDES:slide 2]"
+    }
+   ],
+   "confidence": "medium",
+   "proposed_selection": [
+    "o4"
+   ]
+  },
+  {
+   "item_id": "p9-84",
+   "status": "drafted",
+   "segments": [
+    {
+     "kind": "claim",
+     "text": "Store D holds inlet ash in the fictional model.",
+     "provenance_refs": [
+      "p1"
+     ]
+    }
+   ],
+   "provenance": [
+    {
+     "ref": "p1",
+     "tier": 1,
+     "source_id": "DEMO-1-3A-SLIDES",
+     "locator": "slide 3",
+     "tag": "[T1:DEMO-1-3A-SLIDES:slide 3]"
+    }
+   ],
+   "confidence": "medium",
+   "proposed_selection": [
+    "o4"
+   ]
+  },
+  {
+   "item_id": "p9-85",
+   "status": "drafted",
+   "segments": [
+    {
+     "kind": "claim",
+     "text": "Store C holds valve foam in the fictional model.",
+     "provenance_refs": [
+      "p1"
+     ]
+    }
+   ],
+   "provenance": [
+    {
+     "ref": "p1",
+     "tier": 1,
+     "source_id": "DEMO-1-3A-SLIDES",
+     "locator": "slide 4",
+     "tag": "[T1:DEMO-1-3A-SLIDES:slide 4]"
+    }
+   ],
+   "confidence": "medium",
+   "proposed_selection": [
+    "o3"
+   ]
+  }
+ ]
+}

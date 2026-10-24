@@ -1,0 +1,64 @@
+{
+ "schema_version": 1,
+ "module_id": "c1-r101",
+ "run_id": 101,
+ "captured_at": "2000-01-01T00:00:00Z",
+ "provenance_of_reference": "student-submitted",
+ "never_load_into_drafting_context": true,
+ "items": [
+  {
+   "item_id": "p2-11",
+   "maximum_grade": 4,
+   "student_answer": "The first sign was a delayed response to a tessin load.",
+   "given_grade": 3,
+   "grading_feedback": "Accept either mechanism."
+  },
+  {
+   "item_id": "p2-12",
+   "maximum_grade": 4,
+   "student_answer": "Without vorlase the step from tessin to quillic acid stops, so tessin collects behind it.",
+   "given_grade": 3,
+   "grading_feedback": "Accept either mechanism."
+  },
+  {
+   "item_id": "p2-13",
+   "maximum_grade": null,
+   "student_answer": "Quillic acid",
+   "student_selection": [
+    "Quillic acid"
+   ]
+  },
+  {
+   "item_id": "p2-14",
+   "maximum_grade": null,
+   "student_answer": "Quillen gland; Orm lobe",
+   "student_selection": [
+    "Quillen gland",
+    "Orm lobe"
+   ]
+  },
+  {
+   "item_id": "p3-21",
+   "maximum_grade": null,
+   "student_answer": "Fasting | low | normal baseline\nAfter load | high | tessin builds up\nNext morning | moderate | slow clearance",
+   "note": "rows=4 body_rows=3"
+  },
+  {
+   "item_id": "p3-22",
+   "maximum_grade": 2,
+   "student_answer": "Only one patient is shown."
+  },
+  {
+   "item_id": "p4-31",
+   "maximum_grade": null,
+   "student_answer": "Zeta fold -> location 1\nOrm lobe -> location 0\nPell duct -> location 3\nQuillen cap -> location 2",
+   "note": "linked=4/4"
+  },
+  {
+   "item_id": "p4-32",
+   "maximum_grade": null,
+   "student_answer": "Phase A: tessin loading, vorlase binding\nPhase B: quillic clearance, orm release",
+   "note": "placed=4/4 categories=2"
+  }
+ ]
+}

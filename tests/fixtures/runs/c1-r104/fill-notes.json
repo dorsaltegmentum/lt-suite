@@ -1,0 +1,104 @@
+{
+ "started_at": "2000-01-01T00:00:00Z",
+ "ended_at": "2000-01-01T00:00:00Z",
+ "approval_mode": "auto",
+ "boundary_reached": {
+  "stopped": true,
+  "class": "run-level-commit",
+  "page_index": null,
+  "item_id": null,
+  "detail": "Team selections are saved. Navigation stops before the final completion route."
+ },
+ "pages_filled": [
+  9
+ ],
+ "never_navigated": [
+  {
+   "route": "complete",
+   "reason": "Final completion controls remain outside automatic navigation."
+  }
+ ],
+ "user_decisions": [
+  {
+   "rail": "approval-manual-at-boundary",
+   "who": "the user",
+   "when": "2000-01-01T00:00:00Z",
+   "why": "Synthetic approval permits automatic entry of team selections before the completion route.",
+   "approval_id": "A-add2e6ec",
+   "quote": "Run it on auto, I accept that it ends at the completion page."
+  },
+  {
+   "rail": "passed-single-approval",
+   "item_ids": [
+    "p3-12"
+   ],
+   "who": "the user",
+   "when": "2000-01-01T00:00:00Z",
+   "why": "The submitted item on page 3 is already locked; the user accepted a run that reaches page 9 without manual approval.",
+   "approval_id": "A-868b40fc",
+   "quote": "Go on past page 3, I know p3-12 is already submitted."
+  }
+ ],
+ "items": {
+  "p3-12": {
+   "result": "skipped",
+   "attempted": false,
+   "stopped_reason": "Submission is already recorded and this panel is locked."
+  },
+  "p3-13": {
+   "result": "skipped",
+   "attempted": false,
+   "stopped_reason": "The page is locked after the committed checkpoint."
+  },
+  "p3-14": {
+   "result": "skipped",
+   "attempted": false,
+   "stopped_reason": "The page is locked after the committed checkpoint."
+  },
+  "p9-71": {
+   "method": "view-model"
+  },
+  "p9-72": {
+   "method": "view-model"
+  },
+  "p9-73": {
+   "method": "view-model"
+  },
+  "p9-74": {
+   "method": "view-model"
+  },
+  "p9-75": {
+   "method": "view-model"
+  },
+  "p9-76": {
+   "method": "view-model"
+  },
+  "p9-77": {
+   "method": "view-model"
+  },
+  "p9-78": {
+   "method": "view-model"
+  },
+  "p9-79": {
+   "method": "view-model"
+  },
+  "p9-80": {
+   "method": "view-model"
+  },
+  "p9-81": {
+   "method": "view-model"
+  },
+  "p9-82": {
+   "method": "view-model"
+  },
+  "p9-83": {
+   "method": "view-model"
+  },
+  "p9-84": {
+   "method": "view-model"
+  },
+  "p9-85": {
+   "method": "view-model"
+  }
+ }
+}

@@ -1,0 +1,15 @@
+{
+ "schema_version": 1,
+ "module_id": "c1-r104",
+ "approvals": [
+  {
+   "approval_id": "A-4f004ddd",
+   "kind": "single-attempt",
+   "item_id": "p3-12",
+   "approved_by": "user",
+   "quote": "Yes, write p3-12 as drafted.",
+   "recorded_at": "2000-01-01T00:00:00Z",
+   "question_digest": "74eb0850eb23a19798b4c27c63f1535f546bff4240d412ca23decc1367c807e5"
+  }
+ ]
+}

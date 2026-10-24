@@ -1,0 +1,7 @@
+# SPDX-FileCopyrightText: 2026 dorsaltegmentum
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Resolve the generated synthetic curriculum during answer evaluations.
+[curriculum]
+root = "../../tests/fixtures/curriculum"
+learning_outcomes_file = "ILO.md"
+week_number_pattern = '(?i)\bweek\s*(\d{1,2})(?:\.(\d{1,2}))?\b'

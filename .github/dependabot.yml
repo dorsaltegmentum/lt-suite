@@ -1,0 +1,22 @@
+# SPDX-FileCopyrightText: 2026 dorsaltegmentum
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Weekly dependency updates for Python and GitHub Actions.
+version: 2
+updates:
+  - package-ecosystem: uv
+    directory: /
+    schedule:
+      interval: weekly
+  - package-ecosystem: pip
+    directories:
+      - /skills/*
+    schedule:
+      interval: weekly
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+  - package-ecosystem: npm
+    directory: /packaging
+    schedule:
+      interval: weekly

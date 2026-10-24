@@ -1,0 +1,368 @@
+{
+ "module_id": "c1-r103",
+ "location": {
+  "origin": "https://lt.example.invalid",
+  "pathname": "/i/inst0001/student/courses/1/runs/103/run/page/1"
+ },
+ "globals": {
+  "pageLessonId": 1,
+  "pageCourseLongName": "Example Course 2000 (X101)"
+ },
+ "root": {
+  "lessonTitleDisplay": "2.1 Demo: Reading a Zeta section",
+  "hasCompletionPage": false,
+  "runLocked": false,
+  "showPageMenuPageRemaining": false,
+  "remainingFlowPagesWithoutCheckpoints": 0,
+  "checkpointPageContainer": {
+   "pages": []
+  }
+ },
+ "pages": [
+  {
+   "title": "Overview",
+   "allPanels": [
+    {
+     "pluginKey": "kcTextArea",
+     "panelKey": "1",
+     "panelState": {
+      "content": {
+       "theText": "<p>Study the Zeta section before you annotate it.</p>"
+      }
+     }
+    },
+    {
+     "pluginKey": "image",
+     "panelKey": "2",
+     "panelState": {
+      "content": {
+       "imageResourceKey": "23",
+       "caption": "Figure 1. The supplied Zeta section.",
+       "altTextDescription": "Zeta section, author figure"
+      }
+     }
+    }
+   ],
+   "rows": []
+  },
+  {
+   "title": "Annotate",
+   "allPanels": [
+    {
+     "pluginKey": "image-annotation",
+     "panelKey": "11",
+     "panelState": {
+      "content": {
+       "questionText": "Upload your annotated sketch of the Zeta section.",
+       "inputMode": "allowImageAndAnnotation",
+       "singleAttempt": false,
+       "assessmentType": "noAssessment"
+      },
+      "input": {
+       "annotations": [
+        {
+         "type": "arrow",
+         "text": "fold",
+         "position": {
+          "x": 0.25,
+          "y": 0.5
+         }
+        }
+       ],
+       "imageKey": "23",
+       "annotationsKey": "a1",
+       "presentedRatio": 0.625
+      }
+     }
+    },
+    {
+     "pluginKey": "image-annotation",
+     "panelKey": "12",
+     "panelState": {
+      "content": {
+       "questionText": "Upload a sketch of the duct layout.",
+       "inputMode": "allowImageAndAnnotation",
+       "singleAttempt": false,
+       "assessmentType": "noAssessment"
+      },
+      "input": {
+       "annotations": [],
+       "presentedRatio": 0
+      }
+     }
+    },
+    {
+     "pluginKey": "image-annotation",
+     "panelKey": "13",
+     "panelState": {
+      "content": {
+       "questionText": "Mark the fold on the supplied section.",
+       "inputMode": "allowAnnotation",
+       "predefinedImageKey": "52",
+       "altTextDescription": "Supplied Zeta section",
+       "presentedRatio": 0.8125,
+       "singleAttempt": false,
+       "assessmentType": "noAssessment"
+      },
+      "input": {
+       "annotations": [
+        {
+         "type": "pin",
+         "text": "fold",
+         "position": {
+          "x": 0.4,
+          "y": 0.3
+         }
+        },
+        {
+         "type": "pin",
+         "text": "",
+         "position": {
+          "x": 0.6,
+          "y": 0.7
+         }
+        }
+       ]
+      }
+     }
+    },
+    {
+     "pluginKey": "image-annotation",
+     "panelKey": "14",
+     "panelState": {
+      "content": {
+       "questionText": "Mark the duct on the supplied section.",
+       "inputMode": "allowAnnotation",
+       "predefinedImageKey": "53",
+       "altTextDescription": "Supplied duct section",
+       "presentedRatio": 0,
+       "singleAttempt": false,
+       "assessmentType": "noAssessment"
+      },
+      "input": {
+       "annotations": []
+      }
+     }
+    }
+   ],
+   "rows": []
+  },
+  {
+   "title": "Labelling",
+   "allPanels": [
+    {
+     "pluginKey": "kcImageLabelling",
+     "panelKey": "21",
+     "panelState": {
+      "content": {
+       "question": "Label the structures.",
+       "labelItems": [
+        {
+         "label": "Fold"
+        },
+        {
+         "label": "Lobe"
+        },
+        {
+         "label": "Duct"
+        },
+        {
+         "label": "Cap"
+        },
+        {
+         "label": "Stalk"
+        }
+       ],
+       "labelLocationItems": [
+        {
+         "dropZoneLeftProportion": 0.2,
+         "dropZoneTopProportion": 0.2,
+         "anchorX": 0.2,
+         "anchorY": 0.2
+        },
+        {
+         "dropZoneLeftProportion": 0.7,
+         "dropZoneTopProportion": 0.25,
+         "anchorX": 0.7,
+         "anchorY": 0.25
+        },
+        {
+         "dropZoneLeftProportion": 0.3,
+         "dropZoneTopProportion": 0.75,
+         "anchorX": 0.3,
+         "anchorY": 0.75
+        },
+        {
+         "dropZoneLeftProportion": 0.8,
+         "dropZoneTopProportion": 0.7,
+         "anchorX": 0.8,
+         "anchorY": 0.7
+        }
+       ],
+       "presentedRatio": 0.75,
+       "imageResourceKey": "54",
+       "altTextDescription": "Zeta section with four drop zones",
+       "singleAttempt": false,
+       "assessmentType": "noAssessment"
+      },
+      "input": {
+       "linkedLabels": [
+        {
+         "locationIndex": 0,
+         "labelIndex": 0
+        },
+        {
+         "locationIndex": 1,
+         "labelIndex": 1
+        }
+       ]
+      }
+     }
+    },
+    {
+     "pluginKey": "drag-and-drop",
+     "panelKey": "22",
+     "panelState": {
+      "content": {
+       "question": "Drag each term onto its place.",
+       "labelItems": [
+        {
+         "label": "Inlet"
+        },
+        {
+         "label": "Outlet"
+        },
+        {
+         "label": "Valve"
+        }
+       ],
+       "labelLocationItems": [
+        {
+         "dropZoneLeftProportion": 0.15,
+         "dropZoneTopProportion": 0.5,
+         "anchorX": 0.15,
+         "anchorY": 0.5
+        },
+        {
+         "dropZoneLeftProportion": 0.5,
+         "dropZoneTopProportion": 0.2,
+         "anchorX": 0.5,
+         "anchorY": 0.2
+        },
+        {
+         "dropZoneLeftProportion": 0.85,
+         "dropZoneTopProportion": 0.5,
+         "anchorX": 0.85,
+         "anchorY": 0.5
+        }
+       ],
+       "presentedRatio": 0.5,
+       "imageResourceKey": "55",
+       "altTextDescription": "Valve diagram with three zones",
+       "singleAttempt": false,
+       "assessmentType": "noAssessment"
+      },
+      "input": {
+       "linkedLabels": []
+      }
+     }
+    },
+    {
+     "pluginKey": "categories",
+     "panelKey": "23",
+     "panelState": {
+      "content": {
+       "question": "Sort the terms.",
+       "categoryItems": [
+        {
+         "title": "Early"
+        },
+        {
+         "title": "Late"
+        }
+       ],
+       "labelItems": [
+        {
+         "label": "warm-up"
+        },
+        {
+         "label": "peak"
+        },
+        {
+         "label": "recovery"
+        },
+        {
+         "label": "rest"
+        },
+        {
+         "label": "burst"
+        }
+       ],
+       "singleAttempt": false,
+       "assessmentType": "noAssessment"
+      },
+      "input": {
+       "categoryAnswerItems": []
+      }
+     }
+    }
+   ],
+   "rows": []
+  },
+  {
+   "title": "Final labelling",
+   "allPanels": [
+    {
+     "pluginKey": "kcImageLabelling",
+     "panelKey": "31",
+     "panelState": {
+      "content": {
+       "question": "Final labelling: place each name.",
+       "labelItems": [
+        {
+         "label": "North"
+        },
+        {
+         "label": "South"
+        },
+        {
+         "label": "East"
+        }
+       ],
+       "labelLocationItems": [
+        {
+         "dropZoneLeftProportion": 0.5,
+         "dropZoneTopProportion": 0.15,
+         "anchorX": 0.5,
+         "anchorY": 0.15
+        },
+        {
+         "dropZoneLeftProportion": 0.5,
+         "dropZoneTopProportion": 0.85,
+         "anchorX": 0.5,
+         "anchorY": 0.85
+        },
+        {
+         "dropZoneLeftProportion": 0.9,
+         "dropZoneTopProportion": 0.5,
+         "anchorX": 0.9,
+         "anchorY": 0.5
+        }
+       ],
+       "presentedRatio": 0.5,
+       "imageResourceKey": "56",
+       "altTextDescription": "Compass diagram",
+       "singleAttempt": true,
+       "assessmentType": "graded",
+       "maximumGrade": 3
+      },
+      "input": {
+       "linkedLabels": []
+      }
+     }
+    }
+   ],
+   "rows": []
+  }
+ ]
+}

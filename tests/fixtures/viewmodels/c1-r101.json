@@ -1,0 +1,480 @@
+{
+ "module_id": "c1-r101",
+ "location": {
+  "origin": "https://lt.example.invalid",
+  "pathname": "/i/inst0001/student/courses/1/runs/101/run/page/1"
+ },
+ "globals": {
+  "pageLessonId": 1,
+  "pageCourseLongName": "Example Course 2000 (X101)"
+ },
+ "root": {
+  "lessonTitleDisplay": "1.1 Demo: Vorlase deficiency",
+  "hasCompletionPage": true,
+  "runLocked": true,
+  "showPageMenuPageRemaining": false,
+  "remainingFlowPagesWithoutCheckpoints": 0,
+  "checkpointPageContainer": {
+   "pages": []
+  }
+ },
+ "pages": [
+  {
+   "title": "Introduction",
+   "allPanels": [
+    {
+     "pluginKey": "kcTextArea",
+     "panelKey": "1",
+     "panelState": {
+      "content": {
+       "theText": "<p>This module follows a fictional patient, Alex Example, through the vorlase pathway.</p><p>Read the case, then answer each question &amp; check the key terms.</p>"
+      }
+     }
+    },
+    {
+     "pluginKey": "image",
+     "panelKey": "2",
+     "panelState": {
+      "content": {
+       "imageResourceKey": "31",
+       "caption": "Figure 1. The fictional vorlase pathway.",
+       "altTextDescription": "Four labelled boxes joined by arrows"
+      }
+     }
+    },
+    {
+     "pluginKey": "kcTextArea",
+     "panelKey": "3",
+     "panelState": {
+      "content": {
+       "theText": "Copyright © 2000 Example Publishing"
+      }
+     }
+    },
+    {
+     "pluginKey": "divider",
+     "panelKey": "4",
+     "panelState": {
+      "content": {}
+     }
+    }
+   ],
+   "rows": []
+  },
+  {
+   "title": "Case",
+   "allPanels": [
+    {
+     "pluginKey": "text-question",
+     "panelKey": "11",
+     "panelState": {
+      "content": {
+       "question": "<p>Describe the first sign of vorlase deficiency in Alex Example.</p>",
+       "singleAttempt": false,
+       "assessmentType": "graded",
+       "maximumGrade": 4
+      },
+      "input": {
+       "answer": "The first sign was a delayed response to a tessin load.",
+       "locked": true
+      },
+      "isReadOnly": true
+     }
+    },
+    {
+     "pluginKey": "text-question",
+     "panelKey": "12",
+     "panelState": {
+      "content": {
+       "question": "Explain why tessin builds up when vorlase is missing.",
+       "singleAttempt": false,
+       "assessmentType": "graded",
+       "maximumGrade": 4
+      },
+      "input": {
+       "answer": "Without vorlase the step from tessin to quillic acid stops, so tessin collects behind it.",
+       "locked": true
+      },
+      "isReadOnly": true
+     }
+    },
+    {
+     "pluginKey": "select",
+     "panelKey": "13",
+     "panelState": {
+      "content": {
+       "question": "Which product does vorlase form?",
+       "answers": [
+        {
+         "answer": "Tessin"
+        },
+        {
+         "answer": "Quillic acid"
+        },
+        {
+         "answer": "Orm salt"
+        },
+        {
+         "answer": "Pell resin"
+        }
+       ],
+       "multiselect": false,
+       "singleAttempt": true,
+       "assessmentType": "instantFeedback"
+      },
+      "input": {
+       "selectedAnswers": [
+        1
+       ],
+       "locked": true
+      },
+      "isReadOnly": true
+     }
+    },
+    {
+     "pluginKey": "select",
+     "panelKey": "14",
+     "panelState": {
+      "content": {
+       "question": "Select every organ that stores tessin.",
+       "answers": [
+        {
+         "answer": "Quillen gland"
+        },
+        {
+         "answer": "Pell duct"
+        },
+        {
+         "answer": "Orm lobe"
+        },
+        {
+         "answer": "Zeta fold"
+        },
+        {
+         "answer": "None of these"
+        }
+       ],
+       "multiselect": true,
+       "singleAttempt": false,
+       "assessmentType": "noAssessment"
+      },
+      "input": {
+       "selectedAnswers": [
+        0,
+        2
+       ],
+       "locked": true
+      },
+      "isReadOnly": true
+     }
+    }
+   ],
+   "rows": []
+  },
+  {
+   "title": "Data",
+   "allPanels": [
+    {
+     "pluginKey": "table-question",
+     "panelKey": "21",
+     "panelState": {
+      "content": {
+       "question": "Complete the table of tessin levels.",
+       "rows": [
+        {
+         "headerRow": true,
+         "cells": [
+          {
+           "content": "Time"
+          },
+          {
+           "content": "Level"
+          },
+          {
+           "content": "Meaning"
+          }
+         ]
+        },
+        {
+         "headerRow": false,
+         "cells": [
+          {
+           "content": "Fasting",
+           "headerColumn": true
+          },
+          {
+           "content": ""
+          },
+          {
+           "content": ""
+          }
+         ]
+        },
+        {
+         "headerRow": false,
+         "cells": [
+          {
+           "content": "After load",
+           "headerColumn": true
+          },
+          {
+           "content": ""
+          },
+          {
+           "content": ""
+          }
+         ]
+        },
+        {
+         "headerRow": false,
+         "cells": [
+          {
+           "content": "Next morning",
+           "headerColumn": true
+          },
+          {
+           "content": ""
+          },
+          {
+           "content": ""
+          }
+         ]
+        }
+       ],
+       "singleAttempt": false,
+       "assessmentType": "noAssessment"
+      },
+      "input": {
+       "rows": [
+        {
+         "headerRow": true,
+         "cells": [
+          {
+           "content": "Time"
+          },
+          {
+           "content": "Level"
+          },
+          {
+           "content": "Meaning"
+          }
+         ]
+        },
+        {
+         "headerRow": false,
+         "cells": [
+          {
+           "content": "Fasting",
+           "headerColumn": true
+          },
+          {
+           "content": "low"
+          },
+          {
+           "content": "normal baseline"
+          }
+         ]
+        },
+        {
+         "headerRow": false,
+         "cells": [
+          {
+           "content": "After load",
+           "headerColumn": true
+          },
+          {
+           "content": "high"
+          },
+          {
+           "content": "tessin builds up"
+          }
+         ]
+        },
+        {
+         "headerRow": false,
+         "cells": [
+          {
+           "content": "Next morning",
+           "headerColumn": true
+          },
+          {
+           "content": "moderate"
+          },
+          {
+           "content": "slow clearance"
+          }
+         ]
+        }
+       ],
+       "locked": true
+      },
+      "isReadOnly": true
+     }
+    },
+    {
+     "pluginKey": "text-question",
+     "panelKey": "22",
+     "panelState": {
+      "content": {
+       "question": "State one limit of the data above.",
+       "singleAttempt": false,
+       "assessmentType": "graded",
+       "maximumGrade": 2
+      },
+      "input": {
+       "answer": "Only one patient is shown.",
+       "locked": true
+      },
+      "isReadOnly": true
+     }
+    }
+   ],
+   "rows": []
+  },
+  {
+   "title": "Structures",
+   "allPanels": [
+    {
+     "pluginKey": "kcImageLabelling",
+     "panelKey": "31",
+     "panelState": {
+      "content": {
+       "question": "Label the four structures on the Zeta section.",
+       "labelItems": [
+        {
+         "label": "Zeta fold"
+        },
+        {
+         "label": "Orm lobe"
+        },
+        {
+         "label": "Pell duct"
+        },
+        {
+         "label": "Quillen cap"
+        }
+       ],
+       "labelLocationItems": [
+        {
+         "dropZoneLeftProportion": 0.2,
+         "dropZoneTopProportion": 0.3,
+         "anchorX": 0.2,
+         "anchorY": 0.3
+        },
+        {
+         "dropZoneLeftProportion": 0.6,
+         "dropZoneTopProportion": 0.25,
+         "anchorX": 0.6,
+         "anchorY": 0.25
+        },
+        {
+         "dropZoneLeftProportion": 0.35,
+         "dropZoneTopProportion": 0.7,
+         "anchorX": 0.35,
+         "anchorY": 0.7
+        },
+        {
+         "dropZoneLeftProportion": 0.8,
+         "dropZoneTopProportion": 0.65,
+         "anchorX": 0.8,
+         "anchorY": 0.65
+        }
+       ],
+       "presentedRatio": 0.75,
+       "imageResourceKey": "32",
+       "altTextDescription": "Zeta section with four marked sites",
+       "singleAttempt": false,
+       "assessmentType": "noAssessment"
+      },
+      "input": {
+       "linkedLabels": [
+        {
+         "locationIndex": 1,
+         "labelIndex": 0
+        },
+        {
+         "locationIndex": 0,
+         "labelIndex": 1
+        },
+        {
+         "locationIndex": 3,
+         "labelIndex": 2
+        },
+        {
+         "locationIndex": 2,
+         "labelIndex": 3
+        }
+       ],
+       "locked": true
+      },
+      "isReadOnly": true
+     }
+    },
+    {
+     "pluginKey": "categories",
+     "panelKey": "32",
+     "panelState": {
+      "content": {
+       "question": "Sort each term into its phase.",
+       "categoryItems": [
+        {
+         "title": "Phase A"
+        },
+        {
+         "title": "Phase B"
+        }
+       ],
+       "labelItems": [
+        {
+         "label": "tessin loading"
+        },
+        {
+         "label": "quillic clearance"
+        },
+        {
+         "label": "vorlase binding"
+        },
+        {
+         "label": "orm release"
+        }
+       ],
+       "singleAttempt": true,
+       "assessmentType": "instantFeedback"
+      },
+      "input": {
+       "categoryAnswerItems": [
+        {
+         "labelAnswerItems": [
+          {
+           "labelIndex": 0
+          },
+          {
+           "labelIndex": 2
+          }
+         ]
+        },
+        {
+         "labelAnswerItems": [
+          {
+           "labelIndex": 1
+          },
+          {
+           "labelIndex": 3
+          }
+         ]
+        }
+       ],
+       "locked": true
+      },
+      "isReadOnly": true
+     }
+    }
+   ],
+   "rows": []
+  },
+  {
+   "title": "Report",
+   "reportInfoPanels": []
+  }
+ ]
+}

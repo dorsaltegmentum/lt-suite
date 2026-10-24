@@ -1,0 +1,63 @@
+{
+ "schema_version": 1,
+ "module_id": "c1-r105",
+ "run_id": 105,
+ "captured_at": "2000-01-01T00:00:00Z",
+ "provenance_of_reference": "student-submitted",
+ "never_load_into_drafting_context": true,
+ "items": [
+  {
+   "item_id": "p1-11",
+   "maximum_grade": null,
+   "student_answer": "tessin surplus | blocked conversion\nlow quillic acid | reduced output",
+   "note": "rows=3 body_rows=2"
+  },
+  {
+   "item_id": "p2-21",
+   "maximum_grade": null,
+   "student_answer": "age | narrows the list\nonset | sets the pace",
+   "note": "rows=3 body_rows=2"
+  },
+  {
+   "item_id": "p2-22",
+   "maximum_grade": null,
+   "student_answer": "Vorlase deficiency."
+  },
+  {
+   "item_id": "p3-31",
+   "maximum_grade": null,
+   "student_answer": "level | confirms the cause\nscan | shows the site",
+   "note": "rows=3 body_rows=2"
+  },
+  {
+   "item_id": "p3-32",
+   "maximum_grade": null,
+   "student_answer": "rest | first step\nreview | second step",
+   "note": "rows=3 body_rows=2"
+  },
+  {
+   "item_id": "p4-41",
+   "maximum_grade": null,
+   "student_answer": "tessin surplus | blocked conversion\nlow quillic acid | reduced output",
+   "note": "rows=3 body_rows=2"
+  },
+  {
+   "item_id": "p4-42",
+   "maximum_grade": null,
+   "student_answer": "age | narrows the list\nonset | sets the pace",
+   "note": "rows=3 body_rows=2"
+  },
+  {
+   "item_id": "p4-43",
+   "maximum_grade": null,
+   "student_answer": "level | confirms the cause\nscan | shows the site",
+   "note": "rows=3 body_rows=2"
+  },
+  {
+   "item_id": "p4-44",
+   "maximum_grade": null,
+   "student_answer": "fluids | first step\nrecheck | ",
+   "note": "rows=3 body_rows=2"
+  }
+ ]
+}

@@ -1,0 +1,16 @@
+{
+ "schema_version": 1,
+ "module_id": "c1-r106",
+ "run_id": 106,
+ "captured_at": "2000-01-01T00:00:00Z",
+ "provenance_of_reference": "student-submitted",
+ "never_load_into_drafting_context": true,
+ "items": [
+  {
+   "item_id": "p2-11",
+   "maximum_grade": null,
+   "student_answer": "Minute 0 | hold steady | \nMinute 5 | hold steady | \nMinute 10 | hold steady | \nMinute 15 | hold steady | \nMinute 20 |  | \nMinute 25 |  | \nMinute 30 |  | \nMinute 35 |  | \nMinute 40 |  | \nMinute 45 |  | \nMinute 50 |  | \nMinute 55 |  | \nMinute 60 |  | \nMinute 65 |  | \nMinute 70 |  | \nMinute 75 |  | ",
+   "note": "rows=17 body_rows=16"
+  }
+ ]
+}

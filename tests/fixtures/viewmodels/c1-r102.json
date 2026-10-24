@@ -1,0 +1,456 @@
+{
+ "module_id": "c1-r102",
+ "location": {
+  "origin": "https://lt.example.invalid",
+  "pathname": "/i/inst0001/student/courses/1/runs/102/run/page/1"
+ },
+ "globals": {
+  "pageLessonId": 1,
+  "pageCourseLongName": "Example Course 2000 (X101)"
+ },
+ "root": {
+  "lessonTitleDisplay": "1.2 Demo: Quillen gland function",
+  "hasCompletionPage": true,
+  "runLocked": false,
+  "showPageMenuPageRemaining": false,
+  "remainingFlowPagesWithoutCheckpoints": 0,
+  "checkpointPageContainer": {
+   "pages": []
+  }
+ },
+ "pages": [
+  {
+   "title": "Introduction",
+   "allPanels": [
+    {
+     "pluginKey": "kcTextArea",
+     "panelKey": "1",
+     "panelState": {
+      "content": {
+       "theText": "<p>Key points:</p><ul><li>The quillen gland releases tessin.</li><li>Release is paced by oram cells.</li></ul>"
+      }
+     }
+    },
+    {
+     "pluginKey": "hotspot",
+     "panelKey": "2",
+     "panelState": {
+      "content": {
+       "hotspots": [
+        {
+         "id": 1,
+         "parentHotspot": null,
+         "hotspotType": "CUSTOM",
+         "hotspotColour": "BLUE",
+         "labelTitle": "",
+         "labelDescription": "",
+         "imageResourceKey": "41",
+         "position": "{\"points\":[]}"
+        },
+        {
+         "id": 2,
+         "parentHotspot": 1,
+         "hotspotType": "POINT",
+         "hotspotColour": "BLUE",
+         "labelTitle": "Stain Q",
+         "labelDescription": "Colours oram cells deep blue.",
+         "imageResourceKey": "",
+         "position": "{\"points\":[{\"x\":0.25,\"y\":0.5}]}"
+        },
+        {
+         "id": 3,
+         "parentHotspot": 1,
+         "hotspotType": "POINT",
+         "hotspotColour": "RED",
+         "labelTitle": "Stain R",
+         "labelDescription": "Colours the duct wall rose. \n \nBest on thin sections.",
+         "imageResourceKey": "",
+         "position": "{\"points\":[{\"x\":0.7,\"y\":0.4},{\"x\":0.72,\"y\":0.45}]}"
+        }
+       ]
+      }
+     }
+    },
+    {
+     "pluginKey": "kcMystery",
+     "panelKey": "3",
+     "panelState": {
+      "content": {
+       "widgetText": "not read",
+       "height": 3
+      }
+     }
+    },
+    {
+     "pluginKey": "table",
+     "panelKey": "4",
+     "panelState": {
+      "content": {
+       "rows": [
+        {
+         "headerRow": true,
+         "cells": [
+          {
+           "content": "Gland"
+          },
+          {
+           "content": "Product"
+          }
+         ]
+        },
+        {
+         "headerRow": false,
+         "cells": [
+          {
+           "content": "Quillen"
+          },
+          {
+           "content": "Tessin"
+          }
+         ]
+        },
+        {
+         "headerRow": false,
+         "cells": [
+          {
+           "content": "Pell"
+          },
+          {
+           "content": "Resin"
+          }
+         ]
+        }
+       ]
+      }
+     }
+    },
+    {
+     "pluginKey": "divider",
+     "panelKey": "5",
+     "panelState": {
+      "content": {}
+     }
+    }
+   ],
+   "rows": []
+  },
+  {
+   "title": "Warm-up",
+   "allPanels": [
+    {
+     "pluginKey": "text-question",
+     "panelKey": "11",
+     "panelState": {
+      "content": {
+       "question": "Name the gland that releases tessin.",
+       "singleAttempt": false,
+       "assessmentType": "noAssessment"
+      },
+      "input": {
+       "answer": ""
+      },
+      "isReadOnly": false
+     }
+    },
+    {
+     "pluginKey": "select",
+     "panelKey": "12",
+     "panelState": {
+      "content": {
+       "question": "How many oram cell types are described?",
+       "answers": [
+        {
+         "answer": "One"
+        },
+        {
+         "answer": "Two"
+        },
+        {
+         "answer": "Three"
+        }
+       ],
+       "multiselect": false,
+       "singleAttempt": false,
+       "assessmentType": "noAssessment"
+      },
+      "input": {
+       "selectedAnswers": []
+      },
+      "isReadOnly": false
+     }
+    },
+    {
+     "pluginKey": "table-question",
+     "panelKey": "13",
+     "panelState": {
+      "content": {
+       "question": "Complete the release schedule.",
+       "singleAttempt": false,
+       "assessmentType": "noAssessment"
+      },
+      "input": {
+       "rows": [
+        {
+         "headerRow": false,
+         "cells": [
+          {
+           "content": "Step"
+          },
+          {
+           "content": "Signal"
+          },
+          {
+           "content": "Result"
+          }
+         ]
+        },
+        {
+         "headerRow": false,
+         "cells": [
+          {
+           "content": "Dawn"
+          },
+          {
+           "content": ""
+          },
+          {
+           "content": ""
+          }
+         ]
+        },
+        {
+         "headerRow": false,
+         "cells": [
+          {
+           "content": "Noon"
+          },
+          {
+           "content": ""
+          },
+          {
+           "content": ""
+          }
+         ]
+        },
+        {
+         "headerRow": false,
+         "cells": [
+          {
+           "content": "Dusk"
+          },
+          {
+           "content": ""
+          },
+          {
+           "content": ""
+          }
+         ]
+        },
+        {
+         "headerRow": false,
+         "cells": [
+          {
+           "content": "Night"
+          },
+          {
+           "content": ""
+          },
+          {
+           "content": ""
+          }
+         ]
+        }
+       ]
+      },
+      "isReadOnly": false
+     }
+    }
+   ],
+   "rows": []
+  },
+  {
+   "title": "Decision",
+   "allPanels": [
+    {
+     "pluginKey": "text-question",
+     "panelKey": "21",
+     "panelState": {
+      "content": {
+       "question": "Commit to a single best explanation for the gland's output.",
+       "singleAttempt": true,
+       "assessmentType": "noAssessment"
+      },
+      "input": {
+       "answer": ""
+      },
+      "isReadOnly": false
+     }
+    },
+    {
+     "pluginKey": "text-question",
+     "panelKey": "22",
+     "panelState": {
+      "content": {
+       "question": "List one factor that changes release.",
+       "singleAttempt": false,
+       "assessmentType": "noAssessment"
+      },
+      "input": {
+       "answer": "Dusk."
+      },
+      "isReadOnly": false
+     }
+    },
+    {
+     "pluginKey": "rating-scale",
+     "panelKey": "23",
+     "panelState": {
+      "content": {
+       "question": "Rate your confidence from 1 to 5."
+      },
+      "input": {
+       "value": null
+      },
+      "isReadOnly": false
+     }
+    }
+   ],
+   "rows": []
+  },
+  {
+   "title": "Review",
+   "allPanels": [
+    {
+     "pluginKey": "select",
+     "panelKey": "31",
+     "panelState": {
+      "content": {
+       "question": "Which cell paces release?",
+       "answers": [
+        {
+         "answer": "Oram cell"
+        },
+        {
+         "answer": "Pell cell"
+        },
+        {
+         "answer": "Zeta cell"
+        }
+       ],
+       "multiselect": false,
+       "singleAttempt": false,
+       "assessmentType": "noAssessment"
+      },
+      "input": {
+       "selectedAnswers": [
+        0
+       ]
+      }
+     }
+    },
+    {
+     "pluginKey": "table-question",
+     "panelKey": "32",
+     "panelState": {
+      "content": {
+       "question": "Complete the gland map.",
+       "rows": [
+        {
+         "headerRow": true,
+         "cells": [
+          {
+           "content": "Region"
+          },
+          {
+           "content": "Cell"
+          }
+         ]
+        },
+        {
+         "headerRow": false,
+         "cells": [
+          {
+           "content": "Cap"
+          },
+          {
+           "content": "Oram"
+          }
+         ]
+        },
+        {
+         "headerRow": false,
+         "cells": [
+          {
+           "content": "Duct"
+          },
+          {
+           "content": ""
+          }
+         ]
+        }
+       ],
+       "singleAttempt": false,
+       "assessmentType": "noAssessment"
+      },
+      "input": {
+       "rows": [
+        {
+         "headerRow": true,
+         "cells": [
+          {
+           "content": "Region"
+          },
+          {
+           "content": "Cell"
+          }
+         ]
+        },
+        {
+         "headerRow": false,
+         "cells": [
+          {
+           "content": "Cap"
+          },
+          {
+           "content": "Oram"
+          }
+         ]
+        },
+        {
+         "headerRow": false,
+         "cells": [
+          {
+           "content": "Duct"
+          },
+          {
+           "content": "Pell"
+          }
+         ]
+        }
+       ]
+      }
+     }
+    },
+    {
+     "pluginKey": "text-question",
+     "panelKey": "33",
+     "panelState": {
+      "content": {
+       "question": "Summarise the release pathway.",
+       "singleAttempt": false,
+       "assessmentType": "noAssessment"
+      },
+      "input": {
+       "answer": "Oram cells pace tessin release at dusk."
+      }
+     }
+    }
+   ],
+   "rows": []
+  },
+  {
+   "title": "Report",
+   "reportInfoPanels": []
+  }
+ ]
+}

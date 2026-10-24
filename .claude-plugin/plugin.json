@@ -1,0 +1,21 @@
+{
+  "name": "lt-suite",
+  "version": "0.1.0",
+  "description": "Unofficial tools to capture, draft, diagram, fill and export Lt learning modules.",
+  "homepage": "https://github.com/dorsaltegmentum/lt-suite",
+  "repository": "https://github.com/dorsaltegmentum/lt-suite",
+  "license": "AGPL-3.0-or-later",
+  "keywords": [
+    "lt",
+    "learning-module",
+    "agent-skills",
+    "study",
+    "diagram",
+    "pdf"
+  ],
+  "author": {
+    "name": "dorsaltegmentum",
+    "url": "https://github.com/dorsaltegmentum"
+  },
+  "icon": "./assets/icon.png"
+}

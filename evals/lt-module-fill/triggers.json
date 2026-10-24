@@ -1,0 +1,118 @@
+{
+  "SPDX-FileCopyrightText": "2026 dorsaltegmentum",
+  "SPDX-License-Identifier": "AGPL-3.0-or-later",
+  "description": "Synthetic routing queries for the Lt fill skill.",
+  "skill_name": "lt-module-fill",
+  "cases": [
+    {
+      "query": "Enter my drafted answers into the Lt run open in my browser tab.",
+      "should_trigger": true,
+      "id": "fill-001"
+    },
+    {
+      "query": "Fill the captured module from answers.json and leave submission for me.",
+      "should_trigger": true,
+      "id": "fill-002"
+    },
+    {
+      "query": "How far can filling this module proceed before reaching a one-way door?",
+      "should_trigger": true,
+      "id": "fill-003"
+    },
+    {
+      "query": "Build the commit-boundary map from module.json before entering the drafted answers.",
+      "should_trigger": true,
+      "id": "fill-004"
+    },
+    {
+      "query": "Put the prepared answers into the page; I will press Submit myself.",
+      "should_trigger": true,
+      "id": "fill-005"
+    },
+    {
+      "query": "Check the target's live contents before replacing its existing response.",
+      "should_trigger": true,
+      "id": "fill-006"
+    },
+    {
+      "query": "Enter the drafted table responses into the selected pages and stop there.",
+      "should_trigger": true,
+      "id": "fill-007"
+    },
+    {
+      "query": "Transcribe the supplied responses into Lt during this supervised session.",
+      "should_trigger": true,
+      "id": "fill-008"
+    },
+    {
+      "query": "Which answer panels in this run are empty on the live page right now?",
+      "should_trigger": true,
+      "id": "fill-009"
+    },
+    {
+      "query": "Populate the module from our draft and prepare a review packet before submission.",
+      "should_trigger": true,
+      "id": "fill-010"
+    },
+    {
+      "query": "Replace earlier suite-written responses only where their live text hashes still match.",
+      "should_trigger": true,
+      "id": "fill-011"
+    },
+    {
+      "query": "Reload the pages we filled, verify persistence, and generate the fill report from receipts.",
+      "should_trigger": true,
+      "id": "fill-012"
+    },
+    {
+      "query": "Capture the open Lt module into module.json so I can inspect it offline.",
+      "should_trigger": false,
+      "id": "fill-013"
+    },
+    {
+      "query": "Inventory the open module read-only, including its questions and commit boundaries.",
+      "should_trigger": false,
+      "id": "fill-014"
+    },
+    {
+      "query": "Draft answers for the captured unanswered items using the supplied source notes.",
+      "should_trigger": false,
+      "id": "fill-015"
+    },
+    {
+      "query": "Research the captured prompts and write proposed answers with provenance tags.",
+      "should_trigger": false,
+      "id": "fill-016"
+    },
+    {
+      "query": "Export the worked module into my notes graph without changing the live module.",
+      "should_trigger": false,
+      "id": "fill-017"
+    },
+    {
+      "query": "Prepare the finished module for a flashcard workflow using the export skill.",
+      "should_trigger": false,
+      "id": "fill-018"
+    },
+    {
+      "query": "Draw the alpha-to-beta mechanism and audit its editable diagram against the diagram standard.",
+      "should_trigger": false,
+      "id": "fill-019"
+    },
+    {
+      "query": "Bootstrap lt-suite dependencies and configure the shared data directory.",
+      "should_trigger": false,
+      "id": "fill-020"
+    },
+    {
+      "query": "Fill the missing numeric values in this spreadsheet using its existing formulas.",
+      "should_trigger": false,
+      "id": "fill-021"
+    },
+    {
+      "query": "Complete the delivery form on this shopping site and place the order.",
+      "should_trigger": false,
+      "id": "fill-022"
+    }
+  ]
+}

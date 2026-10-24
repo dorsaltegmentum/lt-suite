@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 300" width="160" height="300">
+  <!-- SPDX-FileCopyrightText: 2026 dorsaltegmentum -->
+  <!-- SPDX-License-Identifier: AGPL-3.0-or-later -->
+  <!-- A themed drawing for the toy case: colours are palette tokens that the engine fills per palette. -->
+  <rect x="0" y="0" width="160" height="300" fill="{key_fill}"/>
+  <path d="M 84 40 Q 150 30 154 120 Q 158 220 114 270 Q 88 292 84 240 Z" fill="{anat.fill}" stroke="{anat.stroke}" stroke-width="3"/>
+  <rect x="12" y="12" width="44" height="276" rx="22" fill="{sign.fill}" stroke="{sign.stroke}" stroke-width="3"/>
+  <circle cx="34" cy="60" r="7" fill="{risk.stroke}"/>
+  <circle cx="29" cy="112" r="7" fill="{risk.stroke}"/>
+  <circle cx="39" cy="164" r="7" fill="{risk.stroke}"/>
+  <circle cx="31" cy="216" r="7" fill="{risk.stroke}"/>
+  <path d="M 62 152 L 92 152" stroke="{mech.stroke}" stroke-width="4" stroke-linecap="round" fill="none"/>
+  <path d="M 83 143 L 94 152 L 83 161" stroke="{mech.stroke}" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <polygon points="124,134 140,143 140,161 124,170 108,161 108,143" fill="{mech.fill}" stroke="{mech.stroke}" stroke-width="3"/>
+  <circle cx="124" cy="152" r="5" fill="{risk.stroke}"/>
+</svg>

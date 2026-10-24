@@ -1,0 +1,40 @@
+{
+ "schema_version": 1,
+ "module_id": "c1-r102",
+ "run_id": 102,
+ "captured_at": "2000-01-01T00:00:00Z",
+ "provenance_of_reference": "student-submitted",
+ "never_load_into_drafting_context": true,
+ "items": [
+  {
+   "item_id": "p2-13",
+   "maximum_grade": null,
+   "student_answer": "Step | Signal | Result\nDawn |  | \nNoon |  | \nDusk |  | \nNight |  | ",
+   "note": "rows=5 body_rows=5"
+  },
+  {
+   "item_id": "p3-22",
+   "maximum_grade": null,
+   "student_answer": "Dusk."
+  },
+  {
+   "item_id": "p4-31",
+   "maximum_grade": null,
+   "student_answer": "Oram cell",
+   "student_selection": [
+    "Oram cell"
+   ]
+  },
+  {
+   "item_id": "p4-32",
+   "maximum_grade": null,
+   "student_answer": "Cap | Oram\nDuct | Pell",
+   "note": "rows=3 body_rows=2"
+  },
+  {
+   "item_id": "p4-33",
+   "maximum_grade": null,
+   "student_answer": "Oram cells pace tessin release at dusk."
+  }
+ ]
+}

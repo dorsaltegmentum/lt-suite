@@ -1,0 +1,45 @@
+# SPDX-FileCopyrightText: 2026 dorsaltegmentum
+# SPDX-License-Identifier: AGPL-3.0-or-later
+name: Bug report
+description: Report a reproducible lt-suite failure.
+title: "[bug] "
+body:
+  - type: markdown
+    attributes:
+      value: >-
+        Use invented examples. Report vulnerabilities privately through the
+        repository Security tab. Remove course material and personal data from
+        text, screenshots, attachments, and logs.
+  - type: checkboxes
+    id: privacy
+    attributes:
+      label: Privacy
+      options:
+        - label: This report carries no course material or personal data, including attachments and logs.
+          required: true
+  - type: input
+    id: version
+    attributes:
+      label: lt-suite version
+      description: Release tag or commit identifier.
+    validations:
+      required: true
+  - type: input
+    id: platform
+    attributes:
+      label: Client and runtime versions
+      description: Agent client, browser adapter, Python version, and operating system family.
+    validations:
+      required: true
+  - type: textarea
+    id: details
+    attributes:
+      label: What happened?
+      description: Describe expected behavior, observed behavior, and a synthetic reproduction.
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Synthetic reproduction or supporting evidence
+      description: Include commands and sanitized output. Check attachments for private information.

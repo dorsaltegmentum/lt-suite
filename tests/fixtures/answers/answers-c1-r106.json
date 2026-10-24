@@ -1,0 +1,308 @@
+{
+ "schema_version": 2,
+ "module_id": "c1-r106",
+ "run_id": 106,
+ "drafted_at": "2000-01-01T00:00:00Z",
+ "source_module": {
+  "path": "../modules/module-c1-r106.json",
+  "sha256": "2e9b8b7e0119b477c3565dd6b22a4a114e20adf69893c488c6d6d8c15607507c",
+  "question_digest": "3d01fa7b8c136112c576724c50d5860d3d804fce4558f320b4164618624556db"
+ },
+ "tier1_corpus": [],
+ "items": [
+  {
+   "item_id": "p2-11",
+   "status": "drafted",
+   "segments": [
+    {
+     "kind": "claim",
+     "text": "Check the level every five minutes for the first hour.",
+     "provenance_refs": [
+      "p1"
+     ]
+    }
+   ],
+   "provenance": [
+    {
+     "ref": "p1",
+     "tier": 4,
+     "source_id": "10.5555/fixture.0001",
+     "locator": "table 3",
+     "tag": "[T4:10.5555/fixture.0001]"
+    }
+   ],
+   "confidence": "high",
+   "tier_descent": [
+    {
+     "from_tier": 1,
+     "to_tier": 2,
+     "reason": "absent"
+    },
+    {
+     "from_tier": 2,
+     "to_tier": 3,
+     "reason": "absent"
+    },
+    {
+     "from_tier": 3,
+     "to_tier": 4,
+     "reason": "absent"
+    }
+   ],
+   "table_cells": [
+    {
+     "row": 1,
+     "col": 1,
+     "text": "hold at minute 0"
+    },
+    {
+     "row": 1,
+     "col": 2,
+     "text": "repeat"
+    },
+    {
+     "row": 2,
+     "col": 1,
+     "text": "hold at minute 5"
+    },
+    {
+     "row": 2,
+     "col": 2,
+     "text": "repeat"
+    },
+    {
+     "row": 3,
+     "col": 1,
+     "text": "hold at minute 10"
+    },
+    {
+     "row": 3,
+     "col": 2,
+     "text": "repeat"
+    },
+    {
+     "row": 4,
+     "col": 1,
+     "text": "hold at minute 15"
+    },
+    {
+     "row": 4,
+     "col": 2,
+     "text": "repeat"
+    },
+    {
+     "row": 5,
+     "col": 1,
+     "text": "hold at minute 20"
+    },
+    {
+     "row": 5,
+     "col": 2,
+     "text": "repeat"
+    },
+    {
+     "row": 6,
+     "col": 1,
+     "text": "hold at minute 25"
+    },
+    {
+     "row": 6,
+     "col": 2,
+     "text": "repeat"
+    },
+    {
+     "row": 7,
+     "col": 1,
+     "text": "hold at minute 30"
+    },
+    {
+     "row": 7,
+     "col": 2,
+     "text": "repeat"
+    },
+    {
+     "row": 8,
+     "col": 1,
+     "text": "hold at minute 35"
+    },
+    {
+     "row": 8,
+     "col": 2,
+     "text": "repeat"
+    },
+    {
+     "row": 9,
+     "col": 1,
+     "text": "hold at minute 40"
+    },
+    {
+     "row": 9,
+     "col": 2,
+     "text": "repeat"
+    },
+    {
+     "row": 10,
+     "col": 1,
+     "text": "hold at minute 45"
+    },
+    {
+     "row": 10,
+     "col": 2,
+     "text": "repeat"
+    },
+    {
+     "row": 11,
+     "col": 1,
+     "text": "hold at minute 50"
+    },
+    {
+     "row": 11,
+     "col": 2,
+     "text": "repeat"
+    },
+    {
+     "row": 12,
+     "col": 1,
+     "text": "hold at minute 55"
+    },
+    {
+     "row": 12,
+     "col": 2,
+     "text": "repeat"
+    },
+    {
+     "row": 13,
+     "col": 1,
+     "text": "hold at minute 60"
+    },
+    {
+     "row": 13,
+     "col": 2,
+     "text": "repeat"
+    },
+    {
+     "row": 14,
+     "col": 1,
+     "text": "hold at minute 65"
+    },
+    {
+     "row": 14,
+     "col": 2,
+     "text": "repeat"
+    },
+    {
+     "row": 15,
+     "col": 1,
+     "text": "hold at minute 70"
+    },
+    {
+     "row": 15,
+     "col": 2,
+     "text": "repeat"
+    },
+    {
+     "row": 16,
+     "col": 1,
+     "text": "hold at minute 75"
+    },
+    {
+     "row": 16,
+     "col": 2,
+     "text": "repeat"
+    }
+   ]
+  },
+  {
+   "item_id": "p2-12",
+   "status": "drafted",
+   "segments": [
+    {
+     "kind": "claim",
+     "text": "Short-term care holds steady; long-term care needs a review.",
+     "provenance_refs": [
+      "p1"
+     ]
+    }
+   ],
+   "provenance": [
+    {
+     "ref": "p1",
+     "tier": 4,
+     "source_id": "10.5555/fixture.0001",
+     "locator": "table 4",
+     "tag": "[T4:10.5555/fixture.0001]"
+    }
+   ],
+   "confidence": "high",
+   "tier_descent": [
+    {
+     "from_tier": 1,
+     "to_tier": 2,
+     "reason": "absent"
+    },
+    {
+     "from_tier": 2,
+     "to_tier": 3,
+     "reason": "absent"
+    },
+    {
+     "from_tier": 3,
+     "to_tier": 4,
+     "reason": "absent"
+    }
+   ],
+   "table_cells": [
+    {
+     "row": 1,
+     "col": 1,
+     "text": "hold steady"
+    },
+    {
+     "row": 1,
+     "col": 2,
+     "text": "observe"
+    },
+    {
+     "row": 2,
+     "col": 1,
+     "text": "reassess"
+    },
+    {
+     "row": 2,
+     "col": 2,
+     "text": "adjust"
+    },
+    {
+     "row": 3,
+     "col": 1,
+     "text": "plan review"
+    },
+    {
+     "row": 3,
+     "col": 2,
+     "text": "set date"
+    },
+    {
+     "row": 4,
+     "col": 1,
+     "text": "audit"
+    },
+    {
+     "row": 4,
+     "col": 2,
+     "text": "repeat"
+    },
+    {
+     "row": 5,
+     "col": 1,
+     "text": "close"
+    },
+    {
+     "row": 5,
+     "col": 2,
+     "text": "hand over"
+    }
+   ]
+  }
+ ]
+}

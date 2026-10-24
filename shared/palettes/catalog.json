@@ -1,0 +1,2159 @@
+{
+ "schema_version": 1,
+ "about": "Palette catalog for lt-suite. Each entry gives colour roles; ltcore.palettes.derive_theme() turns them into a diagram theme. Ranking fields (score, rank) are measured on the derived theme by python3 -m ltcore.palettes rank; licence fields are never read by the ranking.",
+ "role_names": [
+  "background",
+  "surface",
+  "text",
+  "text_muted",
+  "border",
+  "accent_N",
+  "positive",
+  "negative"
+ ],
+ "palettes": [
+  {
+   "id": "okabe-ito",
+   "name": "Okabe-Ito (Wong 2011)",
+   "family": "Okabe-Ito",
+   "mode": "categorical-only",
+   "source_url": "https://jfly.uni-koeln.de/color/",
+   "licence": {
+    "ref": "LicenseRef-palette-attribution",
+    "attribution": "Colour Universal Design palette by Masataka Okabe and Kei Ito (https://jfly.uni-koeln.de/color/); popularised by B. Wong, Nature Methods 8, 441 (2011). Used with credit as the authors ask.",
+    "url": "https://jfly.uni-koeln.de/color/"
+   },
+   "roles": {
+    "background": "#ffffff",
+    "text": "#000000",
+    "accent_1": "#e69f00",
+    "accent_2": "#56b4e9",
+    "accent_3": "#009e73",
+    "accent_4": "#f0e442",
+    "accent_5": "#0072b2",
+    "accent_6": "#d55e00",
+    "accent_7": "#cc79a7"
+   },
+   "role_sources": {
+    "background": "assumed (#ffffff)",
+    "text": "black",
+    "accent_1": "orange",
+    "accent_2": "skyblue",
+    "accent_3": "bluishgreen",
+    "accent_4": "yellow",
+    "accent_5": "blue",
+    "accent_6": "vermillion",
+    "accent_7": "reddishpurple"
+   },
+   "claim": "Colour Universal Design palette of 8 colours that Okabe and Ito propose as a colour-blind barrier-free set ('recognizable also to protanopes'); popularised by Wong, Nature Methods, 2011",
+   "assumptions": [
+    "background #ffffff and text #000000 are stated assumptions: the author designs for a white background; no documented dark background exists, so no dark variant is made",
+    "black is a palette member and is used as the text role; accents are the other 7 in the canonical order"
+   ],
+   "rank": {
+    "derivable": true,
+    "mode": "light",
+    "of": 4,
+    "score": 50.79,
+    "weighting": "balanced",
+    "default_eligible": false,
+    "not_default_because": "inv and dx strokes (#0066a0, #007957) differ by OKLab 0.028 under tritan simulation, below 0.05"
+   }
+  },
+  {
+   "id": "tol-bright",
+   "name": "Paul Tol Bright",
+   "family": "Paul Tol",
+   "mode": "categorical-only",
+   "source_url": "https://sronpersonalpages.nl/~pault/",
+   "licence": {
+    "spdx": "BSD-3-Clause",
+    "copyright": "Copyright (c) 2019, Paul Tol, Clément Haëck (tol_colors package); colour schemes © Paul Tol",
+    "url": "https://github.com/Descanonge/tol_colors/blob/master/LICENSE"
+   },
+   "roles": {
+    "background": "#ffffff",
+    "text": "#000000",
+    "accent_1": "#4477aa",
+    "accent_2": "#ee6677",
+    "accent_3": "#228833",
+    "accent_4": "#ccbb44",
+    "accent_5": "#66ccee",
+    "accent_6": "#aa3377",
+    "accent_7": "#bbbbbb"
+   },
+   "role_sources": {
+    "background": "assumed (#ffffff)",
+    "text": "assumed (#000000)",
+    "accent_1": "blue",
+    "accent_2": "red",
+    "accent_3": "green",
+    "accent_4": "yellow",
+    "accent_5": "cyan",
+    "accent_6": "purple",
+    "accent_7": "grey"
+   },
+   "claim": "'Bright qualitative colour scheme that is colour-blind safe. The main scheme for lines and their labels.' Source: Tol, SRON/EPS/TN/09-002 issue 3.2 (2021), section 2.",
+   "assumptions": [
+    "background #ffffff and text #000000 are stated assumptions: the author designs for a white background; no documented dark background exists, so no dark variant is made"
+   ],
+   "rank": {
+    "derivable": true,
+    "mode": "light",
+    "of": 4,
+    "score": 57.42,
+    "weighting": "balanced",
+    "default_eligible": true,
+    "position": 1
+   }
+  },
+  {
+   "id": "tol-high-contrast",
+   "name": "Paul Tol High-contrast",
+   "family": "Paul Tol",
+   "mode": "categorical-only",
+   "source_url": "https://sronpersonalpages.nl/~pault/",
+   "licence": {
+    "spdx": "BSD-3-Clause",
+    "copyright": "Copyright (c) 2019, Paul Tol, Clément Haëck (tol_colors package); colour schemes © Paul Tol",
+    "url": "https://github.com/Descanonge/tol_colors/blob/master/LICENSE"
+   },
+   "roles": {
+    "background": "#ffffff",
+    "text": "#000000",
+    "accent_1": "#004488",
+    "accent_2": "#ddaa33",
+    "accent_3": "#bb5566"
+   },
+   "role_sources": {
+    "background": "white (scheme member; white background is the design basis)",
+    "text": "black (scheme member)",
+    "accent_1": "blue",
+    "accent_2": "yellow",
+    "accent_3": "red"
+   },
+   "claim": "'High-contrast qualitative colour scheme, an alternative to the bright scheme that is colour-blind safe and optimized for contrast ... also works well for people with monochrome vision and in a monochrome printout.' Source: Tol, SRON/EPS/TN/09-002 issue 3.2 (2021), section 2.",
+   "assumptions": [
+    "white background is Tol's stated basis (scheme is shown with white and black members); no documented dark background, so no dark variant is made"
+   ],
+   "rank": {
+    "derivable": false,
+    "reason": "tol-high-contrast: needs 6 accents for the 6 coloured roles, has 3"
+   }
+  },
+  {
+   "id": "tol-vibrant",
+   "name": "Paul Tol Vibrant",
+   "family": "Paul Tol",
+   "mode": "categorical-only",
+   "source_url": "https://sronpersonalpages.nl/~pault/",
+   "licence": {
+    "spdx": "BSD-3-Clause",
+    "copyright": "Copyright (c) 2019, Paul Tol, Clément Haëck (tol_colors package); colour schemes © Paul Tol",
+    "url": "https://github.com/Descanonge/tol_colors/blob/master/LICENSE"
+   },
+   "roles": {
+    "background": "#ffffff",
+    "text": "#000000",
+    "accent_1": "#ee7733",
+    "accent_2": "#0077bb",
+    "accent_3": "#33bbee",
+    "accent_4": "#ee3377",
+    "accent_5": "#cc3311",
+    "accent_6": "#009988",
+    "accent_7": "#bbbbbb"
+   },
+   "role_sources": {
+    "background": "assumed (#ffffff)",
+    "text": "assumed (#000000)",
+    "accent_1": "orange",
+    "accent_2": "blue",
+    "accent_3": "cyan",
+    "accent_4": "magenta",
+    "accent_5": "red",
+    "accent_6": "teal",
+    "accent_7": "grey"
+   },
+   "claim": "'Vibrant qualitative colour scheme, an alternative to the bright scheme that is equally colour-blind safe.' Source: Tol, SRON/EPS/TN/09-002 issue 3.2 (2021), section 2.",
+   "assumptions": [
+    "background #ffffff and text #000000 are stated assumptions: the author designs for a white background; no documented dark background exists, so no dark variant is made"
+   ],
+   "rank": {
+    "derivable": true,
+    "mode": "light",
+    "of": 4,
+    "score": 48.95,
+    "weighting": "balanced",
+    "default_eligible": false,
+    "not_default_because": "dx and tx strokes (#8a8a8a, #ee3377) differ by OKLab 0.042 under deutan simulation, below 0.05; mech and inv strokes (#008173, #0068a4) differ by OKLab 0.042 under tritan simulation, below 0.05"
+   }
+  },
+  {
+   "id": "tol-muted",
+   "name": "Paul Tol Muted",
+   "family": "Paul Tol",
+   "mode": "categorical-only",
+   "source_url": "https://sronpersonalpages.nl/~pault/",
+   "licence": {
+    "spdx": "BSD-3-Clause",
+    "copyright": "Copyright (c) 2019, Paul Tol, Clément Haëck (tol_colors package); colour schemes © Paul Tol",
+    "url": "https://github.com/Descanonge/tol_colors/blob/master/LICENSE"
+   },
+   "roles": {
+    "background": "#ffffff",
+    "text": "#000000",
+    "accent_1": "#cc6677",
+    "accent_2": "#332288",
+    "accent_3": "#ddcc77",
+    "accent_4": "#117733",
+    "accent_5": "#88ccee",
+    "accent_6": "#882255",
+    "accent_7": "#44aa99",
+    "accent_8": "#999933",
+    "accent_9": "#aa4499"
+   },
+   "role_sources": {
+    "background": "assumed (#ffffff)",
+    "text": "assumed (#000000)",
+    "accent_1": "rose",
+    "accent_2": "indigo",
+    "accent_3": "sand",
+    "accent_4": "green",
+    "accent_5": "cyan",
+    "accent_6": "wine",
+    "accent_7": "teal",
+    "accent_8": "olive",
+    "accent_9": "purple"
+   },
+   "claim": "'Muted qualitative colour scheme, an alternative to the bright scheme that is equally colour-blind safe with more colours, but lacking a clear red or medium blue.' Source: Tol, SRON/EPS/TN/09-002 issue 3.2 (2021), section 2.",
+   "assumptions": [
+    "background #ffffff and text #000000 are stated assumptions: the author designs for a white background; no documented dark background exists, so no dark variant is made"
+   ],
+   "rank": {
+    "derivable": true,
+    "mode": "light",
+    "of": 4,
+    "score": 56.08,
+    "weighting": "balanced",
+    "default_eligible": true,
+    "position": 2
+   }
+  },
+  {
+   "id": "tol-medium-contrast",
+   "name": "Paul Tol Medium-contrast",
+   "family": "Paul Tol",
+   "mode": "categorical-only",
+   "source_url": "https://sronpersonalpages.nl/~pault/",
+   "licence": {
+    "spdx": "BSD-3-Clause",
+    "copyright": "Copyright (c) 2019, Paul Tol, Clément Haëck (tol_colors package); colour schemes © Paul Tol",
+    "url": "https://github.com/Descanonge/tol_colors/blob/master/LICENSE"
+   },
+   "roles": {
+    "background": "#ffffff",
+    "text": "#000000",
+    "accent_1": "#6699cc",
+    "accent_2": "#004488",
+    "accent_3": "#eecc66",
+    "accent_4": "#994455",
+    "accent_5": "#997700",
+    "accent_6": "#ee99aa"
+   },
+   "role_sources": {
+    "background": "white (scheme member; white background is the design basis)",
+    "text": "black (scheme member)",
+    "accent_1": "light_blue",
+    "accent_2": "dark_blue",
+    "accent_3": "light_yellow",
+    "accent_4": "dark_red",
+    "accent_5": "dark_yellow",
+    "accent_6": "light_red"
+   },
+   "claim": "'Medium-contrast qualitative colour scheme, an alternative to the high-contrast scheme that is colour-blind safe with more colours ... optimized for contrast to work in a monochrome printout.' Source: Tol, SRON/EPS/TN/09-002 issue 3.2 (2021), section 2.",
+   "assumptions": [
+    "white background is Tol's stated basis (scheme is shown with white and black members); no documented dark background, so no dark variant is made"
+   ],
+   "rank": {
+    "derivable": true,
+    "mode": "light",
+    "of": 4,
+    "score": 50.05,
+    "weighting": "balanced",
+    "default_eligible": true,
+    "position": 4
+   }
+  },
+  {
+   "id": "tol-light",
+   "name": "Paul Tol Light",
+   "family": "Paul Tol",
+   "mode": "categorical-only",
+   "source_url": "https://sronpersonalpages.nl/~pault/",
+   "licence": {
+    "spdx": "BSD-3-Clause",
+    "copyright": "Copyright (c) 2019, Paul Tol, Clément Haëck (tol_colors package); colour schemes © Paul Tol",
+    "url": "https://github.com/Descanonge/tol_colors/blob/master/LICENSE"
+   },
+   "roles": {
+    "background": "#ffffff",
+    "text": "#000000",
+    "accent_1": "#77aadd",
+    "accent_2": "#ee8866",
+    "accent_3": "#eedd88",
+    "accent_4": "#ffaabb",
+    "accent_5": "#99ddff",
+    "accent_6": "#44bb99",
+    "accent_7": "#bbcc33",
+    "accent_8": "#aaaa00"
+   },
+   "role_sources": {
+    "background": "assumed (#ffffff)",
+    "text": "assumed (#000000)",
+    "accent_1": "light_blue",
+    "accent_2": "orange",
+    "accent_3": "light_yellow",
+    "accent_4": "pink",
+    "accent_5": "light_cyan",
+    "accent_6": "mint",
+    "accent_7": "pear",
+    "accent_8": "olive"
+   },
+   "claim": "'Light qualitative colour scheme that is reasonably distinct in both normal and colour-blind vision ... keeping black labels clearly readable.' Source: Tol, SRON/EPS/TN/09-002 issue 3.2 (2021), section 2.",
+   "assumptions": [
+    "background #ffffff and text #000000 are stated assumptions: the author designs for a white background; no documented dark background exists, so no dark variant is made"
+   ],
+   "rank": {
+    "derivable": true,
+    "mode": "light",
+    "of": 4,
+    "score": 49.09,
+    "weighting": "balanced",
+    "default_eligible": false,
+    "not_default_because": "risk and sign strokes (#666600, #b75736) differ by OKLab 0.034 under protan simulation, below 0.05; sign and dx strokes (#b75736, #7e8b00) differ by OKLab 0.041 under deutan simulation, below 0.05; risk and anat strokes (#666600, #786c63) differ by OKLab 0.046 under tritan simulation, below 0.05"
+   }
+  },
+  {
+   "id": "ibm-colourblind",
+   "name": "IBM Design Library colour-blind palette",
+   "family": "IBM Design Language",
+   "mode": "categorical-only",
+   "source_url": "https://www.ibm.com/design/language/color/",
+   "licence": {
+    "spdx": "CC-BY-4.0",
+    "copyright": "IBM Design Language colour values, International Business Machines Corporation",
+    "url": "https://github.com/IBM-Design/colors/blob/master/LICENSE.md"
+   },
+   "roles": {
+    "background": "#ffffff",
+    "text": "#000000",
+    "accent_1": "#648fff",
+    "accent_2": "#785ef0",
+    "accent_3": "#dc267f",
+    "accent_4": "#fe6100",
+    "accent_5": "#ffb000"
+   },
+   "role_sources": {
+    "background": "assumed (#ffffff)",
+    "text": "assumed (#000000)",
+    "accent_1": "ultramarine_40",
+    "accent_2": "indigo_50",
+    "accent_3": "magenta_50",
+    "accent_4": "peach_40",
+    "accent_5": "gold_20"
+   },
+   "claim": "The task names this five-colour set as the IBM Design Library colour-blind palette; the ibm.com page that lists it could not be read. IBM Design Language colour page (older source in raw/ibm/design-language-color.mdx): 'Don't rely on color alone to convey meaning'; graphical elements such as charts need 3:1 contrast",
+   "assumptions": [
+    "background #ffffff and text #000000 are stated assumptions: the author designs for a white background; no documented dark background exists, so no dark variant is made"
+   ],
+   "rank": {
+    "derivable": false,
+    "reason": "ibm-colourblind: needs 6 accents for the 6 coloured roles, has 5"
+   }
+  },
+  {
+   "id": "petroff-6",
+   "name": "Petroff 2021 6-colour cycle",
+   "family": "Petroff 2021",
+   "mode": "categorical-only",
+   "source_url": "https://github.com/mpetroff/accessible-color-cycles",
+   "licence": {
+    "spdx": "CC0-1.0",
+    "copyright": "Colour cycles by Matthew A. Petroff, dedicated to the public domain (CC0-1.0); see M. A. Petroff, \"Accessible Color Sequences for Data Visualization\", arXiv:2107.02270",
+    "url": "https://github.com/mpetroff/accessible-color-cycles#license"
+   },
+   "roles": {
+    "background": "#ffffff",
+    "text": "#000000",
+    "accent_1": "#5790fc",
+    "accent_2": "#f89c20",
+    "accent_3": "#e42536",
+    "accent_4": "#964a8b",
+    "accent_5": "#9c9ca1",
+    "accent_6": "#7a21dd"
+   },
+   "role_sources": {
+    "background": "assumed (#ffffff)",
+    "text": "assumed (#000000)",
+    "accent_1": "c1",
+    "accent_2": "c2",
+    "accent_3": "c3",
+    "accent_4": "c4",
+    "accent_5": "c5",
+    "accent_6": "c6"
+   },
+   "claim": "Petroff, 'Accessible Color Sequences for Data Visualization' (arXiv:2107.02270): sequences generated under colour-vision-deficiency, greyscale-printing and contrast constraints, including maximum-lightness limits for contrast with a white background",
+   "assumptions": [
+    "background #ffffff and text #000000 are stated assumptions: the author designs for a white background; no documented dark background exists, so no dark variant is made (paper bounds lightness against a white background)"
+   ],
+   "rank": {
+    "derivable": true,
+    "mode": "light",
+    "of": 4,
+    "score": 55.69,
+    "weighting": "balanced",
+    "default_eligible": true,
+    "position": 3
+   }
+  },
+  {
+   "id": "petroff-8",
+   "name": "Petroff 2021 8-colour cycle",
+   "family": "Petroff 2021",
+   "mode": "categorical-only",
+   "source_url": "https://github.com/mpetroff/accessible-color-cycles",
+   "licence": {
+    "spdx": "CC0-1.0",
+    "copyright": "Colour cycles by Matthew A. Petroff, dedicated to the public domain (CC0-1.0); see M. A. Petroff, \"Accessible Color Sequences for Data Visualization\", arXiv:2107.02270",
+    "url": "https://github.com/mpetroff/accessible-color-cycles#license"
+   },
+   "roles": {
+    "background": "#ffffff",
+    "text": "#000000",
+    "accent_1": "#1845fb",
+    "accent_2": "#ff5e02",
+    "accent_3": "#c91f16",
+    "accent_4": "#c849a9",
+    "accent_5": "#adad7d",
+    "accent_6": "#86c8dd",
+    "accent_7": "#578dff",
+    "accent_8": "#656364"
+   },
+   "role_sources": {
+    "background": "assumed (#ffffff)",
+    "text": "assumed (#000000)",
+    "accent_1": "c1",
+    "accent_2": "c2",
+    "accent_3": "c3",
+    "accent_4": "c4",
+    "accent_5": "c5",
+    "accent_6": "c6",
+    "accent_7": "c7",
+    "accent_8": "c8"
+   },
+   "claim": "Petroff, 'Accessible Color Sequences for Data Visualization' (arXiv:2107.02270): sequences generated under colour-vision-deficiency, greyscale-printing and contrast constraints, including maximum-lightness limits for contrast with a white background",
+   "assumptions": [
+    "background #ffffff and text #000000 are stated assumptions: the author designs for a white background; no documented dark background exists, so no dark variant is made (paper bounds lightness against a white background)"
+   ],
+   "rank": {
+    "derivable": true,
+    "mode": "light",
+    "of": 4,
+    "score": 45.94,
+    "weighting": "balanced",
+    "default_eligible": false,
+    "not_default_because": "mech and tx strokes (#5192a6, #c849a9) differ by OKLab 0.009 under deutan simulation, below 0.05"
+   }
+  },
+  {
+   "id": "petroff-10",
+   "name": "Petroff 2021 10-colour cycle",
+   "family": "Petroff 2021",
+   "mode": "categorical-only",
+   "source_url": "https://github.com/mpetroff/accessible-color-cycles",
+   "licence": {
+    "spdx": "CC0-1.0",
+    "copyright": "Colour cycles by Matthew A. Petroff, dedicated to the public domain (CC0-1.0); see M. A. Petroff, \"Accessible Color Sequences for Data Visualization\", arXiv:2107.02270",
+    "url": "https://github.com/mpetroff/accessible-color-cycles#license"
+   },
+   "roles": {
+    "background": "#ffffff",
+    "text": "#000000",
+    "accent_1": "#3f90da",
+    "accent_2": "#ffa90e",
+    "accent_3": "#bd1f01",
+    "accent_4": "#94a4a2",
+    "accent_5": "#832db6",
+    "accent_6": "#a96b59",
+    "accent_7": "#e76300",
+    "accent_8": "#b9ac70",
+    "accent_9": "#717581",
+    "accent_10": "#92dadd"
+   },
+   "role_sources": {
+    "background": "assumed (#ffffff)",
+    "text": "assumed (#000000)",
+    "accent_1": "c1",
+    "accent_2": "c2",
+    "accent_3": "c3",
+    "accent_4": "c4",
+    "accent_5": "c5",
+    "accent_6": "c6",
+    "accent_7": "c7",
+    "accent_8": "c8",
+    "accent_9": "c9",
+    "accent_10": "c10"
+   },
+   "claim": "Petroff, 'Accessible Color Sequences for Data Visualization' (arXiv:2107.02270): sequences generated under colour-vision-deficiency, greyscale-printing and contrast constraints, including maximum-lightness limits for contrast with a white background",
+   "assumptions": [
+    "background #ffffff and text #000000 are stated assumptions: the author designs for a white background; no documented dark background exists, so no dark variant is made (paper bounds lightness against a white background)"
+   ],
+   "rank": {
+    "derivable": true,
+    "mode": "light",
+    "of": 4,
+    "score": 50.03,
+    "weighting": "balanced",
+    "default_eligible": false,
+    "not_default_because": "mech and dx strokes (#978a4f, #be7c00) differ by OKLab 0.047 under protan simulation, below 0.05; risk and mech strokes (#a96b59, #978a4f) differ by OKLab 0.046 under deutan simulation, below 0.05"
+   }
+  },
+  {
+   "id": "modus-operandi",
+   "name": "Modus Operandi",
+   "family": "Modus",
+   "mode": "light",
+   "source_url": "https://github.com/protesilaos/modus-themes",
+   "licence": {
+    "spdx": "GPL-3.0-or-later",
+    "copyright": "Copyright (C) Free Software Foundation, Inc. (modus-themes by Protesilaos Stavrou); colour values only",
+    "url": "https://github.com/protesilaos/modus-themes/blob/main/COPYING"
+   },
+   "roles": {
+    "background": "#ffffff",
+    "surface": "#f2f2f2",
+    "text": "#000000",
+    "text_muted": "#595959",
+    "border": "#9f9f9f",
+    "accent_1": "#a60000",
+    "accent_2": "#006800",
+    "accent_3": "#6f5500",
+    "accent_4": "#0031a9",
+    "accent_5": "#721045",
+    "accent_6": "#005e8b",
+    "positive": "#005000",
+    "negative": "#8f1313"
+   },
+   "role_sources": {
+    "background": "bg-main",
+    "surface": "bg-dim",
+    "text": "fg-main",
+    "text_muted": "fg-dim",
+    "border": "border",
+    "accent_1": "red",
+    "accent_2": "green",
+    "accent_3": "yellow",
+    "accent_4": "blue",
+    "accent_5": "magenta",
+    "accent_6": "cyan",
+    "positive": "fg-added (diff added foreground)",
+    "negative": "fg-removed (diff removed foreground)"
+   },
+   "claim": "'The Modus themes are designed for accessible readability. They conform with the highest standard for color contrast between combinations of background and foreground values. For small sized text, this corresponds to the WCAG AAA standard ... 7:1.'",
+   "rank": {
+    "derivable": true,
+    "mode": "light",
+    "of": 4,
+    "score": 46.41,
+    "weighting": "balanced",
+    "default_eligible": false,
+    "not_default_because": "risk and dx strokes (#6f5500, #006800) differ by OKLab 0.031 under protan simulation, below 0.05; risk and sign strokes (#6f5500, #a60000) differ by OKLab 0.004 under deutan simulation, below 0.05; mech and dx strokes (#005e8b, #006800) differ by OKLab 0.037 under tritan simulation, below 0.05"
+   }
+  },
+  {
+   "id": "modus-operandi-tinted",
+   "name": "Modus Operandi Tinted",
+   "family": "Modus",
+   "mode": "light",
+   "source_url": "https://github.com/protesilaos/modus-themes",
+   "licence": {
+    "spdx": "GPL-3.0-or-later",
+    "copyright": "Copyright (C) Free Software Foundation, Inc. (modus-themes by Protesilaos Stavrou); colour values only",
+    "url": "https://github.com/protesilaos/modus-themes/blob/main/COPYING"
+   },
+   "roles": {
+    "background": "#fbf7f0",
+    "surface": "#efe9dd",
+    "text": "#000000",
+    "text_muted": "#595959",
+    "border": "#9f9690",
+    "accent_1": "#a60000",
+    "accent_2": "#006300",
+    "accent_3": "#6d5000",
+    "accent_4": "#0031a9",
+    "accent_5": "#721045",
+    "accent_6": "#00598b",
+    "positive": "#005000",
+    "negative": "#8f1313"
+   },
+   "role_sources": {
+    "background": "bg-main",
+    "surface": "bg-dim",
+    "text": "fg-main",
+    "text_muted": "fg-dim",
+    "border": "border",
+    "accent_1": "red",
+    "accent_2": "green",
+    "accent_3": "yellow",
+    "accent_4": "blue",
+    "accent_5": "magenta",
+    "accent_6": "cyan",
+    "positive": "fg-added (diff added foreground)",
+    "negative": "fg-removed (diff removed foreground)"
+   },
+   "claim": "'The Modus themes are designed for accessible readability. They conform with the highest standard for color contrast between combinations of background and foreground values. For small sized text, this corresponds to the WCAG AAA standard ... 7:1.'",
+   "rank": {
+    "derivable": true,
+    "mode": "light",
+    "of": 4,
+    "score": 50.11,
+    "weighting": "balanced",
+    "default_eligible": false,
+    "not_default_because": "risk and dx strokes (#6d5000, #006300) differ by OKLab 0.030 under protan simulation, below 0.05; risk and sign strokes (#6d5000, #a60000) differ by OKLab 0.017 under deutan simulation, below 0.05; mech and dx strokes (#00598b, #006300) differ by OKLab 0.040 under tritan simulation, below 0.05"
+   }
+  },
+  {
+   "id": "modus-operandi-deuteranopia",
+   "name": "Modus Operandi Deuteranopia",
+   "family": "Modus",
+   "mode": "light",
+   "source_url": "https://github.com/protesilaos/modus-themes",
+   "licence": {
+    "spdx": "GPL-3.0-or-later",
+    "copyright": "Copyright (C) Free Software Foundation, Inc. (modus-themes by Protesilaos Stavrou); colour values only",
+    "url": "https://github.com/protesilaos/modus-themes/blob/main/COPYING"
+   },
+   "roles": {
+    "background": "#ffffff",
+    "surface": "#f2f2f2",
+    "text": "#000000",
+    "text_muted": "#595959",
+    "border": "#9f9f9f",
+    "positive": "#0031a9",
+    "negative": "#973300",
+    "accent_1": "#0031a9",
+    "accent_2": "#695500",
+    "accent_3": "#3548cf",
+    "accent_4": "#77492f",
+    "accent_5": "#0000b0",
+    "accent_6": "#973300"
+   },
+   "role_sources": {
+    "background": "bg-main",
+    "surface": "bg-dim",
+    "text": "fg-main",
+    "text_muted": "fg-dim",
+    "border": "border",
+    "positive": "info (blue)",
+    "negative": "err (yellow-warmer)",
+    "accent_1": "rainbow-0 (blue)",
+    "accent_2": "rainbow-1 (yellow)",
+    "accent_3": "rainbow-2 (blue-warmer)",
+    "accent_4": "rainbow-3 (yellow-cooler)",
+    "accent_5": "rainbow-4 (blue-cooler)",
+    "accent_6": "rainbow-5 (yellow-warmer)"
+   },
+   "claim": "'The Modus themes are designed for accessible readability. They conform with the highest standard for color contrast between combinations of background and foreground values. For small sized text, this corresponds to the WCAG AAA standard ... 7:1.' Deuteranopia variants are 'optimized for users with red-green color deficiency' and use 'mostly shades of yellow and blue' for colour coding.",
+   "notes": [
+    "accents follow the variant's own rainbow-N mapping, the colours it uses to keep headings apart for this deficiency"
+   ],
+   "rank": {
+    "derivable": true,
+    "mode": "light",
+    "of": 4,
+    "score": 42.47,
+    "weighting": "balanced",
+    "default_eligible": false,
+    "not_default_because": "mech and inv strokes (#0000b0, #0031a9) differ by OKLab 0.032 under protan simulation, below 0.05; sign and dx strokes (#973300, #695500) differ by OKLab 0.014 under deutan simulation, below 0.05; mech and inv strokes (#0000b0, #0031a9) differ by OKLab 0.038 under tritan simulation, below 0.05"
+   }
+  },
+  {
+   "id": "modus-operandi-tritanopia",
+   "name": "Modus Operandi Tritanopia",
+   "family": "Modus",
+   "mode": "light",
+   "source_url": "https://github.com/protesilaos/modus-themes",
+   "licence": {
+    "spdx": "GPL-3.0-or-later",
+    "copyright": "Copyright (C) Free Software Foundation, Inc. (modus-themes by Protesilaos Stavrou); colour values only",
+    "url": "https://github.com/protesilaos/modus-themes/blob/main/COPYING"
+   },
+   "roles": {
+    "background": "#ffffff",
+    "surface": "#f2f2f2",
+    "text": "#000000",
+    "text_muted": "#595959",
+    "border": "#9f9f9f",
+    "positive": "#005e8b",
+    "negative": "#b21100",
+    "accent_1": "#005e8b",
+    "accent_2": "#a60000",
+    "accent_3": "#3f578f",
+    "accent_4": "#a0132f",
+    "accent_5": "#005f5f",
+    "accent_6": "#721045"
+   },
+   "role_sources": {
+    "background": "bg-main",
+    "surface": "bg-dim",
+    "text": "fg-main",
+    "text_muted": "fg-dim",
+    "border": "border",
+    "positive": "info (cyan)",
+    "negative": "err (red-warmer)",
+    "accent_1": "rainbow-0 (cyan)",
+    "accent_2": "rainbow-1 (red)",
+    "accent_3": "rainbow-2 (cyan-warmer)",
+    "accent_4": "rainbow-3 (red-cooler)",
+    "accent_5": "rainbow-4 (cyan-cooler)",
+    "accent_6": "rainbow-5 (magenta)"
+   },
+   "claim": "'The Modus themes are designed for accessible readability. They conform with the highest standard for color contrast between combinations of background and foreground values. For small sized text, this corresponds to the WCAG AAA standard ... 7:1.' Tritanopia variants are 'optimized for users with blue-yellow color deficiency' and use 'shades of red and cyan' for colour coding.",
+   "notes": [
+    "accents follow the variant's own rainbow-N mapping, the colours it uses to keep headings apart for this deficiency"
+   ],
+   "rank": {
+    "derivable": true,
+    "mode": "light",
+    "of": 4,
+    "score": 41.01,
+    "weighting": "balanced",
+    "default_eligible": false,
+    "not_default_because": "mech and inv strokes (#005e8b, #3f578f) differ by OKLab 0.015 under protan simulation, below 0.05; mech and inv strokes (#005e8b, #3f578f) differ by OKLab 0.007 under deutan simulation, below 0.05; mech and inv strokes (#005e8b, #3f578f) differ by OKLab 0.019 under tritan simulation, below 0.05"
+   }
+  },
+  {
+   "id": "modus-vivendi",
+   "name": "Modus Vivendi",
+   "family": "Modus",
+   "mode": "dark",
+   "source_url": "https://github.com/protesilaos/modus-themes",
+   "licence": {
+    "spdx": "GPL-3.0-or-later",
+    "copyright": "Copyright (C) Free Software Foundation, Inc. (modus-themes by Protesilaos Stavrou); colour values only",
+    "url": "https://github.com/protesilaos/modus-themes/blob/main/COPYING"
+   },
+   "roles": {
+    "background": "#000000",
+    "surface": "#1e1e1e",
+    "text": "#ffffff",
+    "text_muted": "#989898",
+    "border": "#646464",
+    "accent_1": "#ff5f59",
+    "accent_2": "#44bc44",
+    "accent_3": "#d0bc00",
+    "accent_4": "#2fafff",
+    "accent_5": "#feacd0",
+    "accent_6": "#00d3d0",
+    "positive": "#a0e0a0",
+    "negative": "#ffbfbf"
+   },
+   "role_sources": {
+    "background": "bg-main",
+    "surface": "bg-dim",
+    "text": "fg-main",
+    "text_muted": "fg-dim",
+    "border": "border",
+    "accent_1": "red",
+    "accent_2": "green",
+    "accent_3": "yellow",
+    "accent_4": "blue",
+    "accent_5": "magenta",
+    "accent_6": "cyan",
+    "positive": "fg-added (diff added foreground)",
+    "negative": "fg-removed (diff removed foreground)"
+   },
+   "claim": "'The Modus themes are designed for accessible readability. They conform with the highest standard for color contrast between combinations of background and foreground values. For small sized text, this corresponds to the WCAG AAA standard ... 7:1.'",
+   "rank": {
+    "derivable": true,
+    "mode": "dark",
+    "of": 6,
+    "score": 45.93,
+    "weighting": "balanced",
+    "default_eligible": false,
+    "not_default_because": "mech and tx strokes (#00d3d0, #feacd0) differ by OKLab 0.042 under protan simulation, below 0.05; sign and dx strokes (#ff5f59, #44bc44) differ by OKLab 0.006 under deutan simulation, below 0.05; inv and dx fills (#002e4a, #003402) differ by 0.001 in greyscale lightness, below 0.03"
+   }
+  },
+  {
+   "id": "modus-vivendi-tinted",
+   "name": "Modus Vivendi Tinted",
+   "family": "Modus",
+   "mode": "dark",
+   "source_url": "https://github.com/protesilaos/modus-themes",
+   "licence": {
+    "spdx": "GPL-3.0-or-later",
+    "copyright": "Copyright (C) Free Software Foundation, Inc. (modus-themes by Protesilaos Stavrou); colour values only",
+    "url": "https://github.com/protesilaos/modus-themes/blob/main/COPYING"
+   },
+   "roles": {
+    "background": "#0d0e1c",
+    "surface": "#1d2235",
+    "text": "#ffffff",
+    "text_muted": "#989898",
+    "border": "#61647a",
+    "accent_1": "#ff5f59",
+    "accent_2": "#44bc44",
+    "accent_3": "#d0bc00",
+    "accent_4": "#2fafff",
+    "accent_5": "#feacd0",
+    "accent_6": "#00d3d0",
+    "positive": "#a0e0a0",
+    "negative": "#ffbfbf"
+   },
+   "role_sources": {
+    "background": "bg-main",
+    "surface": "bg-dim",
+    "text": "fg-main",
+    "text_muted": "fg-dim",
+    "border": "border",
+    "accent_1": "red",
+    "accent_2": "green",
+    "accent_3": "yellow",
+    "accent_4": "blue",
+    "accent_5": "magenta",
+    "accent_6": "cyan",
+    "positive": "fg-added (diff added foreground)",
+    "negative": "fg-removed (diff removed foreground)"
+   },
+   "claim": "'The Modus themes are designed for accessible readability. They conform with the highest standard for color contrast between combinations of background and foreground values. For small sized text, this corresponds to the WCAG AAA standard ... 7:1.'",
+   "rank": {
+    "derivable": true,
+    "mode": "dark",
+    "of": 6,
+    "score": 50.95,
+    "weighting": "balanced",
+    "default_eligible": false,
+    "not_default_because": "mech and tx strokes (#00d3d0, #feacd0) differ by OKLab 0.042 under protan simulation, below 0.05; sign and dx strokes (#ff5f59, #44bc44) differ by OKLab 0.006 under deutan simulation, below 0.05"
+   }
+  },
+  {
+   "id": "modus-vivendi-deuteranopia",
+   "name": "Modus Vivendi Deuteranopia",
+   "family": "Modus",
+   "mode": "dark",
+   "source_url": "https://github.com/protesilaos/modus-themes",
+   "licence": {
+    "spdx": "GPL-3.0-or-later",
+    "copyright": "Copyright (C) Free Software Foundation, Inc. (modus-themes by Protesilaos Stavrou); colour values only",
+    "url": "https://github.com/protesilaos/modus-themes/blob/main/COPYING"
+   },
+   "roles": {
+    "background": "#000000",
+    "surface": "#1e1e1e",
+    "text": "#ffffff",
+    "text_muted": "#989898",
+    "border": "#646464",
+    "positive": "#2fafff",
+    "negative": "#ffa00f",
+    "accent_1": "#ffa00f",
+    "accent_2": "#2fafff",
+    "accent_3": "#d8af7a",
+    "accent_4": "#79a8ff",
+    "accent_5": "#cabf00",
+    "accent_6": "#4ae2f0"
+   },
+   "role_sources": {
+    "background": "bg-main",
+    "surface": "bg-dim",
+    "text": "fg-main",
+    "text_muted": "fg-dim",
+    "border": "border",
+    "positive": "info (blue)",
+    "negative": "err (yellow-warmer)",
+    "accent_1": "rainbow-0 (yellow-warmer)",
+    "accent_2": "rainbow-1 (blue)",
+    "accent_3": "rainbow-2 (yellow-cooler)",
+    "accent_4": "rainbow-3 (blue-warmer)",
+    "accent_5": "rainbow-4 (yellow)",
+    "accent_6": "rainbow-5 (cyan-warmer)"
+   },
+   "claim": "'The Modus themes are designed for accessible readability. They conform with the highest standard for color contrast between combinations of background and foreground values. For small sized text, this corresponds to the WCAG AAA standard ... 7:1.' Deuteranopia variants are 'optimized for users with red-green color deficiency' and use 'mostly shades of yellow and blue' for colour coding.",
+   "notes": [
+    "accents follow the variant's own rainbow-N mapping, the colours it uses to keep headings apart for this deficiency"
+   ],
+   "rank": {
+    "derivable": true,
+    "mode": "dark",
+    "of": 6,
+    "score": 35.75,
+    "weighting": "balanced",
+    "default_eligible": false,
+    "not_default_because": "inv and tx strokes (#2fafff, #79a8ff) differ by OKLab 0.007 under protan simulation, below 0.05; risk and dx strokes (#ffa00f, #cabf00) differ by OKLab 0.004 under deutan simulation, below 0.05; inv and tx strokes (#2fafff, #79a8ff) differ by OKLab 0.022 under tritan simulation, below 0.05; inv and tx fills (#002e4a, #142a55) differ by 0.001 in greyscale lightness, below 0.03"
+   }
+  },
+  {
+   "id": "modus-vivendi-tritanopia",
+   "name": "Modus Vivendi Tritanopia",
+   "family": "Modus",
+   "mode": "dark",
+   "source_url": "https://github.com/protesilaos/modus-themes",
+   "licence": {
+    "spdx": "GPL-3.0-or-later",
+    "copyright": "Copyright (C) Free Software Foundation, Inc. (modus-themes by Protesilaos Stavrou); colour values only",
+    "url": "https://github.com/protesilaos/modus-themes/blob/main/COPYING"
+   },
+   "roles": {
+    "background": "#000000",
+    "surface": "#1e1e1e",
+    "text": "#ffffff",
+    "text_muted": "#989898",
+    "border": "#646464",
+    "positive": "#00d3d0",
+    "negative": "#ff6740",
+    "accent_1": "#feacd0",
+    "accent_2": "#00d3d0",
+    "accent_3": "#ff9070",
+    "accent_4": "#d2b580",
+    "accent_5": "#b6a0ff",
+    "accent_6": "#44bc44"
+   },
+   "role_sources": {
+    "background": "bg-main",
+    "surface": "bg-dim",
+    "text": "fg-main",
+    "text_muted": "fg-dim",
+    "border": "border",
+    "positive": "info (cyan)",
+    "negative": "err (red-warmer)",
+    "accent_1": "rainbow-1 (magenta)",
+    "accent_2": "rainbow-2 (cyan)",
+    "accent_3": "rainbow-3 (red-faint)",
+    "accent_4": "rainbow-4 (yellow-faint)",
+    "accent_5": "rainbow-5 (magenta-cooler)",
+    "accent_6": "rainbow-6 (green)"
+   },
+   "claim": "'The Modus themes are designed for accessible readability. They conform with the highest standard for color contrast between combinations of background and foreground values. For small sized text, this corresponds to the WCAG AAA standard ... 7:1.' Tritanopia variants are 'optimized for users with blue-yellow color deficiency' and use 'shades of red and cyan' for colour coding.",
+   "notes": [
+    "accents follow the variant's own rainbow-N mapping, the colours it uses to keep headings apart for this deficiency"
+   ],
+   "rank": {
+    "derivable": true,
+    "mode": "dark",
+    "of": 6,
+    "score": 46.85,
+    "weighting": "balanced",
+    "default_eligible": false,
+    "not_default_because": "mech and tx strokes (#00d3d0, #feacd0) differ by OKLab 0.042 under protan simulation, below 0.05; risk and sign strokes (#d2b580, #ff9070) differ by OKLab 0.022 under deutan simulation, below 0.05; sign and inv fills (#521c0c, #322553) differ by 0.001 in greyscale lightness, below 0.03"
+   }
+  },
+  {
+   "id": "catppuccin-latte",
+   "name": "Catppuccin Latte",
+   "family": "Catppuccin",
+   "mode": "light",
+   "source_url": "https://github.com/catppuccin/palette",
+   "licence": {
+    "spdx": "MIT",
+    "copyright": "Copyright (c) 2021 Catppuccin",
+    "url": "https://github.com/catppuccin/palette/blob/main/LICENSE"
+   },
+   "roles": {
+    "background": "#eff1f5",
+    "surface": "#ccd0da",
+    "text": "#4c4f69",
+    "text_muted": "#5c5f77",
+    "border": "#9ca0b0",
+    "accent_1": "#dc8a78",
+    "accent_2": "#dd7878",
+    "accent_3": "#ea76cb",
+    "accent_4": "#8839ef",
+    "accent_5": "#d20f39",
+    "accent_6": "#e64553",
+    "accent_7": "#fe640b",
+    "accent_8": "#df8e1d",
+    "accent_9": "#40a02b",
+    "accent_10": "#179299",
+    "accent_11": "#04a5e5",
+    "accent_12": "#209fb5",
+    "accent_13": "#1e66f5",
+    "accent_14": "#7287fd",
+    "positive": "#40a02b",
+    "negative": "#d20f39"
+   },
+   "role_sources": {
+    "background": "base (style guide: Background Pane)",
+    "surface": "surface0 (style guide: Surface Elements)",
+    "text": "text (style guide: Body Copy)",
+    "text_muted": "subtext1 (style guide: Sub-Headlines, Labels)",
+    "border": "overlay0 (style guide: Inactive Border)",
+    "accent_1": "rosewater",
+    "accent_2": "flamingo",
+    "accent_3": "pink",
+    "accent_4": "mauve",
+    "accent_5": "red",
+    "accent_6": "maroon",
+    "accent_7": "peach",
+    "accent_8": "yellow",
+    "accent_9": "green",
+    "accent_10": "teal",
+    "accent_11": "sky",
+    "accent_12": "sapphire",
+    "accent_13": "blue",
+    "accent_14": "lavender",
+    "positive": "green (style guide: Success)",
+    "negative": "red (style guide: Errors)"
+   },
+   "claim": "No WCAG or colour-blindness claim. The project describes itself as 'a community-driven pastel theme that aims to be the middle ground between low and high-contrast themes'",
+   "rank": {
+    "derivable": true,
+    "mode": "light",
+    "of": 4,
+    "score": 35.63,
+    "weighting": "balanced",
+    "default_eligible": false,
+    "not_default_because": "hand-tuned override, kept as an option"
+   }
+  },
+  {
+   "id": "catppuccin-frappe",
+   "name": "Catppuccin Frappé",
+   "family": "Catppuccin",
+   "mode": "dark",
+   "source_url": "https://github.com/catppuccin/palette",
+   "licence": {
+    "spdx": "MIT",
+    "copyright": "Copyright (c) 2021 Catppuccin",
+    "url": "https://github.com/catppuccin/palette/blob/main/LICENSE"
+   },
+   "roles": {
+    "background": "#303446",
+    "surface": "#414559",
+    "text": "#c6d0f5",
+    "text_muted": "#b5bfe2",
+    "border": "#737994",
+    "accent_1": "#f2d5cf",
+    "accent_2": "#eebebe",
+    "accent_3": "#f4b8e4",
+    "accent_4": "#ca9ee6",
+    "accent_5": "#e78284",
+    "accent_6": "#ea999c",
+    "accent_7": "#ef9f76",
+    "accent_8": "#e5c890",
+    "accent_9": "#a6d189",
+    "accent_10": "#81c8be",
+    "accent_11": "#99d1db",
+    "accent_12": "#85c1dc",
+    "accent_13": "#8caaee",
+    "accent_14": "#babbf1",
+    "positive": "#a6d189",
+    "negative": "#e78284"
+   },
+   "role_sources": {
+    "background": "base (style guide: Background Pane)",
+    "surface": "surface0 (style guide: Surface Elements)",
+    "text": "text (style guide: Body Copy)",
+    "text_muted": "subtext1 (style guide: Sub-Headlines, Labels)",
+    "border": "overlay0 (style guide: Inactive Border)",
+    "accent_1": "rosewater",
+    "accent_2": "flamingo",
+    "accent_3": "pink",
+    "accent_4": "mauve",
+    "accent_5": "red",
+    "accent_6": "maroon",
+    "accent_7": "peach",
+    "accent_8": "yellow",
+    "accent_9": "green",
+    "accent_10": "teal",
+    "accent_11": "sky",
+    "accent_12": "sapphire",
+    "accent_13": "blue",
+    "accent_14": "lavender",
+    "positive": "green (style guide: Success)",
+    "negative": "red (style guide: Errors)"
+   },
+   "claim": "No WCAG or colour-blindness claim. The project describes itself as 'a community-driven pastel theme that aims to be the middle ground between low and high-contrast themes'",
+   "rank": {
+    "derivable": true,
+    "mode": "dark",
+    "of": 6,
+    "score": 32.45,
+    "weighting": "balanced",
+    "default_eligible": false,
+    "not_default_because": "hand-tuned override, kept as an option"
+   }
+  },
+  {
+   "id": "catppuccin-macchiato",
+   "name": "Catppuccin Macchiato",
+   "family": "Catppuccin",
+   "mode": "dark",
+   "source_url": "https://github.com/catppuccin/palette",
+   "licence": {
+    "spdx": "MIT",
+    "copyright": "Copyright (c) 2021 Catppuccin",
+    "url": "https://github.com/catppuccin/palette/blob/main/LICENSE"
+   },
+   "roles": {
+    "background": "#24273a",
+    "surface": "#363a4f",
+    "text": "#cad3f5",
+    "text_muted": "#b8c0e0",
+    "border": "#6e738d",
+    "accent_1": "#f4dbd6",
+    "accent_2": "#f0c6c6",
+    "accent_3": "#f5bde6",
+    "accent_4": "#c6a0f6",
+    "accent_5": "#ed8796",
+    "accent_6": "#ee99a0",
+    "accent_7": "#f5a97f",
+    "accent_8": "#eed49f",
+    "accent_9": "#a6da95",
+    "accent_10": "#8bd5ca",
+    "accent_11": "#91d7e3",
+    "accent_12": "#7dc4e4",
+    "accent_13": "#8aadf4",
+    "accent_14": "#b7bdf8",
+    "positive": "#a6da95",
+    "negative": "#ed8796"
+   },
+   "role_sources": {
+    "background": "base (style guide: Background Pane)",
+    "surface": "surface0 (style guide: Surface Elements)",
+    "text": "text (style guide: Body Copy)",
+    "text_muted": "subtext1 (style guide: Sub-Headlines, Labels)",
+    "border": "overlay0 (style guide: Inactive Border)",
+    "accent_1": "rosewater",
+    "accent_2": "flamingo",
+    "accent_3": "pink",
+    "accent_4": "mauve",
+    "accent_5": "red",
+    "accent_6": "maroon",
+    "accent_7": "peach",
+    "accent_8": "yellow",
+    "accent_9": "green",
+    "accent_10": "teal",
+    "accent_11": "sky",
+    "accent_12": "sapphire",
+    "accent_13": "blue",
+    "accent_14": "lavender",
+    "positive": "green (style guide: Success)",
+    "negative": "red (style guide: Errors)"
+   },
+   "claim": "No WCAG or colour-blindness claim. The project describes itself as 'a community-driven pastel theme that aims to be the middle ground between low and high-contrast themes'",
+   "rank": {
+    "derivable": true,
+    "mode": "dark",
+    "of": 6,
+    "score": 42.62,
+    "weighting": "balanced",
+    "default_eligible": false,
+    "not_default_because": "anat and tx strokes (#8e929f, #ed8796) differ by OKLab 0.030 under protan simulation, below 0.05; sign and dx strokes (#f4dbd6, #eed49f) differ by OKLab 0.035 under tritan simulation, below 0.05; mech and anat fills (#384a47, #444549) differ by 0.005 in greyscale lightness, below 0.03"
+   }
+  },
+  {
+   "id": "catppuccin-mocha",
+   "name": "Catppuccin Mocha",
+   "family": "Catppuccin",
+   "mode": "dark",
+   "source_url": "https://github.com/catppuccin/palette",
+   "licence": {
+    "spdx": "MIT",
+    "copyright": "Copyright (c) 2021 Catppuccin",
+    "url": "https://github.com/catppuccin/palette/blob/main/LICENSE"
+   },
+   "roles": {
+    "background": "#1e1e2e",
+    "surface": "#313244",
+    "text": "#cdd6f4",
+    "text_muted": "#bac2de",
+    "border": "#6c7086",
+    "accent_1": "#f5e0dc",
+    "accent_2": "#f2cdcd",
+    "accent_3": "#f5c2e7",
+    "accent_4": "#cba6f7",
+    "accent_5": "#f38ba8",
+    "accent_6": "#eba0ac",
+    "accent_7": "#fab387",
+    "accent_8": "#f9e2af",
+    "accent_9": "#a6e3a1",
+    "accent_10": "#94e2d5",
+    "accent_11": "#89dceb",
+    "accent_12": "#74c7ec",
+    "accent_13": "#89b4fa",
+    "accent_14": "#b4befe",
+    "positive": "#a6e3a1",
+    "negative": "#f38ba8"
+   },
+   "role_sources": {
+    "background": "base (style guide: Background Pane)",
+    "surface": "surface0 (style guide: Surface Elements)",
+    "text": "text (style guide: Body Copy)",
+    "text_muted": "subtext1 (style guide: Sub-Headlines, Labels)",
+    "border": "overlay0 (style guide: Inactive Border)",
+    "accent_1": "rosewater",
+    "accent_2": "flamingo",
+    "accent_3": "pink",
+    "accent_4": "mauve",
+    "accent_5": "red",
+    "accent_6": "maroon",
+    "accent_7": "peach",
+    "accent_8": "yellow",
+    "accent_9": "green",
+    "accent_10": "teal",
+    "accent_11": "sky",
+    "accent_12": "sapphire",
+    "accent_13": "blue",
+    "accent_14": "lavender",
+    "positive": "green (style guide: Success)",
+    "negative": "red (style guide: Errors)"
+   },
+   "claim": "No WCAG or colour-blindness claim. The project describes itself as 'a community-driven pastel theme that aims to be the middle ground between low and high-contrast themes'",
+   "rank": {
+    "derivable": true,
+    "mode": "dark",
+    "of": 6,
+    "score": 41.4,
+    "weighting": "balanced",
+    "default_eligible": false,
+    "not_default_because": "anat and tx strokes (#9498a5, #f38ba8) differ by OKLab 0.019 under protan simulation, below 0.05; sign and dx strokes (#f2cdcd, #f9e2af) differ by OKLab 0.039 under tritan simulation, below 0.05; mech and sign fills (#31494d, #4e4343) differ by 0.002 in greyscale lightness, below 0.03"
+   }
+  },
+  {
+   "id": "everforest-dark-medium",
+   "name": "Everforest Dark Medium",
+   "family": "Everforest",
+   "mode": "dark",
+   "source_url": "https://github.com/sainnhe/everforest",
+   "licence": {
+    "spdx": "MIT",
+    "copyright": "Copyright (c) 2019 sainnhe",
+    "url": "https://github.com/sainnhe/everforest/blob/master/LICENSE"
+   },
+   "roles": {
+    "background": "#2d353b",
+    "surface": "#343f44",
+    "text": "#d3c6aa",
+    "text_muted": "#859289",
+    "border": "#4f585e",
+    "accent_1": "#e67e80",
+    "accent_2": "#e69875",
+    "accent_3": "#dbbc7f",
+    "accent_4": "#a7c080",
+    "accent_5": "#83c092",
+    "accent_6": "#7fbbb3",
+    "accent_7": "#d699b6",
+    "positive": "#a7c080",
+    "negative": "#e67e80"
+   },
+   "role_sources": {
+    "background": "bg0 (Default Background)",
+    "surface": "bg1 (Cursor Line / Status Line Background)",
+    "text": "fg (Default Foreground)",
+    "text_muted": "grey1 (Comments, Punctuation, Status Line Text)",
+    "border": "bg4 (Window Splits Separators)",
+    "accent_1": "red",
+    "accent_2": "orange",
+    "accent_3": "yellow",
+    "accent_4": "green",
+    "accent_5": "aqua",
+    "accent_6": "blue",
+    "accent_7": "purple",
+    "positive": "green (Hint messages)",
+    "negative": "red (Error messages)"
+   },
+   "claim": "No WCAG or colour-blindness claim. Upstream: 'Designed to have soft contrast for eye protection' and 'warm and soft in order to protect developers' eyes'",
+   "rank": {
+    "derivable": true,
+    "mode": "dark",
+    "of": 6,
+    "score": 29.9,
+    "weighting": "balanced",
+    "default_eligible": false,
+    "not_default_because": "hand-tuned override, kept as an option"
+   }
+  },
+  {
+   "id": "everforest-light-medium",
+   "name": "Everforest Light Medium",
+   "family": "Everforest",
+   "mode": "light",
+   "source_url": "https://github.com/sainnhe/everforest",
+   "licence": {
+    "spdx": "MIT",
+    "copyright": "Copyright (c) 2019 sainnhe",
+    "url": "https://github.com/sainnhe/everforest/blob/master/LICENSE"
+   },
+   "roles": {
+    "background": "#fdf6e3",
+    "surface": "#f4f0d9",
+    "text": "#5c6a72",
+    "text_muted": "#939f91",
+    "border": "#e0dcc7",
+    "accent_1": "#f85552",
+    "accent_2": "#f57d26",
+    "accent_3": "#dfa000",
+    "accent_4": "#8da101",
+    "accent_5": "#35a77c",
+    "accent_6": "#3a94c5",
+    "accent_7": "#df69ba",
+    "positive": "#8da101",
+    "negative": "#f85552"
+   },
+   "role_sources": {
+    "background": "bg0 (Default Background)",
+    "surface": "bg1 (Cursor Line / Status Line Background)",
+    "text": "fg (Default Foreground)",
+    "text_muted": "grey1 (Comments, Punctuation, Status Line Text)",
+    "border": "bg4 (Window Splits Separators)",
+    "accent_1": "red",
+    "accent_2": "orange",
+    "accent_3": "yellow",
+    "accent_4": "green",
+    "accent_5": "aqua",
+    "accent_6": "blue",
+    "accent_7": "purple",
+    "positive": "green (Hint messages)",
+    "negative": "red (Error messages)"
+   },
+   "claim": "No WCAG or colour-blindness claim. Upstream: 'Designed to have soft contrast for eye protection' and 'warm and soft in order to protect developers' eyes'",
+   "rank": {
+    "derivable": false,
+    "reason": "palette everforest-light-medium: anat and inv fills (#e7eaeb, #dbeaf5) differ by OKLab 0.0196 in normal vision, below 0.02"
+   }
+  },
+  {
+   "id": "solarized-dark",
+   "name": "Solarized Dark",
+   "family": "Solarized",
+   "mode": "dark",
+   "source_url": "https://github.com/altercation/solarized",
+   "licence": {
+    "spdx": "MIT",
+    "copyright": "Copyright (c) 2011 Ethan Schoonover",
+    "url": "https://github.com/altercation/solarized/blob/master/LICENSE"
+   },
+   "roles": {
+    "background": "#002b36",
+    "surface": "#073642",
+    "text": "#839496",
+    "text_muted": "#586e75",
+    "border": "#586e75",
+    "accent_1": "#b58900",
+    "accent_2": "#cb4b16",
+    "accent_3": "#dc322f",
+    "accent_4": "#d33682",
+    "accent_5": "#6c71c4",
+    "accent_6": "#268bd2",
+    "accent_7": "#2aa198",
+    "accent_8": "#859900",
+    "positive": "#859900",
+    "negative": "#dc322f"
+   },
+   "role_sources": {
+    "background": "base03 (README: dark background)",
+    "surface": "base02 (README: background highlights, base02:base1 pair)",
+    "text": "base0 (README rebase mixin: body text on base03)",
+    "text_muted": "base01",
+    "border": "base01",
+    "accent_1": "yellow",
+    "accent_2": "orange",
+    "accent_3": "red",
+    "accent_4": "magenta",
+    "accent_5": "violet",
+    "accent_6": "blue",
+    "accent_7": "cyan",
+    "accent_8": "green",
+    "positive": "green",
+    "negative": "red"
+   },
+   "claim": "No WCAG or colour-blindness claim. Upstream: 'precise CIELAB lightness relationships'; 'Solarized reduces brightness contrast but, unlike many low contrast colorschemes, retains contrasting hues'",
+   "rank": {
+    "derivable": false,
+    "reason": "solarized-dark: muted text cannot reach 4.5:1 on canvas #002b36 and container fill #073642; even the text colour #839496 reaches only 4.11:1"
+   }
+  },
+  {
+   "id": "solarized-light",
+   "name": "Solarized Light",
+   "family": "Solarized",
+   "mode": "light",
+   "source_url": "https://github.com/altercation/solarized",
+   "licence": {
+    "spdx": "MIT",
+    "copyright": "Copyright (c) 2011 Ethan Schoonover",
+    "url": "https://github.com/altercation/solarized/blob/master/LICENSE"
+   },
+   "roles": {
+    "background": "#fdf6e3",
+    "surface": "#eee8d5",
+    "text": "#657b83",
+    "text_muted": "#93a1a1",
+    "border": "#93a1a1",
+    "accent_1": "#b58900",
+    "accent_2": "#cb4b16",
+    "accent_3": "#dc322f",
+    "accent_4": "#d33682",
+    "accent_5": "#6c71c4",
+    "accent_6": "#268bd2",
+    "accent_7": "#2aa198",
+    "accent_8": "#859900",
+    "positive": "#859900",
+    "negative": "#dc322f"
+   },
+   "role_sources": {
+    "background": "base3 (README: light background)",
+    "surface": "base2 (README: background highlights)",
+    "text": "base00 (README rebase mixin: body text on base3)",
+    "text_muted": "base1",
+    "border": "base1",
+    "accent_1": "yellow",
+    "accent_2": "orange",
+    "accent_3": "red",
+    "accent_4": "magenta",
+    "accent_5": "violet",
+    "accent_6": "blue",
+    "accent_7": "cyan",
+    "accent_8": "green",
+    "positive": "green",
+    "negative": "red"
+   },
+   "claim": "No WCAG or colour-blindness claim. Upstream: 'precise CIELAB lightness relationships'; 'Solarized reduces brightness contrast but, unlike many low contrast colorschemes, retains contrasting hues'",
+   "rank": {
+    "derivable": false,
+    "reason": "solarized-light: text #657b83 on background #fdf6e3 is 4.13:1, below 4.5"
+   }
+  },
+  {
+   "id": "viridis",
+   "name": "viridis",
+   "family": "viridis family",
+   "mode": "sequential",
+   "source_url": "https://bids.github.io/colormap/",
+   "licence": {
+    "spdx": "CC0-1.0",
+    "copyright": "viridis by Stéfan van der Walt and Nathaniel Smith (BIDS mpl-colormaps), CC0-1.0 public domain dedication",
+    "url": "https://github.com/BIDS/colormap/blob/master/colormaps.py"
+   },
+   "roles": {
+    "background": "#ffffff",
+    "text": "#000000",
+    "accent_1": "#440154",
+    "accent_2": "#443983",
+    "accent_3": "#31688e",
+    "accent_4": "#21918c",
+    "accent_5": "#35b779",
+    "accent_6": "#90d743",
+    "accent_7": "#fde725"
+   },
+   "role_sources": {
+    "background": "assumed (#ffffff)",
+    "text": "assumed (#000000)",
+    "accent_1": "ramp index 0 of 255",
+    "accent_2": "ramp index 42 of 255",
+    "accent_3": "ramp index 85 of 255",
+    "accent_4": "ramp index 128 of 255",
+    "accent_5": "ramp index 170 of 255",
+    "accent_6": "ramp index 213 of 255",
+    "accent_7": "ramp index 255 of 255"
+   },
+   "claim": "viridis, by Nathaniel Smith, Stefan van der Walt and Eric Firing: perceptually uniform 'both in regular form and also when converted to black-and-white'; 'relatively friendly to common forms of colorblindness'",
+   "assumptions": [
+    "background #ffffff and text #000000 assumed; a sequential ramp has no background or text colours",
+    "accent_1..7 are evenly spaced ramp samples; the ramp is not a categorical design and adjacent samples are ordered, not maximally distinct"
+   ],
+   "rank": {
+    "derivable": true,
+    "mode": "light",
+    "of": 4,
+    "score": 52.57,
+    "weighting": "balanced",
+    "default_eligible": false,
+    "not_default_because": "sequential ramp: its colours imply an order the roles do not have"
+   }
+  },
+  {
+   "id": "cividis",
+   "name": "cividis",
+   "family": "viridis family",
+   "mode": "sequential",
+   "source_url": "https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0199239",
+   "licence": {
+    "ref": "LicenseRef-palette-attribution",
+    "attribution": "cividis by Jamie R. Nuñez, Christopher R. Anderton and Ryan S. Renslow, \"Optimizing colormaps with consideration for color vision deficiency to enable accurate interpretation of scientific data\", PLOS ONE 13(7): e0199239 (2018). Values from pnnl/cmaputil, Copyright Battelle Memorial Institute; its permissive licence text is in ATTRIBUTION.md.",
+    "url": "https://github.com/pnnl/cmaputil/blob/master/LICENSE"
+   },
+   "roles": {
+    "background": "#ffffff",
+    "text": "#000000",
+    "accent_1": "#00204d",
+    "accent_2": "#233e6c",
+    "accent_3": "#575c6d",
+    "accent_4": "#7d7c78",
+    "accent_5": "#a69d75",
+    "accent_6": "#d4c264",
+    "accent_7": "#ffea46"
+   },
+   "role_sources": {
+    "background": "assumed (#ffffff)",
+    "text": "assumed (#000000)",
+    "accent_1": "ramp index 0 of 255",
+    "accent_2": "ramp index 42 of 255",
+    "accent_3": "ramp index 85 of 255",
+    "accent_4": "ramp index 128 of 255",
+    "accent_5": "ramp index 170 of 255",
+    "accent_6": "ramp index 213 of 255",
+    "accent_7": "ramp index 255 of 255"
+   },
+   "claim": "cividis, Nunez, Anderton and Renslow (PLOS ONE 2018): 'optimized for viewing by those without a CVD as well as those with red-green colorblindness' and 'enables nearly-identical visual-data interpretation to both groups'",
+   "assumptions": [
+    "background #ffffff and text #000000 assumed; a sequential ramp has no background or text colours",
+    "accent_1..7 are evenly spaced ramp samples; the ramp is not a categorical design and adjacent samples are ordered, not maximally distinct"
+   ],
+   "notes": [
+    "values from the authors' table (pnnl/cmaputil colormaps/cividis.txt, identical to viridisLite optionE)"
+   ],
+   "rank": {
+    "derivable": true,
+    "mode": "light",
+    "of": 4,
+    "score": 50.26,
+    "weighting": "balanced",
+    "default_eligible": false,
+    "not_default_because": "sequential ramp: its colours imply an order the roles do not have"
+   }
+  },
+  {
+   "id": "colorbrewer-set2-n3",
+   "name": "ColorBrewer Set2 (3 classes)",
+   "family": "ColorBrewer",
+   "mode": "categorical-only",
+   "source_url": "https://colorbrewer2.org/",
+   "licence": {
+    "spdx": "Apache-2.0",
+    "copyright": "Copyright (c) 2002 Cynthia Brewer, Mark Harrower, and The Pennsylvania State University",
+    "notice": "This product includes color specifications and designs developed by Cynthia Brewer (http://colorbrewer.org/).",
+    "url": "https://github.com/axismaps/colorbrewer/blob/master/export/LICENSE.txt"
+   },
+   "roles": {
+    "background": "#ffffff",
+    "text": "#000000",
+    "accent_1": "#66c2a5",
+    "accent_2": "#fc8d62",
+    "accent_3": "#8da0cb"
+   },
+   "role_sources": {
+    "background": "assumed (#ffffff)",
+    "text": "assumed (#000000)",
+    "accent_1": "c1",
+    "accent_2": "c2",
+    "accent_3": "c3"
+   },
+   "claim": "ColorBrewer property 'blind' flags Set2 as colour-blind friendly only for class counts [3]; larger class counts of the same scheme are not flagged safe",
+   "assumptions": [
+    "background #ffffff and text #000000 are stated assumptions: the author designs for a white background; no documented dark background exists, so no dark variant is made (ColorBrewer is designed for map fills on a light background)",
+    "only the 3-class version is catalogued because it is the largest flagged colour-blind friendly"
+   ],
+   "rank": {
+    "derivable": false,
+    "reason": "colorbrewer-set2-n3: needs 6 accents for the 6 coloured roles, has 3"
+   }
+  },
+  {
+   "id": "colorbrewer-dark2-n3",
+   "name": "ColorBrewer Dark2 (3 classes)",
+   "family": "ColorBrewer",
+   "mode": "categorical-only",
+   "source_url": "https://colorbrewer2.org/",
+   "licence": {
+    "spdx": "Apache-2.0",
+    "copyright": "Copyright (c) 2002 Cynthia Brewer, Mark Harrower, and The Pennsylvania State University",
+    "notice": "This product includes color specifications and designs developed by Cynthia Brewer (http://colorbrewer.org/).",
+    "url": "https://github.com/axismaps/colorbrewer/blob/master/export/LICENSE.txt"
+   },
+   "roles": {
+    "background": "#ffffff",
+    "text": "#000000",
+    "accent_1": "#1b9e77",
+    "accent_2": "#d95f02",
+    "accent_3": "#7570b3"
+   },
+   "role_sources": {
+    "background": "assumed (#ffffff)",
+    "text": "assumed (#000000)",
+    "accent_1": "c1",
+    "accent_2": "c2",
+    "accent_3": "c3"
+   },
+   "claim": "ColorBrewer property 'blind' flags Dark2 as colour-blind friendly only for class counts [3]; larger class counts of the same scheme are not flagged safe",
+   "assumptions": [
+    "background #ffffff and text #000000 are stated assumptions: the author designs for a white background; no documented dark background exists, so no dark variant is made (ColorBrewer is designed for map fills on a light background)",
+    "only the 3-class version is catalogued because it is the largest flagged colour-blind friendly"
+   ],
+   "rank": {
+    "derivable": false,
+    "reason": "colorbrewer-dark2-n3: needs 6 accents for the 6 coloured roles, has 3"
+   }
+  },
+  {
+   "id": "colorbrewer-paired-n4",
+   "name": "ColorBrewer Paired (4 classes)",
+   "family": "ColorBrewer",
+   "mode": "categorical-only",
+   "source_url": "https://colorbrewer2.org/",
+   "licence": {
+    "spdx": "Apache-2.0",
+    "copyright": "Copyright (c) 2002 Cynthia Brewer, Mark Harrower, and The Pennsylvania State University",
+    "notice": "This product includes color specifications and designs developed by Cynthia Brewer (http://colorbrewer.org/).",
+    "url": "https://github.com/axismaps/colorbrewer/blob/master/export/LICENSE.txt"
+   },
+   "roles": {
+    "background": "#ffffff",
+    "text": "#000000",
+    "accent_1": "#a6cee3",
+    "accent_2": "#1f78b4",
+    "accent_3": "#b2df8a",
+    "accent_4": "#33a02c"
+   },
+   "role_sources": {
+    "background": "assumed (#ffffff)",
+    "text": "assumed (#000000)",
+    "accent_1": "c1",
+    "accent_2": "c2",
+    "accent_3": "c3",
+    "accent_4": "c4"
+   },
+   "claim": "ColorBrewer property 'blind' flags Paired as colour-blind friendly only for class counts [3, 4]; larger class counts of the same scheme are not flagged safe",
+   "assumptions": [
+    "background #ffffff and text #000000 are stated assumptions: the author designs for a white background; no documented dark background exists, so no dark variant is made (ColorBrewer is designed for map fills on a light background)",
+    "only the 4-class version is catalogued because it is the largest flagged colour-blind friendly"
+   ],
+   "rank": {
+    "derivable": false,
+    "reason": "colorbrewer-paired-n4: needs 6 accents for the 6 coloured roles, has 4"
+   }
+  },
+  {
+   "id": "uswds",
+   "name": "USWDS system colours (default theme)",
+   "family": "USWDS",
+   "mode": "light",
+   "source_url": "https://designsystem.digital.gov/design-tokens/color/overview/",
+   "licence": {
+    "spdx": "CC0-1.0",
+    "copyright": "U.S. Web Design System, General Services Administration; public domain in the United States, worldwide CC0-1.0 waiver",
+    "url": "https://github.com/uswds/uswds/blob/develop/LICENSE.md"
+   },
+   "roles": {
+    "background": "#ffffff",
+    "surface": "#f0f0f0",
+    "text": "#1b1b1b",
+    "text_muted": "#565c65",
+    "border": "#71767a",
+    "accent_1": "#005ea2",
+    "accent_2": "#d83933",
+    "accent_3": "#fa9441",
+    "accent_4": "#00bde3",
+    "accent_5": "#00a91c",
+    "accent_6": "#ffbe2e",
+    "positive": "#00a91c",
+    "negative": "#d54309"
+   },
+   "role_sources": {
+    "background": "white (theme-body-background-color)",
+    "surface": "base-lightest = gray-5",
+    "text": "base-ink = gray-90",
+    "text_muted": "base-dark = gray-cool-60",
+    "border": "base = gray-cool-50",
+    "accent_1": "primary = blue-60v",
+    "accent_2": "secondary = red-50",
+    "accent_3": "accent-warm = orange-30v",
+    "accent_4": "accent-cool = cyan-30v",
+    "accent_5": "success = green-cool-40v",
+    "accent_6": "warning = gold-20v",
+    "positive": "success = green-cool-40v",
+    "negative": "error = red-warm-50v"
+   },
+   "claim": "Grade 'magic number' system: 'A magic number of 50+ results in WCAG 2.0 AA contrast', '70+ results in WCAG 2.0 AAA contrast'; 'Colors of grade 50 result in Section 508 AA contrast against both pure white and pure black'. Upstream does not claim every token pairing is accessible",
+   "rank": {
+    "derivable": true,
+    "mode": "light",
+    "of": 4,
+    "score": 44.83,
+    "weighting": "balanced",
+    "default_eligible": false,
+    "not_default_because": "dx and tx strokes (#008614, #d16e04) differ by OKLab 0.008 under protan simulation, below 0.05; risk and tx strokes (#b48200, #d16e04) differ by OKLab 0.006 under deutan simulation, below 0.05"
+   }
+  },
+  {
+   "id": "govuk",
+   "name": "GOV.UK Frontend colours",
+   "family": "GOV.UK",
+   "mode": "light",
+   "source_url": "https://design-system.service.gov.uk/styles/colour/",
+   "licence": {
+    "spdx": "MIT",
+    "copyright": "Copyright (c) 2017 Crown Copyright (Government Digital Service)",
+    "url": "https://github.com/alphagov/govuk-frontend/blob/main/LICENSE.txt"
+   },
+   "roles": {
+    "background": "#ffffff",
+    "surface": "#f4f8fb",
+    "text": "#0b0c0c",
+    "text_muted": "#484949",
+    "border": "#cecece",
+    "accent_1": "#1d70b8",
+    "accent_2": "#0f7a52",
+    "accent_3": "#158187",
+    "accent_4": "#54319f",
+    "accent_5": "#ca357c",
+    "accent_6": "#ca3535",
+    "accent_7": "#f47738",
+    "accent_8": "#ffdd00",
+    "accent_9": "#99704a",
+    "positive": "#0f7a52",
+    "negative": "#ca3535"
+   },
+   "role_sources": {
+    "background": "body-background = white",
+    "surface": "surface-background = blue tint-95",
+    "text": "text = black primary",
+    "text_muted": "secondary-text = black tint-25",
+    "border": "border = black tint-80",
+    "accent_1": "blue primary",
+    "accent_2": "green primary",
+    "accent_3": "teal primary",
+    "accent_4": "purple primary",
+    "accent_5": "magenta primary",
+    "accent_6": "red primary",
+    "accent_7": "orange primary",
+    "accent_8": "yellow primary",
+    "accent_9": "brown primary",
+    "positive": "success = green primary",
+    "negative": "error = red primary"
+   },
+   "claim": "GOV.UK Design System: 'You must make sure that the contrast ratio of text and interactive elements in your service meets' WCAG 2.2 AA; focus colour is yellow with black text. No colour-blindness claim",
+   "rank": {
+    "derivable": true,
+    "mode": "light",
+    "of": 4,
+    "score": 53.84,
+    "weighting": "balanced",
+    "default_eligible": false,
+    "not_default_because": "mech and inv strokes (#0e7e84, #196db5) differ by OKLab 0.023 under tritan simulation, below 0.05"
+   }
+  },
+  {
+   "id": "primer-light-colorblind",
+   "name": "GitHub Primer Light Colorblind (protanopia and deuteranopia)",
+   "family": "GitHub Primer",
+   "mode": "light",
+   "source_url": "https://github.com/primer/primitives",
+   "licence": {
+    "spdx": "MIT",
+    "copyright": "Copyright (c) 2018 GitHub Inc.",
+    "url": "https://github.com/primer/primitives/blob/main/LICENSE"
+   },
+   "roles": {
+    "background": "#ffffff",
+    "surface": "#f6f8fa",
+    "text": "#1f2328",
+    "text_muted": "#59636e",
+    "border": "#d1d9e0",
+    "accent_1": "#0969da",
+    "accent_2": "#bc4c00",
+    "accent_3": "#9a6700",
+    "accent_4": "#8250df",
+    "accent_5": "#bf3989",
+    "positive": "#0969da",
+    "negative": "#bc4c00"
+   },
+   "role_sources": {
+    "background": "bgColor-default",
+    "surface": "bgColor-muted",
+    "text": "fgColor-default",
+    "text_muted": "fgColor-muted",
+    "border": "borderColor-default",
+    "accent_1": "fgColor-accent",
+    "accent_2": "fgColor-danger",
+    "accent_3": "fgColor-attention",
+    "accent_4": "fgColor-done",
+    "accent_5": "fgColor-sponsors",
+    "positive": "fgColor-success",
+    "negative": "fgColor-danger"
+   },
+   "claim": "GitHub docs: 'If you have colorblindness, you may benefit from our light and dark colorblind themes.' Observed in the theme CSS: success is blue (default theme: green) and danger and open are orange (default: red), so state colours avoid a red-green pair. Upstream text on the design rationale was not found",
+   "rank": {
+    "derivable": false,
+    "reason": "primer-light-colorblind: needs 6 accents for the 6 coloured roles, has 5"
+   }
+  },
+  {
+   "id": "primer-dark-colorblind",
+   "name": "GitHub Primer Dark Colorblind (protanopia and deuteranopia)",
+   "family": "GitHub Primer",
+   "mode": "dark",
+   "source_url": "https://github.com/primer/primitives",
+   "licence": {
+    "spdx": "MIT",
+    "copyright": "Copyright (c) 2018 GitHub Inc.",
+    "url": "https://github.com/primer/primitives/blob/main/LICENSE"
+   },
+   "roles": {
+    "background": "#0d1117",
+    "surface": "#151b23",
+    "text": "#f0f6fc",
+    "text_muted": "#9198a1",
+    "border": "#3d444d",
+    "accent_1": "#4493f8",
+    "accent_2": "#f0883e",
+    "accent_3": "#d29922",
+    "accent_4": "#b7bdc8",
+    "accent_5": "#db61a2",
+    "positive": "#58a6ff",
+    "negative": "#f0883e"
+   },
+   "role_sources": {
+    "background": "bgColor-default",
+    "surface": "bgColor-muted",
+    "text": "fgColor-default",
+    "text_muted": "fgColor-muted",
+    "border": "borderColor-default",
+    "accent_1": "fgColor-accent",
+    "accent_2": "fgColor-danger",
+    "accent_3": "fgColor-attention",
+    "accent_4": "fgColor-done",
+    "accent_5": "fgColor-sponsors",
+    "positive": "fgColor-success",
+    "negative": "fgColor-danger"
+   },
+   "claim": "GitHub docs: 'If you have colorblindness, you may benefit from our light and dark colorblind themes.' Observed in the theme CSS: success is blue (default theme: green) and danger and open are orange (default: red), so state colours avoid a red-green pair. Upstream text on the design rationale was not found",
+   "rank": {
+    "derivable": true,
+    "mode": "dark",
+    "of": 6,
+    "score": 42.67,
+    "weighting": "balanced",
+    "default_eligible": false,
+    "not_default_because": "risk and dx strokes (#f0883e, #d29922) differ by OKLab 0.033 under protan simulation, below 0.05; risk and dx strokes (#f0883e, #d29922) differ by OKLab 0.015 under deutan simulation, below 0.05; mech and inv strokes (#58a6ff, #4493f8) differ by OKLab 0.046 under tritan simulation, below 0.05"
+   }
+  },
+  {
+   "id": "primer-light-tritanopia",
+   "name": "GitHub Primer Light Tritanopia",
+   "family": "GitHub Primer",
+   "mode": "light",
+   "source_url": "https://github.com/primer/primitives",
+   "licence": {
+    "spdx": "MIT",
+    "copyright": "Copyright (c) 2018 GitHub Inc.",
+    "url": "https://github.com/primer/primitives/blob/main/LICENSE"
+   },
+   "roles": {
+    "background": "#ffffff",
+    "surface": "#f6f8fa",
+    "text": "#1f2328",
+    "text_muted": "#59636e",
+    "border": "#d1d9e0",
+    "accent_1": "#0969da",
+    "accent_2": "#d1242f",
+    "accent_3": "#9a6700",
+    "accent_4": "#8250df",
+    "accent_5": "#bf3989",
+    "positive": "#0969da",
+    "negative": "#d1242f"
+   },
+   "role_sources": {
+    "background": "bgColor-default",
+    "surface": "bgColor-muted",
+    "text": "fgColor-default",
+    "text_muted": "fgColor-muted",
+    "border": "borderColor-default",
+    "accent_1": "fgColor-accent",
+    "accent_2": "fgColor-danger",
+    "accent_3": "fgColor-attention",
+    "accent_4": "fgColor-done",
+    "accent_5": "fgColor-sponsors",
+    "positive": "fgColor-success",
+    "negative": "fgColor-danger"
+   },
+   "claim": "GitHub ships tritanopia themes next to the colorblind (protanopia and deuteranopia) themes. Observed in the theme CSS: success is blue (default: green) and open and severe are red; upstream text on the design rationale was not found",
+   "rank": {
+    "derivable": false,
+    "reason": "primer-light-tritanopia: needs 6 accents for the 6 coloured roles, has 5"
+   }
+  },
+  {
+   "id": "primer-dark-tritanopia",
+   "name": "GitHub Primer Dark Tritanopia",
+   "family": "GitHub Primer",
+   "mode": "dark",
+   "source_url": "https://github.com/primer/primitives",
+   "licence": {
+    "spdx": "MIT",
+    "copyright": "Copyright (c) 2018 GitHub Inc.",
+    "url": "https://github.com/primer/primitives/blob/main/LICENSE"
+   },
+   "roles": {
+    "background": "#0d1117",
+    "surface": "#151b23",
+    "text": "#f0f6fc",
+    "text_muted": "#9198a1",
+    "border": "#3d444d",
+    "accent_1": "#4493f8",
+    "accent_2": "#f85149",
+    "accent_3": "#d29922",
+    "accent_4": "#ab7df8",
+    "accent_5": "#db61a2",
+    "positive": "#58a6ff",
+    "negative": "#f85149"
+   },
+   "role_sources": {
+    "background": "bgColor-default",
+    "surface": "bgColor-muted",
+    "text": "fgColor-default",
+    "text_muted": "fgColor-muted",
+    "border": "borderColor-default",
+    "accent_1": "fgColor-accent",
+    "accent_2": "fgColor-danger",
+    "accent_3": "fgColor-attention",
+    "accent_4": "fgColor-done",
+    "accent_5": "fgColor-sponsors",
+    "positive": "fgColor-success",
+    "negative": "fgColor-danger"
+   },
+   "claim": "GitHub ships tritanopia themes next to the colorblind (protanopia and deuteranopia) themes. Observed in the theme CSS: success is blue (default: green) and open and severe are red; upstream text on the design rationale was not found",
+   "rank": {
+    "derivable": true,
+    "mode": "dark",
+    "of": 6,
+    "score": 41.09,
+    "weighting": "balanced",
+    "default_eligible": false,
+    "not_default_because": "inv and tx strokes (#4493f8, #ab7df8) differ by OKLab 0.024 under protan simulation, below 0.05; mech and tx strokes (#58a6ff, #ab7df8) differ by OKLab 0.025 under deutan simulation, below 0.05; mech and inv strokes (#58a6ff, #4493f8) differ by OKLab 0.046 under tritan simulation, below 0.05"
+   }
+  },
+  {
+   "id": "primer-light-high-contrast",
+   "name": "GitHub Primer Light High Contrast",
+   "family": "GitHub Primer",
+   "mode": "light",
+   "source_url": "https://github.com/primer/primitives",
+   "licence": {
+    "spdx": "MIT",
+    "copyright": "Copyright (c) 2018 GitHub Inc.",
+    "url": "https://github.com/primer/primitives/blob/main/LICENSE"
+   },
+   "roles": {
+    "background": "#ffffff",
+    "surface": "#e6eaef",
+    "text": "#010409",
+    "text_muted": "#454c54",
+    "border": "#454c54",
+    "accent_1": "#023b95",
+    "accent_2": "#04591f",
+    "accent_3": "#960d1e",
+    "accent_4": "#603700",
+    "accent_5": "#702c00",
+    "accent_6": "#5e2bb4",
+    "accent_7": "#7d0c57",
+    "positive": "#04591f",
+    "negative": "#960d1e"
+   },
+   "role_sources": {
+    "background": "bgColor-default",
+    "surface": "bgColor-muted",
+    "text": "fgColor-default",
+    "text_muted": "fgColor-muted",
+    "border": "borderColor-default",
+    "accent_1": "fgColor-accent",
+    "accent_2": "fgColor-success",
+    "accent_3": "fgColor-danger",
+    "accent_4": "fgColor-attention",
+    "accent_5": "fgColor-severe",
+    "accent_6": "fgColor-done",
+    "accent_7": "fgColor-sponsors",
+    "positive": "fgColor-success",
+    "negative": "fgColor-danger"
+   },
+   "claim": "GitHub docs: 'If you have low vision, you may benefit from a high contrast theme.' The primitives CI contrast check (scripts/colorContrast.config.ts) requires 7:1 for text and 4.5:1 for borders in high-contrast themes, versus 4.5:1 and 3:1 in the default themes",
+   "rank": {
+    "derivable": true,
+    "mode": "light",
+    "of": 4,
+    "score": 43.84,
+    "weighting": "balanced",
+    "default_eligible": false,
+    "not_default_because": "risk and dx strokes (#702c00, #603700) differ by OKLab 0.015 under protan simulation, below 0.05; risk and dx strokes (#702c00, #603700) differ by OKLab 0.009 under deutan simulation, below 0.05; mech and inv strokes (#04591f, #023b95) differ by OKLab 0.044 under tritan simulation, below 0.05"
+   }
+  },
+  {
+   "id": "primer-dark-high-contrast",
+   "name": "GitHub Primer Dark High Contrast",
+   "family": "GitHub Primer",
+   "mode": "dark",
+   "source_url": "https://github.com/primer/primitives",
+   "licence": {
+    "spdx": "MIT",
+    "copyright": "Copyright (c) 2018 GitHub Inc.",
+    "url": "https://github.com/primer/primitives/blob/main/LICENSE"
+   },
+   "roles": {
+    "background": "#010409",
+    "surface": "#151b23",
+    "text": "#ffffff",
+    "text_muted": "#b7bdc8",
+    "border": "#b7bdc8",
+    "accent_1": "#74b9ff",
+    "accent_2": "#2bd853",
+    "accent_3": "#ff9492",
+    "accent_4": "#f0b72f",
+    "accent_5": "#fe9a2d",
+    "accent_6": "#d3abff",
+    "accent_7": "#ff90c8",
+    "positive": "#2bd853",
+    "negative": "#ff9492"
+   },
+   "role_sources": {
+    "background": "bgColor-default",
+    "surface": "bgColor-muted",
+    "text": "fgColor-default",
+    "text_muted": "fgColor-muted",
+    "border": "borderColor-default",
+    "accent_1": "fgColor-accent",
+    "accent_2": "fgColor-success",
+    "accent_3": "fgColor-danger",
+    "accent_4": "fgColor-attention",
+    "accent_5": "fgColor-severe",
+    "accent_6": "fgColor-done",
+    "accent_7": "fgColor-sponsors",
+    "positive": "fgColor-success",
+    "negative": "fgColor-danger"
+   },
+   "claim": "GitHub docs: 'If you have low vision, you may benefit from a high contrast theme.' The primitives CI contrast check (scripts/colorContrast.config.ts) requires 7:1 for text and 4.5:1 for borders in high-contrast themes, versus 4.5:1 and 3:1 in the default themes",
+   "rank": {
+    "derivable": true,
+    "mode": "dark",
+    "of": 6,
+    "score": 47.1,
+    "weighting": "balanced",
+    "default_eligible": false,
+    "not_default_because": "mech and dx strokes (#2bd853, #f0b72f) differ by OKLab 0.043 under protan simulation, below 0.05; risk and dx strokes (#fe9a2d, #f0b72f) differ by OKLab 0.035 under deutan simulation, below 0.05; risk and sign strokes (#fe9a2d, #ff9492) differ by OKLab 0.019 under tritan simulation, below 0.05"
+   }
+  },
+  {
+   "id": "a11y-syntax-dark",
+   "name": "A11Y Syntax Highlighting light-on-dark",
+   "family": "a11y-syntax-highlighting",
+   "mode": "dark",
+   "source_url": "https://github.com/ericwbailey/a11y-syntax-highlighting",
+   "licence": {
+    "spdx": "MIT",
+    "copyright": "Copyright (c) 2017 Eric Bailey",
+    "url": "https://github.com/ericwbailey/a11y-syntax-highlighting/blob/main/LICENSE"
+   },
+   "roles": {
+    "background": "#2b2b2b",
+    "text": "#f8f8f2",
+    "text_muted": "#d4d0ab",
+    "accent_1": "#6bbeff",
+    "accent_2": "#66ddec",
+    "accent_3": "#abe338",
+    "accent_4": "#f5ab32",
+    "accent_5": "#dcc6e0",
+    "accent_6": "#ffa07a",
+    "accent_7": "#ffd700",
+    "positive": "#abe338",
+    "negative": "#ffa07a"
+   },
+   "role_sources": {
+    "background": "background (#2b2b2b, hsla(0,0%,17%))",
+    "text": "no token",
+    "text_muted": "comment",
+    "accent_1": "blue",
+    "accent_2": "cyan",
+    "accent_3": "green",
+    "accent_4": "orange",
+    "accent_5": "purple",
+    "accent_6": "red",
+    "accent_7": "yellow",
+    "positive": "green",
+    "negative": "red"
+   },
+   "claim": "'WCAG AAA compliant for color contrast': every token colour is listed at 7:1 or higher against #2b2b2b",
+   "rank": {
+    "derivable": true,
+    "mode": "dark",
+    "of": 6,
+    "score": 36.44,
+    "weighting": "balanced",
+    "default_eligible": false,
+    "not_default_because": "dx and tx strokes (#abe338, #ffd700) differ by OKLab 0.002 under protan simulation, below 0.05; risk and dx strokes (#f5ab32, #abe338) differ by OKLab 0.049 under deutan simulation, below 0.05; risk and sign strokes (#f5ab32, #ffa07a) differ by OKLab 0.020 under tritan simulation, below 0.05; risk and inv fills (#614826, #354f64) differ by 0.001 in greyscale lightness, below 0.03"
+   }
+  },
+  {
+   "id": "petroff-10-on-primer-dark-high-contrast",
+   "name": "Petroff 2021 10-colour cycle on GitHub Primer Dark High Contrast",
+   "family": "Composite",
+   "mode": "dark",
+   "composite_sources": [
+    "petroff-10",
+    "primer-dark-high-contrast"
+   ],
+   "roles": {
+    "background": "#010409",
+    "surface": "#151b23",
+    "text": "#ffffff",
+    "text_muted": "#b7bdc8",
+    "border": "#b7bdc8",
+    "accent_1": "#3f90da",
+    "accent_2": "#ffa90e",
+    "accent_3": "#bd1f01",
+    "accent_4": "#94a4a2",
+    "accent_5": "#832db6",
+    "accent_6": "#a96b59",
+    "accent_7": "#e76300",
+    "accent_8": "#b9ac70",
+    "accent_9": "#717581",
+    "accent_10": "#92dadd"
+   },
+   "role_sources": {
+    "background": "primer-dark-high-contrast: bgColor-default",
+    "surface": "primer-dark-high-contrast: bgColor-muted",
+    "text": "primer-dark-high-contrast: fgColor-default",
+    "text_muted": "primer-dark-high-contrast: fgColor-muted",
+    "border": "primer-dark-high-contrast: borderColor-default",
+    "accent_1": "petroff-10: c1",
+    "accent_2": "petroff-10: c2",
+    "accent_3": "petroff-10: c3",
+    "accent_4": "petroff-10: c4",
+    "accent_5": "petroff-10: c5",
+    "accent_6": "petroff-10: c6",
+    "accent_7": "petroff-10: c7",
+    "accent_8": "petroff-10: c8",
+    "accent_9": "petroff-10: c9",
+    "accent_10": "petroff-10: c10"
+   },
+   "licence": {
+    "spdx": "MIT AND CC0-1.0",
+    "copyright": "Primer neutral colours: Copyright (c) 2018 GitHub Inc. (MIT); Petroff colour cycles by Matthew A. Petroff, dedicated to the public domain (CC0-1.0)",
+    "attribution": "Petroff-10's ten accent colours on the five neutral colours (background, surface, text, muted text, border) of GitHub Primer Dark High Contrast. See the petroff-10 and primer-dark-high-contrast entries for upstream links and terms."
+   },
+   "rank": {
+    "derivable": true,
+    "mode": "dark",
+    "of": 6,
+    "score": 68.23,
+    "weighting": "balanced",
+    "default_eligible": true,
+    "position": 1
+   }
+  }
+ ],
+ "defaults": {
+  "palettes": [
+   "tol-bright",
+   "petroff-10-on-primer-dark-high-contrast"
+  ],
+  "print_palette": "tol-bright"
+ }
+}

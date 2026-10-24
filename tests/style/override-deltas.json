@@ -1,0 +1,20 @@
+{
+ "about": "Every value in which a hand-tuned override differs from golden-themes.json, with the contrast before and after. A change here needs a reason.",
+ "deltas": [
+  {
+   "palette": "catppuccin-latte",
+   "key": "muted",
+   "old": "#6c6f85",
+   "new": "#56586d",
+   "old_contrast": {
+    "canvas": 4.37,
+    "cl_fill": 3.2
+   },
+   "new_contrast": {
+    "canvas": 6.16,
+    "cl_fill": 4.52
+   },
+   "reason": "muted renders text (the subtitle and the members line) and must reach 4.5:1 on the canvas and on the container fill; subtext0 stepped 0.08 darker in Oklch L, hue and chroma kept"
+  }
+ ]
+}

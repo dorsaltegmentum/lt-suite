@@ -1,0 +1,21 @@
+# SPDX-FileCopyrightText: 2026 dorsaltegmentum
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Build outputs of the worked example (python3 ../../engine/build.py .); only the sources are kept.
+geometry*.json
+final-*
+*.drawio
+*.html
+deliver/
+checks/
+accepted/
+consistency-report.md
+verify-result.json
+layout.draft.py
+layout_*.draft.py
+assets/*-*.svg
+assets/*-*.png
+assets/*-*.json
+.font-cache/
+__pycache__/
+*.static.svg
+verify.js

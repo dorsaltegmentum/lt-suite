@@ -1,0 +1,20 @@
+{
+ "source": "grammar",
+ "note": "Scale-free quality minimums set by hand from references/grammar.md and the accessibility checks (WCAG 2.2 1.4.3 and 1.4.11). Not measured from any diagram, so a larger diagram does not breach them. Page size limits come from the config keys diagram.page.max_w and diagram.page.max_h. Change a value only with tests/diagram/test_floor.py passing.",
+ "text_px_min": 11,
+ "body_text_px_min": 12,
+ "layout": {"problems": 0, "crossings": 0, "unrouted": 0},
+ "label_overlaps": 0,
+ "box_gap_min": 10,
+ "edge_clearance_min": 4,
+ "gutter": 28,
+ "gutter_tolerance": 0.5,
+ "pdf_pages": 1,
+ "box_aspect_min": 1.9,
+ "box_count_warn": 80,
+ "house": {"wght": [500, 700], "box_rx": 7, "container_rx": 12},
+ "image_rx_range": [5, 14],
+ "contrast": {"text_min": 4.5, "large_text_min": 3.0, "arrow_min": 3.0},
+ "contrast_exceptions": [],
+ "contrast_exceptions_note": "Palette pairs below their WCAG minimum that a build may report as KNOWN instead of failing: theme, fg, bg, ratio (no lower may pass) and min_px (no smaller text may pass). Empty: every shortfall fails."
+}

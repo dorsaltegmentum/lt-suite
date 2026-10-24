@@ -1,0 +1,152 @@
+# SPDX-FileCopyrightText: 2026 dorsaltegmentum
+# SPDX-License-Identifier: AGPL-3.0-or-later
+#
+# Layer 1 of tools/privacy_gate.py: generic shapes of personal, private-history and
+# course-run data. No owner literal belongs here (no tool, browser, institution,
+# service or folder name): those would describe the owner. Owner literals live in
+# the private layer (docs/privacy.md).
+#
+# Each [[pattern]]: id, regex (Python syntax, compiled with re.MULTILINE), optional
+# flags ("i" ignores case), optional scope ("all" for files and commit messages,
+# "commit-message" for commit messages only), description.
+# tests/privacy/test_patterns.py holds a positive and a negative string for every id.
+
+schema = 1
+
+# --history: every commit must carry this author and committer, at this offset.
+[identity]
+name = "dorsaltegmentum"
+email = "208164922+dorsaltegmentum@users.noreply.github.com"
+offset = "+0000"
+
+[policy]
+# Pattern ids the repo allowlist may name only for tools/privacy/** and tests/privacy/**.
+never_allow = ["lt-request-claim", "lt-staff", "user-said", "home-path", "session-path"]
+# Allowlist entries may use "*" (every public pattern) only under these prefixes.
+self_paths = ["tools/privacy/", "tests/privacy/"]
+
+[[pattern]]
+id = "home-path"
+regex = '''(?<![\w.])(/home/[a-z_][a-z0-9_-]*|/Users/[A-Za-z0-9._-]+|[A-Za-z]:\\Users\\[^\\\s]+)'''
+description = "Absolute path into a user's home folder (Linux, macOS, Windows)."
+
+[[pattern]]
+id = "agent-state-path"
+regex = '''~/\.(claude|codex|gemini)/(projects|sessions|history)'''
+description = "Agent transcript and session folders."
+
+[[pattern]]
+id = "tmp-claude"
+regex = '''/tmp/claude-\d+'''
+description = "Per-user agent scratch folder."
+
+[[pattern]]
+id = "lt-tenant-host"
+regex = '''\b[a-z0-9-]+\.lt\.app\b'''
+flags = "i"
+description = "A named Lt tenant host. Docs and tests use the placeholder host only."
+
+[[pattern]]
+id = "lt-instance-path"
+regex = '''/i/[0-9a-f]{8}/'''
+description = "Lt instance id in a URL path."
+
+[[pattern]]
+id = "lt-run-url"
+regex = '''/courses/\d{3,}/runs/\d{5,}'''
+description = "Lt course and run ids in a URL path."
+
+[[pattern]]
+id = "module-id"
+regex = '''\bc\d{3}-r\d{5,}\b'''
+description = "Module id built from a real course id and run id."
+
+[[pattern]]
+id = "panel-id"
+regex = '''\bp\d{1,2}-\d{3,5}\b'''
+description = "Panel id from a real capture (page number and Lt data key)."
+
+[[pattern]]
+id = "unit-code"
+regex = '''\b[A-Z]{4}\d{4}\b'''
+description = "Unit of study code: four capitals and four digits."
+
+[[pattern]]
+id = "d-id"
+regex = '''\bD\d{1,2}\.\d{1,3}\b'''
+description = "Private decision-log id."
+
+[[pattern]]
+id = "f-id"
+regex = '''\bF\d{1,3}\b'''
+description = "Private finding id."
+
+[[pattern]]
+id = "section-ref"
+regex = '''§\s?\d'''
+description = "Section reference into a private brief."
+
+[[pattern]]
+id = "private-doc"
+regex = '''\b(PROMPT\.md|SPEC\.md|NEXT-PROMPT|progress\.md)\b|\b(decisions|recon)/'''
+description = "Name of a private planning document or folder."
+
+[[pattern]]
+id = "phase-ref"
+regex = '''\bPhase [0-9]\b'''
+description = "Private project phase number."
+
+[[pattern]]
+id = "study-date"
+regex = '''\b20[12]\d-[01]\d-[0-3]\d\b'''
+description = "Calendar date from 2010 to 2029 (study and session dates). 2000-01-01 never matches."
+
+[[pattern]]
+id = "user-said"
+regex = '''\bthe\s+user\s+(asked|chose|said|wanted|decided|prefers)\b'''
+flags = "i"
+description = "Attribution to the owner's own words or choices."
+
+[[pattern]]
+id = "email"
+regex = '''[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}'''
+description = "Email address."
+
+[[pattern]]
+id = "lt-request-claim"
+regex = '''\b(ADInstruments|Lt|kuraCloud)( staff| support| team)?\s+(has |have |had )?(asked|requested|approved|reviewed|cleared|endorsed|sanctioned)\b'''
+description = "Claim that the vendor asked for, approved or reviewed this work."
+
+[[pattern]]
+id = "lt-staff"
+regex = '''\bLt\s+staff\b'''
+flags = "i"
+description = "Mention of the vendor's staff."
+
+[[pattern]]
+id = "agent-host-stamp"
+regex = '''host="Claude"'''
+description = "Agent host stamp written into a capture."
+
+[[pattern]]
+id = "session-path"
+regex = '''claude\.ai/(code/session_|artifact/)'''
+flags = "i"
+description = "Link to an agent session or a private artifact."
+
+[[pattern]]
+id = "grade"
+regex = '''\b(graded (PASS|FAIL)|marked (PASS|FAIL)|Group \d{1,3}\b)'''
+description = "Grading verdict or a numbered student group."
+
+[[pattern]]
+id = "secret-token"
+regex = '''(\b(ghp_[A-Za-z0-9]{36}|github_pat_[A-Za-z0-9_]{40,}|sk-[A-Za-z0-9_-]{20,}|AKIA[0-9A-Z]{16}|xox[abprs]-[A-Za-z0-9-]{10,})\b|-----BEGIN [A-Z ]*PRIVATE KEY-----)'''
+description = "Access token or private key."
+
+[[pattern]]
+id = "agent-trailer"
+regex = '''^[ \t]*(Co-Authored-By|Claude-Session)[ \t]*:'''
+flags = "i"
+scope = "commit-message"
+description = "Agent attribution trailer. Public commits carry author and committer only."

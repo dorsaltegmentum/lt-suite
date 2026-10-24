@@ -1,0 +1,108 @@
+{
+  "SPDX-FileCopyrightText": "2026 dorsaltegmentum",
+  "SPDX-License-Identifier": "AGPL-3.0-or-later",
+  "description": "Synthetic trigger and non-trigger queries for the setup skill. The format matches dev/claude-code/run_trigger_eval.py (cases with id, query, should_trigger).",
+  "skill_name": "lt-suite-setup",
+  "cases": [
+    {
+      "id": "setup-trigger-01",
+      "query": "Set up lt-suite for the first time",
+      "should_trigger": true
+    },
+    {
+      "id": "setup-trigger-02",
+      "query": "Configure lt-suite for my Lt address and notes folder",
+      "should_trigger": true
+    },
+    {
+      "id": "setup-trigger-03",
+      "query": "Run the lt-suite doctor and tell me what is missing",
+      "should_trigger": true
+    },
+    {
+      "id": "setup-trigger-04",
+      "query": "Doctor says my Lt fonts cannot resolve; diagnose the installation",
+      "should_trigger": true
+    },
+    {
+      "id": "setup-trigger-05",
+      "query": "Show accessible palettes and libre fonts for lt-suite exports",
+      "should_trigger": true
+    },
+    {
+      "id": "setup-trigger-06",
+      "query": "Which palette has the best contrast for my diagrams and PDFs?",
+      "should_trigger": true
+    },
+    {
+      "id": "setup-trigger-07",
+      "query": "Pick a dyslexia-friendly font for my lt-suite pages",
+      "should_trigger": true
+    },
+    {
+      "id": "setup-trigger-08",
+      "query": "lt-suite cannot find Python 3.11 on this machine; build the environment",
+      "should_trigger": true
+    },
+    {
+      "id": "setup-trigger-09",
+      "query": "Check that my browser tool can run the lt-suite page scripts in the Lt tab",
+      "should_trigger": true
+    },
+    {
+      "id": "setup-trigger-10",
+      "query": "Review my local run diffs and propose a lexicon correction",
+      "should_trigger": true
+    },
+    {
+      "id": "setup-trigger-11",
+      "query": "Capture the Lt module open in my browser",
+      "should_trigger": false
+    },
+    {
+      "id": "setup-trigger-12",
+      "query": "Draft answers from this module.json",
+      "should_trigger": false
+    },
+    {
+      "id": "setup-trigger-13",
+      "query": "Type the drafted answers into the Lt fields",
+      "should_trigger": false
+    },
+    {
+      "id": "setup-trigger-14",
+      "query": "Fill the module up to its checkpoint boundary",
+      "should_trigger": false
+    },
+    {
+      "id": "setup-trigger-15",
+      "query": "Export the answers into a Markdown page and a PDF",
+      "should_trigger": false
+    },
+    {
+      "id": "setup-trigger-16",
+      "query": "Draw a mechanism diagram from this case",
+      "should_trigger": false
+    },
+    {
+      "id": "setup-trigger-17",
+      "query": "Restyle my existing diagram with the Everforest palette",
+      "should_trigger": false
+    },
+    {
+      "id": "setup-trigger-18",
+      "query": "Validate answers.json against its schema",
+      "should_trigger": false
+    },
+    {
+      "id": "setup-trigger-19",
+      "query": "Correct misheard drug names in this lecture transcript",
+      "should_trigger": false
+    },
+    {
+      "id": "setup-trigger-20",
+      "query": "Generate flashcards from these answers",
+      "should_trigger": false
+    }
+  ]
+}

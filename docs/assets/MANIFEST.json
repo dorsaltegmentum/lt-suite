@@ -1,0 +1,234 @@
+{
+ "schema": 1,
+ "data": "synthetic",
+ "generator": "make_proof_assets.py",
+ "palettes": {
+  "light": {
+   "id": "tol-bright",
+   "name": "Paul Tol Bright",
+   "text_min": 10.25,
+   "nontext_min": 3.02,
+   "stroke_distance": {
+    "none": 0.1239,
+    "protan": 0.0799,
+    "deutan": 0.0592,
+    "tritan": 0.0504
+   }
+  },
+  "dark": {
+   "id": "petroff-10-on-primer-dark-high-contrast",
+   "name": "Petroff 2021 10-colour cycle on GitHub Primer Dark High Contrast",
+   "text_min": 9.17,
+   "nontext_min": 3.1,
+   "stroke_distance": {
+    "none": 0.1175,
+    "protan": 0.0536,
+    "deutan": 0.0963,
+    "tritan": 0.0914
+   }
+  }
+ },
+ "tool_versions": {
+  "pdftoppm": "pdftoppm version 26.10.0",
+  "rsvg-convert": "rsvg-convert version 2.63.3",
+  "python": "3.14.8",
+  "pillow": "13.0.0",
+  "reportlab": "5.0.1"
+ },
+ "assets": [
+  {
+   "file": "toy-diagram-light.png",
+   "kind": "png",
+   "bytes": 184830,
+   "sha256": "8203a1f9e288ef4cea2b41ba4ffd407af118d3189a827bd55f866da43128b99c",
+   "alt": "Mechanism diagram of an invented enzyme deficiency: 11 boxes in 4 stages, joined by 4 arrow styles. Light palette.",
+   "caption": "Synthetic example. A mechanism diagram built from the toy case in `skills/mechanistic-diagram/examples/toy-case`, an invented enzyme deficiency. Palette: Paul Tol Bright (dark mode shows Petroff 2021 10-colour cycle on GitHub Primer Dark High Contrast). [One-page PDF](docs/assets/toy-diagram-print.pdf), [build checks](docs/assets/diagram-build.txt).",
+   "width": 1600,
+   "height": 733,
+   "command": [
+    "python3 skills/mechanistic-diagram/engine/build.py $WORK/toy-case --final --trust-case"
+   ],
+   "checks": [
+    "build.py and access.py exit 0 (WCAG gate); text selectable",
+    "Paul Tol Bright: text 10.25:1 min, non-text 3.02:1 min, text on fill 10.66:1 min"
+   ]
+  },
+  {
+   "file": "toy-diagram-dark.png",
+   "kind": "png",
+   "bytes": 188834,
+   "sha256": "5ec0361667c30a3f34fad2fc72e1b02d032334e415a732dcd8b481ff8c464246",
+   "alt": "Mechanism diagram of an invented enzyme deficiency: 11 boxes in 4 stages, joined by 4 arrow styles. Dark palette.",
+   "caption": "",
+   "width": 1600,
+   "height": 733,
+   "command": [
+    "python3 skills/mechanistic-diagram/engine/build.py $WORK/toy-case --final --trust-case"
+   ],
+   "checks": [
+    "build.py and access.py exit 0 (WCAG gate); text selectable",
+    "Petroff 2021 10-colour cycle on GitHub Primer Dark High Contrast: text 9.17:1 min, non-text 3.1:1 min, text on fill 12.9:1 min"
+   ]
+  },
+  {
+   "file": "toy-diagram-print.pdf",
+   "kind": "pdf",
+   "bytes": 44696,
+   "sha256": "f1a515801a85c1318877203e6dff18c57e1986b1670cff159dd232e3b09cdaeb",
+   "alt": "One-page PDF of the synthetic mechanism diagram, light palette.",
+   "caption": "",
+   "pages": 1,
+   "command": [
+    "python3 skills/mechanistic-diagram/engine/build.py $WORK/toy-case --final --trust-case"
+   ],
+   "checks": [
+    "build.py and access.py exit 0 (WCAG gate); text selectable",
+    "all fonts used by text are embedded and on the allowlist"
+   ]
+  },
+  {
+   "file": "diagram-build.txt",
+   "kind": "txt",
+   "bytes": 6938,
+   "sha256": "b36a56fd12eb7b45e3f4f8782e642e9f0d86432c89513105fac1b6f37e4b13e5",
+   "alt": "Text log of the diagram build checks on the synthetic toy case.",
+   "caption": "",
+   "command": [
+    "python3 skills/mechanistic-diagram/engine/build.py $WORK/toy-case --final --trust-case"
+   ],
+   "checks": [
+    "paths shortened, no absolute path left"
+   ]
+  },
+  {
+   "file": "toy-diagram-cvd.png",
+   "kind": "png",
+   "bytes": 375949,
+   "sha256": "12cf1cb972be9fba197abd772cf6573466e96c15044955f43980afa1de388727",
+   "alt": "The toy diagram under protanopia, deuteranopia, tritanopia and greyscale. Boxes keep their labels, arrows their styles.",
+   "caption": "Synthetic example. The toy diagram as seen with three kinds of colour-vision deficiency and in greyscale. Every box keeps its text label and every arrow keeps its dash or head.",
+   "width": 1672,
+   "height": 892,
+   "command": [
+    "access.py simulations, joined by the helper (Pillow)"
+   ],
+   "checks": [
+    "4 simulations present; labels are text, black on white"
+   ]
+  },
+  {
+   "file": "export-page.png",
+   "kind": "png",
+   "bytes": 244145,
+   "sha256": "84301d42c6020c259207a7f26573f7717114214c083910aca02b9e4d557adc9d",
+   "alt": "First page of a synthetic module export: questions, drafted answers and source tags.",
+   "caption": "Synthetic example. A module export built from the schema example in `tests/fixtures/examples`. Every claim carries a source tag. [Full PDF](docs/assets/sample-module-export.pdf).",
+   "width": 1000,
+   "height": 1415,
+   "command": [
+    "python3 skills/lt-module-export/scripts/export_module.py --config $WORK/proof-config.toml --data-dir $WORK/data --module tests/fixtures/examples/module.example.json --answers tests/fixtures/examples/answers.example.json --week 1 --out-dir $WORK/export-answers --pdf"
+   ],
+   "checks": [
+    "palette tol-bright; answer text selectable; fonts embedded"
+   ]
+  },
+  {
+   "file": "sample-module-export.pdf",
+   "kind": "pdf",
+   "bytes": 44464,
+   "sha256": "53f4a4e65341068d8325dd1e3c9ad01cd3878befa52e46bc02c057318f8d9232",
+   "alt": "Synthetic module export as a PDF, light palette.",
+   "caption": "",
+   "pages": 1,
+   "command": [
+    "python3 skills/lt-module-export/scripts/export_module.py --config $WORK/proof-config.toml --data-dir $WORK/data --module tests/fixtures/examples/module.example.json --answers tests/fixtures/examples/answers.example.json --week 1 --out-dir $WORK/export-answers --pdf"
+   ],
+   "checks": [
+    "palette tol-bright; answer text selectable; fonts embedded",
+    "unused font resource Helvetica does not render text",
+    "all fonts used by text are embedded and on the allowlist"
+   ]
+  },
+  {
+   "file": "fill-review-page.png",
+   "kind": "png",
+   "bytes": 158594,
+   "sha256": "f2c3619490b00605387295b32d14f25db266f846c16797a2b6f849d890238ecb",
+   "alt": "Synthetic fill review page: a fill result per answer, to-dos saying where to type, a warning on a disputed answer.",
+   "caption": "Synthetic example. The same module after a fill run that stopped before a one-way door. The suite never clicks Submit: the human reads this page, then submits. [Full PDF](docs/assets/sample-fill-review.pdf), [export log](docs/assets/export-run.txt).",
+   "width": 1000,
+   "height": 1415,
+   "command": [
+    "python3 skills/lt-module-export/scripts/export_module.py --config $WORK/proof-config.toml --data-dir $WORK/data --module $WORK/fill-example/module.example.json --answers $WORK/fill-example/answers.example.json --fill-report $WORK/fill-example/fill-report.example.json --week 1 --out-dir $WORK/export-fill --pdf"
+   ],
+   "checks": [
+    "palette tol-bright; page 1 holds 3 of 3 fill markers as text"
+   ]
+  },
+  {
+   "file": "sample-fill-review.pdf",
+   "kind": "pdf",
+   "bytes": 43556,
+   "sha256": "22913db1151c2ba602480c1ad4f8f6f0fd55cb3b2add0422d780ba92b669040a",
+   "alt": "Synthetic fill review as a PDF, light palette.",
+   "caption": "",
+   "pages": 1,
+   "command": [
+    "python3 skills/lt-module-export/scripts/export_module.py --config $WORK/proof-config.toml --data-dir $WORK/data --module $WORK/fill-example/module.example.json --answers $WORK/fill-example/answers.example.json --fill-report $WORK/fill-example/fill-report.example.json --week 1 --out-dir $WORK/export-fill --pdf"
+   ],
+   "checks": [
+    "palette tol-bright; page 1 holds 3 of 3 fill markers as text",
+    "unused font resource Helvetica does not render text",
+    "all fonts used by text are embedded and on the allowlist"
+   ]
+  },
+  {
+   "file": "export-run.txt",
+   "kind": "txt",
+   "bytes": 2321,
+   "sha256": "bdfdecfa3ebfb73ceb07cdc5bf05117c579c170a0478eca0eb08cc22b5c1651e",
+   "alt": "Text log of the synthetic module export run.",
+   "caption": "",
+   "command": [
+    "python3 skills/lt-module-export/scripts/export_module.py --config $WORK/proof-config.toml --data-dir $WORK/data --module $WORK/fill-example/module.example.json --answers $WORK/fill-example/answers.example.json --fill-report $WORK/fill-example/fill-report.example.json --week 1 --out-dir $WORK/export-fill --pdf"
+   ],
+   "checks": [
+    "paths shortened, no absolute path left"
+   ]
+  },
+  {
+   "file": "palette-preview-light.png",
+   "kind": "png",
+   "bytes": 64876,
+   "sha256": "50ada30b757075a48dc2e672182d1263970154b93cf8d3852aa3567dc1d00e82",
+   "alt": "Palette preview, light default: seven role swatches with sample text, four arrow styles, contrast table.",
+   "caption": "Synthetic example. The setup skill's preview of the default light palette, Paul Tol Bright, with measured contrast.",
+   "width": 1280,
+   "height": 838,
+   "command": [
+    "python3 skills/lt-suite-setup/scripts/preview.py palettes --top 99 --out $WORK/preview"
+   ],
+   "checks": [
+    "palette tol-bright; swatches and contrast table are drawn by preview.py",
+    "Paul Tol Bright: text 10.25:1 min, non-text 3.02:1 min, text on fill 10.66:1 min"
+   ]
+  },
+  {
+   "file": "palette-preview-dark.png",
+   "kind": "png",
+   "bytes": 75940,
+   "sha256": "9f68fcaab94922fb589b691ca60ac8f44411bd0469025a5f651a94e4fbff8cc1",
+   "alt": "Palette preview, dark default: seven role swatches with sample text, four arrow styles, contrast table.",
+   "caption": "",
+   "width": 1280,
+   "height": 838,
+   "command": [
+    "python3 skills/lt-suite-setup/scripts/preview.py palettes --top 99 --out $WORK/preview"
+   ],
+   "checks": [
+    "palette petroff-10-on-primer-dark-high-contrast; swatches and contrast table are drawn by preview.py",
+    "Petroff 2021 10-colour cycle on GitHub Primer Dark High Contrast: text 9.17:1 min, non-text 3.1:1 min, text on fill 12.9:1 min"
+   ]
+  }
+ ]
+}

@@ -1,0 +1,338 @@
+{
+ "schema_version": 2,
+ "module_id": "c1-r105",
+ "run_id": 105,
+ "drafted_at": "2000-01-01T00:00:00Z",
+ "source_module": {
+  "path": "../modules/module-c1-r105.json",
+  "sha256": "85a95c85910f6568c36bb11bf2a0655eec99ae529bb22233cc0dc767b5be10b1",
+  "question_digest": "79e01906cb9a66ca045d29fca5d7d109c655fbc5ddd3d72d016c8e67a47d7f84"
+ },
+ "tier1_corpus": [],
+ "items": [
+  {
+   "item_id": "p1-11",
+   "status": "drafted",
+   "segments": [
+    {
+     "kind": "claim",
+     "text": "Thirst and frequent urine are the two cues.",
+     "provenance_refs": [
+      "p1"
+     ]
+    }
+   ],
+   "provenance": [
+    {
+     "ref": "p1",
+     "tier": 3,
+     "source_id": "EXAMPLE-HEALTH-GUIDE",
+     "locator": "section 1",
+     "title": "Invented guidance note",
+     "tag": "[T3:EXAMPLE-HEALTH-GUIDE:section 1]"
+    }
+   ],
+   "confidence": "high",
+   "tier_descent": [
+    {
+     "from_tier": 1,
+     "to_tier": 2,
+     "reason": "absent"
+    },
+    {
+     "from_tier": 2,
+     "to_tier": 3,
+     "reason": "absent"
+    }
+   ],
+   "table_cells": [
+    {
+     "row": 1,
+     "col": 0,
+     "text": "polyuria"
+    },
+    {
+     "row": 1,
+     "col": 1,
+     "text": "osmotic loss"
+    },
+    {
+     "row": 2,
+     "col": 0,
+     "text": "thirst"
+    },
+    {
+     "row": 2,
+     "col": 1,
+     "text": "dehydration"
+    }
+   ]
+  },
+  {
+   "item_id": "p2-21",
+   "status": "drafted",
+   "segments": [
+    {
+     "kind": "claim",
+     "text": "Age and onset narrow the list.",
+     "provenance_refs": [
+      "p1"
+     ]
+    }
+   ],
+   "provenance": [
+    {
+     "ref": "p1",
+     "tier": 3,
+     "source_id": "EXAMPLE-HEALTH-GUIDE",
+     "locator": "section 2",
+     "title": "Invented guidance note",
+     "tag": "[T3:EXAMPLE-HEALTH-GUIDE:section 2]"
+    }
+   ],
+   "confidence": "high",
+   "tier_descent": [
+    {
+     "from_tier": 1,
+     "to_tier": 2,
+     "reason": "absent"
+    },
+    {
+     "from_tier": 2,
+     "to_tier": 3,
+     "reason": "absent"
+    }
+   ],
+   "table_cells": [
+    {
+     "row": 1,
+     "col": 0,
+     "text": "age"
+    },
+    {
+     "row": 1,
+     "col": 1,
+     "text": "narrows the list"
+    },
+    {
+     "row": 2,
+     "col": 0,
+     "text": "onset"
+    },
+    {
+     "row": 2,
+     "col": 1,
+     "text": "sets the pace"
+    }
+   ]
+  },
+  {
+   "item_id": "p2-22",
+   "status": "drafted",
+   "segments": [
+    {
+     "kind": "claim",
+     "text": "The provisional diagnosis is vorlase deficiency.",
+     "provenance_refs": [
+      "p1"
+     ]
+    }
+   ],
+   "provenance": [
+    {
+     "ref": "p1",
+     "tier": 3,
+     "source_id": "EXAMPLE-HEALTH-GUIDE",
+     "locator": "section 3",
+     "title": "Invented guidance note",
+     "tag": "[T3:EXAMPLE-HEALTH-GUIDE:section 3]"
+    }
+   ],
+   "confidence": "high",
+   "tier_descent": [
+    {
+     "from_tier": 1,
+     "to_tier": 2,
+     "reason": "absent"
+    },
+    {
+     "from_tier": 2,
+     "to_tier": 3,
+     "reason": "absent"
+    }
+   ]
+  },
+  {
+   "item_id": "p3-31",
+   "status": "drafted",
+   "segments": [
+    {
+     "kind": "claim",
+     "text": "A level and a scan confirm the cause.",
+     "provenance_refs": [
+      "p1"
+     ]
+    }
+   ],
+   "provenance": [
+    {
+     "ref": "p1",
+     "tier": 3,
+     "source_id": "EXAMPLE-HEALTH-GUIDE",
+     "locator": "section 4",
+     "title": "Invented guidance note",
+     "tag": "[T3:EXAMPLE-HEALTH-GUIDE:section 4]"
+    }
+   ],
+   "confidence": "high",
+   "tier_descent": [
+    {
+     "from_tier": 1,
+     "to_tier": 2,
+     "reason": "absent"
+    },
+    {
+     "from_tier": 2,
+     "to_tier": 3,
+     "reason": "absent"
+    }
+   ],
+   "table_cells": [
+    {
+     "row": 1,
+     "col": 0,
+     "text": "level"
+    },
+    {
+     "row": 1,
+     "col": 1,
+     "text": "confirms the cause"
+    },
+    {
+     "row": 2,
+     "col": 0,
+     "text": "scan"
+    },
+    {
+     "row": 2,
+     "col": 1,
+     "text": "shows the site"
+    }
+   ]
+  },
+  {
+   "item_id": "p3-32",
+   "status": "drafted",
+   "segments": [
+    {
+     "kind": "claim",
+     "text": "Rest and review are the first two steps.",
+     "provenance_refs": [
+      "p1"
+     ]
+    }
+   ],
+   "provenance": [
+    {
+     "ref": "p1",
+     "tier": 3,
+     "source_id": "EXAMPLE-HEALTH-GUIDE",
+     "locator": "section 5",
+     "title": "Invented guidance note",
+     "tag": "[T3:EXAMPLE-HEALTH-GUIDE:section 5]"
+    }
+   ],
+   "confidence": "high",
+   "tier_descent": [
+    {
+     "from_tier": 1,
+     "to_tier": 2,
+     "reason": "absent"
+    },
+    {
+     "from_tier": 2,
+     "to_tier": 3,
+     "reason": "absent"
+    }
+   ],
+   "table_cells": [
+    {
+     "row": 1,
+     "col": 0,
+     "text": "rest"
+    },
+    {
+     "row": 1,
+     "col": 1,
+     "text": "first step"
+    },
+    {
+     "row": 2,
+     "col": 0,
+     "text": "review"
+    },
+    {
+     "row": 2,
+     "col": 1,
+     "text": "second step"
+    }
+   ]
+  },
+  {
+   "item_id": "p4-41",
+   "status": "skipped",
+   "skip_reason": "read-only-mirror"
+  },
+  {
+   "item_id": "p4-42",
+   "status": "skipped",
+   "skip_reason": "read-only-mirror"
+  },
+  {
+   "item_id": "p4-43",
+   "status": "skipped",
+   "skip_reason": "read-only-mirror"
+  },
+  {
+   "item_id": "p4-44",
+   "status": "skipped",
+   "skip_reason": "read-only-mirror"
+  },
+  {
+   "item_id": "p4-46",
+   "status": "drafted",
+   "segments": [
+    {
+     "kind": "claim",
+     "text": "The final diagnosis is vorlase deficiency.",
+     "provenance_refs": [
+      "p1"
+     ]
+    }
+   ],
+   "provenance": [
+    {
+     "ref": "p1",
+     "tier": 3,
+     "source_id": "EXAMPLE-HEALTH-GUIDE",
+     "locator": "section 3",
+     "title": "Invented guidance note",
+     "tag": "[T3:EXAMPLE-HEALTH-GUIDE:section 3]"
+    }
+   ],
+   "confidence": "high",
+   "tier_descent": [
+    {
+     "from_tier": 1,
+     "to_tier": 2,
+     "reason": "absent"
+    },
+    {
+     "from_tier": 2,
+     "to_tier": 3,
+     "reason": "absent"
+    }
+   ]
+  }
+ ]
+}

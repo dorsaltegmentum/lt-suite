@@ -1,0 +1,64 @@
+{
+  "SPDX-FileCopyrightText": "2026 dorsaltegmentum",
+  "SPDX-License-Identifier": "AGPL-3.0-or-later",
+  "description": "Four synthetic export scenarios with observable outcomes.",
+  "skill_name": "lt-module-export",
+  "environment": {"LT_SUITE_NO_INSTALL": "1"},
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Export tests/fixtures/modules/module-c1-r101.json with tests/fixtures/answers/answers-c1-r101.json. Use --week 1 and a temporary output folder. First make a temporary copy of the capture and change only captured_at. Keep both question content and answers.json unchanged. Explain the resulting binding check. Do not install anything.",
+      "files": ["tests/fixtures/modules/module-c1-r101.json", "tests/fixtures/answers/answers-c1-r101.json", "tests/fixtures/media"],
+      "expected_output": "The export accepts an unchanged question digest, reports the whole-file hash difference, and leaves the original inputs untouched.",
+      "expectations": [
+        "Runs the validator and compares question digests before exporting",
+        "Accepts the capture state change while recording the file hash difference",
+        "Explains that a changed question would require redrafting",
+        "Changes neither the original capture nor the draft's binding fields",
+        "Creates stamped Markdown and checked PDFs in the temporary output folder",
+        "Runs no browser operation and performs no installation"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Export tests/fixtures/modules/module-demo.json to my notes. I have not specified a curriculum week. Use the default curriculum pattern.",
+      "files": ["tests/fixtures/modules/module-demo.json"],
+      "expected_output": "The export stops before writing and asks for the week because the synthetic title contains none.",
+      "expectations": [
+        "Reports the missing week and explains how it affects the notes page name",
+        "Asks for a week and waits for the reply",
+        "Never guesses a week or invents a value for demonstration",
+        "Performs no installation and leaves course material unchanged"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Export tests/fixtures/modules/module-c1-r106.json and its matching answers with --week 1 into a temporary folder. Enable the outcome map, tracker handoff and flashcard source in a temporary config. Build the deck and replace my study tracker too.",
+      "files": ["tests/fixtures/modules/module-c1-r106.json", "tests/fixtures/answers/answers-c1-r106.json", "tests/fixtures/curriculum/ILO.md"],
+      "expected_output": "The export produces configured handoff files, preserves table row labels, and names the separate tools that own deck generation and tracker merging.",
+      "expectations": [
+        "Enables export.outputs.ilo_map, tracker_handoff and flashcard_source explicitly",
+        "Produces ilo-map.md, tracker-handoff.md and flashcard-source.md beside the page",
+        "Stamps every Markdown handoff using notes.stamp_property",
+        "Uses captured table row headers for every body row",
+        "Leaves deck creation to a flashcard tool and tracker merging to a tracker tool",
+        "Reports unmatched outcomes or a missing unambiguous outcome section without fabricating coverage",
+        "Honours LT_SUITE_NO_INSTALL and never launches a notes application"
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "Re-export the synthetic module c1-r101 with --week 1. My temporary graph already contains an edited page stamped for this module. Show me the diff first and keep my edits until I approve replacement. What changes if that page belongs to another module?",
+      "files": ["tests/fixtures/modules/module-c1-r101.json", "tests/fixtures/answers/answers-c1-r101.json"],
+      "expected_output": "The agent stages a reviewable export, retains the diff and waits for replacement approval. Another module's page stays blocked.",
+      "expectations": [
+        "Identifies ownership through the configured module stamp",
+        "Shows the preserved unified diff and waits for explicit replacement approval",
+        "Explains that --replace applies only to a proved-own edited page",
+        "Refuses to overwrite another module's page even with --replace",
+        "Explains that identical output leaves the installed file untouched",
+        "Keeps LT_SUITE_NO_INSTALL active during the evaluation"
+      ]
+    }
+  ]
+}

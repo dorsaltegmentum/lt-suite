@@ -1,0 +1,253 @@
+{
+ "schema_version": 1,
+ "module_id": "c1-r106",
+ "instance": "inst0001",
+ "course_id": 1,
+ "run_id": 106,
+ "lesson_id": 1,
+ "source_url": "https://lt.example.invalid/i/inst0001/student/courses/1/runs/106/run/page/1",
+ "captured_at": "2000-01-01T00:00:00Z",
+ "capture_method": "view-model",
+ "lesson": {
+  "title": "2.3 Demo: Tables and plans",
+  "course_title": "Example Course 2000 (X101)",
+  "page_count": 3,
+  "has_completion_page": true,
+  "run_locked": false,
+  "show_page_menu_page_remaining": true,
+  "remaining_flow_pages_without_checkpoints": 2,
+  "completion_route": "complete"
+ },
+ "commit_boundaries": {
+  "checkpoint_pages": [
+   3
+  ],
+  "checkpoints": [
+   {
+    "index": 7,
+    "page_index": 3,
+    "committed": false,
+    "in_flow": true,
+    "source": "both"
+   }
+  ],
+  "checkpoints_container_present": true,
+  "single_attempt_items": [],
+  "run_level_commit": {
+   "present": true,
+   "route": "complete",
+   "note": "hasCompletionPage exposes the final route; capture leaves that route unopened."
+  },
+  "unmapped": []
+ },
+ "census": {
+  "pages_total": 3,
+  "captured_total": 2,
+  "answerable_total": 2,
+  "by_type": {
+   "table-completion": 2
+  },
+  "confirmed_by": "panel walk over lessonFlowPages with subpage recursion; answerable = panelState carries an input key"
+ },
+ "pages": [
+  {
+   "page_index": 1,
+   "page_no": 1,
+   "route": null,
+   "url": "https://lt.example.invalid/i/inst0001/student/courses/1/runs/106/run/page/1",
+   "title": "Brief",
+   "is_report_page": false,
+   "is_checkpoint": false,
+   "content": [
+    {
+     "panel_key": "1",
+     "plugin_key": "kcTextArea",
+     "kind": "text",
+     "text": "Plan the fictional patient's care in two grids."
+    }
+   ],
+   "items": []
+  },
+  {
+   "page_index": 2,
+   "page_no": 2,
+   "route": null,
+   "url": "https://lt.example.invalid/i/inst0001/student/courses/1/runs/106/run/page/2",
+   "title": "Grids",
+   "is_report_page": false,
+   "is_checkpoint": false,
+   "content": [],
+   "items": [
+    {
+     "item_id": "p2-11",
+     "panel_key": "11",
+     "plugin_key": "table-question",
+     "type": "table-completion",
+     "prompt_text": "Complete the timed plan.",
+     "attempts": "multi",
+     "assessment_type": "noAssessment",
+     "maximum_grade": null,
+     "commit_state": "open",
+     "read_only": false,
+     "automation": "resilient-selector",
+     "answered": true,
+     "parent_item_id": null,
+     "constraints": {
+      "rows": 17,
+      "cols": 3,
+      "column_headers": [
+       "Interval",
+       "Goal",
+       "Option"
+      ],
+      "row_headers": [
+       [
+        "Minute 0"
+       ],
+       [
+        "Minute 5"
+       ],
+       [
+        "Minute 10"
+       ],
+       [
+        "Minute 15"
+       ],
+       [
+        "Minute 20"
+       ],
+       [
+        "Minute 25"
+       ],
+       [
+        "Minute 30"
+       ],
+       [
+        "Minute 35"
+       ],
+       [
+        "Minute 40"
+       ],
+       [
+        "Minute 45"
+       ],
+       [
+        "Minute 50"
+       ],
+       [
+        "Minute 55"
+       ],
+       [
+        "Minute 60"
+       ],
+       [
+        "Minute 65"
+       ],
+       [
+        "Minute 70"
+       ],
+       [
+        "Minute 75"
+       ]
+      ]
+     },
+     "answered_evidence": {
+      "filled_map": [
+       "h#.",
+       "h#.",
+       "h#.",
+       "h#.",
+       "h..",
+       "h..",
+       "h..",
+       "h..",
+       "h..",
+       "h..",
+       "h..",
+       "h..",
+       "h..",
+       "h..",
+       "h..",
+       "h.."
+      ],
+      "author_grid": {
+       "status": "absent",
+       "source": "content.rows",
+       "authored_cells": 0
+      }
+     }
+    },
+    {
+     "item_id": "p2-12",
+     "panel_key": "12",
+     "plugin_key": "table-question",
+     "type": "table-completion",
+     "prompt_text": "Complete the horizon plan.",
+     "attempts": "multi",
+     "assessment_type": "noAssessment",
+     "maximum_grade": null,
+     "commit_state": "open",
+     "read_only": false,
+     "automation": "resilient-selector",
+     "answered": false,
+     "parent_item_id": null,
+     "constraints": {
+      "rows": 6,
+      "cols": 3,
+      "column_headers": [
+       "Horizon",
+       "Goal",
+       "Option"
+      ],
+      "row_headers": [
+       [
+        "Short term"
+       ],
+       [
+        "Medium term"
+       ],
+       [
+        "Long term"
+       ],
+       [
+        "Review"
+       ],
+       [
+        "Exit"
+       ]
+      ]
+     },
+     "answered_evidence": {
+      "filled_map": [
+       "h..",
+       "h..",
+       "h..",
+       "h..",
+       "h.."
+      ],
+      "author_grid": {
+       "status": "absent",
+       "source": "content.rows",
+       "authored_cells": 0
+      }
+     }
+    }
+   ]
+  },
+  {
+   "page_index": 3,
+   "page_no": null,
+   "route": "checkpoint",
+   "url": null,
+   "title": "Checkpoint",
+   "is_report_page": false,
+   "is_checkpoint": true,
+   "content": [],
+   "items": [],
+   "checkpoint": {
+    "index": 7,
+    "committed": false
+   }
+  }
+ ]
+}

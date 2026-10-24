@@ -1,0 +1,23 @@
+{
+  "module_id": "demo-module",
+  "origin": "https://lt.example.invalid",
+  "instance": "inst0001",
+  "course_id": 1,
+  "run_id": 101,
+  "stop_before_page": 5,
+  "never_navigated": [
+    {"route": "complete", "reason": "completion page"},
+    {"page_index": 3, "reason": "synthetic never-navigated page"}
+  ],
+  "pages": [
+    {"page_index": 1, "page_no": 1, "url": "https://lt.example.invalid/i/inst0001/student/courses/1/runs/101/run/page/1", "title": "Demo page one"},
+    {"page_index": 2, "page_no": 2, "url": "https://lt.example.invalid/i/inst0001/student/courses/1/runs/101/run/page/2", "title": "Demo page two"},
+    {"page_index": 4, "page_no": 4, "url": "https://lt.example.invalid/i/inst0001/student/courses/1/runs/101/run/page/4", "title": "Demo page four"}
+  ],
+  "skipped_pages": [
+    {"page_index": 3, "page_no": 3, "reason": "never-navigated"},
+    {"page_index": 5, "reason": "at-or-past-first-boundary", "is_checkpoint": true},
+    {"page_index": 6, "page_no": 5, "reason": "at-or-past-first-boundary"},
+    {"page_index": 7, "page_no": 6, "reason": "report-page"}
+  ]
+}

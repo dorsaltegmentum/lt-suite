@@ -1,0 +1,1142 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "$id": "https://github.com/dorsaltegmentum/lt-suite/schemas/module.schema.json",
+ "title": "module.json: lt-module-capture → lt-module-answer",
+ "description": "Normalised capture of one Lt run: page map, item inventory and commit-boundary map. Contains no answer content. Lt's model answer is excluded. The student's submitted answers belong in reference.json.",
+ "type": "object",
+ "additionalProperties": false,
+ "required": [
+  "schema_version",
+  "module_id",
+  "instance",
+  "course_id",
+  "run_id",
+  "lesson_id",
+  "source_url",
+  "captured_at",
+  "lesson",
+  "commit_boundaries",
+  "census",
+  "pages"
+ ],
+ "properties": {
+  "schema_version": {
+   "const": 1
+  },
+  "module_id": {
+   "type": "string",
+   "minLength": 1,
+   "description": "The stable local identifier, such as c1-r101, names both output directories: run data and assets."
+  },
+  "instance": {
+   "type": "string",
+   "minLength": 1,
+   "description": "The <instance> segment of /i/<instance>/ in the Lt URL."
+  },
+  "course_id": {
+   "type": "integer"
+  },
+  "run_id": {
+   "type": "integer",
+   "description": "The addressable run. The /published/<lessonId>/ URL shape does not address the run in use."
+  },
+  "lesson_id": {
+   "type": "integer"
+  },
+  "source_url": {
+   "type": "string",
+   "format": "uri"
+  },
+  "captured_at": {
+   "type": "string",
+   "format": "date-time"
+  },
+  "capture_method": {
+   "type": "string",
+   "enum": [
+    "view-model",
+    "dom-fallback"
+   ],
+   "default": "view-model"
+  },
+  "lesson": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "title",
+    "course_title",
+    "page_count",
+    "has_completion_page",
+    "run_locked",
+    "show_page_menu_page_remaining",
+    "remaining_flow_pages_without_checkpoints"
+   ],
+   "properties": {
+    "title": {
+     "type": "string"
+    },
+    "course_title": {
+     "type": "string"
+    },
+    "page_count": {
+     "type": "integer",
+     "minimum": 1,
+     "description": "Length of $root.lessonFlowPages, i.e. INCLUDING the Report page. Not the highest URL page number."
+    },
+    "has_completion_page": {
+     "type": "boolean"
+    },
+    "run_locked": {
+     "type": "boolean"
+    },
+    "show_page_menu_page_remaining": {
+     "type": "boolean",
+     "description": "The checkpoint predicate. Never infer a checkpoint from the DIV.pageCount i18n template."
+    },
+    "remaining_flow_pages_without_checkpoints": {
+     "type": "integer",
+     "minimum": -1,
+     "description": "Lt's returned count is preserved verbatim. An empty checkpointPageContainer can accompany a count of -1 and a flow containing zero checkpoints. Consumers use commit_boundaries to map stops instead of this count."
+    },
+    "completion_route": {
+     "type": [
+      "string",
+      "null"
+     ],
+     "description": "The Report page is not URL-addressable by number. Record its route so it can be avoided."
+    }
+   }
+  },
+  "commit_boundaries": {
+   "type": "object",
+   "additionalProperties": false,
+   "description": "Three classes of commit boundary.",
+   "required": [
+    "checkpoint_pages",
+    "checkpoints",
+    "checkpoints_container_present",
+    "single_attempt_items",
+    "run_level_commit"
+   ],
+   "properties": {
+    "checkpoint_pages": {
+     "type": "array",
+     "items": {
+      "type": "integer"
+     },
+     "description": "List page_index for each live Checkpoint. Identify checkpoint pages using the committed property together with the absence of allPanels. Run-level showPageMenuPageRemaining and remainingFlowPagesWithoutCheckpoints do not locate boundaries. Preserve the separate live-page and checkpoint-inventory arrays. Lt removes a committed checkpoint from lessonFlowPages. An empty checkpoint_pages array can therefore accompany a nonempty checkpoints inventory. If both arrays are empty and checkpoints_container_present is true, the module contains no checkpoint. first_stop_boundary() and plan_fill stop before live checkpoint pages and disregard already-passed checkpoints."
+    },
+    "single_attempt_items": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     },
+     "description": "item_id values where content.singleAttempt === true."
+    },
+    "run_level_commit": {
+     "type": "object",
+     "additionalProperties": false,
+     "required": [
+      "present"
+     ],
+     "properties": {
+      "present": {
+       "type": "boolean"
+      },
+      "route": {
+       "type": [
+        "string",
+        "null"
+       ]
+      },
+      "note": {
+       "type": "string"
+      }
+     }
+    },
+    "unmapped": {
+     "type": "array",
+     "description": "Entries the detectors could not classify. This is not a stopping class. the validator (ltcore.validate) rejects a fill-report whose boundary_reached.class is 'unmapped'. See docs/design-notes.md for handling each entry.",
+     "items": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+       "page_index",
+       "reason"
+      ],
+      "properties": {
+       "page_index": {
+        "type": "integer"
+       },
+       "item_id": {
+        "type": "string"
+       },
+       "reason": {
+        "type": "string"
+       }
+      }
+     }
+    },
+    "checkpoints": {
+     "type": "array",
+     "description": "All checkpoints the module has, committed or uncommitted. `checkpoint_pages` lists only live doors. Union entries from the lessonFlowPages page walk and root.checkpointPageContainer.pages. The page walk sees only uncommitted checkpoints. The container retains checkpoints removed from the flow by `removeCommittedCheckpoints`. Whether uncommitted checkpoints also appear in the container remains unverified, so consult both readers. `source` records which reader supplied each entry.",
+     "items": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+       "index",
+       "page_index",
+       "committed",
+       "in_flow",
+       "source"
+      ],
+      "properties": {
+       "index": {
+        "type": [
+         "integer",
+         "null"
+        ],
+        "description": "Lt's checkpoint index. It is neither a URL page number nor a page_index. A checkpoint's index can differ from its /run/checkpoint/<n> route segment."
+       },
+       "page_index": {
+        "type": [
+         "integer",
+         "null"
+        ],
+        "description": "The pages[] position when the checkpoint is still in the flow; null once it is committed and Lt has dropped it, because it no longer occupies one."
+       },
+       "committed": {
+        "type": "boolean"
+       },
+       "in_flow": {
+        "type": "boolean",
+        "description": "Whether the page walk found the checkpoint in lessonFlowPages. False means only the container records it, as happens after a checkpoint is passed."
+       },
+       "source": {
+        "enum": [
+         "lessonFlowPages",
+         "checkpointPageContainer",
+         "both"
+        ],
+        "description": "Which reader supplied the entry. `both` is the same door seen twice and deduped on index."
+       }
+      }
+     }
+    },
+    "checkpoints_container_present": {
+     "type": "boolean",
+     "description": "Whether root.checkpointPageContainer.pages was readable. Without this flag, an unavailable container could make an empty inventory look complete. False means the inventory covers only checkpoints still in the flow. An empty list then does not establish absence."
+    }
+   }
+  },
+  "census": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "pages_total",
+    "captured_total",
+    "answerable_total",
+    "by_type"
+   ],
+   "properties": {
+    "pages_total": {
+     "type": "integer",
+     "minimum": 1
+    },
+    "captured_total": {
+     "type": "integer",
+     "minimum": 0,
+     "description": "Every item in pages[].items[], containers included."
+    },
+    "answerable_total": {
+     "type": "integer",
+     "minimum": 0,
+     "description": "captured_total minus type='subpage' containers. A subpage contains nested questions. Counting the container as a question makes the census inconsistent."
+    },
+    "by_type": {
+     "type": "object",
+     "additionalProperties": {
+      "type": "integer",
+      "minimum": 0
+     }
+    },
+    "confirmed_by": {
+     "type": "string",
+     "description": "Name the second, independent confirmation required for every census."
+    }
+   }
+  },
+  "pages": {
+   "type": "array",
+   "minItems": 1,
+   "items": {
+    "$ref": "#/$defs/page"
+   }
+  }
+ },
+ "$defs": {
+  "page": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "page_index",
+    "page_no",
+    "route",
+    "title",
+    "is_report_page",
+    "is_checkpoint",
+    "content",
+    "items"
+   ],
+   "properties": {
+    "page_index": {
+     "type": "integer",
+     "minimum": 1,
+     "description": "1-based index into $root.lessonFlowPages. INCLUDES the Report page."
+    },
+    "page_no": {
+     "type": [
+      "integer",
+      "null"
+     ],
+     "description": "URL-addressable page number (…/run/page/<n>). NULL for Report and Checkpoint pages. Lt routes Checkpoint pages as /run/checkpoint/<n>, and the page menu leaves them unnumbered. These numbering schemes differ."
+    },
+    "route": {
+     "type": [
+      "string",
+      "null"
+     ],
+     "description": "Non-null only for pages with their own route: 'complete' for the Report page, 'checkpoint' for a Checkpoint page. Content pages address by /run/page/<n> and carry null."
+    },
+    "url": {
+     "type": [
+      "string",
+      "null"
+     ]
+    },
+    "title": {
+     "type": "string"
+    },
+    "is_report_page": {
+     "type": "boolean",
+     "description": "Identify by page.model.attributes.reportInfoPanels. Its panels repeat panels of earlier pages, so items[] and the census leave them out."
+    },
+    "is_checkpoint": {
+     "type": "boolean",
+     "description": "Identify structurally: only the checkpoint view model carries `committed`/`commitLoading` and lacks `allPanels`. Never identify it by the title 'Checkpoint'. A checkpoint is a one-way door. first_stop_boundary returns it as class 'checkpoint-page'."
+    },
+    "checkpoint": {
+     "type": "object",
+     "additionalProperties": false,
+     "description": "Present only when is_checkpoint is true. `committed` indicates whether the run's later pages are hidden. Lt excludes every page after an uncommitted checkpoint from lessonFlowPages. Such a capture can lack a Report page even when lesson.has_completion_page is true.",
+     "required": [
+      "committed"
+     ],
+     "properties": {
+      "index": {
+       "type": [
+        "integer",
+        "null"
+       ],
+       "description": "$root page.index(). This value can differ from the /run/checkpoint/<n> URL segment."
+      },
+      "committed": {
+       "type": "boolean"
+      }
+     }
+    },
+    "policy_skip": {
+     "type": "object",
+     "additionalProperties": false,
+     "description": "A page skipped by standing policy rather than capability. Record it without silently dropping it. See docs/design-notes.md for excluded page kinds.",
+     "required": [
+      "reason"
+     ],
+     "properties": {
+      "reason": {
+       "type": "string",
+       "enum": [
+        "irat",
+        "trat-answers-unavailable"
+       ],
+       "description": "'irat': the student's own closed-book work, permanently out of scope. 'trat-answers-unavailable': a confirmed tRAT skipped because its answers file is unavailable in `rat.answers_dir`. The second state clears when the file becomes available. 'rat' cannot express these separate policies."
+      },
+      "note": {
+       "type": "string"
+      }
+     }
+    },
+    "rat_candidate": {
+     "type": "object",
+     "additionalProperties": false,
+     "description": "Capture flags a page that resembles a Readiness Assurance Test without classifying it conclusively. Titles and item shapes cannot establish the page's kind. Record the human's classification in answers.json. Captures record what Lt returned and must remain unedited. Every consumer derives the classification from answers.json. See docs/design-notes.md for page kinds and consumer requirements.",
+     "required": [
+      "basis"
+     ],
+     "properties": {
+      "basis": {
+       "type": "string",
+       "minLength": 1,
+       "description": "Observed evidence stated so a human can check it at a glance."
+      },
+      "note": {
+       "type": "string"
+      }
+     }
+    },
+    "content": {
+     "type": "array",
+     "items": {
+      "$ref": "#/$defs/content_panel"
+     },
+     "description": "Non-answerable author panels (kcTextArea, image, video, divider…). The stimulus lt-module-answer drafts against."
+    },
+    "items": {
+     "type": "array",
+     "items": {
+      "$ref": "#/$defs/item"
+     }
+    }
+   }
+  },
+  "content_panel": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "panel_key",
+    "plugin_key",
+    "kind"
+   ],
+   "properties": {
+    "panel_key": {
+     "type": "string"
+    },
+    "plugin_key": {
+     "type": "string",
+     "description": "pluginKey is a function on the view model. Call it. A generic ko.unwrap returns its source text."
+    },
+    "kind": {
+     "type": "string",
+     "enum": [
+      "text",
+      "image",
+      "video",
+      "audio",
+      "divider",
+      "whitespace",
+      "button",
+      "other",
+      "hotspot"
+     ]
+    },
+    "text": {
+     "type": "string"
+    },
+    "media": {
+     "type": "array",
+     "items": {
+      "$ref": "#/$defs/media"
+     }
+    },
+    "capture_note": {
+     "type": "string",
+     "description": "Describe partial content readers and unrecognized content-only plugins. For kind other, retain key names while omitting values. Keep evidence for panels that a full reader cannot yet interpret."
+    },
+    "hotspots": {
+     "type": "array",
+     "description": "The hotspot plugin supplies content.hotspots. CUSTOM supplies the underlying image; POINT records supply its popup regions. This stimulus accepts no response.",
+     "items": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+       "id",
+       "title",
+       "text"
+      ],
+      "properties": {
+       "id": {
+        "type": [
+         "integer",
+         "string",
+         "null"
+        ]
+       },
+       "parent_id": {
+        "type": [
+         "integer",
+         "string",
+         "null"
+        ],
+        "description": "parentHotspot: the id of the CUSTOM entry a POINT sits on, null on the base entry."
+       },
+       "hotspot_type": {
+        "type": [
+         "string",
+         "null"
+        ],
+        "description": "hotspotType as Lt stores it: CUSTOM for the base image or POINT for a popup marker."
+       },
+       "colour": {
+        "type": [
+         "string",
+         "null"
+        ],
+        "description": "hotspotColour, e.g. RED, BLUE, YELLOW."
+       },
+       "title": {
+        "type": "string",
+        "description": "labelTitle, the popup's heading."
+       },
+       "text": {
+        "type": "string",
+        "description": "labelDescription, the popup's body."
+       },
+       "image_key": {
+        "type": [
+         "string",
+         "null"
+        ],
+        "description": "imageResourceKey; set on the base entry."
+       },
+       "alt": {
+        "type": [
+         "string",
+         "null"
+        ]
+       },
+       "points": {
+        "type": [
+         "array",
+         "null"
+        ],
+        "description": "`position` parsed from its JSON string: proportions of the image, origin top left. null when the string would not parse.",
+        "items": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "x",
+          "y"
+         ],
+         "properties": {
+          "x": {
+           "type": "number"
+          },
+          "y": {
+           "type": "number"
+          }
+         }
+        }
+       }
+      }
+     }
+    },
+    "hidden_text_dropped": {
+     "type": "integer",
+     "minimum": 0
+    },
+    "suspect_text": {
+     "type": "array",
+     "uniqueItems": true,
+     "items": {
+      "type": "string",
+      "enum": [
+       "instruction-override",
+       "agent-address",
+       "agent-imperative",
+       "tool-reference",
+       "commit-route"
+      ]
+     }
+    }
+   }
+  },
+  "item": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "item_id",
+    "panel_key",
+    "plugin_key",
+    "type",
+    "prompt_text",
+    "attempts",
+    "assessment_type",
+    "commit_state",
+    "automation",
+    "answered"
+   ],
+   "properties": {
+    "item_id": {
+     "type": "string",
+     "minLength": 1
+    },
+    "panel_key": {
+     "type": "string"
+    },
+    "plugin_key": {
+     "type": "string",
+     "description": "Raw discriminator as observed. See schemas/README.md for the pluginKey → type map."
+    },
+    "type": {
+     "type": "string",
+     "enum": [
+      "text-response",
+      "multiple-choice",
+      "table-completion",
+      "image-annotation",
+      "upload-and-annotate",
+      "image-labeling",
+      "drag-and-drop-labeling",
+      "categorization",
+      "notebook",
+      "data-value",
+      "subpage",
+      "unmapped"
+     ],
+     "description": "Normalised type. input_mode distinguishes image-annotation from upload-and-annotate. pluginKey alone is insufficient."
+    },
+    "input_mode": {
+     "type": "string",
+     "enum": [
+      "allowAnnotation",
+      "allowImageAndAnnotation"
+     ]
+    },
+    "prompt_text": {
+     "type": "string",
+     "description": "The question verbatim. Include it verbatim in the review packet."
+    },
+    "media": {
+     "type": "array",
+     "items": {
+      "$ref": "#/$defs/media"
+     }
+    },
+    "attempts": {
+     "type": "string",
+     "enum": [
+      "single",
+      "multi"
+     ],
+     "description": "single ⇔ content.singleAttempt === true. A commit boundary."
+    },
+    "assessment_type": {
+     "type": "string",
+     "enum": [
+      "noAssessment",
+      "instantFeedback",
+      "graded"
+     ]
+    },
+    "maximum_grade": {
+     "type": [
+      "number",
+      "null"
+     ]
+    },
+    "commit_state": {
+     "type": "string",
+     "enum": [
+      "open",
+      "committed",
+      "locked",
+      "unknown"
+     ]
+    },
+    "automation": {
+     "type": "string",
+     "enum": [
+      "structured-path",
+      "resilient-selector",
+      "degrade-todo"
+     ],
+     "description": "Automation preference assigned at capture from the feasibility table."
+    },
+    "degrade": {
+     "type": "object",
+     "additionalProperties": false,
+     "description": "Why automation is 'degrade-todo' and whether the TODO can become an automated fill. Required exactly when automation is 'degrade-todo' and forbidden otherwise. See docs/design-notes.md.",
+     "required": [
+      "class",
+      "reason"
+     ],
+     "properties": {
+      "class": {
+       "type": "string",
+       "enum": [
+        "lifts-at-fill",
+        "lifts-on-capture-support",
+        "permanent"
+       ],
+       "description": "lifts-at-fill: the blocker is knowable from the live page during lt-module-fill. lifts-on-capture-support: the blocker lifts when a code change adds capture support for the type. permanent: the platform or standing policy forbids automation, regardless of the run or changes to this suite."
+      },
+      "reason": {
+       "type": "string",
+       "enum": [
+        "geometry-unknown-until-presented",
+        "panel-accepts-no-upload",
+        "single-attempt-drag",
+        "unmapped-type",
+        "coordinator-policy",
+        "notebook-never-written"
+       ],
+       "description": "Each reason implies exactly one class, enforced by the validator (ltcore.validate): geometry-unknown-until-presented -> lifts-at-fill; unmapped-type -> lifts-on-capture-support; panel-accepts-no-upload, single-attempt-drag, coordinator-policy and notebook-never-written -> permanent. Set notebook-never-written only on an unmapped item whose plugin_key is notebook. The suite never writes to the student's notebook."
+      },
+      "note": {
+       "type": "string"
+      }
+     }
+    },
+    "answered": {
+     "type": "boolean",
+     "description": "STATE ONLY. Determined by collection length / string emptiness, never by a truthiness heuristic (presentedRatio: 0 is not an answer). The answer CONTENT is not in this file."
+    },
+    "constraints": {
+     "type": "object",
+     "additionalProperties": false,
+     "properties": {
+      "word_limit": {
+       "type": "integer"
+      },
+      "char_limit": {
+       "type": "integer"
+      },
+      "rows": {
+       "type": "integer"
+      },
+      "cols": {
+       "type": "integer"
+      },
+      "column_headers": {
+       "type": "array",
+       "items": {
+        "type": "string"
+       },
+       "description": "Authored header-row text of a table-completion grid, left to right. `rows`/`cols` describe dimensions without identifying column contents, which an answerer needs to draft answers. Header cells are authored stimulus. The student's body-cell contents are excluded from module.json."
+      },
+      "row_headers": {
+       "type": "array",
+       "items": {
+        "type": "array",
+        "items": {
+         "type": "string"
+        }
+       },
+       "description": "Authored header-column text per body row, where present. Empty when the student must fill the first column."
+      },
+      "options_count": {
+       "type": "integer"
+      },
+      "note": {
+       "type": "string"
+      },
+      "categories": {
+       "type": "array",
+       "items": {
+        "type": "string"
+       },
+       "description": "For categorization, authored bin titles in displayed order (content.categoryItems[].title). These are authored stimulus, like column_headers. Preserve their order. Bins and labels do not align by index, so their positions encode no mapping."
+      },
+      "authored_cells": {
+       "type": "array",
+       "description": "For table-completion, the author's non-empty body cells from panelState.content.rows. Never read them from the student's grid. These cells provide authored labels beside which an answerer drafts. `row` and `col` index the full grid, including header rows, as answers' table_cells do. Excluded from question_digest's AUTHORED_CONSTRAINTS in digest version 1.",
+       "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+         "row",
+         "col",
+         "text"
+        ],
+        "properties": {
+         "row": {
+          "type": "integer",
+          "minimum": 0
+         },
+         "col": {
+          "type": "integer",
+          "minimum": 0
+         },
+         "text": {
+          "type": "string",
+          "minLength": 1
+         }
+        }
+       }
+      }
+     }
+    },
+    "options": {
+     "type": "array",
+     "description": "Visible option text without correctness information. For multiple-choice, these are the choices. Correctness flags in panelState.modelAnswer are readable by default under `model_answer.read` (default true) but never stored in module.json. For image-labeling, drag-and-drop-labeling and categorization, use content.labelItems[].label. Emit those three types' pools alphabetically, with option_id positional in the sorted list. See docs/design-notes.md for resolving labels against the live page.",
+     "items": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+       "option_id",
+       "text"
+      ],
+      "properties": {
+       "option_id": {
+        "type": "string"
+       },
+       "text": {
+        "type": "string"
+       }
+      }
+     }
+    },
+    "target_geometry": {
+     "type": "object",
+     "additionalProperties": false,
+     "description": "Describes the target canvas for mechanistic-diagram. input_mode identifies the image: 'allowImageAndAnnotation' uses the student's uploaded file (input.attributes.*); 'allowAnnotation' uses the author's predefined image (content.*), the panel's only canvas. presented_ratio is NULL when the target slot is empty. See docs/design-notes.md.",
+     "required": [
+      "presented_ratio",
+      "accepts_upload"
+     ],
+     "properties": {
+      "presented_ratio": {
+       "type": [
+        "number",
+        "null"
+       ],
+       "exclusiveMinimum": 0,
+       "description": "Stored target image aspect ratio: naturalHeight / naturalWidth. NULL means the slot is empty. Never substitute 1 for an empty slot. Lt derives the ratio after downsampling uploads to a 1920-pixel longest side. Source-file predictions can differ through rounding, so read the ratio back after writing."
+      },
+      "accepts_upload": {
+       "type": "boolean",
+       "description": "Whether the panel accepts an uploaded image. True exactly when input_mode is 'allowImageAndAnnotation'. An 'allowAnnotation' panel permits annotation only on an image Lt supplies. See docs/design-notes.md."
+      },
+      "canvas_width": {
+       "type": "integer",
+       "minimum": 1
+      },
+      "canvas_height": {
+       "type": "integer",
+       "minimum": 1
+      },
+      "image_key": {
+       "type": [
+        "string",
+        "null"
+       ]
+      },
+      "annotations_key": {
+       "type": [
+        "string",
+        "null"
+       ]
+      },
+      "accepted_types": {
+       "type": "array",
+       "items": {
+        "type": "string"
+       }
+      },
+      "geometry_source": {
+       "type": "string",
+       "enum": [
+        "captured",
+        "unavailable-until-presented"
+       ],
+       "description": "Source of presented_ratio. 'unavailable-until-presented' means the target slot contains no stored image. Use it for an empty slot. See docs/design-notes.md."
+      }
+     }
+    },
+    "parent_item_id": {
+     "type": [
+      "string",
+      "null"
+     ],
+     "description": "Set when the item was found inside a subpage panel. Subpage children are absent from the parent page's allPanels. Capture must recurse to avoid losing them."
+    },
+    "ilo_refs": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    },
+    "capture_note": {
+     "type": "string",
+     "description": "Required when type is 'unmapped'."
+    },
+    "read_only": {
+     "type": [
+      "boolean",
+      "null"
+     ],
+     "description": "The panel's isReadOnly flag. Controls can be disabled through $parent.inputDisabled while commit_state remains 'open' because inp.locked is absent. Planning must account for this flag to avoid unwritable targets. Run-level runLocked and lessonReadOnly can both be false. pg.readOnly can be true even on writable pages. null means the panel flag was not found. Consumers must treat null as unknown and must never infer writability from it."
+    },
+    "answered_evidence": {
+     "type": "object",
+     "additionalProperties": false,
+     "description": "Evidence supporting `answered` for a table-completion item. Authored labels in a first column without headerColumn can make gridFilled count an untouched grid as answered. Keep `answered` unchanged because clearing it could cause an overwrite. Record occupancy only, without cell text, under the same disclosure rules as `answered`.",
+     "required": [
+      "filled_map"
+     ],
+     "properties": {
+      "filled_map": {
+       "type": "array",
+       "description": "One string per body row. '#' marks a non-empty student cell. 'a' marks a cell matching the author's text in content.rows. '.' marks an empty cell. 'h' marks a cell Lt flags headerColumn, which the answered test ignores. Only '#' counts as answered. Without an author grid, authored labels can appear as '#' marks.",
+       "items": {
+        "type": "string",
+        "pattern": "^[#.ha]*$"
+       }
+      },
+      "answered_suspect": {
+       "type": "object",
+       "additionalProperties": false,
+       "description": "Flag set when exactly one body column contains text in every body row. This shape can represent authored row labels or a genuine one-column answer. Never modifies `answered`.",
+       "required": [
+        "basis"
+       ],
+       "properties": {
+        "basis": {
+         "type": "string",
+         "minLength": 1
+        },
+        "note": {
+         "type": "string"
+        }
+       }
+      },
+      "author_grid": {
+       "type": "object",
+       "additionalProperties": false,
+       "description": "Whether the author's grid (panelState.content.rows) was read and used to determine `answered`. read: matching cells receive 'a' marks. absent, same-object, shape-mismatch: the grid was not used, so `answered` counts every non-empty body cell and answered_suspect may flag authored shapes.",
+       "required": [
+        "status"
+       ],
+       "properties": {
+        "status": {
+         "type": "string",
+         "enum": [
+          "read",
+          "absent",
+          "same-object",
+          "shape-mismatch"
+         ]
+        },
+        "source": {
+         "type": "string"
+        },
+        "authored_cells": {
+         "type": "integer",
+         "minimum": 0,
+         "description": "How many 'a' marks filled_map carries."
+        }
+       }
+      }
+     }
+    },
+    "mirror_of": {
+     "type": "object",
+     "additionalProperties": false,
+     "description": "Flags a panel that redisplays an earlier panel and is unwritable. Never modifies `read_only`, which is usually null for mirrors. The three isReadOnly locations lack a mirror flag. DOM inspection cannot distinguish these panels because Lt creates table-cell editors only after a click. Detection therefore uses structural evidence across pages. A consumer must not draft answer cells for a panel carrying this field.",
+     "required": [
+      "item_id",
+      "page_index",
+      "basis"
+     ],
+     "properties": {
+      "item_id": {
+       "type": "string",
+       "description": "The earlier item this panel re-displays."
+      },
+      "page_index": {
+       "type": "integer",
+       "description": "The earlier item's page_index, strictly less than this item's. A duplicate on the same page is a repeated question."
+      },
+      "basis": {
+       "type": "array",
+       "minItems": 1,
+       "description": "Matching facts that make the strength of the mirror signal inspectable.",
+       "items": {
+        "enum": [
+         "duplicate-prompt-and-constraints",
+         "identical-content",
+         "both-empty",
+         "read-only-flag-absent-here-present-on-source"
+        ]
+       }
+      },
+      "note": {
+       "type": "string"
+      }
+     }
+    },
+    "hidden_text_dropped": {
+     "type": "integer",
+     "minimum": 0
+    },
+    "suspect_text": {
+     "type": "array",
+     "uniqueItems": true,
+     "items": {
+      "type": "string",
+      "enum": [
+       "instruction-override",
+       "agent-address",
+       "agent-imperative",
+       "tool-reference",
+       "commit-route"
+      ]
+     }
+    }
+   },
+   "allOf": [
+    {
+     "if": {
+      "properties": {
+       "type": {
+        "enum": [
+         "image-annotation",
+         "upload-and-annotate"
+        ]
+       }
+      },
+      "required": [
+       "type"
+      ]
+     },
+     "then": {
+      "required": [
+       "target_geometry"
+      ]
+     }
+    },
+    {
+     "if": {
+      "properties": {
+       "type": {
+        "const": "unmapped"
+       }
+      },
+      "required": [
+       "type"
+      ]
+     },
+     "then": {
+      "required": [
+       "capture_note"
+      ],
+      "properties": {
+       "automation": {
+        "const": "degrade-todo"
+       }
+      }
+     }
+    },
+    {
+     "if": {
+      "properties": {
+       "type": {
+        "const": "upload-and-annotate"
+       }
+      },
+      "required": [
+       "type"
+      ]
+     },
+     "then": {
+      "properties": {
+       "input_mode": {
+        "const": "allowImageAndAnnotation"
+       }
+      },
+      "required": [
+       "input_mode"
+      ]
+     }
+    },
+    {
+     "if": {
+      "properties": {
+       "automation": {
+        "const": "degrade-todo"
+       }
+      },
+      "required": [
+       "automation"
+      ]
+     },
+     "then": {
+      "required": [
+       "degrade"
+      ]
+     },
+     "else": {
+      "not": {
+       "required": [
+        "degrade"
+       ]
+      }
+     }
+    }
+   ]
+  },
+  "media": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "kind"
+   ],
+   "properties": {
+    "kind": {
+     "type": "string",
+     "enum": [
+      "image",
+      "video",
+      "audio",
+      "canvas"
+     ]
+    },
+    "key": {
+     "type": [
+      "string",
+      "null"
+     ]
+    },
+    "url": {
+     "type": [
+      "string",
+      "null"
+     ]
+    },
+    "width": {
+     "type": [
+      "integer",
+      "null"
+     ]
+    },
+    "height": {
+     "type": [
+      "integer",
+      "null"
+     ]
+    },
+    "alt": {
+     "type": [
+      "string",
+      "null"
+     ]
+    },
+    "local_path": {
+     "type": [
+      "string",
+      "null"
+     ],
+     "description": "Always null. Capture never populates it, and no consumer uses it. Match media by filename: media/lt-<module_id>-<key>.<ext> beside module.json. export_module.py scans that location by default. Null does not mean the image is unavailable. Do not use this field to locate media."
+    },
+    "role": {
+     "type": "string",
+     "enum": [
+      "author-supplied",
+      "student-upload"
+     ],
+     "description": "Whose image this is. Distinguish the author's predefined image in content.* from the student's target in input.attributes.*. Conflating them can make consumers use the wrong target."
+    }
+   }
+  }
+ }
+}

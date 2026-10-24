@@ -1,0 +1,48 @@
+# SPDX-FileCopyrightText: 2026 dorsaltegmentum
+# SPDX-License-Identifier: AGPL-3.0-or-later
+#
+# Extras tools/sync_shared.py copies into skills beside the computed file set.
+# Code is found from imports, and data from each ltcore module's NEEDS list, so
+# only files that no import or NEEDS entry can reveal belong here.
+#
+# Paths are relative to shared/. A path ending in "/" copies the whole folder.
+#   references = [...]  -> skills/<skill>/references/_shared/<path without "references/">
+#   scripts    = [...]  -> skills/<skill>/scripts/_shared/<path>
+
+[all]
+references = ["references/safety.md", "references/browser-adapters.md"]
+
+[skill.lt-suite-setup]
+references = ["lexicon/README.md", "lexicon/recurring-corrections.md"]
+scripts = ["fonts/", "style.defaults.toml"]
+
+[skill.lt-module-capture]
+references = ["lexicon/lt-client-vocabulary.md"]
+scripts = []
+
+[skill.lt-module-answer]
+references = ["lexicon/answer-provenance-style.md", "lexicon/recurring-corrections.md"]
+scripts = []
+
+[skill.lt-module-fill]
+references = ["lexicon/lt-client-vocabulary.md"]
+scripts = ["fonts/", "style.defaults.toml"]
+
+[skill.lt-module-export]
+references = ["lexicon/answer-provenance-style.md"]
+scripts = ["fonts/", "style.defaults.toml"]
+
+[skill.mechanistic-diagram]
+references = ["lexicon/answer-provenance-style.md"]
+scripts = ["fonts/", "style.defaults.toml"]
+
+# Third-party files a skill may carry, listed in its NOTICE.txt. Keys are globs on
+# the path relative to shared/; values name the licence and where its text is.
+[notices]
+"fonts/catalog.json" = "AGPL-3.0-or-later; font catalog metadata maintained by lt-suite"
+"fonts/README.md" = "AGPL-3.0-or-later; font documentation maintained by lt-suite"
+"fonts/**/*.ttf" = "SIL Open Font License 1.1; the licence text and copyright lines are in the OFL.txt beside each font"
+"fonts/**/OFL.txt" = "SIL Open Font License 1.1; the licence text and copyright lines are beside each font"
+"palettes/catalog.json" = "palette colour values under their own licences or attribution terms; see palettes/ATTRIBUTION.md in the lt-suite repository"
+"palettes/overrides/catppuccin-*.toml" = "Catppuccin colour values, MIT licence, Copyright (c) 2021 Catppuccin"
+"palettes/overrides/everforest-*.toml" = "Everforest colour values, MIT licence, Copyright (c) 2019 sainnhe"

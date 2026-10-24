@@ -1,0 +1,620 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "$id": "https://github.com/dorsaltegmentum/lt-suite/schemas/fill-report.schema.json",
+ "title": "fill-report.json: lt-module-fill → human → lexicon",
+ "description": "Records what was typed where, skips, the stopping boundary, every selector and every TODO with its placement. Also supports resuming after a dropped browser agent connection.",
+ "type": "object",
+ "additionalProperties": false,
+ "required": [
+  "schema_version",
+  "module_id",
+  "run_id",
+  "started_at",
+  "approval_mode",
+  "boundary_reached",
+  "never_navigated",
+  "pages_filled",
+  "items"
+ ],
+ "properties": {
+  "schema_version": {
+   "const": 1
+  },
+  "module_id": {
+   "type": "string",
+   "minLength": 1
+  },
+  "run_id": {
+   "type": "integer"
+  },
+  "started_at": {
+   "type": "string",
+   "format": "date-time"
+  },
+  "ended_at": {
+   "type": [
+    "string",
+    "null"
+   ],
+   "format": "date-time"
+  },
+  "approval_mode": {
+   "type": "string",
+   "enum": [
+    "manual",
+    "auto",
+    "skip-all"
+   ],
+   "description": "Use Manually Approve for the first ten runs and every page containing a commit boundary."
+  },
+  "source_answers": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "path",
+    "sha256"
+   ],
+   "properties": {
+    "path": {
+     "type": "string",
+     "description": "The answers file this run filled from. A relative path resolves against this report's own folder."
+    },
+    "sha256": {
+     "type": "string",
+     "pattern": "^[0-9a-f]{64}$"
+    }
+   }
+  },
+  "source_receipts": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "path",
+    "sha256"
+   ],
+   "description": "The fresh-load hash receipts file read by make_fill_report.py. When present, the validator (ltcore.validate) rejects result=filled for an item without a receipt.",
+   "properties": {
+    "path": {
+     "type": "string"
+    },
+    "sha256": {
+     "type": "string",
+     "pattern": "^[0-9a-f]{64}$"
+    }
+   }
+  },
+  "user_decisions": {
+   "type": "array",
+   "description": "Records a waived rail, the approver, time, reason and approval_id from <data>/runs/<module_id>/approvals.json. approval_id must match ^A-[0-9a-f]{8}$. Only the three rails in the enum can be waived. Every other rail remains enforced. the validator (ltcore.validate) accepts a waivable violation only when an entry names its rail and, for a per-item rail, its item. It prints each waiver as a note. It rejects entries without a recorded approval or without a matching violation.",
+   "items": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+     "rail",
+     "who",
+     "when",
+     "why",
+     "approval_id"
+    ],
+    "properties": {
+     "rail": {
+      "type": "string",
+      "enum": [
+       "approval-manual-at-boundary",
+       "write-past-first-door",
+       "passed-single-approval"
+      ],
+      "description": "approval-manual-at-boundary requires manual approval when a run meets a boundary. The first commit boundary limits the pages eligible for this fill operation. write-past-first-door covers attempted items there or later with result filled, filled-unverified or failed. passed-single-approval requires manual approval upon reaching a page containing a submitted single-attempt response."
+     },
+     "item_ids": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+       "type": "string",
+       "minLength": 1
+      },
+      "description": "Per-item rails only: write-past-first-door names the written items, passed-single-approval names the submitted single-attempt item."
+     },
+     "who": {
+      "type": "string",
+      "minLength": 1,
+      "description": "The person who decided, by role: the user, or the unit coordinator."
+     },
+     "when": {
+      "type": "string",
+      "minLength": 10,
+      "description": "YYYY-MM-DD, or an ISO 8601 timestamp with an offset."
+     },
+     "why": {
+      "type": "string",
+      "minLength": 20,
+      "description": "What was decided and why the rail does not apply, as the log records it."
+     },
+     "approval_id": {
+      "type": "string",
+      "pattern": "^A-[0-9a-f]{8}$",
+      "description": "The approval_id identifying the waiver in <data>/runs/<module_id>/approvals.json. Format: A- plus 8 hexadecimal characters, matching ^A-[0-9a-f]{8}$."
+     },
+     "quote": {
+      "type": "string",
+      "minLength": 1,
+      "description": "The user's words verbatim, where the log or the session records them. Never reconstructed."
+     }
+    },
+    "allOf": [
+     {
+      "if": {
+       "properties": {
+        "rail": {
+         "enum": [
+          "write-past-first-door",
+          "passed-single-approval"
+         ]
+        }
+       },
+       "required": [
+        "rail"
+       ]
+      },
+      "then": {
+       "required": [
+        "item_ids"
+       ]
+      }
+     },
+     {
+      "if": {
+       "properties": {
+        "rail": {
+         "const": "approval-manual-at-boundary"
+        }
+       },
+       "required": [
+        "rail"
+       ]
+      },
+      "then": {
+       "not": {
+        "required": [
+         "item_ids"
+        ]
+       }
+      }
+     }
+    ]
+   }
+  },
+  "boundary_reached": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "stopped"
+   ],
+   "properties": {
+    "stopped": {
+     "type": "boolean"
+    },
+    "class": {
+     "type": [
+      "string",
+      "null"
+     ],
+     "enum": [
+      "checkpoint-page",
+      "single-attempt-item",
+      "run-level-commit",
+      "unmapped",
+      null
+     ],
+     "description": "What stopped the run. Only checkpoint-page, single-attempt-item and run-level-commit are one-way doors, so only they are legitimate stopping classes. 'unmapped' still parses so older reports load, but the validator (ltcore.validate) rejects it: an unmapped item type is a gap in this suite, not a door in Lt. It is recorded per item as result=todo and the run continues past it."
+    },
+    "page_index": {
+     "type": [
+      "integer",
+      "null"
+     ]
+    },
+    "item_id": {
+     "type": [
+      "string",
+      "null"
+     ]
+    },
+    "detail": {
+     "type": "string"
+    }
+   },
+   "allOf": [
+    {
+     "if": {
+      "properties": {
+       "stopped": {
+        "const": true
+       }
+      },
+      "required": [
+       "stopped"
+      ]
+     },
+     "then": {
+      "required": [
+       "class",
+       "detail"
+      ]
+     }
+    }
+   ]
+  },
+  "never_navigated": {
+   "type": "array",
+   "description": "Routes deliberately left unvisited. When lesson.has_completion_page is true, include the completion route here. the validator (ltcore.validate) enforces this. See docs/design-notes.md.",
+   "items": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+     "route",
+     "reason"
+    ],
+    "properties": {
+     "route": {
+      "type": "string"
+     },
+     "reason": {
+      "type": "string"
+     }
+    }
+   }
+  },
+  "pages_filled": {
+   "type": "array",
+   "items": {
+    "type": "integer"
+   },
+   "description": "page_index values actually visited and written to."
+  },
+  "items": {
+   "type": "array",
+   "items": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+     "item_id",
+     "attempted",
+     "method",
+     "result"
+    ],
+    "properties": {
+     "item_id": {
+      "type": "string",
+      "minLength": 1
+     },
+     "item_type": {
+      "type": "string"
+     },
+     "attempts": {
+      "type": "string",
+      "enum": [
+       "single",
+       "multi"
+      ]
+     },
+     "attempted": {
+      "type": "boolean"
+     },
+     "method": {
+      "type": "string",
+      "enum": [
+       "url",
+       "selector",
+       "view-model",
+       "manual-todo",
+       "not-attempted"
+      ]
+     },
+     "selector_used": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "result": {
+      "type": "string",
+      "enum": [
+       "filled",
+       "filled-unverified",
+       "failed",
+       "skipped",
+       "todo"
+      ]
+     },
+     "approval_id": {
+      "type": "string",
+      "pattern": "^A-[0-9a-f]{8}$",
+      "description": "The single-attempt approval that allowed an automated write to an item with attempts single. The validator rejects such a write without it; with --approvals the id must be a single-attempt approval for this item."
+     },
+     "verified": {
+      "type": "boolean",
+      "description": "Verify each item before moving on. filled-unverified is a separate, worse outcome than filled. make_fill_report.py derives this field only from `receipt`, never from a literal."
+     },
+     "receipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+       "expected_hash",
+       "observed_hash",
+       "observed_at"
+      ],
+      "description": "The item's latest fresh-load hash check. Equal hashes require result filled and verified true. Unequal hashes require result failed and verified false. the validator (ltcore.validate) rejects other pairings and observed_at values outside started_at to ended_at.",
+      "properties": {
+       "expected_hash": {
+        "type": [
+         "string",
+         "integer"
+        ],
+        "description": "The hash of the drafted answer, computed by the fill generator."
+       },
+       "observed_hash": {
+        "type": [
+         "string",
+         "integer"
+        ],
+        "description": "The hash of what a fresh load of the page read back."
+       },
+       "observed_at": {
+        "type": "string",
+        "format": "date-time"
+       }
+      }
+     },
+     "stopped_reason": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "todo": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+       "blocker",
+       "placement"
+      ],
+      "properties": {
+       "blocker": {
+        "type": "string"
+       },
+       "placement": {
+        "type": "string"
+       },
+       "artefact_path": {
+        "type": "string"
+       }
+      }
+     },
+     "lt_conflict": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+       "observed_via",
+       "held_answer",
+       "lt_indicated",
+       "draft_ref"
+      ],
+      "description": "Records Lt marking that contradicts a cited answer while the answer remains written on the page. Include the disagreement in the review packet without silently reconciling or dropping it. This differs from answers.conflicts, which pairs cited sources by tier ref. Lt feedback is not a citable tier and must not occupy lower_ref. Record the retained answer and the platform's marking separately. Report the item as filled. Incorrect marking is an outcome rather than a fill failure.",
+      "properties": {
+       "observed_via": {
+        "type": "string",
+        "enum": [
+         "check-answer",
+         "model-answer"
+        ],
+        "description": "Instrument that observed the disagreement. See docs/design-notes.md for instrument behaviour by panel type and the weight of each reading."
+       },
+       "held_answer": {
+        "type": "string",
+        "description": "What stays written in the panel: the researched answer. Never re-pointed onto the key."
+       },
+       "lt_indicated": {
+        "type": "string",
+        "description": "What Lt's marking indicates instead. Recorded as an observation about what the unit will accept, not as a claim about the anatomy."
+       },
+       "draft_ref": {
+        "type": "string",
+        "description": "The provenance ref from answers.json that the held answer rests on. Required: the rule that keeps an answer against the key applies only where the answer is CITED and the citation survives being re-read. An lt_conflict with nothing behind it is not a conflict but an uncorrected wrong answer, and the Check Answer loop is what settles those."
+       },
+       "note": {
+        "type": "string",
+        "description": "Why the researched answer was kept, and any sibling items keyed the same way."
+       }
+      }
+     }
+    },
+    "allOf": [
+     {
+      "if": {
+       "properties": {
+        "result": {
+         "const": "todo"
+        }
+       },
+       "required": [
+        "result"
+       ]
+      },
+      "then": {
+       "required": [
+        "todo"
+       ]
+      }
+     }
+    ]
+   }
+  },
+  "selector_events": {
+   "type": "array",
+   "description": "Resilience ledger entries produced by this run. Merge into state/ledger.json in the data directory (LT_SUITE_DATA).",
+   "items": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+     "selector",
+     "item_type",
+     "outcome",
+     "recorded_at"
+    ],
+    "properties": {
+     "selector": {
+      "type": "string"
+     },
+     "item_type": {
+      "type": "string"
+     },
+     "outcome": {
+      "type": "string",
+      "enum": [
+       "hit",
+       "miss"
+      ]
+     },
+     "recorded_at": {
+      "type": "string",
+      "format": "date-time"
+     },
+     "replaced_by": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "death_date": {
+      "type": [
+       "string",
+       "null"
+      ],
+      "format": "date"
+     }
+    }
+   }
+  },
+  "connection_events": {
+   "type": "array",
+   "description": "Extension service-worker drops and modal blocks, so a resumed run knows where it lost the page.",
+   "items": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+     "at",
+     "kind"
+    ],
+    "properties": {
+     "at": {
+      "type": "string",
+      "format": "date-time"
+     },
+     "kind": {
+      "type": "string",
+      "enum": [
+       "worker-idle",
+       "modal-block",
+       "navigation-timeout",
+       "screenshot-timeout",
+       "content-filter-block"
+      ]
+     },
+     "detail": {
+      "type": "string"
+     }
+    }
+   }
+  },
+  "save_waits": {
+   "type": "array",
+   "description": "Browser save waits retained from fill receipts. model and net acknowledge saves; fallback uses the uncalibrated wait; unconfirmed and error require a fresh-load review. A null signal records a call that ended before waiting.",
+   "items": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+     "pages",
+     "save_signal",
+     "waited_ms"
+    ],
+    "properties": {
+     "receipt": {
+      "type": "string",
+      "minLength": 1
+     },
+     "receipt_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+     },
+     "pages": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+       "type": "integer",
+       "minimum": 0
+      }
+     },
+     "save_signal": {
+      "enum": [
+       "model",
+       "net",
+       "fallback",
+       "unconfirmed",
+       "error",
+       null
+      ]
+     },
+     "waited_ms": {
+      "type": [
+       "number",
+       "null"
+      ],
+      "minimum": 0
+     },
+     "keys_total": {
+      "type": [
+       "integer",
+       "null"
+      ],
+      "minimum": 0
+     },
+     "keys_saved": {
+      "type": [
+       "integer",
+       "null"
+      ],
+      "minimum": 0
+     },
+     "keys_pending": {
+      "type": [
+       "integer",
+       "null"
+      ],
+      "minimum": 0
+     },
+     "save_errors": {
+      "type": [
+       "integer",
+       "null"
+      ],
+      "minimum": 0
+     },
+     "calibrated": {
+      "type": "boolean"
+     },
+     "ok": {
+      "type": "boolean"
+     },
+     "fatal": {
+      "type": [
+       "string",
+       "null"
+      ]
+     }
+    }
+   }
+  }
+ }
+}

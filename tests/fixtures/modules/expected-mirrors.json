@@ -1,0 +1,68 @@
+{
+ "modules": {
+  "c1-r101": {
+   "pairs": [],
+   "near_duplicates": []
+  },
+  "c1-r102": {
+   "pairs": [],
+   "near_duplicates": []
+  },
+  "c1-r103": {
+   "pairs": [],
+   "near_duplicates": []
+  },
+  "c1-r104": {
+   "pairs": [],
+   "near_duplicates": []
+  },
+  "c1-r105": {
+   "pairs": [
+    {
+     "source": "p1-11",
+     "mirror": "p4-41",
+     "basis": [
+      "duplicate-prompt-and-constraints",
+      "identical-content",
+      "read-only-flag-absent-here-present-on-source"
+     ]
+    },
+    {
+     "source": "p2-21",
+     "mirror": "p4-42",
+     "basis": [
+      "duplicate-prompt-and-constraints",
+      "identical-content",
+      "read-only-flag-absent-here-present-on-source"
+     ]
+    },
+    {
+     "source": "p3-31",
+     "mirror": "p4-43",
+     "basis": [
+      "duplicate-prompt-and-constraints",
+      "identical-content",
+      "read-only-flag-absent-here-present-on-source"
+     ]
+    }
+   ],
+   "near_duplicates": [
+    {
+     "source": "p3-32",
+     "mirror": "p4-44",
+     "basis": [
+      "duplicate-prompt-and-constraints"
+     ]
+    }
+   ]
+  },
+  "c1-r106": {
+   "pairs": [],
+   "near_duplicates": []
+  },
+  "c1-r107": {
+   "pairs": [],
+   "near_duplicates": []
+  }
+ }
+}

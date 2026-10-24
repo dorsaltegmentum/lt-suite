@@ -1,0 +1,33 @@
+{
+  "mcpServers": {
+    "lt-chrome": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "chrome-devtools-mcp@1.12.0",
+        "--autoConnect",
+        "--no-usage-statistics",
+        "--no-performance-crux",
+        "--no-category-input",
+        "--no-category-network",
+        "--no-category-memory",
+        "--no-category-performance",
+        "--no-category-emulation",
+        "--redact-network-headers"
+      ],
+      "disabledTools": [
+        "new_page",
+        "click",
+        "click_at",
+        "drag",
+        "fill",
+        "fill_form",
+        "hover",
+        "press_key",
+        "type_text",
+        "upload_file",
+        "handle_dialog"
+      ]
+    }
+  }
+}

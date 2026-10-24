@@ -1,0 +1,256 @@
+# SPDX-FileCopyrightText: 2026 dorsaltegmentum
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Verify source, privacy, licensing, isolated skills and distribution archives.
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+  workflow_dispatch:
+  workflow_call:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  PYTHONDONTWRITEBYTECODE: "1"
+  LT_SUITE_NO_INSTALL: "1"
+
+jobs:
+  privacy:
+    timeout-minutes: 30
+    runs-on: ubuntu-latest
+    env:
+      # Public CI never receives or loads a private pattern layer.
+      PRIVACY_PATTERNS_B64: ""
+      LT_PRIVACY_DIR: ${{ runner.temp }}/lt-suite-public-privacy
+      LT_REQUIRE_PRIVATE: "0"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.13"
+      - run: sudo apt-get update && sudo apt-get install -y poppler-utils
+      - run: python -m pip install fonttools
+      - name: Scan public patterns and full commit history without excerpts
+        run: python3 tools/privacy_gate.py --all --history --public-history
+
+  drift:
+    timeout-minutes: 30
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.11"
+      - run: python -m pip install --upgrade "pip>=25.1"
+      - run: python -m pip install uv==0.13.5
+      - run: python packaging/ci.py install-ci
+      - run: python3 tools/sync_shared.py --check --strict
+      - run: python3 tools/gen_manifests.py --check
+      - run: python3 tools/gen_fixtures.py --check
+      - run: python3 tools/gen_config_docs.py --check
+
+  py:
+    timeout-minutes: 30
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.11", "3.13", "3.14"]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Install rendering and metadata tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y librsvg2-bin poppler-utils libxml2-utils qpdf libimage-exiftool-perl
+      - run: python -m pip install --upgrade "pip>=25.1"
+      - run: python -m pip install uv==0.13.5
+      - run: python packaging/ci.py install-ci
+      - run: python -m compileall -q skills shared tools tests
+      - run: python packaging/ci.py area-tests
+
+  py-os:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, windows-latest]
+    timeout-minutes: 30
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.13"
+      - run: python -m pip install --upgrade "pip>=25.1"
+      - run: python -m pip install uv==0.13.5
+      - run: python packaging/ci.py install-ci
+      - run: python -m pytest tests/core -q
+      - run: python -m pytest tests/packaging -q
+      - name: Bootstrap from the macOS system Python
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          /usr/bin/python3 --version
+          /usr/bin/python3 skills/lt-suite-setup/scripts/setup.py bootstrap \
+            --python "$(command -v python3)" \
+            --data-dir "$RUNNER_TEMP/lt-suite-bootstrap" --network yes
+          "$RUNNER_TEMP/lt-suite-bootstrap/venv/bin/python" --version
+
+  node:
+    timeout-minutes: 30
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.13"
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "22"
+      - run: python3 tools/node_tests.py tests --expect-files 12 --expect-min 300
+
+  isolation:
+    timeout-minutes: 30
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.11"
+      - run: python3 tools/check_isolation.py --venv
+
+  reuse:
+    timeout-minutes: 30
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: fsfe/reuse-action@676e2d560c9a403aa252096d99fcab3e1132b0f5 # v6.0.0
+        with:
+          args: lint
+
+  skills:
+    timeout-minutes: 30
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.13"
+      - run: python -m pip install skills-ref==0.1.1
+      - run: |
+          for skill in skills/*; do
+            agentskills validate "$skill"
+          done
+      - run: python3 tools/check_skills.py
+
+  validators:
+    timeout-minutes: 30
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "22"
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.13"
+      - name: Validate Claude manifests without account access
+        run: python packaging/ci.py claude
+      - run: npx -y @google/gemini-cli@0.65.0 extensions validate .
+      # Antigravity validation remains manual until a login-free CLI is verified.
+
+  lexicon:
+    timeout-minutes: 30
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.13"
+      - run: python3 -m ltcore.lexicon --check --expired warn
+        env:
+          PYTHONPATH: shared
+
+  dist:
+    timeout-minutes: 30
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.11"
+      - run: python -m pip install uv==0.13.5
+      - run: python3 tools/build_dist.py --out dist --check
+
+  release-check:
+    env:
+      LT_REQUIRE_PRIVATE: "0"
+      LT_PRIVACY_DIR: ${{ runner.temp }}/lt-suite-public-privacy
+    timeout-minutes: 30
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.13"
+      - run: python -m pip install --upgrade "pip>=25.1"
+      - run: python -m pip install uv==0.13.5
+      - run: python packaging/ci.py install-ci
+      - run: |
+          if git rev-parse --verify -q refs/tags/v0.1.0 >/dev/null; then
+            python3 tools/check_release.py --public-history --initial-release-ref v0.1.0
+          else
+            python3 tools/check_release.py --public-history
+          fi
+
+  dco:
+    if: github.event_name == 'pull_request'
+    timeout-minutes: 5
+    runs-on: ubuntu-latest
+    env:
+      PR_BASE: ${{ github.event.pull_request.base.sha }}
+      PR_HEAD: ${{ github.event.pull_request.head.sha }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.13"
+      - run: python packaging/ci.py dco

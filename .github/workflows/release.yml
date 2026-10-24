@@ -1,0 +1,63 @@
+# SPDX-FileCopyrightText: 2026 dorsaltegmentum
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Verify tagged source before attaching deterministic upload archives to a release.
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  checks:
+    uses: ./.github/workflows/ci.yml
+    permissions:
+      contents: read
+
+  publish:
+    needs: checks
+    timeout-minutes: 30
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.11"
+      - run: git fetch origin refs/heads/main:refs/remotes/origin/main
+      - run: python packaging/ci.py release-tag
+      - run: python -m pip install --upgrade "pip>=25.1"
+      - run: python -m pip install uv==0.13.5
+      - run: python packaging/ci.py install-ci
+      - run: python3 tools/check_release.py --public-history --initial-release-ref v0.1.0 --tag "$GITHUB_REF_NAME"
+      - run: python3 tools/build_dist.py --out dist --check
+      - run: python packaging/ci.py checksums
+      - name: Attest archive provenance
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-path: dist/**/*.zip
+      - name: Attach all upload layouts
+        uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3.0.3
+        with:
+          fail_on_unmatched_files: true
+          files: |
+            dist/SHA256SUMS
+            dist/lt-suite-plugin-*.zip
+            dist/claude-ai/*.zip
+            dist/claude-api/*.zip
+            dist/gemini-app/*.zip
+            dist/gemini-enterprise/*.zip
+            dist/perplexity-api/*.zip
+            dist/perplexity-ui/*.zip

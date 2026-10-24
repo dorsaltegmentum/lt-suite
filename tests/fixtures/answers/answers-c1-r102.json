@@ -1,0 +1,272 @@
+{
+ "schema_version": 2,
+ "module_id": "c1-r102",
+ "run_id": 102,
+ "drafted_at": "2000-01-01T00:00:00Z",
+ "source_module": {
+  "path": "../modules/module-c1-r102.json",
+  "sha256": "4e5e95e50c0c9a9be415f62b3e4f1b3844de1408ed6c65fd8ee9b8df234a4d3d",
+  "question_digest": "940e39a88524134053a093ab9a289969107f1415c2c536cd90397be69204165c"
+ },
+ "tier1_corpus": [
+  {
+   "source_id": "DEMO-1-2-SLIDES",
+   "path": "tests/fixtures/curriculum/Block A/1.2 Demo/Lectures/slides.md",
+   "kind": "slides"
+  },
+  {
+   "source_id": "DEMO-1-1-ILO",
+   "path": "tests/fixtures/curriculum/ILO.md",
+   "kind": "ilo"
+  }
+ ],
+ "items": [
+  {
+   "item_id": "p2-11",
+   "status": "drafted",
+   "segments": [
+    {
+     "kind": "claim",
+     "text": "The quillen gland releases tessin.",
+     "provenance_refs": [
+      "p1"
+     ]
+    }
+   ],
+   "provenance": [
+    {
+     "ref": "p1",
+     "tier": 1,
+     "source_id": "DEMO-1-2-SLIDES",
+     "locator": "slide 1",
+     "tag": "[T1:DEMO-1-2-SLIDES:slide 1]"
+    }
+   ],
+   "confidence": "low",
+   "uncertainties": [
+    {
+     "question": "Does the question mean the gland or the cell type?",
+     "why_it_matters": "The answer names the gland, not the cell."
+    }
+   ]
+  },
+  {
+   "item_id": "p2-12",
+   "status": "drafted",
+   "segments": [
+    {
+     "kind": "claim",
+     "text": "Oram cells pace the release, and one cell type is described.",
+     "provenance_refs": [
+      "p1"
+     ]
+    }
+   ],
+   "provenance": [
+    {
+     "ref": "p1",
+     "tier": 1,
+     "source_id": "DEMO-1-2-SLIDES",
+     "locator": "slide 2",
+     "tag": "[T1:DEMO-1-2-SLIDES:slide 2]"
+    }
+   ],
+   "confidence": "high",
+   "proposed_selection": [
+    "o1"
+   ]
+  },
+  {
+   "item_id": "p2-13",
+   "status": "drafted",
+   "segments": [
+    {
+     "kind": "claim",
+     "text": "Release is highest at dusk and lowest at night.",
+     "provenance_refs": [
+      "p1"
+     ]
+    }
+   ],
+   "provenance": [
+    {
+     "ref": "p1",
+     "tier": 1,
+     "source_id": "DEMO-1-2-SLIDES",
+     "locator": "slide 3",
+     "tag": "[T1:DEMO-1-2-SLIDES:slide 3]"
+    }
+   ],
+   "confidence": "high",
+   "table_cells": [
+    {
+     "row": 1,
+     "col": 1,
+     "text": "first light"
+    },
+    {
+     "row": 1,
+     "col": 2,
+     "text": "low"
+    },
+    {
+     "row": 2,
+     "col": 1,
+     "text": "midday"
+    },
+    {
+     "row": 2,
+     "col": 2,
+     "text": "rising"
+    },
+    {
+     "row": 3,
+     "col": 1,
+     "text": "highest"
+    },
+    {
+     "row": 3,
+     "col": 2,
+     "text": "peak"
+    },
+    {
+     "row": 4,
+     "col": 1,
+     "text": "none"
+    },
+    {
+     "row": 4,
+     "col": 2,
+     "text": "lowest"
+    }
+   ]
+  },
+  {
+   "item_id": "p3-21",
+   "status": "drafted",
+   "segments": [
+    {
+     "kind": "claim",
+     "text": "Oram cells pace the release of tessin.",
+     "provenance_refs": [
+      "p1"
+     ]
+    }
+   ],
+   "provenance": [
+    {
+     "ref": "p1",
+     "tier": 1,
+     "source_id": "DEMO-1-2-SLIDES",
+     "locator": "slide 2",
+     "tag": "[T1:DEMO-1-2-SLIDES:slide 2]"
+    }
+   ],
+   "confidence": "high"
+  },
+  {
+   "item_id": "p3-22",
+   "status": "drafted",
+   "segments": [
+    {
+     "kind": "claim",
+     "text": "Release changes with the time of day.",
+     "provenance_refs": [
+      "p1"
+     ]
+    },
+    {
+     "kind": "claim",
+     "text": "A longer fast shifts the peak later.",
+     "provenance_refs": [
+      "p2"
+     ]
+    }
+   ],
+   "provenance": [
+    {
+     "ref": "p1",
+     "tier": 1,
+     "source_id": "DEMO-1-2-SLIDES",
+     "locator": "slide 3",
+     "tag": "[T1:DEMO-1-2-SLIDES:slide 3]"
+    },
+    {
+     "ref": "p2",
+     "tier": 4,
+     "source_id": "10.5555/fixture.0001",
+     "locator": "table 2",
+     "tag": "[T4:10.5555/fixture.0001]"
+    }
+   ],
+   "confidence": "high",
+   "tier_descent": [
+    {
+     "from_tier": 1,
+     "to_tier": 2,
+     "reason": "absent"
+    },
+    {
+     "from_tier": 2,
+     "to_tier": 3,
+     "reason": "absent"
+    },
+    {
+     "from_tier": 3,
+     "to_tier": 4,
+     "reason": "insufficient-depth"
+    }
+   ],
+   "conflicts": [
+    {
+     "higher_ref": "p1",
+     "lower_ref": "p2",
+     "higher_claim": "Release is highest at dusk.",
+     "lower_claim": "A longer fast shifts the peak later.",
+     "note": "The slide gives one peak time; the paper describes a shift."
+    }
+   ]
+  },
+  {
+   "item_id": "p3-23",
+   "status": "skipped",
+   "skip_reason": "unmapped-boundary"
+  },
+  {
+   "item_id": "p4-31",
+   "status": "drafted",
+   "segments": [
+    {
+     "kind": "claim",
+     "text": "Oram cells pace the release.",
+     "provenance_refs": [
+      "p1"
+     ]
+    }
+   ],
+   "provenance": [
+    {
+     "ref": "p1",
+     "tier": 1,
+     "source_id": "DEMO-1-2-SLIDES",
+     "locator": "slide 2",
+     "tag": "[T1:DEMO-1-2-SLIDES:slide 2]"
+    }
+   ],
+   "confidence": "high",
+   "proposed_selection": [
+    "o1"
+   ]
+  },
+  {
+   "item_id": "p4-32",
+   "status": "skipped",
+   "skip_reason": "already-answered"
+  },
+  {
+   "item_id": "p4-33",
+   "status": "skipped",
+   "skip_reason": "already-answered"
+  }
+ ]
+}

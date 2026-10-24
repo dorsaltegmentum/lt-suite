@@ -1,0 +1,75 @@
+{
+ "schema_version": 1,
+ "run_ts": "2000-01-01T00:00:00Z",
+ "module_id": "c1-r101",
+ "tool_version": "0.1.0",
+ "config_digest": "0000000000000000000000000000000000000000000000000000000000000000",
+ "institution_profile": "generic",
+ "unit_code": "X101",
+ "skills_invoked": [
+  "lt-module-capture",
+  "lt-module-answer",
+  "mechanistic-diagram",
+  "lt-module-fill"
+ ],
+ "timings": {
+  "lt-module-capture": 41200,
+  "lt-module-answer": 388400,
+  "mechanistic-diagram": 96100,
+  "lt-module-fill": 1320000
+ },
+ "token_cost": {
+  "lt-module-capture": 18400,
+  "lt-module-answer": 141900,
+  "mechanistic-diagram": 52300,
+  "lt-module-fill": 87600
+ },
+ "question_type_census": {
+  "multiple-choice": 2,
+  "upload-and-annotate": 1,
+  "image-annotation": 1,
+  "categorization": 1,
+  "text-response": 2,
+  "subpage": 1,
+  "table-completion": 1,
+  "unmapped": 1
+ },
+ "selector_events": [
+  {
+   "selector": "input[type=file][accept*='image/png']",
+   "item_type": "upload-and-annotate",
+   "outcome": "hit"
+  },
+  {
+   "selector": "div[data-cke-temp] .ck-editor__editable",
+   "item_type": "text-response",
+   "outcome": "hit"
+  }
+ ],
+ "diff_classification": [
+  {
+   "item_id": "i-text-2",
+   "class": "scope",
+   "before": "Two-sentence answer citing a conflicting source.",
+   "after": "Three words: fine focus knob.",
+   "steered_run_wrong": false,
+   "note": "A reviewer trimmed a short answer to taste. No skill change follows from a run that worked."
+  },
+  {
+   "item_id": "i-upann-1",
+   "class": "provenance",
+   "before": "[T4:10.5555/synthetic.0001]",
+   "after": "removed",
+   "steered_run_wrong": true,
+   "note": "Tier 4 was cited for a figure the item did not ask for. Lexicon candidate: go below Tier 1 only when the prompt needs that depth."
+  }
+ ],
+ "eval_snapshot": {
+  "benchmark_path": "evals/lt-module-answer/benchmark.json",
+  "with_skill_rate": 0.0,
+  "without_skill_rate": 0.0,
+  "n": 0
+ },
+ "outcome": "stopped-at-boundary",
+ "notes": "Invented record. Every rate is zero because no eval ran."
+}

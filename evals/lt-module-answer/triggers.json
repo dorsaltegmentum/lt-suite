@@ -1,0 +1,107 @@
+{
+  "SPDX-FileCopyrightText": "2026 dorsaltegmentum",
+  "SPDX-License-Identifier": "AGPL-3.0-or-later",
+  "description": "Synthetic trigger and non-trigger queries for the answer skill.",
+  "cases": [
+    {
+      "id": "answer-trigger-01",
+      "query": "Draft answers for the module.json we captured",
+      "should_trigger": true
+    },
+    {
+      "id": "answer-trigger-02",
+      "query": "Prepare sourced responses to a captured TBL; attach evidence to each factual statement.",
+      "should_trigger": true
+    },
+    {
+      "id": "answer-trigger-03",
+      "query": "Answer Week 1 using course material first and the configured reference tiers afterward",
+      "should_trigger": true
+    },
+    {
+      "id": "answer-trigger-04",
+      "query": "Build an auditable proposal packet from this saved Lt capture.",
+      "should_trigger": true
+    },
+    {
+      "id": "answer-trigger-05",
+      "query": "Work through the captured practical and surface source disagreements",
+      "should_trigger": true
+    },
+    {
+      "id": "answer-trigger-06",
+      "query": "Draft module answers and flag genuine uncertainties",
+      "should_trigger": true
+    },
+    {
+      "id": "answer-trigger-07",
+      "query": "Draft answers and flag which items need a diagram brief",
+      "should_trigger": true
+    },
+    {
+      "id": "answer-trigger-08",
+      "query": "Source answers for the captured module using only my curriculum",
+      "should_trigger": true
+    },
+    {
+      "id": "answer-trigger-09",
+      "query": "I need answers.json for the synthetic demo module",
+      "should_trigger": true
+    },
+    {
+      "id": "answer-trigger-10",
+      "query": "Draft the text responses for a captured histology practical",
+      "should_trigger": true
+    },
+    {
+      "id": "answer-trigger-11",
+      "query": "Capture the Lt module open in my browser",
+      "should_trigger": false
+    },
+    {
+      "id": "answer-trigger-12",
+      "query": "How many questions does this kuraCloud module have?",
+      "should_trigger": false
+    },
+    {
+      "id": "answer-trigger-13",
+      "query": "Draw the mechanistic diagram for these answers",
+      "should_trigger": false
+    },
+    {
+      "id": "answer-trigger-14",
+      "query": "Restyle the pathway diagram with the configured palette",
+      "should_trigger": false
+    },
+    {
+      "id": "answer-trigger-15",
+      "query": "Type the drafted answers into the Lt fields",
+      "should_trigger": false
+    },
+    {
+      "id": "answer-trigger-16",
+      "query": "Fill the module to its checkpoint boundary",
+      "should_trigger": false
+    },
+    {
+      "id": "answer-trigger-17",
+      "query": "Export the review packet into my notes graph",
+      "should_trigger": false
+    },
+    {
+      "id": "answer-trigger-18",
+      "query": "Generate flashcards from these answers",
+      "should_trigger": false
+    },
+    {
+      "id": "answer-trigger-19",
+      "query": "Correct misheard drug names in this lecture transcript",
+      "should_trigger": false
+    },
+    {
+      "id": "answer-trigger-20",
+      "query": "Validate answers.json against its schema",
+      "should_trigger": false
+    }
+  ]
+}

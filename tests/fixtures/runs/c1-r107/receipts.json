@@ -1,0 +1,14 @@
+[
+ {
+  "item_id": "p1-11",
+  "expected_hash": 546380983,
+  "observed_hash": 546380983,
+  "observed_at": "2000-01-01T00:00:00Z"
+ },
+ {
+  "item_id": "p1-14",
+  "expected_hash": 11494517,
+  "observed_hash": 11494517,
+  "observed_at": "2000-01-01T00:00:00Z"
+ }
+]

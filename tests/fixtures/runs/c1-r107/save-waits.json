@@ -1,0 +1,20 @@
+{
+ "save_waits": [
+  {
+   "receipt": "fill-result-1.json",
+   "receipt_sha256": "dfaf7fb452594f46ea6befa21ffb8aa4937fa7ee07675d2af82b3af2311d644e",
+   "pages": [
+    1
+   ],
+   "save_signal": "net",
+   "waited_ms": 450,
+   "keys_total": 2,
+   "keys_saved": 2,
+   "keys_pending": 0,
+   "save_errors": 0,
+   "calibrated": true,
+   "ok": true,
+   "fatal": null
+  }
+ ]
+}

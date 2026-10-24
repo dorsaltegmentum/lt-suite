@@ -1,0 +1,37 @@
+{
+ "save_waits": [
+  {
+   "receipt": "fill-result-1.json",
+   "receipt_sha256": "2955e428ac4426bc06c81a32a559349ad1921c8e27a0dffa80e0f1c8a01468a9",
+   "pages": [
+    2
+   ],
+   "save_signal": "fallback",
+   "waited_ms": 4200,
+   "keys_total": 3,
+   "keys_saved": null,
+   "keys_pending": null,
+   "save_errors": 0,
+   "calibrated": false,
+   "ok": true,
+   "fatal": null
+  },
+  {
+   "receipt": "fill-result-2.json",
+   "receipt_sha256": "454b3b7bed05f0a71ea974bb2c488fe31cffa70e17a843db7018d600e90cba9f",
+   "pages": [
+    3,
+    4
+   ],
+   "save_signal": "model",
+   "waited_ms": 520,
+   "keys_total": 2,
+   "keys_saved": 2,
+   "keys_pending": 0,
+   "save_errors": 0,
+   "calibrated": true,
+   "ok": true,
+   "fatal": null
+  }
+ ]
+}

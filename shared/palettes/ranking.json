@@ -1,0 +1,4311 @@
+{
+ "weightings": {
+  "balanced": {
+   "text": 20,
+   "nontext": 10,
+   "stroke_normal": 10,
+   "stroke_red_green": 22,
+   "stroke_tritan": 8,
+   "stroke_grey": 15,
+   "fill_cvd": 8,
+   "fill_grey": 7
+  },
+  "cvd-first": {
+   "text": 15,
+   "nontext": 5,
+   "stroke_normal": 5,
+   "stroke_red_green": 35,
+   "stroke_tritan": 15,
+   "stroke_grey": 10,
+   "fill_cvd": 10,
+   "fill_grey": 5
+  },
+  "print-first": {
+   "text": 20,
+   "nontext": 10,
+   "stroke_normal": 10,
+   "stroke_red_green": 10,
+   "stroke_tritan": 5,
+   "stroke_grey": 30,
+   "fill_cvd": 5,
+   "fill_grey": 10
+  },
+  "text-first": {
+   "text": 35,
+   "nontext": 15,
+   "stroke_normal": 10,
+   "stroke_red_green": 15,
+   "stroke_tritan": 5,
+   "stroke_grey": 10,
+   "fill_cvd": 5,
+   "fill_grey": 5
+  }
+ },
+ "primary_weighting": "balanced",
+ "full_credit": {
+  "text": 7.0,
+  "nontext": 4.5,
+  "stroke_de00": 20.0,
+  "stroke_grey": 0.1,
+  "fill_de00": 10.0,
+  "fill_grey": 0.05
+ },
+ "winners": {
+  "balanced": {
+   "light": "tol-bright",
+   "dark": "petroff-10-on-primer-dark-high-contrast"
+  },
+  "cvd-first": {
+   "light": "tol-bright",
+   "dark": "petroff-10-on-primer-dark-high-contrast"
+  },
+  "print-first": {
+   "light": "tol-muted",
+   "dark": "petroff-10-on-primer-dark-high-contrast"
+  },
+  "text-first": {
+   "light": "tol-bright",
+   "dark": "petroff-10-on-primer-dark-high-contrast"
+  }
+ },
+ "defaults": {
+  "palettes": [
+   "tol-bright",
+   "petroff-10-on-primer-dark-high-contrast"
+  ],
+  "print_palette": "tol-bright"
+ },
+ "thresholds": {
+  "text": 4.5,
+  "text_target": 7.0,
+  "nontext": 3.0,
+  "jnd_de_ok": 0.02,
+  "cvd_collapse_de_ok": 0.05,
+  "grey_dl": 0.03
+ },
+ "eligible": {
+  "light": 4,
+  "dark": 6
+ },
+ "catalog_dark_eligible": 0,
+ "entries": [
+  {
+   "id": "okabe-ito",
+   "family": "Okabe-Ito",
+   "catalog_mode": "categorical-only",
+   "derivable": true,
+   "error": "",
+   "mode": "light",
+   "source": "derived",
+   "default_eligible": false,
+   "not_eligible_because": "inv and dx strokes (#0066a0, #007957) differ by OKLab 0.028 under tritan simulation, below 0.05",
+   "scores": {
+    "balanced": 50.79,
+    "cvd-first": 44.6,
+    "print-first": 47.27,
+    "text-first": 62.73
+   },
+   "components": {
+    "text": 1.0,
+    "nontext": 0.504,
+    "stroke_normal": 0.877,
+    "stroke_red_green": 0.295,
+    "stroke_tritan": 0.365,
+    "stroke_grey": 0.012,
+    "fill_cvd": 0.349,
+    "fill_grey": 0.658
+   },
+   "text_min": 10.25,
+   "nontext_min": 3.01,
+   "text_on_fill_min": 10.66,
+   "stroke_de_ok": {
+    "none": 0.1054,
+    "protan": 0.0762,
+    "deutan": 0.0579,
+    "tritan": 0.0278
+   },
+   "stroke_de00": {
+    "none": 17.53,
+    "protan": 10.67,
+    "deutan": 5.9,
+    "tritan": 7.3
+   },
+   "stroke_grey_dl": 0.0012,
+   "fill_de00": {
+    "none": 8.42,
+    "protan": 3.49,
+    "deutan": 4.47,
+    "tritan": 5.48
+   },
+   "fill_grey_dl": 0.0329,
+   "role_accents": {
+    "risk": "accent_1",
+    "mech": "accent_2",
+    "anat": "neutral",
+    "sign": "accent_6",
+    "inv": "accent_5",
+    "dx": "accent_3",
+    "tx": "accent_7"
+   },
+   "reported": [
+    "inv and dx strokes (#0066a0, #007957) differ by OKLab 0.028 under tritan simulation, below 0.05"
+   ]
+  },
+  {
+   "id": "tol-bright",
+   "family": "Paul Tol",
+   "catalog_mode": "categorical-only",
+   "derivable": true,
+   "error": "",
+   "mode": "light",
+   "source": "derived",
+   "default_eligible": true,
+   "not_eligible_because": "",
+   "scores": {
+    "balanced": 57.42,
+    "cvd-first": 54.2,
+    "print-first": 51.4,
+    "text-first": 67.56
+   },
+   "components": {
+    "text": 1.0,
+    "nontext": 0.508,
+    "stroke_normal": 0.97,
+    "stroke_red_green": 0.52,
+    "stroke_tritan": 0.478,
+    "stroke_grey": 0.034,
+    "fill_cvd": 0.28,
+    "fill_grey": 0.662
+   },
+   "text_min": 10.25,
+   "nontext_min": 3.02,
+   "text_on_fill_min": 10.66,
+   "stroke_de_ok": {
+    "none": 0.1239,
+    "protan": 0.0799,
+    "deutan": 0.0592,
+    "tritan": 0.0504
+   },
+   "stroke_de00": {
+    "none": 19.39,
+    "protan": 10.4,
+    "deutan": 12.65,
+    "tritan": 9.55
+   },
+   "stroke_grey_dl": 0.0034,
+   "fill_de00": {
+    "none": 8.48,
+    "protan": 2.8,
+    "deutan": 2.96,
+    "tritan": 5.89
+   },
+   "fill_grey_dl": 0.0331,
+   "role_accents": {
+    "risk": "accent_7",
+    "mech": "accent_3",
+    "anat": "neutral",
+    "sign": "accent_2",
+    "inv": "accent_1",
+    "dx": "accent_4",
+    "tx": "accent_6"
+   },
+   "reported": []
+  },
+  {
+   "id": "tol-high-contrast",
+   "family": "Paul Tol",
+   "catalog_mode": "categorical-only",
+   "derivable": false,
+   "error": "tol-high-contrast: needs 6 accents for the 6 coloured roles, has 3"
+  },
+  {
+   "id": "tol-vibrant",
+   "family": "Paul Tol",
+   "catalog_mode": "categorical-only",
+   "derivable": true,
+   "error": "",
+   "mode": "light",
+   "source": "derived",
+   "default_eligible": false,
+   "not_eligible_because": "dx and tx strokes (#8a8a8a, #ee3377) differ by OKLab 0.042 under deutan simulation, below 0.05; mech and inv strokes (#008173, #0068a4) differ by OKLab 0.042 under tritan simulation, below 0.05",
+   "scores": {
+    "balanced": 48.95,
+    "cvd-first": 43.06,
+    "print-first": 45.7,
+    "text-first": 61.32
+   },
+   "components": {
+    "text": 1.0,
+    "nontext": 0.512,
+    "stroke_normal": 0.758,
+    "stroke_red_green": 0.369,
+    "stroke_tritan": 0.268,
+    "stroke_grey": 0.021,
+    "fill_cvd": 0.117,
+    "fill_grey": 0.674
+   },
+   "text_min": 10.25,
+   "nontext_min": 3.03,
+   "text_on_fill_min": 10.67,
+   "stroke_de_ok": {
+    "none": 0.1133,
+    "protan": 0.0599,
+    "deutan": 0.0417,
+    "tritan": 0.0418
+   },
+   "stroke_de00": {
+    "none": 15.17,
+    "protan": 7.39,
+    "deutan": 10.95,
+    "tritan": 5.36
+   },
+   "stroke_grey_dl": 0.0021,
+   "fill_de00": {
+    "none": 5.9,
+    "protan": 1.17,
+    "deutan": 3.54,
+    "tritan": 5.14
+   },
+   "fill_grey_dl": 0.0337,
+   "role_accents": {
+    "risk": "accent_1",
+    "mech": "accent_6",
+    "anat": "neutral",
+    "sign": "accent_5",
+    "inv": "accent_2",
+    "dx": "accent_7",
+    "tx": "accent_4"
+   },
+   "reported": [
+    "dx and tx strokes (#8a8a8a, #ee3377) differ by OKLab 0.042 under deutan simulation, below 0.05",
+    "mech and inv strokes (#008173, #0068a4) differ by OKLab 0.042 under tritan simulation, below 0.05"
+   ]
+  },
+  {
+   "id": "tol-muted",
+   "family": "Paul Tol",
+   "catalog_mode": "categorical-only",
+   "derivable": true,
+   "error": "",
+   "mode": "light",
+   "source": "derived",
+   "default_eligible": true,
+   "not_eligible_because": "",
+   "scores": {
+    "balanced": 56.08,
+    "cvd-first": 52.53,
+    "print-first": 53.06,
+    "text-first": 66.03
+   },
+   "components": {
+    "text": 1.0,
+    "nontext": 0.528,
+    "stroke_normal": 0.75,
+    "stroke_red_green": 0.418,
+    "stroke_tritan": 0.575,
+    "stroke_grey": 0.174,
+    "fill_cvd": 0.285,
+    "fill_grey": 0.658
+   },
+   "text_min": 10.25,
+   "nontext_min": 3.07,
+   "text_on_fill_min": 10.73,
+   "stroke_de_ok": {
+    "none": 0.129,
+    "protan": 0.0946,
+    "deutan": 0.0724,
+    "tritan": 0.0928
+   },
+   "stroke_de00": {
+    "none": 15.0,
+    "protan": 11.8,
+    "deutan": 8.36,
+    "tritan": 11.5
+   },
+   "stroke_grey_dl": 0.0174,
+   "fill_de00": {
+    "none": 7.84,
+    "protan": 2.85,
+    "deutan": 3.41,
+    "tritan": 5.3
+   },
+   "fill_grey_dl": 0.0329,
+   "role_accents": {
+    "risk": "accent_1",
+    "mech": "accent_5",
+    "anat": "neutral",
+    "sign": "accent_6",
+    "inv": "accent_2",
+    "dx": "accent_4",
+    "tx": "accent_9"
+   },
+   "reported": []
+  },
+  {
+   "id": "tol-medium-contrast",
+   "family": "Paul Tol",
+   "catalog_mode": "categorical-only",
+   "derivable": true,
+   "error": "",
+   "mode": "light",
+   "source": "derived",
+   "default_eligible": true,
+   "not_eligible_because": "",
+   "scores": {
+    "balanced": 50.05,
+    "cvd-first": 47.84,
+    "print-first": 45.75,
+    "text-first": 60.9
+   },
+   "components": {
+    "text": 1.0,
+    "nontext": 0.508,
+    "stroke_normal": 0.446,
+    "stroke_red_green": 0.439,
+    "stroke_tritan": 0.439,
+    "stroke_grey": 0.063,
+    "fill_cvd": 0.215,
+    "fill_grey": 0.666
+   },
+   "text_min": 10.25,
+   "nontext_min": 3.02,
+   "text_on_fill_min": 10.72,
+   "stroke_de_ok": {
+    "none": 0.078,
+    "protan": 0.0774,
+    "deutan": 0.0786,
+    "tritan": 0.0583
+   },
+   "stroke_de00": {
+    "none": 8.92,
+    "protan": 9.04,
+    "deutan": 8.79,
+    "tritan": 8.77
+   },
+   "stroke_grey_dl": 0.0063,
+   "fill_de00": {
+    "none": 7.71,
+    "protan": 3.21,
+    "deutan": 2.15,
+    "tritan": 5.29
+   },
+   "fill_grey_dl": 0.0333,
+   "role_accents": {
+    "risk": "accent_5",
+    "mech": "accent_1",
+    "anat": "neutral",
+    "sign": "accent_4",
+    "inv": "accent_2",
+    "dx": "accent_3",
+    "tx": "accent_6"
+   },
+   "reported": []
+  },
+  {
+   "id": "tol-light",
+   "family": "Paul Tol",
+   "catalog_mode": "categorical-only",
+   "derivable": true,
+   "error": "",
+   "mode": "light",
+   "source": "derived",
+   "default_eligible": false,
+   "not_eligible_because": "risk and sign strokes (#666600, #b75736) differ by OKLab 0.034 under protan simulation, below 0.05; sign and dx strokes (#b75736, #7e8b00) differ by OKLab 0.041 under deutan simulation, below 0.05; risk and anat strokes (#666600, #786c63) differ by OKLab 0.046 under tritan simulation, below 0.05",
+   "scores": {
+    "balanced": 49.09,
+    "cvd-first": 43.35,
+    "print-first": 46.45,
+    "text-first": 61.09
+   },
+   "components": {
+    "text": 1.0,
+    "nontext": 0.512,
+    "stroke_normal": 0.7,
+    "stroke_red_green": 0.3,
+    "stroke_tritan": 0.347,
+    "stroke_grey": 0.065,
+    "fill_cvd": 0.282,
+    "fill_grey": 0.624
+   },
+   "text_min": 10.25,
+   "nontext_min": 3.03,
+   "text_on_fill_min": 10.68,
+   "stroke_de_ok": {
+    "none": 0.106,
+    "protan": 0.0342,
+    "deutan": 0.0412,
+    "tritan": 0.0463
+   },
+   "stroke_de00": {
+    "none": 13.99,
+    "protan": 6.69,
+    "deutan": 6.0,
+    "tritan": 6.94
+   },
+   "stroke_grey_dl": 0.0065,
+   "fill_de00": {
+    "none": 8.32,
+    "protan": 2.93,
+    "deutan": 2.82,
+    "tritan": 5.63
+   },
+   "fill_grey_dl": 0.0312,
+   "role_accents": {
+    "risk": "accent_8",
+    "mech": "accent_5",
+    "anat": "neutral",
+    "sign": "accent_2",
+    "inv": "accent_1",
+    "dx": "accent_7",
+    "tx": "accent_4"
+   },
+   "reported": [
+    "risk and sign strokes (#666600, #b75736) differ by OKLab 0.034 under protan simulation, below 0.05",
+    "sign and dx strokes (#b75736, #7e8b00) differ by OKLab 0.041 under deutan simulation, below 0.05",
+    "risk and anat strokes (#666600, #786c63) differ by OKLab 0.046 under tritan simulation, below 0.05"
+   ]
+  },
+  {
+   "id": "ibm-colourblind",
+   "family": "IBM Design Language",
+   "catalog_mode": "categorical-only",
+   "derivable": false,
+   "error": "ibm-colourblind: needs 6 accents for the 6 coloured roles, has 5"
+  },
+  {
+   "id": "petroff-6",
+   "family": "Petroff 2021",
+   "catalog_mode": "categorical-only",
+   "derivable": true,
+   "error": "",
+   "mode": "light",
+   "source": "derived",
+   "default_eligible": true,
+   "not_eligible_because": "",
+   "scores": {
+    "balanced": 55.69,
+    "cvd-first": 52.36,
+    "print-first": 50.86,
+    "text-first": 65.99
+   },
+   "components": {
+    "text": 1.0,
+    "nontext": 0.5,
+    "stroke_normal": 0.894,
+    "stroke_red_green": 0.404,
+    "stroke_tritan": 0.627,
+    "stroke_grey": 0.052,
+    "fill_cvd": 0.299,
+    "fill_grey": 0.67
+   },
+   "text_min": 10.25,
+   "nontext_min": 3.0,
+   "text_on_fill_min": 10.67,
+   "stroke_de_ok": {
+    "none": 0.1502,
+    "protan": 0.0631,
+    "deutan": 0.0671,
+    "tritan": 0.0988
+   },
+   "stroke_de00": {
+    "none": 17.87,
+    "protan": 10.57,
+    "deutan": 8.07,
+    "tritan": 12.54
+   },
+   "stroke_grey_dl": 0.0052,
+   "fill_de00": {
+    "none": 3.54,
+    "protan": 3.49,
+    "deutan": 3.65,
+    "tritan": 2.99
+   },
+   "fill_grey_dl": 0.0335,
+   "role_accents": {
+    "risk": "accent_3",
+    "mech": "accent_5",
+    "anat": "neutral",
+    "sign": "accent_4",
+    "inv": "accent_1",
+    "dx": "accent_2",
+    "tx": "accent_6"
+   },
+   "reported": []
+  },
+  {
+   "id": "petroff-8",
+   "family": "Petroff 2021",
+   "catalog_mode": "categorical-only",
+   "derivable": true,
+   "error": "",
+   "mode": "light",
+   "source": "derived",
+   "default_eligible": false,
+   "not_eligible_because": "mech and tx strokes (#5192a6, #c849a9) differ by OKLab 0.009 under deutan simulation, below 0.05",
+   "scores": {
+    "balanced": 45.94,
+    "cvd-first": 39.71,
+    "print-first": 45.16,
+    "text-first": 58.17
+   },
+   "components": {
+    "text": 1.0,
+    "nontext": 0.508,
+    "stroke_normal": 0.524,
+    "stroke_red_green": 0.057,
+    "stroke_tritan": 0.551,
+    "stroke_grey": 0.072,
+    "fill_cvd": 0.518,
+    "fill_grey": 0.676
+   },
+   "text_min": 10.25,
+   "nontext_min": 3.02,
+   "text_on_fill_min": 10.64,
+   "stroke_de_ok": {
+    "none": 0.0833,
+    "protan": 0.0644,
+    "deutan": 0.0088,
+    "tritan": 0.0824
+   },
+   "stroke_de00": {
+    "none": 10.48,
+    "protan": 9.0,
+    "deutan": 1.14,
+    "tritan": 11.03
+   },
+   "stroke_grey_dl": 0.0072,
+   "fill_de00": {
+    "none": 9.12,
+    "protan": 6.61,
+    "deutan": 6.26,
+    "tritan": 5.18
+   },
+   "fill_grey_dl": 0.0338,
+   "role_accents": {
+    "risk": "accent_3",
+    "mech": "accent_6",
+    "anat": "neutral",
+    "sign": "accent_8",
+    "inv": "accent_1",
+    "dx": "accent_5",
+    "tx": "accent_4"
+   },
+   "reported": [
+    "mech and tx strokes (#5192a6, #c849a9) differ by OKLab 0.009 under deutan simulation, below 0.05"
+   ]
+  },
+  {
+   "id": "petroff-10",
+   "family": "Petroff 2021",
+   "catalog_mode": "categorical-only",
+   "derivable": true,
+   "error": "",
+   "mode": "light",
+   "source": "derived",
+   "default_eligible": false,
+   "not_eligible_because": "mech and dx strokes (#978a4f, #be7c00) differ by OKLab 0.047 under protan simulation, below 0.05; risk and mech strokes (#a96b59, #978a4f) differ by OKLab 0.046 under deutan simulation, below 0.05",
+   "scores": {
+    "balanced": 50.03,
+    "cvd-first": 44.1,
+    "print-first": 46.3,
+    "text-first": 62.22
+   },
+   "components": {
+    "text": 1.0,
+    "nontext": 0.532,
+    "stroke_normal": 0.799,
+    "stroke_red_green": 0.314,
+    "stroke_tritan": 0.333,
+    "stroke_grey": 0.003,
+    "fill_cvd": 0.319,
+    "fill_grey": 0.65
+   },
+   "text_min": 10.25,
+   "nontext_min": 3.08,
+   "text_on_fill_min": 10.74,
+   "stroke_de_ok": {
+    "none": 0.0728,
+    "protan": 0.0473,
+    "deutan": 0.046,
+    "tritan": 0.0554
+   },
+   "stroke_de00": {
+    "none": 15.98,
+    "protan": 8.27,
+    "deutan": 6.28,
+    "tritan": 6.65
+   },
+   "stroke_grey_dl": 0.0003,
+   "fill_de00": {
+    "none": 8.25,
+    "protan": 3.19,
+    "deutan": 4.92,
+    "tritan": 5.34
+   },
+   "fill_grey_dl": 0.0325,
+   "role_accents": {
+    "risk": "accent_6",
+    "mech": "accent_8",
+    "anat": "neutral",
+    "sign": "accent_3",
+    "inv": "accent_9",
+    "dx": "accent_2",
+    "tx": "accent_5"
+   },
+   "reported": [
+    "mech and dx strokes (#978a4f, #be7c00) differ by OKLab 0.047 under protan simulation, below 0.05",
+    "risk and mech strokes (#a96b59, #978a4f) differ by OKLab 0.046 under deutan simulation, below 0.05"
+   ]
+  },
+  {
+   "id": "modus-operandi",
+   "family": "Modus",
+   "catalog_mode": "light",
+   "derivable": true,
+   "error": "",
+   "mode": "light",
+   "source": "derived",
+   "default_eligible": false,
+   "not_eligible_because": "risk and dx strokes (#6f5500, #006800) differ by OKLab 0.031 under protan simulation, below 0.05; risk and sign strokes (#6f5500, #a60000) differ by OKLab 0.004 under deutan simulation, below 0.05; mech and dx strokes (#005e8b, #006800) differ by OKLab 0.037 under tritan simulation, below 0.05",
+   "scores": {
+    "balanced": 46.41,
+    "cvd-first": 35.97,
+    "print-first": 45.94,
+    "text-first": 61.74
+   },
+   "components": {
+    "text": 1.0,
+    "nontext": 0.755,
+    "stroke_normal": 0.849,
+    "stroke_red_green": 0.038,
+    "stroke_tritan": 0.416,
+    "stroke_grey": 0.001,
+    "fill_cvd": 0.22,
+    "fill_grey": 0.63
+   },
+   "text_min": 6.26,
+   "nontext_min": 3.69,
+   "text_on_fill_min": 10.72,
+   "stroke_de_ok": {
+    "none": 0.1086,
+    "protan": 0.0306,
+    "deutan": 0.0038,
+    "tritan": 0.0366
+   },
+   "stroke_de00": {
+    "none": 16.99,
+    "protan": 3.12,
+    "deutan": 0.77,
+    "tritan": 8.32
+   },
+   "stroke_grey_dl": 0.0001,
+   "fill_de00": {
+    "none": 7.82,
+    "protan": 2.2,
+    "deutan": 3.85,
+    "tritan": 7.9
+   },
+   "fill_grey_dl": 0.0315,
+   "role_accents": {
+    "risk": "accent_3",
+    "mech": "accent_6",
+    "anat": "neutral",
+    "sign": "accent_1",
+    "inv": "accent_4",
+    "dx": "accent_2",
+    "tx": "accent_5"
+   },
+   "reported": [
+    "risk and dx strokes (#6f5500, #006800) differ by OKLab 0.031 under protan simulation, below 0.05",
+    "risk and sign strokes (#6f5500, #a60000) differ by OKLab 0.004 under deutan simulation, below 0.05",
+    "mech and dx strokes (#005e8b, #006800) differ by OKLab 0.037 under tritan simulation, below 0.05"
+   ]
+  },
+  {
+   "id": "modus-operandi-tinted",
+   "family": "Modus",
+   "catalog_mode": "light",
+   "derivable": true,
+   "error": "",
+   "mode": "light",
+   "source": "derived",
+   "default_eligible": false,
+   "not_eligible_because": "risk and dx strokes (#6d5000, #006300) differ by OKLab 0.030 under protan simulation, below 0.05; risk and sign strokes (#6d5000, #a60000) differ by OKLab 0.017 under deutan simulation, below 0.05; mech and dx strokes (#00598b, #006300) differ by OKLab 0.040 under tritan simulation, below 0.05",
+   "scores": {
+    "balanced": 50.11,
+    "cvd-first": 42.24,
+    "print-first": 47.72,
+    "text-first": 63.04
+   },
+   "components": {
+    "text": 1.0,
+    "nontext": 0.662,
+    "stroke_normal": 0.77,
+    "stroke_red_green": 0.095,
+    "stroke_tritan": 0.44,
+    "stroke_grey": 0.003,
+    "fill_cvd": 0.673,
+    "fill_grey": 0.68
+   },
+   "text_min": 5.79,
+   "nontext_min": 3.42,
+   "text_on_fill_min": 9.87,
+   "stroke_de_ok": {
+    "none": 0.1165,
+    "protan": 0.0299,
+    "deutan": 0.0166,
+    "tritan": 0.0396
+   },
+   "stroke_de00": {
+    "none": 15.39,
+    "protan": 2.99,
+    "deutan": 1.9,
+    "tritan": 8.8
+   },
+   "stroke_grey_dl": 0.0003,
+   "fill_de00": {
+    "none": 7.99,
+    "protan": 6.73,
+    "deutan": 7.74,
+    "tritan": 6.98
+   },
+   "fill_grey_dl": 0.034,
+   "role_accents": {
+    "risk": "accent_3",
+    "mech": "accent_6",
+    "anat": "neutral",
+    "sign": "accent_1",
+    "inv": "accent_4",
+    "dx": "accent_2",
+    "tx": "accent_5"
+   },
+   "reported": [
+    "risk and dx strokes (#6d5000, #006300) differ by OKLab 0.030 under protan simulation, below 0.05",
+    "risk and sign strokes (#6d5000, #a60000) differ by OKLab 0.017 under deutan simulation, below 0.05",
+    "mech and dx strokes (#00598b, #006300) differ by OKLab 0.040 under tritan simulation, below 0.05"
+   ]
+  },
+  {
+   "id": "modus-operandi-deuteranopia",
+   "family": "Modus",
+   "catalog_mode": "light",
+   "derivable": true,
+   "error": "",
+   "mode": "light",
+   "source": "derived",
+   "default_eligible": false,
+   "not_eligible_because": "mech and inv strokes (#0000b0, #0031a9) differ by OKLab 0.032 under protan simulation, below 0.05; sign and dx strokes (#973300, #695500) differ by OKLab 0.014 under deutan simulation, below 0.05; mech and inv strokes (#0000b0, #0031a9) differ by OKLab 0.038 under tritan simulation, below 0.05",
+   "scores": {
+    "balanced": 42.47,
+    "cvd-first": 34.59,
+    "print-first": 41.69,
+    "text-first": 56.85
+   },
+   "components": {
+    "text": 1.0,
+    "nontext": 0.647,
+    "stroke_normal": 0.43,
+    "stroke_red_green": 0.085,
+    "stroke_tritan": 0.302,
+    "stroke_grey": 0.009,
+    "fill_cvd": 0.329,
+    "fill_grey": 0.664
+   },
+   "text_min": 6.26,
+   "nontext_min": 3.38,
+   "text_on_fill_min": 10.7,
+   "stroke_de_ok": {
+    "none": 0.059,
+    "protan": 0.0318,
+    "deutan": 0.0137,
+    "tritan": 0.0376
+   },
+   "stroke_de00": {
+    "none": 8.6,
+    "protan": 4.66,
+    "deutan": 1.7,
+    "tritan": 6.04
+   },
+   "stroke_grey_dl": 0.0009,
+   "fill_de00": {
+    "none": 3.29,
+    "protan": 3.3,
+    "deutan": 3.7,
+    "tritan": 3.44
+   },
+   "fill_grey_dl": 0.0332,
+   "role_accents": {
+    "risk": "accent_4",
+    "mech": "accent_5",
+    "anat": "neutral",
+    "sign": "accent_6",
+    "inv": "accent_1",
+    "dx": "accent_2",
+    "tx": "accent_3"
+   },
+   "reported": [
+    "mech and inv strokes (#0000b0, #0031a9) differ by OKLab 0.032 under protan simulation, below 0.05",
+    "sign and dx strokes (#973300, #695500) differ by OKLab 0.014 under deutan simulation, below 0.05",
+    "mech and inv strokes (#0000b0, #0031a9) differ by OKLab 0.038 under tritan simulation, below 0.05"
+   ]
+  },
+  {
+   "id": "modus-operandi-tritanopia",
+   "family": "Modus",
+   "catalog_mode": "light",
+   "derivable": true,
+   "error": "",
+   "mode": "light",
+   "source": "derived",
+   "default_eligible": false,
+   "not_eligible_because": "mech and inv strokes (#005e8b, #3f578f) differ by OKLab 0.015 under protan simulation, below 0.05; mech and inv strokes (#005e8b, #3f578f) differ by OKLab 0.007 under deutan simulation, below 0.05; mech and inv strokes (#005e8b, #3f578f) differ by OKLab 0.019 under tritan simulation, below 0.05",
+   "scores": {
+    "balanced": 41.01,
+    "cvd-first": 30.52,
+    "print-first": 41.29,
+    "text-first": 57.08
+   },
+   "components": {
+    "text": 1.0,
+    "nontext": 0.755,
+    "stroke_normal": 0.506,
+    "stroke_red_green": 0.035,
+    "stroke_tritan": 0.162,
+    "stroke_grey": 0.002,
+    "fill_cvd": 0.239,
+    "fill_grey": 0.626
+   },
+   "text_min": 6.26,
+   "nontext_min": 3.69,
+   "text_on_fill_min": 10.72,
+   "stroke_de_ok": {
+    "none": 0.0369,
+    "protan": 0.0149,
+    "deutan": 0.0069,
+    "tritan": 0.0187
+   },
+   "stroke_de00": {
+    "none": 10.12,
+    "protan": 1.83,
+    "deutan": 0.71,
+    "tritan": 3.24
+   },
+   "stroke_grey_dl": 0.0002,
+   "fill_de00": {
+    "none": 6.74,
+    "protan": 2.39,
+    "deutan": 4.13,
+    "tritan": 4.84
+   },
+   "fill_grey_dl": 0.0313,
+   "role_accents": {
+    "risk": "accent_2",
+    "mech": "accent_1",
+    "anat": "neutral",
+    "sign": "accent_4",
+    "inv": "accent_3",
+    "dx": "accent_5",
+    "tx": "accent_6"
+   },
+   "reported": [
+    "mech and inv strokes (#005e8b, #3f578f) differ by OKLab 0.015 under protan simulation, below 0.05",
+    "mech and inv strokes (#005e8b, #3f578f) differ by OKLab 0.007 under deutan simulation, below 0.05",
+    "mech and inv strokes (#005e8b, #3f578f) differ by OKLab 0.019 under tritan simulation, below 0.05"
+   ]
+  },
+  {
+   "id": "modus-vivendi",
+   "family": "Modus",
+   "catalog_mode": "dark",
+   "derivable": true,
+   "error": "",
+   "mode": "dark",
+   "source": "derived",
+   "default_eligible": false,
+   "not_eligible_because": "mech and tx strokes (#00d3d0, #feacd0) differ by OKLab 0.042 under protan simulation, below 0.05; sign and dx strokes (#ff5f59, #44bc44) differ by OKLab 0.006 under deutan simulation, below 0.05; inv and dx fills (#002e4a, #003402) differ by 0.001 in greyscale lightness, below 0.03",
+   "scores": {
+    "balanced": 45.93,
+    "cvd-first": 34.25,
+    "print-first": 44.72,
+    "text-first": 63.81
+   },
+   "components": {
+    "text": 1.0,
+    "nontext": 1.0,
+    "stroke_normal": 1.0,
+    "stroke_red_green": 0.047,
+    "stroke_tritan": 0.4,
+    "stroke_grey": 0.055,
+    "fill_cvd": 0.1,
+    "fill_grey": 0.01
+   },
+   "text_min": 5.78,
+   "nontext_min": 5.13,
+   "text_on_fill_min": 12.37,
+   "stroke_de_ok": {
+    "none": 0.127,
+    "protan": 0.0418,
+    "deutan": 0.0061,
+    "tritan": 0.0585
+   },
+   "stroke_de00": {
+    "none": 24.58,
+    "protan": 5.05,
+    "deutan": 0.94,
+    "tritan": 8.01
+   },
+   "stroke_grey_dl": 0.0055,
+   "fill_de00": {
+    "none": 15.36,
+    "protan": 1.0,
+    "deutan": 1.28,
+    "tritan": 4.04
+   },
+   "fill_grey_dl": 0.0005,
+   "role_accents": {
+    "risk": "accent_3",
+    "mech": "accent_6",
+    "anat": "neutral",
+    "sign": "accent_1",
+    "inv": "accent_4",
+    "dx": "accent_2",
+    "tx": "accent_5"
+   },
+   "reported": [
+    "mech and tx strokes (#00d3d0, #feacd0) differ by OKLab 0.042 under protan simulation, below 0.05",
+    "sign and dx strokes (#ff5f59, #44bc44) differ by OKLab 0.006 under deutan simulation, below 0.05",
+    "inv and dx fills (#002e4a, #003402) differ by 0.001 in greyscale lightness, below 0.03"
+   ]
+  },
+  {
+   "id": "modus-vivendi-tinted",
+   "family": "Modus",
+   "catalog_mode": "dark",
+   "derivable": true,
+   "error": "",
+   "mode": "dark",
+   "source": "derived",
+   "default_eligible": false,
+   "not_eligible_because": "mech and tx strokes (#00d3d0, #feacd0) differ by OKLab 0.042 under protan simulation, below 0.05; sign and dx strokes (#ff5f59, #44bc44) differ by OKLab 0.006 under deutan simulation, below 0.05",
+   "scores": {
+    "balanced": 50.95,
+    "cvd-first": 38.13,
+    "print-first": 51.43,
+    "text-first": 67.34
+   },
+   "components": {
+    "text": 1.0,
+    "nontext": 1.0,
+    "stroke_normal": 1.0,
+    "stroke_red_green": 0.047,
+    "stroke_tritan": 0.4,
+    "stroke_grey": 0.055,
+    "fill_cvd": 0.17,
+    "fill_grey": 0.646
+   },
+   "text_min": 5.46,
+   "nontext_min": 5.28,
+   "text_on_fill_min": 9.87,
+   "stroke_de_ok": {
+    "none": 0.127,
+    "protan": 0.0418,
+    "deutan": 0.0061,
+    "tritan": 0.0585
+   },
+   "stroke_de00": {
+    "none": 24.58,
+    "protan": 5.05,
+    "deutan": 0.94,
+    "tritan": 8.01
+   },
+   "stroke_grey_dl": 0.0055,
+   "fill_de00": {
+    "none": 13.9,
+    "protan": 5.24,
+    "deutan": 1.7,
+    "tritan": 5.48
+   },
+   "fill_grey_dl": 0.0323,
+   "role_accents": {
+    "risk": "accent_3",
+    "mech": "accent_6",
+    "anat": "neutral",
+    "sign": "accent_1",
+    "inv": "accent_4",
+    "dx": "accent_2",
+    "tx": "accent_5"
+   },
+   "reported": [
+    "mech and tx strokes (#00d3d0, #feacd0) differ by OKLab 0.042 under protan simulation, below 0.05",
+    "sign and dx strokes (#ff5f59, #44bc44) differ by OKLab 0.006 under deutan simulation, below 0.05"
+   ]
+  },
+  {
+   "id": "modus-vivendi-deuteranopia",
+   "family": "Modus",
+   "catalog_mode": "dark",
+   "derivable": true,
+   "error": "",
+   "mode": "dark",
+   "source": "derived",
+   "default_eligible": false,
+   "not_eligible_because": "inv and tx strokes (#2fafff, #79a8ff) differ by OKLab 0.007 under protan simulation, below 0.05; risk and dx strokes (#ffa00f, #cabf00) differ by OKLab 0.004 under deutan simulation, below 0.05; inv and tx strokes (#2fafff, #79a8ff) differ by OKLab 0.022 under tritan simulation, below 0.05; inv and tx fills (#002e4a, #142a55) differ by 0.001 in greyscale lightness, below 0.03",
+   "scores": {
+    "balanced": 35.75,
+    "cvd-first": 25.53,
+    "print-first": 35.04,
+    "text-first": 53.94
+   },
+   "components": {
+    "text": 1.0,
+    "nontext": 0.814,
+    "stroke_normal": 0.514,
+    "stroke_red_green": 0.028,
+    "stroke_tritan": 0.15,
+    "stroke_grey": 0.013,
+    "fill_cvd": 0.048,
+    "fill_grey": 0.01
+   },
+   "text_min": 5.78,
+   "nontext_min": 3.87,
+   "text_on_fill_min": 11.7,
+   "stroke_de_ok": {
+    "none": 0.0556,
+    "protan": 0.007,
+    "deutan": 0.0036,
+    "tritan": 0.0216
+   },
+   "stroke_de00": {
+    "none": 10.29,
+    "protan": 0.65,
+    "deutan": 0.56,
+    "tritan": 2.99
+   },
+   "stroke_grey_dl": 0.0013,
+   "fill_de00": {
+    "none": 4.84,
+    "protan": 2.08,
+    "deutan": 0.48,
+    "tritan": 2.33
+   },
+   "fill_grey_dl": 0.0005,
+   "role_accents": {
+    "risk": "accent_1",
+    "mech": "accent_6",
+    "anat": "neutral",
+    "sign": "accent_3",
+    "inv": "accent_2",
+    "dx": "accent_5",
+    "tx": "accent_4"
+   },
+   "reported": [
+    "inv and tx strokes (#2fafff, #79a8ff) differ by OKLab 0.007 under protan simulation, below 0.05",
+    "risk and dx strokes (#ffa00f, #cabf00) differ by OKLab 0.004 under deutan simulation, below 0.05",
+    "inv and tx strokes (#2fafff, #79a8ff) differ by OKLab 0.022 under tritan simulation, below 0.05",
+    "inv and tx fills (#002e4a, #142a55) differ by 0.001 in greyscale lightness, below 0.03"
+   ]
+  },
+  {
+   "id": "modus-vivendi-tritanopia",
+   "family": "Modus",
+   "catalog_mode": "dark",
+   "derivable": true,
+   "error": "",
+   "mode": "dark",
+   "source": "derived",
+   "default_eligible": false,
+   "not_eligible_because": "mech and tx strokes (#00d3d0, #feacd0) differ by OKLab 0.042 under protan simulation, below 0.05; risk and sign strokes (#d2b580, #ff9070) differ by OKLab 0.022 under deutan simulation, below 0.05; sign and inv fills (#521c0c, #322553) differ by 0.001 in greyscale lightness, below 0.03",
+   "scores": {
+    "balanced": 46.85,
+    "cvd-first": 38.97,
+    "print-first": 42.85,
+    "text-first": 62.15
+   },
+   "components": {
+    "text": 1.0,
+    "nontext": 0.732,
+    "stroke_normal": 1.0,
+    "stroke_red_green": 0.162,
+    "stroke_tritan": 0.457,
+    "stroke_grey": 0.004,
+    "fill_cvd": 0.267,
+    "fill_grey": 0.018
+   },
+   "text_min": 5.78,
+   "nontext_min": 3.62,
+   "text_on_fill_min": 12.37,
+   "stroke_de_ok": {
+    "none": 0.1053,
+    "protan": 0.0418,
+    "deutan": 0.0225,
+    "tritan": 0.0585
+   },
+   "stroke_de00": {
+    "none": 20.44,
+    "protan": 6.08,
+    "deutan": 3.23,
+    "tritan": 9.14
+   },
+   "stroke_grey_dl": 0.0004,
+   "fill_de00": {
+    "none": 10.1,
+    "protan": 3.07,
+    "deutan": 2.67,
+    "tritan": 4.04
+   },
+   "fill_grey_dl": 0.0009,
+   "role_accents": {
+    "risk": "accent_4",
+    "mech": "accent_2",
+    "anat": "neutral",
+    "sign": "accent_3",
+    "inv": "accent_5",
+    "dx": "accent_6",
+    "tx": "accent_1"
+   },
+   "reported": [
+    "mech and tx strokes (#00d3d0, #feacd0) differ by OKLab 0.042 under protan simulation, below 0.05",
+    "risk and sign strokes (#d2b580, #ff9070) differ by OKLab 0.022 under deutan simulation, below 0.05",
+    "sign and inv fills (#521c0c, #322553) differ by 0.001 in greyscale lightness, below 0.03"
+   ]
+  },
+  {
+   "id": "catppuccin-latte",
+   "family": "Catppuccin",
+   "catalog_mode": "light",
+   "derivable": true,
+   "error": "",
+   "mode": "light",
+   "source": "override",
+   "default_eligible": false,
+   "not_eligible_because": "hand-tuned override, kept as an option",
+   "scores": {
+    "balanced": 35.63,
+    "cvd-first": 27.65,
+    "print-first": 33.58,
+    "text-first": 50.45
+   },
+   "components": {
+    "text": 0.9,
+    "nontext": 0.58,
+    "stroke_normal": 0.728,
+    "stroke_red_green": 0.099,
+    "stroke_tritan": 0.238,
+    "stroke_grey": 0.0,
+    "fill_cvd": 0.057,
+    "fill_grey": 0.004
+   },
+   "text_min": 4.52,
+   "nontext_min": 3.2,
+   "text_on_fill_min": 6.41,
+   "stroke_de_ok": {
+    "none": 0.0859,
+    "protan": 0.0318,
+    "deutan": 0.0238,
+    "tritan": 0.0437
+   },
+   "stroke_de00": {
+    "none": 14.55,
+    "protan": 3.34,
+    "deutan": 1.97,
+    "tritan": 4.76
+   },
+   "stroke_grey_dl": 0.0,
+   "fill_de00": {
+    "none": 7.58,
+    "protan": 1.32,
+    "deutan": 0.57,
+    "tritan": 2.5
+   },
+   "fill_grey_dl": 0.0002,
+   "role_accents": null,
+   "reported": [
+    "inv and tx strokes (#315eb7, #6e4bad) differ by OKLab 0.032 under protan simulation, below 0.05",
+    "risk and dx strokes (#994d00, #287615) differ by OKLab 0.024 under deutan simulation, below 0.05",
+    "mech and inv strokes (#007a86, #315eb7) differ by OKLab 0.044 under tritan simulation, below 0.05",
+    "risk and inv fills (#ffe6c8, #d9ecff) differ by 0.000 in greyscale lightness, below 0.03"
+   ]
+  },
+  {
+   "id": "catppuccin-frappe",
+   "family": "Catppuccin",
+   "catalog_mode": "dark",
+   "derivable": true,
+   "error": "",
+   "mode": "dark",
+   "source": "override",
+   "default_eligible": false,
+   "not_eligible_because": "hand-tuned override, kept as an option",
+   "scores": {
+    "balanced": 32.45,
+    "cvd-first": 26.05,
+    "print-first": 29.68,
+    "text-first": 43.46
+   },
+   "components": {
+    "text": 0.601,
+    "nontext": 0.839,
+    "stroke_normal": 0.577,
+    "stroke_red_green": 0.12,
+    "stroke_tritan": 0.248,
+    "stroke_grey": 0.001,
+    "fill_cvd": 0.202,
+    "fill_grey": 0.002
+   },
+   "text_min": 4.92,
+   "nontext_min": 3.95,
+   "text_on_fill_min": 4.92,
+   "stroke_de_ok": {
+    "none": 0.0572,
+    "protan": 0.0259,
+    "deutan": 0.0166,
+    "tritan": 0.023
+   },
+   "stroke_de00": {
+    "none": 11.53,
+    "protan": 2.4,
+    "deutan": 4.24,
+    "tritan": 4.96
+   },
+   "stroke_grey_dl": 0.0001,
+   "fill_de00": {
+    "none": 11.42,
+    "protan": 2.02,
+    "deutan": 3.59,
+    "tritan": 3.16
+   },
+   "fill_grey_dl": 0.0001,
+   "role_accents": null,
+   "reported": [
+    "anat and sign strokes (#d0b3ad, #efa3a3) differ by OKLab 0.026 under protan simulation, below 0.05",
+    "anat and sign strokes (#d0b3ad, #efa3a3) differ by OKLab 0.017 under deutan simulation, below 0.05",
+    "risk and anat strokes (#d6b676, #d0b3ad) differ by OKLab 0.023 under tritan simulation, below 0.05",
+    "risk and inv fills (#605032, #45526f) differ by 0.000 in greyscale lightness, below 0.03"
+   ]
+  },
+  {
+   "id": "catppuccin-macchiato",
+   "family": "Catppuccin",
+   "catalog_mode": "dark",
+   "derivable": true,
+   "error": "",
+   "mode": "dark",
+   "source": "derived",
+   "default_eligible": false,
+   "not_eligible_because": "anat and tx strokes (#8e929f, #ed8796) differ by OKLab 0.030 under protan simulation, below 0.05; sign and dx strokes (#f4dbd6, #eed49f) differ by OKLab 0.035 under tritan simulation, below 0.05; mech and anat fills (#384a47, #444549) differ by 0.005 in greyscale lightness, below 0.03",
+   "scores": {
+    "balanced": 42.62,
+    "cvd-first": 34.66,
+    "print-first": 43.7,
+    "text-first": 53.3
+   },
+   "components": {
+    "text": 0.812,
+    "nontext": 0.532,
+    "stroke_normal": 0.857,
+    "stroke_red_green": 0.218,
+    "stroke_tritan": 0.244,
+    "stroke_grey": 0.292,
+    "fill_cvd": 0.081,
+    "fill_grey": 0.098
+   },
+   "text_min": 5.93,
+   "nontext_min": 3.08,
+   "text_on_fill_min": 5.93,
+   "stroke_de_ok": {
+    "none": 0.0695,
+    "protan": 0.03,
+    "deutan": 0.0648,
+    "tritan": 0.0349
+   },
+   "stroke_de00": {
+    "none": 17.15,
+    "protan": 4.37,
+    "deutan": 6.39,
+    "tritan": 4.88
+   },
+   "stroke_grey_dl": 0.0292,
+   "fill_de00": {
+    "none": 5.29,
+    "protan": 0.81,
+    "deutan": 1.25,
+    "tritan": 1.92
+   },
+   "fill_grey_dl": 0.0049,
+   "role_accents": {
+    "risk": "accent_7",
+    "mech": "accent_10",
+    "anat": "neutral",
+    "sign": "accent_1",
+    "inv": "accent_4",
+    "dx": "accent_8",
+    "tx": "accent_5"
+   },
+   "reported": [
+    "anat and tx strokes (#8e929f, #ed8796) differ by OKLab 0.030 under protan simulation, below 0.05",
+    "sign and dx strokes (#f4dbd6, #eed49f) differ by OKLab 0.035 under tritan simulation, below 0.05",
+    "mech and anat fills (#384a47, #444549) differ by 0.005 in greyscale lightness, below 0.03"
+   ]
+  },
+  {
+   "id": "catppuccin-mocha",
+   "family": "Catppuccin",
+   "catalog_mode": "dark",
+   "derivable": true,
+   "error": "",
+   "mode": "dark",
+   "source": "derived",
+   "default_eligible": false,
+   "not_eligible_because": "anat and tx strokes (#9498a5, #f38ba8) differ by OKLab 0.019 under protan simulation, below 0.05; sign and dx strokes (#f2cdcd, #f9e2af) differ by OKLab 0.039 under tritan simulation, below 0.05; mech and sign fills (#31494d, #4e4343) differ by 0.002 in greyscale lightness, below 0.03",
+   "scores": {
+    "balanced": 41.4,
+    "cvd-first": 32.03,
+    "print-first": 41.98,
+    "text-first": 54.78
+   },
+   "components": {
+    "text": 0.874,
+    "nontext": 0.665,
+    "stroke_normal": 0.839,
+    "stroke_red_green": 0.104,
+    "stroke_tritan": 0.277,
+    "stroke_grey": 0.198,
+    "fill_cvd": 0.144,
+    "fill_grey": 0.038
+   },
+   "text_min": 6.26,
+   "nontext_min": 3.43,
+   "text_on_fill_min": 6.26,
+   "stroke_de_ok": {
+    "none": 0.0782,
+    "protan": 0.0186,
+    "deutan": 0.0696,
+    "tritan": 0.0393
+   },
+   "stroke_de00": {
+    "none": 16.78,
+    "protan": 2.08,
+    "deutan": 7.48,
+    "tritan": 5.54
+   },
+   "stroke_grey_dl": 0.0198,
+   "fill_de00": {
+    "none": 6.82,
+    "protan": 1.44,
+    "deutan": 2.37,
+    "tritan": 1.95
+   },
+   "fill_grey_dl": 0.0019,
+   "role_accents": {
+    "risk": "accent_7",
+    "mech": "accent_11",
+    "anat": "neutral",
+    "sign": "accent_2",
+    "inv": "accent_4",
+    "dx": "accent_8",
+    "tx": "accent_5"
+   },
+   "reported": [
+    "anat and tx strokes (#9498a5, #f38ba8) differ by OKLab 0.019 under protan simulation, below 0.05",
+    "sign and dx strokes (#f2cdcd, #f9e2af) differ by OKLab 0.039 under tritan simulation, below 0.05",
+    "mech and sign fills (#31494d, #4e4343) differ by 0.002 in greyscale lightness, below 0.03"
+   ]
+  },
+  {
+   "id": "everforest-dark-medium",
+   "family": "Everforest",
+   "catalog_mode": "dark",
+   "derivable": true,
+   "error": "",
+   "mode": "dark",
+   "source": "override",
+   "default_eligible": false,
+   "not_eligible_because": "hand-tuned override, kept as an option",
+   "scores": {
+    "balanced": 29.9,
+    "cvd-first": 22.56,
+    "print-first": 28.08,
+    "text-first": 41.27
+   },
+   "components": {
+    "text": 0.592,
+    "nontext": 0.804,
+    "stroke_normal": 0.565,
+    "stroke_red_green": 0.085,
+    "stroke_tritan": 0.16,
+    "stroke_grey": 0.004,
+    "fill_cvd": 0.137,
+    "fill_grey": 0.01
+   },
+   "text_min": 4.88,
+   "nontext_min": 3.84,
+   "text_on_fill_min": 4.88,
+   "stroke_de_ok": {
+    "none": 0.0466,
+    "protan": 0.0271,
+    "deutan": 0.0075,
+    "tritan": 0.0128
+   },
+   "stroke_de00": {
+    "none": 11.29,
+    "protan": 2.75,
+    "deutan": 1.7,
+    "tritan": 3.2
+   },
+   "stroke_grey_dl": 0.0004,
+   "fill_de00": {
+    "none": 6.92,
+    "protan": 2.04,
+    "deutan": 1.37,
+    "tritan": 2.09
+   },
+   "fill_grey_dl": 0.0005,
+   "role_accents": null,
+   "reported": [
+    "risk and dx strokes (#d0b070, #a6bf7f) differ by OKLab 0.027 under protan simulation, below 0.05",
+    "anat and sign strokes (#bdb39f, #e89d9d) differ by OKLab 0.007 under deutan simulation, below 0.05",
+    "mech and inv strokes (#6bc7bc, #76bfe4) differ by OKLab 0.013 under tritan simulation, below 0.05",
+    "inv and dx fills (#2f5264, #465234) differ by 0.001 in greyscale lightness, below 0.03"
+   ]
+  },
+  {
+   "id": "everforest-light-medium",
+   "family": "Everforest",
+   "catalog_mode": "light",
+   "derivable": false,
+   "error": "palette everforest-light-medium: anat and inv fills (#e7eaeb, #dbeaf5) differ by OKLab 0.0196 in normal vision, below 0.02"
+  },
+  {
+   "id": "solarized-dark",
+   "family": "Solarized",
+   "catalog_mode": "dark",
+   "derivable": false,
+   "error": "solarized-dark: muted text cannot reach 4.5:1 on canvas #002b36 and container fill #073642; even the text colour #839496 reaches only 4.11:1"
+  },
+  {
+   "id": "solarized-light",
+   "family": "Solarized",
+   "catalog_mode": "light",
+   "derivable": false,
+   "error": "solarized-light: text #657b83 on background #fdf6e3 is 4.13:1, below 4.5"
+  },
+  {
+   "id": "viridis",
+   "family": "viridis family",
+   "catalog_mode": "sequential",
+   "derivable": true,
+   "error": "",
+   "mode": "light",
+   "source": "derived",
+   "default_eligible": false,
+   "not_eligible_because": "sequential ramp: its colours imply an order the roles do not have",
+   "scores": {
+    "balanced": 52.57,
+    "cvd-first": 48.01,
+    "print-first": 47.91,
+    "text-first": 63.73
+   },
+   "components": {
+    "text": 1.0,
+    "nontext": 0.524,
+    "stroke_normal": 0.73,
+    "stroke_red_green": 0.483,
+    "stroke_tritan": 0.192,
+    "stroke_grey": 0.046,
+    "fill_cvd": 0.32,
+    "fill_grey": 0.66
+   },
+   "text_min": 10.25,
+   "nontext_min": 3.06,
+   "text_on_fill_min": 10.7,
+   "stroke_de_ok": {
+    "none": 0.0762,
+    "protan": 0.063,
+    "deutan": 0.0747,
+    "tritan": 0.0237
+   },
+   "stroke_de00": {
+    "none": 14.59,
+    "protan": 11.2,
+    "deutan": 9.66,
+    "tritan": 3.84
+   },
+   "stroke_grey_dl": 0.0046,
+   "fill_de00": {
+    "none": 9.49,
+    "protan": 4.36,
+    "deutan": 4.2,
+    "tritan": 3.2
+   },
+   "fill_grey_dl": 0.033,
+   "role_accents": {
+    "risk": "accent_6",
+    "mech": "accent_4",
+    "anat": "neutral",
+    "sign": "accent_1",
+    "inv": "accent_3",
+    "dx": "accent_5",
+    "tx": "accent_2"
+   },
+   "reported": [
+    "mech and dx strokes (#21918c, #009e61) differ by OKLab 0.024 under tritan simulation, below 0.05"
+   ]
+  },
+  {
+   "id": "cividis",
+   "family": "viridis family",
+   "catalog_mode": "sequential",
+   "derivable": true,
+   "error": "",
+   "mode": "light",
+   "source": "derived",
+   "default_eligible": false,
+   "not_eligible_because": "sequential ramp: its colours imply an order the roles do not have",
+   "scores": {
+    "balanced": 50.26,
+    "cvd-first": 47.44,
+    "print-first": 45.85,
+    "text-first": 61.12
+   },
+   "components": {
+    "text": 1.0,
+    "nontext": 0.504,
+    "stroke_normal": 0.474,
+    "stroke_red_green": 0.459,
+    "stroke_tritan": 0.299,
+    "stroke_grey": 0.067,
+    "fill_cvd": 0.31,
+    "fill_grey": 0.642
+   },
+   "text_min": 10.25,
+   "nontext_min": 3.01,
+   "text_on_fill_min": 10.64,
+   "stroke_de_ok": {
+    "none": 0.0605,
+    "protan": 0.0652,
+    "deutan": 0.059,
+    "tritan": 0.0248
+   },
+   "stroke_de00": {
+    "none": 9.47,
+    "protan": 9.3,
+    "deutan": 9.19,
+    "tritan": 5.99
+   },
+   "stroke_grey_dl": 0.0067,
+   "fill_de00": {
+    "none": 3.18,
+    "protan": 3.1,
+    "deutan": 3.25,
+    "tritan": 3.16
+   },
+   "fill_grey_dl": 0.0321,
+   "role_accents": {
+    "risk": "accent_4",
+    "mech": "accent_1",
+    "anat": "neutral",
+    "sign": "accent_5",
+    "inv": "accent_2",
+    "dx": "accent_6",
+    "tx": "accent_3"
+   },
+   "reported": [
+    "sign and dx strokes (#948b63, #9e8d2a) differ by OKLab 0.025 under tritan simulation, below 0.05"
+   ]
+  },
+  {
+   "id": "colorbrewer-set2-n3",
+   "family": "ColorBrewer",
+   "catalog_mode": "categorical-only",
+   "derivable": false,
+   "error": "colorbrewer-set2-n3: needs 6 accents for the 6 coloured roles, has 3"
+  },
+  {
+   "id": "colorbrewer-dark2-n3",
+   "family": "ColorBrewer",
+   "catalog_mode": "categorical-only",
+   "derivable": false,
+   "error": "colorbrewer-dark2-n3: needs 6 accents for the 6 coloured roles, has 3"
+  },
+  {
+   "id": "colorbrewer-paired-n4",
+   "family": "ColorBrewer",
+   "catalog_mode": "categorical-only",
+   "derivable": false,
+   "error": "colorbrewer-paired-n4: needs 6 accents for the 6 coloured roles, has 4"
+  },
+  {
+   "id": "uswds",
+   "family": "USWDS",
+   "catalog_mode": "light",
+   "derivable": true,
+   "error": "",
+   "mode": "light",
+   "source": "derived",
+   "default_eligible": false,
+   "not_eligible_because": "dx and tx strokes (#008614, #d16e04) differ by OKLab 0.008 under protan simulation, below 0.05; risk and tx strokes (#b48200, #d16e04) differ by OKLab 0.006 under deutan simulation, below 0.05",
+   "scores": {
+    "balanced": 44.83,
+    "cvd-first": 36.23,
+    "print-first": 45.21,
+    "text-first": 58.03
+   },
+   "components": {
+    "text": 1.0,
+    "nontext": 0.5,
+    "stroke_normal": 0.702,
+    "stroke_red_green": 0.038,
+    "stroke_tritan": 0.416,
+    "stroke_grey": 0.08,
+    "fill_cvd": 0.359,
+    "fill_grey": 0.654
+   },
+   "text_min": 5.92,
+   "nontext_min": 3.0,
+   "text_on_fill_min": 8.84,
+   "stroke_de_ok": {
+    "none": 0.0673,
+    "protan": 0.0081,
+    "deutan": 0.0056,
+    "tritan": 0.0658
+   },
+   "stroke_de00": {
+    "none": 14.03,
+    "protan": 0.94,
+    "deutan": 0.76,
+    "tritan": 8.31
+   },
+   "stroke_grey_dl": 0.008,
+   "fill_de00": {
+    "none": 5.86,
+    "protan": 5.0,
+    "deutan": 3.59,
+    "tritan": 5.14
+   },
+   "fill_grey_dl": 0.0327,
+   "role_accents": {
+    "risk": "accent_6",
+    "mech": "accent_4",
+    "anat": "neutral",
+    "sign": "accent_2",
+    "inv": "accent_1",
+    "dx": "accent_5",
+    "tx": "accent_3"
+   },
+   "reported": [
+    "dx and tx strokes (#008614, #d16e04) differ by OKLab 0.008 under protan simulation, below 0.05",
+    "risk and tx strokes (#b48200, #d16e04) differ by OKLab 0.006 under deutan simulation, below 0.05"
+   ]
+  },
+  {
+   "id": "govuk",
+   "family": "GOV.UK",
+   "catalog_mode": "light",
+   "derivable": true,
+   "error": "",
+   "mode": "light",
+   "source": "derived",
+   "default_eligible": false,
+   "not_eligible_because": "mech and inv strokes (#0e7e84, #196db5) differ by OKLab 0.023 under tritan simulation, below 0.05",
+   "scores": {
+    "balanced": 53.84,
+    "cvd-first": 49.71,
+    "print-first": 48.32,
+    "text-first": 64.93
+   },
+   "components": {
+    "text": 1.0,
+    "nontext": 0.52,
+    "stroke_normal": 0.85,
+    "stroke_red_green": 0.498,
+    "stroke_tritan": 0.296,
+    "stroke_grey": 0.014,
+    "fill_cvd": 0.264,
+    "fill_grey": 0.642
+   },
+   "text_min": 8.46,
+   "nontext_min": 3.05,
+   "text_on_fill_min": 10.0,
+   "stroke_de_ok": {
+    "none": 0.1042,
+    "protan": 0.0598,
+    "deutan": 0.064,
+    "tritan": 0.0234
+   },
+   "stroke_de00": {
+    "none": 17.0,
+    "protan": 9.98,
+    "deutan": 9.96,
+    "tritan": 5.92
+   },
+   "stroke_grey_dl": 0.0014,
+   "fill_de00": {
+    "none": 6.29,
+    "protan": 3.83,
+    "deutan": 2.64,
+    "tritan": 4.0
+   },
+   "fill_grey_dl": 0.0321,
+   "role_accents": {
+    "risk": "accent_7",
+    "mech": "accent_3",
+    "anat": "neutral",
+    "sign": "accent_5",
+    "inv": "accent_1",
+    "dx": "accent_9",
+    "tx": "accent_4"
+   },
+   "reported": [
+    "mech and inv strokes (#0e7e84, #196db5) differ by OKLab 0.023 under tritan simulation, below 0.05"
+   ]
+  },
+  {
+   "id": "primer-light-colorblind",
+   "family": "GitHub Primer",
+   "catalog_mode": "light",
+   "derivable": false,
+   "error": "primer-light-colorblind: needs 6 accents for the 6 coloured roles, has 5"
+  },
+  {
+   "id": "primer-dark-colorblind",
+   "family": "GitHub Primer",
+   "catalog_mode": "dark",
+   "derivable": true,
+   "error": "",
+   "mode": "dark",
+   "source": "derived",
+   "default_eligible": false,
+   "not_eligible_because": "risk and dx strokes (#f0883e, #d29922) differ by OKLab 0.033 under protan simulation, below 0.05; risk and dx strokes (#f0883e, #d29922) differ by OKLab 0.015 under deutan simulation, below 0.05; mech and inv strokes (#58a6ff, #4493f8) differ by OKLab 0.046 under tritan simulation, below 0.05",
+   "scores": {
+    "balanced": 42.67,
+    "cvd-first": 33.48,
+    "print-first": 42.08,
+    "text-first": 59.2
+   },
+   "components": {
+    "text": 1.0,
+    "nontext": 0.967,
+    "stroke_normal": 0.282,
+    "stroke_red_green": 0.099,
+    "stroke_tritan": 0.232,
+    "stroke_grey": 0.002,
+    "fill_cvd": 0.213,
+    "fill_grey": 0.632
+   },
+   "text_min": 5.94,
+   "nontext_min": 4.38,
+   "text_on_fill_min": 8.83,
+   "stroke_de_ok": {
+    "none": 0.0554,
+    "protan": 0.0332,
+    "deutan": 0.0145,
+    "tritan": 0.0457
+   },
+   "stroke_de00": {
+    "none": 5.64,
+    "protan": 4.89,
+    "deutan": 1.97,
+    "tritan": 4.64
+   },
+   "stroke_grey_dl": 0.0002,
+   "fill_de00": {
+    "none": 3.73,
+    "protan": 2.13,
+    "deutan": 3.09,
+    "tritan": 3.46
+   },
+   "fill_grey_dl": 0.0316,
+   "role_accents": {
+    "risk": "accent_2",
+    "mech": "positive",
+    "anat": "neutral",
+    "sign": "accent_5",
+    "inv": "accent_1",
+    "dx": "accent_3",
+    "tx": "accent_4"
+   },
+   "reported": [
+    "risk and dx strokes (#f0883e, #d29922) differ by OKLab 0.033 under protan simulation, below 0.05",
+    "risk and dx strokes (#f0883e, #d29922) differ by OKLab 0.015 under deutan simulation, below 0.05",
+    "mech and inv strokes (#58a6ff, #4493f8) differ by OKLab 0.046 under tritan simulation, below 0.05"
+   ]
+  },
+  {
+   "id": "primer-light-tritanopia",
+   "family": "GitHub Primer",
+   "catalog_mode": "light",
+   "derivable": false,
+   "error": "primer-light-tritanopia: needs 6 accents for the 6 coloured roles, has 5"
+  },
+  {
+   "id": "primer-dark-tritanopia",
+   "family": "GitHub Primer",
+   "catalog_mode": "dark",
+   "derivable": true,
+   "error": "",
+   "mode": "dark",
+   "source": "derived",
+   "default_eligible": false,
+   "not_eligible_because": "inv and tx strokes (#4493f8, #ab7df8) differ by OKLab 0.024 under protan simulation, below 0.05; mech and tx strokes (#58a6ff, #ab7df8) differ by OKLab 0.025 under deutan simulation, below 0.05; mech and inv strokes (#58a6ff, #4493f8) differ by OKLab 0.046 under tritan simulation, below 0.05",
+   "scores": {
+    "balanced": 41.09,
+    "cvd-first": 32.89,
+    "print-first": 40.46,
+    "text-first": 56.65
+   },
+   "components": {
+    "text": 1.0,
+    "nontext": 0.785,
+    "stroke_normal": 0.282,
+    "stroke_red_green": 0.109,
+    "stroke_tritan": 0.232,
+    "stroke_grey": 0.002,
+    "fill_cvd": 0.2,
+    "fill_grey": 0.648
+   },
+   "text_min": 5.94,
+   "nontext_min": 3.78,
+   "text_on_fill_min": 8.77,
+   "stroke_de_ok": {
+    "none": 0.0554,
+    "protan": 0.024,
+    "deutan": 0.025,
+    "tritan": 0.0457
+   },
+   "stroke_de00": {
+    "none": 5.64,
+    "protan": 2.18,
+    "deutan": 2.44,
+    "tritan": 4.64
+   },
+   "stroke_grey_dl": 0.0002,
+   "fill_de00": {
+    "none": 12.5,
+    "protan": 4.91,
+    "deutan": 2.0,
+    "tritan": 8.33
+   },
+   "fill_grey_dl": 0.0324,
+   "role_accents": {
+    "risk": "accent_2",
+    "mech": "positive",
+    "anat": "neutral",
+    "sign": "accent_5",
+    "inv": "accent_1",
+    "dx": "accent_3",
+    "tx": "accent_4"
+   },
+   "reported": [
+    "inv and tx strokes (#4493f8, #ab7df8) differ by OKLab 0.024 under protan simulation, below 0.05",
+    "mech and tx strokes (#58a6ff, #ab7df8) differ by OKLab 0.025 under deutan simulation, below 0.05",
+    "mech and inv strokes (#58a6ff, #4493f8) differ by OKLab 0.046 under tritan simulation, below 0.05"
+   ]
+  },
+  {
+   "id": "primer-light-high-contrast",
+   "family": "GitHub Primer",
+   "catalog_mode": "light",
+   "derivable": true,
+   "error": "",
+   "mode": "light",
+   "source": "derived",
+   "default_eligible": false,
+   "not_eligible_because": "risk and dx strokes (#702c00, #603700) differ by OKLab 0.015 under protan simulation, below 0.05; risk and dx strokes (#702c00, #603700) differ by OKLab 0.009 under deutan simulation, below 0.05; mech and inv strokes (#04591f, #023b95) differ by OKLab 0.044 under tritan simulation, below 0.05",
+   "scores": {
+    "balanced": 43.84,
+    "cvd-first": 34.43,
+    "print-first": 43.43,
+    "text-first": 59.42
+   },
+   "components": {
+    "text": 1.0,
+    "nontext": 0.849,
+    "stroke_normal": 0.432,
+    "stroke_red_green": 0.044,
+    "stroke_tritan": 0.294,
+    "stroke_grey": 0.006,
+    "fill_cvd": 0.366,
+    "fill_grey": 0.67
+   },
+   "text_min": 7.2,
+   "nontext_min": 3.98,
+   "text_on_fill_min": 10.49,
+   "stroke_de_ok": {
+    "none": 0.0402,
+    "protan": 0.0146,
+    "deutan": 0.0087,
+    "tritan": 0.0437
+   },
+   "stroke_de00": {
+    "none": 8.64,
+    "protan": 1.4,
+    "deutan": 0.88,
+    "tritan": 5.89
+   },
+   "stroke_grey_dl": 0.0006,
+   "fill_de00": {
+    "none": 7.22,
+    "protan": 3.66,
+    "deutan": 4.32,
+    "tritan": 6.72
+   },
+   "fill_grey_dl": 0.0335,
+   "role_accents": {
+    "risk": "accent_5",
+    "mech": "accent_2",
+    "anat": "neutral",
+    "sign": "accent_3",
+    "inv": "accent_1",
+    "dx": "accent_4",
+    "tx": "accent_6"
+   },
+   "reported": [
+    "risk and dx strokes (#702c00, #603700) differ by OKLab 0.015 under protan simulation, below 0.05",
+    "risk and dx strokes (#702c00, #603700) differ by OKLab 0.009 under deutan simulation, below 0.05",
+    "mech and inv strokes (#04591f, #023b95) differ by OKLab 0.044 under tritan simulation, below 0.05"
+   ]
+  },
+  {
+   "id": "primer-dark-high-contrast",
+   "family": "GitHub Primer",
+   "catalog_mode": "dark",
+   "derivable": true,
+   "error": "",
+   "mode": "dark",
+   "source": "derived",
+   "default_eligible": false,
+   "not_eligible_because": "mech and dx strokes (#2bd853, #f0b72f) differ by OKLab 0.043 under protan simulation, below 0.05; risk and dx strokes (#fe9a2d, #f0b72f) differ by OKLab 0.035 under deutan simulation, below 0.05; risk and sign strokes (#fe9a2d, #ff9492) differ by OKLab 0.019 under tritan simulation, below 0.05",
+   "scores": {
+    "balanced": 47.1,
+    "cvd-first": 35.94,
+    "print-first": 46.35,
+    "text-first": 63.79
+   },
+   "components": {
+    "text": 1.0,
+    "nontext": 1.0,
+    "stroke_normal": 0.673,
+    "stroke_red_green": 0.143,
+    "stroke_tritan": 0.19,
+    "stroke_grey": 0.008,
+    "fill_cvd": 0.154,
+    "fill_grey": 0.624
+   },
+   "text_min": 9.17,
+   "nontext_min": 6.97,
+   "text_on_fill_min": 12.82,
+   "stroke_de_ok": {
+    "none": 0.071,
+    "protan": 0.0425,
+    "deutan": 0.0346,
+    "tritan": 0.0186
+   },
+   "stroke_de00": {
+    "none": 13.46,
+    "protan": 4.21,
+    "deutan": 2.85,
+    "tritan": 3.8
+   },
+   "stroke_grey_dl": 0.0008,
+   "fill_de00": {
+    "none": 5.5,
+    "protan": 1.54,
+    "deutan": 3.91,
+    "tritan": 3.3
+   },
+   "fill_grey_dl": 0.0312,
+   "role_accents": {
+    "risk": "accent_5",
+    "mech": "accent_2",
+    "anat": "neutral",
+    "sign": "accent_3",
+    "inv": "accent_1",
+    "dx": "accent_4",
+    "tx": "accent_7"
+   },
+   "reported": [
+    "mech and dx strokes (#2bd853, #f0b72f) differ by OKLab 0.043 under protan simulation, below 0.05",
+    "risk and dx strokes (#fe9a2d, #f0b72f) differ by OKLab 0.035 under deutan simulation, below 0.05",
+    "risk and sign strokes (#fe9a2d, #ff9492) differ by OKLab 0.019 under tritan simulation, below 0.05"
+   ]
+  },
+  {
+   "id": "a11y-syntax-dark",
+   "family": "a11y-syntax-highlighting",
+   "catalog_mode": "dark",
+   "derivable": true,
+   "error": "",
+   "mode": "dark",
+   "source": "derived",
+   "default_eligible": false,
+   "not_eligible_because": "dx and tx strokes (#abe338, #ffd700) differ by OKLab 0.002 under protan simulation, below 0.05; risk and dx strokes (#f5ab32, #abe338) differ by OKLab 0.049 under deutan simulation, below 0.05; risk and sign strokes (#f5ab32, #ffa07a) differ by OKLab 0.020 under tritan simulation, below 0.05; risk and inv fills (#614826, #354f64) differ by 0.001 in greyscale lightness, below 0.03",
+   "scores": {
+    "balanced": 36.44,
+    "cvd-first": 26.46,
+    "print-first": 35.89,
+    "text-first": 52.86
+   },
+   "components": {
+    "text": 1.0,
+    "nontext": 0.532,
+    "stroke_normal": 0.766,
+    "stroke_red_green": 0.02,
+    "stroke_tritan": 0.173,
+    "stroke_grey": 0.035,
+    "fill_cvd": 0.122,
+    "fill_grey": 0.018
+   },
+   "text_min": 7.15,
+   "nontext_min": 3.08,
+   "text_on_fill_min": 7.15,
+   "stroke_de_ok": {
+    "none": 0.081,
+    "protan": 0.0021,
+    "deutan": 0.0485,
+    "tritan": 0.02
+   },
+   "stroke_de00": {
+    "none": 15.31,
+    "protan": 0.41,
+    "deutan": 3.88,
+    "tritan": 3.46
+   },
+   "stroke_grey_dl": 0.0035,
+   "fill_de00": {
+    "none": 7.95,
+    "protan": 1.26,
+    "deutan": 1.22,
+    "tritan": 2.06
+   },
+   "fill_grey_dl": 0.0009,
+   "role_accents": {
+    "risk": "accent_4",
+    "mech": "accent_2",
+    "anat": "neutral",
+    "sign": "accent_6",
+    "inv": "accent_1",
+    "dx": "accent_3",
+    "tx": "accent_7"
+   },
+   "reported": [
+    "dx and tx strokes (#abe338, #ffd700) differ by OKLab 0.002 under protan simulation, below 0.05",
+    "risk and dx strokes (#f5ab32, #abe338) differ by OKLab 0.049 under deutan simulation, below 0.05",
+    "risk and sign strokes (#f5ab32, #ffa07a) differ by OKLab 0.020 under tritan simulation, below 0.05",
+    "risk and inv fills (#614826, #354f64) differ by 0.001 in greyscale lightness, below 0.03"
+   ]
+  },
+  {
+   "id": "petroff-10-on-primer-dark-high-contrast",
+   "family": "Composite",
+   "catalog_mode": "dark",
+   "composite_sources": [
+    "petroff-10",
+    "primer-dark-high-contrast"
+   ],
+   "derivable": true,
+   "error": "",
+   "mode": "dark",
+   "source": "derived",
+   "default_eligible": true,
+   "not_eligible_because": "",
+   "scores": {
+    "balanced": 68.23,
+    "cvd-first": 65.38,
+    "print-first": 68.77,
+    "text-first": 74.56
+   },
+   "components": {
+    "text": 1.0,
+    "nontext": 0.54,
+    "stroke_normal": 0.868,
+    "stroke_red_green": 0.541,
+    "stroke_tritan": 0.795,
+    "stroke_grey": 0.572,
+    "fill_cvd": 0.356,
+    "fill_grey": 0.636
+   },
+   "text_min": 9.17,
+   "nontext_min": 3.1,
+   "text_on_fill_min": 12.9,
+   "stroke_de_ok": {
+    "none": 0.1175,
+    "protan": 0.0536,
+    "deutan": 0.0963,
+    "tritan": 0.0914
+   },
+   "stroke_de00": {
+    "none": 17.35,
+    "protan": 10.83,
+    "deutan": 11.15,
+    "tritan": 15.9
+   },
+   "stroke_grey_dl": 0.0572,
+   "fill_de00": {
+    "none": 8.01,
+    "protan": 4.03,
+    "deutan": 3.56,
+    "tritan": 5.38
+   },
+   "fill_grey_dl": 0.0318,
+   "role_accents": {
+    "risk": "accent_2",
+    "mech": "accent_10",
+    "anat": "neutral",
+    "sign": "accent_6",
+    "inv": "accent_1",
+    "dx": "accent_4",
+    "tx": "accent_5"
+   },
+   "reported": []
+  },
+  {
+   "id": "tol-medium-contrast-on-primer-dark-high-contrast",
+   "family": "Composite",
+   "catalog_mode": "dark",
+   "composite_sources": [
+    "tol-medium-contrast",
+    "primer-dark-high-contrast"
+   ],
+   "derivable": true,
+   "error": "",
+   "mode": "dark",
+   "source": "derived",
+   "default_eligible": true,
+   "not_eligible_because": "",
+   "scores": {
+    "balanced": 60.43,
+    "cvd-first": 59.13,
+    "print-first": 53.67,
+    "text-first": 69.38
+   },
+   "components": {
+    "text": 1.0,
+    "nontext": 0.508,
+    "stroke_normal": 0.922,
+    "stroke_red_green": 0.596,
+    "stroke_tritan": 0.597,
+    "stroke_grey": 0.075,
+    "fill_cvd": 0.311,
+    "fill_grey": 0.662
+   },
+   "text_min": 9.17,
+   "nontext_min": 3.02,
+   "text_on_fill_min": 12.77,
+   "stroke_de_ok": {
+    "none": 0.1338,
+    "protan": 0.0858,
+    "deutan": 0.1058,
+    "tritan": 0.0864
+   },
+   "stroke_de00": {
+    "none": 18.44,
+    "protan": 16.83,
+    "deutan": 11.91,
+    "tritan": 11.95
+   },
+   "stroke_grey_dl": 0.0075,
+   "fill_de00": {
+    "none": 3.6,
+    "protan": 3.35,
+    "deutan": 3.43,
+    "tritan": 3.11
+   },
+   "fill_grey_dl": 0.0331,
+   "role_accents": {
+    "risk": "accent_5",
+    "mech": "accent_1",
+    "anat": "neutral",
+    "sign": "accent_4",
+    "inv": "accent_2",
+    "dx": "accent_3",
+    "tx": "accent_6"
+   },
+   "reported": []
+  },
+  {
+   "id": "tol-medium-contrast-on-modus-vivendi",
+   "family": "Composite",
+   "catalog_mode": "dark",
+   "composite_sources": [
+    "tol-medium-contrast",
+    "modus-vivendi"
+   ],
+   "derivable": true,
+   "error": "",
+   "mode": "dark",
+   "source": "derived",
+   "default_eligible": false,
+   "not_eligible_because": "mech and anat fills (#0d2740, #26211c) differ by 0.016 in greyscale lightness, below 0.03",
+   "scores": {
+    "balanced": 57.54,
+    "cvd-first": 57.13,
+    "print-first": 49.58,
+    "text-first": 67.18
+   },
+   "components": {
+    "text": 1.0,
+    "nontext": 0.516,
+    "stroke_normal": 0.856,
+    "stroke_red_green": 0.596,
+    "stroke_tritan": 0.566,
+    "stroke_grey": 0.068,
+    "fill_cvd": 0.366,
+    "fill_grey": 0.32
+   },
+   "text_min": 5.78,
+   "nontext_min": 3.04,
+   "text_on_fill_min": 11.74,
+   "stroke_de_ok": {
+    "none": 0.1338,
+    "protan": 0.0858,
+    "deutan": 0.1016,
+    "tritan": 0.0803
+   },
+   "stroke_de00": {
+    "none": 17.13,
+    "protan": 16.19,
+    "deutan": 11.91,
+    "tritan": 11.31
+   },
+   "stroke_grey_dl": 0.0068,
+   "fill_de00": {
+    "none": 8.1,
+    "protan": 5.87,
+    "deutan": 3.66,
+    "tritan": 6.44
+   },
+   "fill_grey_dl": 0.016,
+   "role_accents": {
+    "risk": "accent_5",
+    "mech": "accent_1",
+    "anat": "neutral",
+    "sign": "accent_4",
+    "inv": "accent_2",
+    "dx": "accent_3",
+    "tx": "accent_6"
+   },
+   "reported": [
+    "mech and anat fills (#0d2740, #26211c) differ by 0.016 in greyscale lightness, below 0.03"
+   ]
+  },
+  {
+   "id": "tol-medium-contrast-on-catppuccin-mocha",
+   "family": "Composite",
+   "catalog_mode": "dark",
+   "composite_sources": [
+    "tol-medium-contrast",
+    "catppuccin-mocha"
+   ],
+   "derivable": true,
+   "error": "",
+   "mode": "dark",
+   "source": "derived",
+   "default_eligible": false,
+   "not_eligible_because": "mech and anat fills (#2a3745, #323437) differ by 0.008 in greyscale lightness, below 0.03",
+   "scores": {
+    "balanced": 45.29,
+    "cvd-first": 43.64,
+    "print-first": 39.38,
+    "text-first": 57.58
+   },
+   "components": {
+    "text": 1.0,
+    "nontext": 0.508,
+    "stroke_normal": 0.443,
+    "stroke_red_green": 0.435,
+    "stroke_tritan": 0.362,
+    "stroke_grey": 0.038,
+    "fill_cvd": 0.21,
+    "fill_grey": 0.152
+   },
+   "text_min": 7.1,
+   "nontext_min": 3.02,
+   "text_on_fill_min": 7.2,
+   "stroke_de_ok": {
+    "none": 0.0845,
+    "protan": 0.0816,
+    "deutan": 0.0902,
+    "tritan": 0.0674
+   },
+   "stroke_de00": {
+    "none": 8.86,
+    "protan": 8.7,
+    "deutan": 9.83,
+    "tritan": 7.23
+   },
+   "stroke_grey_dl": 0.0038,
+   "fill_de00": {
+    "none": 4.59,
+    "protan": 2.1,
+    "deutan": 4.62,
+    "tritan": 4.6
+   },
+   "fill_grey_dl": 0.0076,
+   "role_accents": {
+    "risk": "accent_5",
+    "mech": "accent_1",
+    "anat": "neutral",
+    "sign": "accent_4",
+    "inv": "accent_2",
+    "dx": "accent_3",
+    "tx": "accent_6"
+   },
+   "reported": [
+    "mech and anat fills (#2a3745, #323437) differ by 0.008 in greyscale lightness, below 0.03"
+   ]
+  },
+  {
+   "id": "tol-medium-contrast-on-catppuccin-macchiato",
+   "family": "Composite",
+   "catalog_mode": "dark",
+   "composite_sources": [
+    "tol-medium-contrast",
+    "catppuccin-macchiato"
+   ],
+   "derivable": true,
+   "error": "",
+   "mode": "dark",
+   "source": "derived",
+   "default_eligible": false,
+   "not_eligible_because": "mech and inv strokes (#6699cc, #4d89d2) differ by OKLab 0.039 under tritan simulation, below 0.05; risk and anat fills (#3b3424, #363639) differ by 0.006 in greyscale lightness, below 0.03",
+   "scores": {
+    "balanced": 38.53,
+    "cvd-first": 34.96,
+    "print-first": 34.54,
+    "text-first": 52.35
+   },
+   "components": {
+    "text": 0.994,
+    "nontext": 0.504,
+    "stroke_normal": 0.276,
+    "stroke_red_green": 0.296,
+    "stroke_tritan": 0.205,
+    "stroke_grey": 0.024,
+    "fill_cvd": 0.184,
+    "fill_grey": 0.124
+   },
+   "text_min": 6.22,
+   "nontext_min": 3.01,
+   "text_on_fill_min": 6.96,
+   "stroke_de_ok": {
+    "none": 0.0568,
+    "protan": 0.0537,
+    "deutan": 0.0621,
+    "tritan": 0.0388
+   },
+   "stroke_de00": {
+    "none": 5.52,
+    "protan": 5.93,
+    "deutan": 6.68,
+    "tritan": 4.1
+   },
+   "stroke_grey_dl": 0.0024,
+   "fill_de00": {
+    "none": 3.58,
+    "protan": 1.84,
+    "deutan": 3.56,
+    "tritan": 3.61
+   },
+   "fill_grey_dl": 0.0062,
+   "role_accents": {
+    "risk": "accent_5",
+    "mech": "accent_1",
+    "anat": "neutral",
+    "sign": "accent_4",
+    "inv": "accent_2",
+    "dx": "accent_3",
+    "tx": "accent_6"
+   },
+   "reported": [
+    "mech and inv strokes (#6699cc, #4d89d2) differ by OKLab 0.039 under tritan simulation, below 0.05",
+    "risk and anat fills (#3b3424, #363639) differ by 0.006 in greyscale lightness, below 0.03"
+   ]
+  },
+  {
+   "id": "tol-medium-contrast-on-everforest-dark-medium",
+   "family": "Composite",
+   "catalog_mode": "dark",
+   "composite_sources": [
+    "tol-medium-contrast",
+    "everforest-dark-medium"
+   ],
+   "derivable": true,
+   "error": "",
+   "mode": "dark",
+   "source": "derived",
+   "default_eligible": false,
+   "not_eligible_because": "mech and inv strokes (#6699cc, #4d89d2) differ by OKLab 0.039 under tritan simulation, below 0.05; mech and anat fills (#384049, #3f3e3c) differ by 0.004 in greyscale lightness, below 0.03",
+   "scores": {
+    "balanced": 33.06,
+    "cvd-first": 30.77,
+    "print-first": 28.91,
+    "text-first": 43.46
+   },
+   "components": {
+    "text": 0.754,
+    "nontext": 0.5,
+    "stroke_normal": 0.276,
+    "stroke_red_green": 0.296,
+    "stroke_tritan": 0.205,
+    "stroke_grey": 0.017,
+    "fill_cvd": 0.156,
+    "fill_grey": 0.08
+   },
+   "text_min": 4.52,
+   "nontext_min": 3.0,
+   "text_on_fill_min": 5.63,
+   "stroke_de_ok": {
+    "none": 0.0568,
+    "protan": 0.0537,
+    "deutan": 0.0621,
+    "tritan": 0.0388
+   },
+   "stroke_de00": {
+    "none": 5.52,
+    "protan": 5.93,
+    "deutan": 6.68,
+    "tritan": 4.1
+   },
+   "stroke_grey_dl": 0.0017,
+   "fill_de00": {
+    "none": 2.99,
+    "protan": 1.7,
+    "deutan": 1.56,
+    "tritan": 2.95
+   },
+   "fill_grey_dl": 0.004,
+   "role_accents": {
+    "risk": "accent_5",
+    "mech": "accent_1",
+    "anat": "neutral",
+    "sign": "accent_4",
+    "inv": "accent_2",
+    "dx": "accent_3",
+    "tx": "accent_6"
+   },
+   "reported": [
+    "mech and inv strokes (#6699cc, #4d89d2) differ by OKLab 0.039 under tritan simulation, below 0.05",
+    "mech and anat fills (#384049, #3f3e3c) differ by 0.004 in greyscale lightness, below 0.03"
+   ]
+  },
+  {
+   "id": "tol-bright-on-primer-dark-high-contrast",
+   "family": "Composite",
+   "catalog_mode": "dark",
+   "composite_sources": [
+    "tol-bright",
+    "primer-dark-high-contrast"
+   ],
+   "derivable": true,
+   "error": "",
+   "mode": "dark",
+   "source": "derived",
+   "default_eligible": false,
+   "not_eligible_because": "inv and dx strokes (#4477aa, #228833) differ by OKLab 0.033 under tritan simulation, below 0.05",
+   "scores": {
+    "balanced": 58.53,
+    "cvd-first": 55.12,
+    "print-first": 53.03,
+    "text-first": 68.81
+   },
+   "components": {
+    "text": 1.0,
+    "nontext": 0.544,
+    "stroke_normal": 1.0,
+    "stroke_red_green": 0.609,
+    "stroke_tritan": 0.431,
+    "stroke_grey": 0.091,
+    "fill_cvd": 0.056,
+    "fill_grey": 0.634
+   },
+   "text_min": 9.17,
+   "nontext_min": 3.11,
+   "text_on_fill_min": 12.84,
+   "stroke_de_ok": {
+    "none": 0.1506,
+    "protan": 0.0852,
+    "deutan": 0.0799,
+    "tritan": 0.0326
+   },
+   "stroke_de00": {
+    "none": 21.64,
+    "protan": 12.17,
+    "deutan": 14.68,
+    "tritan": 8.62
+   },
+   "stroke_grey_dl": 0.0091,
+   "fill_de00": {
+    "none": 8.65,
+    "protan": 0.56,
+    "deutan": 3.39,
+    "tritan": 5.01
+   },
+   "fill_grey_dl": 0.0317,
+   "role_accents": {
+    "risk": "accent_4",
+    "mech": "accent_5",
+    "anat": "neutral",
+    "sign": "accent_2",
+    "inv": "accent_1",
+    "dx": "accent_3",
+    "tx": "accent_6"
+   },
+   "reported": [
+    "inv and dx strokes (#4477aa, #228833) differ by OKLab 0.033 under tritan simulation, below 0.05"
+   ]
+  },
+  {
+   "id": "tol-bright-on-modus-vivendi",
+   "family": "Composite",
+   "catalog_mode": "dark",
+   "composite_sources": [
+    "tol-bright",
+    "modus-vivendi"
+   ],
+   "derivable": true,
+   "error": "",
+   "mode": "dark",
+   "source": "derived",
+   "default_eligible": false,
+   "not_eligible_because": "inv and dx strokes (#4477aa, #228833) differ by OKLab 0.033 under tritan simulation, below 0.05; inv and dx fills (#021c35, #002204) differ by 0.004 in greyscale lightness, below 0.03",
+   "scores": {
+    "balanced": 54.62,
+    "cvd-first": 52.0,
+    "print-first": 47.59,
+    "text-first": 65.95
+   },
+   "components": {
+    "text": 1.0,
+    "nontext": 0.544,
+    "stroke_normal": 1.0,
+    "stroke_red_green": 0.562,
+    "stroke_tritan": 0.431,
+    "stroke_grey": 0.091,
+    "fill_cvd": 0.187,
+    "fill_grey": 0.07
+   },
+   "text_min": 5.78,
+   "nontext_min": 3.11,
+   "text_on_fill_min": 12.51,
+   "stroke_de_ok": {
+    "none": 0.1506,
+    "protan": 0.0852,
+    "deutan": 0.0797,
+    "tritan": 0.0326
+   },
+   "stroke_de00": {
+    "none": 20.83,
+    "protan": 11.25,
+    "deutan": 14.58,
+    "tritan": 8.62
+   },
+   "stroke_grey_dl": 0.0091,
+   "fill_de00": {
+    "none": 11.93,
+    "protan": 1.87,
+    "deutan": 4.88,
+    "tritan": 5.45
+   },
+   "fill_grey_dl": 0.0035,
+   "role_accents": {
+    "risk": "accent_4",
+    "mech": "accent_5",
+    "anat": "neutral",
+    "sign": "accent_2",
+    "inv": "accent_1",
+    "dx": "accent_3",
+    "tx": "accent_6"
+   },
+   "reported": [
+    "inv and dx strokes (#4477aa, #228833) differ by OKLab 0.033 under tritan simulation, below 0.05",
+    "inv and dx fills (#021c35, #002204) differ by 0.004 in greyscale lightness, below 0.03"
+   ]
+  },
+  {
+   "id": "tol-bright-on-catppuccin-mocha",
+   "family": "Composite",
+   "catalog_mode": "dark",
+   "composite_sources": [
+    "tol-bright",
+    "catppuccin-mocha"
+   ],
+   "derivable": true,
+   "error": "",
+   "mode": "dark",
+   "source": "derived",
+   "default_eligible": false,
+   "not_eligible_because": "mech and inv strokes (#32943f, #5386ba) differ by OKLab 0.034 under tritan simulation, below 0.05; risk and dx fills (#4a4a4a, #504a1f) differ by 0.003 in greyscale lightness, below 0.03",
+   "scores": {
+    "balanced": 43.3,
+    "cvd-first": 43.7,
+    "print-first": 35.94,
+    "text-first": 52.6
+   },
+   "components": {
+    "text": 0.831,
+    "nontext": 0.504,
+    "stroke_normal": 0.476,
+    "stroke_red_green": 0.472,
+    "stroke_tritan": 0.419,
+    "stroke_grey": 0.02,
+    "fill_cvd": 0.304,
+    "fill_grey": 0.058
+   },
+   "text_min": 6.03,
+   "nontext_min": 3.01,
+   "text_on_fill_min": 6.03,
+   "stroke_de_ok": {
+    "none": 0.0904,
+    "protan": 0.0634,
+    "deutan": 0.0791,
+    "tritan": 0.0343
+   },
+   "stroke_de00": {
+    "none": 9.52,
+    "protan": 9.58,
+    "deutan": 9.44,
+    "tritan": 8.38
+   },
+   "stroke_grey_dl": 0.002,
+   "fill_de00": {
+    "none": 3.53,
+    "protan": 3.45,
+    "deutan": 3.65,
+    "tritan": 3.04
+   },
+   "fill_grey_dl": 0.0029,
+   "role_accents": {
+    "risk": "accent_7",
+    "mech": "accent_3",
+    "anat": "neutral",
+    "sign": "accent_2",
+    "inv": "accent_1",
+    "dx": "accent_4",
+    "tx": "accent_5"
+   },
+   "reported": [
+    "mech and inv strokes (#32943f, #5386ba) differ by OKLab 0.034 under tritan simulation, below 0.05",
+    "risk and dx fills (#4a4a4a, #504a1f) differ by 0.003 in greyscale lightness, below 0.03"
+   ]
+  },
+  {
+   "id": "tol-bright-on-catppuccin-macchiato",
+   "family": "Composite",
+   "catalog_mode": "dark",
+   "composite_sources": [
+    "tol-bright",
+    "catppuccin-macchiato"
+   ],
+   "derivable": true,
+   "error": "",
+   "mode": "dark",
+   "source": "derived",
+   "default_eligible": false,
+   "not_eligible_because": "mech and inv strokes (#3c9d48, #598cc0) differ by OKLab 0.032 under tritan simulation, below 0.05; risk and dx fills (#525252, #595226) differ by 0.002 in greyscale lightness, below 0.03",
+   "scores": {
+    "balanced": 38.9,
+    "cvd-first": 39.46,
+    "print-first": 32.53,
+    "text-first": 45.69
+   },
+   "components": {
+    "text": 0.648,
+    "nontext": 0.504,
+    "stroke_normal": 0.476,
+    "stroke_red_green": 0.423,
+    "stroke_tritan": 0.419,
+    "stroke_grey": 0.048,
+    "fill_cvd": 0.303,
+    "fill_grey": 0.048
+   },
+   "text_min": 5.13,
+   "nontext_min": 3.01,
+   "text_on_fill_min": 5.13,
+   "stroke_de_ok": {
+    "none": 0.0904,
+    "protan": 0.0634,
+    "deutan": 0.076,
+    "tritan": 0.0324
+   },
+   "stroke_de00": {
+    "none": 9.52,
+    "protan": 9.58,
+    "deutan": 8.46,
+    "tritan": 8.38
+   },
+   "stroke_grey_dl": 0.0048,
+   "fill_de00": {
+    "none": 3.51,
+    "protan": 3.42,
+    "deutan": 3.62,
+    "tritan": 3.03
+   },
+   "fill_grey_dl": 0.0024,
+   "role_accents": {
+    "risk": "accent_7",
+    "mech": "accent_3",
+    "anat": "neutral",
+    "sign": "accent_2",
+    "inv": "accent_1",
+    "dx": "accent_4",
+    "tx": "accent_5"
+   },
+   "reported": [
+    "mech and inv strokes (#3c9d48, #598cc0) differ by OKLab 0.032 under tritan simulation, below 0.05",
+    "risk and dx fills (#525252, #595226) differ by 0.002 in greyscale lightness, below 0.03"
+   ]
+  },
+  {
+   "id": "tol-bright-on-everforest-dark-medium",
+   "family": "Composite",
+   "catalog_mode": "dark",
+   "composite_sources": [
+    "tol-bright",
+    "everforest-dark-medium"
+   ],
+   "derivable": false,
+   "error": "palette tol-bright-on-everforest-dark-medium: risk and anat fills (#383838, #383837) differ by OKLab 0.0018 in normal vision, below 0.02"
+  },
+  {
+   "id": "tol-muted-on-primer-dark-high-contrast",
+   "family": "Composite",
+   "catalog_mode": "dark",
+   "composite_sources": [
+    "tol-muted",
+    "primer-dark-high-contrast"
+   ],
+   "derivable": true,
+   "error": "",
+   "mode": "dark",
+   "source": "derived",
+   "default_eligible": true,
+   "not_eligible_because": "",
+   "scores": {
+    "balanced": 62.74,
+    "cvd-first": 61.9,
+    "print-first": 56.61,
+    "text-first": 70.8
+   },
+   "components": {
+    "text": 1.0,
+    "nontext": 0.532,
+    "stroke_normal": 0.806,
+    "stroke_red_green": 0.699,
+    "stroke_tritan": 0.474,
+    "stroke_grey": 0.181,
+    "fill_cvd": 0.347,
+    "fill_grey": 0.67
+   },
+   "text_min": 9.17,
+   "nontext_min": 3.08,
+   "text_on_fill_min": 12.83,
+   "stroke_de_ok": {
+    "none": 0.1223,
+    "protan": 0.1033,
+    "deutan": 0.0518,
+    "tritan": 0.082
+   },
+   "stroke_de00": {
+    "none": 16.13,
+    "protan": 13.98,
+    "deutan": 14.25,
+    "tritan": 9.48
+   },
+   "stroke_grey_dl": 0.0181,
+   "fill_de00": {
+    "none": 7.21,
+    "protan": 3.7,
+    "deutan": 3.47,
+    "tritan": 3.77
+   },
+   "fill_grey_dl": 0.0335,
+   "role_accents": {
+    "risk": "accent_3",
+    "mech": "accent_7",
+    "anat": "neutral",
+    "sign": "accent_1",
+    "inv": "accent_5",
+    "dx": "accent_8",
+    "tx": "accent_2"
+   },
+   "reported": []
+  },
+  {
+   "id": "tol-muted-on-modus-vivendi",
+   "family": "Composite",
+   "catalog_mode": "dark",
+   "composite_sources": [
+    "tol-muted",
+    "modus-vivendi"
+   ],
+   "derivable": true,
+   "error": "",
+   "mode": "dark",
+   "source": "derived",
+   "default_eligible": false,
+   "not_eligible_because": "anat and dx fills (#2a2520, #282700) differ by 0.001 in greyscale lightness, below 0.03",
+   "scores": {
+    "balanced": 57.09,
+    "cvd-first": 57.23,
+    "print-first": 49.43,
+    "text-first": 66.93
+   },
+   "components": {
+    "text": 1.0,
+    "nontext": 0.54,
+    "stroke_normal": 0.806,
+    "stroke_red_green": 0.699,
+    "stroke_tritan": 0.474,
+    "stroke_grey": 0.181,
+    "fill_cvd": 0.203,
+    "fill_grey": 0.016
+   },
+   "text_min": 5.78,
+   "nontext_min": 3.1,
+   "text_on_fill_min": 11.88,
+   "stroke_de_ok": {
+    "none": 0.1223,
+    "protan": 0.1033,
+    "deutan": 0.0518,
+    "tritan": 0.082
+   },
+   "stroke_de00": {
+    "none": 16.13,
+    "protan": 13.98,
+    "deutan": 14.25,
+    "tritan": 9.48
+   },
+   "stroke_grey_dl": 0.0181,
+   "fill_de00": {
+    "none": 7.43,
+    "protan": 2.03,
+    "deutan": 3.42,
+    "tritan": 2.44
+   },
+   "fill_grey_dl": 0.0008,
+   "role_accents": {
+    "risk": "accent_3",
+    "mech": "accent_7",
+    "anat": "neutral",
+    "sign": "accent_1",
+    "inv": "accent_5",
+    "dx": "accent_8",
+    "tx": "accent_2"
+   },
+   "reported": [
+    "anat and dx fills (#2a2520, #282700) differ by 0.001 in greyscale lightness, below 0.03"
+   ]
+  },
+  {
+   "id": "tol-muted-on-catppuccin-mocha",
+   "family": "Composite",
+   "catalog_mode": "dark",
+   "composite_sources": [
+    "tol-muted",
+    "catppuccin-mocha"
+   ],
+   "derivable": true,
+   "error": "",
+   "mode": "dark",
+   "source": "derived",
+   "default_eligible": false,
+   "not_eligible_because": "anat and dx fills (#36373b, #38391f) differ by 0.001 in greyscale lightness, below 0.03",
+   "scores": {
+    "balanced": 53.61,
+    "cvd-first": 52.55,
+    "print-first": 47.8,
+    "text-first": 64.19
+   },
+   "components": {
+    "text": 1.0,
+    "nontext": 0.5,
+    "stroke_normal": 0.806,
+    "stroke_red_green": 0.521,
+    "stroke_tritan": 0.616,
+    "stroke_grey": 0.181,
+    "fill_cvd": 0.162,
+    "fill_grey": 0.02
+   },
+   "text_min": 7.08,
+   "nontext_min": 3.0,
+   "text_on_fill_min": 7.08,
+   "stroke_de_ok": {
+    "none": 0.1289,
+    "protan": 0.0908,
+    "deutan": 0.0518,
+    "tritan": 0.0964
+   },
+   "stroke_de00": {
+    "none": 16.13,
+    "protan": 10.43,
+    "deutan": 13.81,
+    "tritan": 12.31
+   },
+   "stroke_grey_dl": 0.0181,
+   "fill_de00": {
+    "none": 4.95,
+    "protan": 3.28,
+    "deutan": 1.62,
+    "tritan": 3.21
+   },
+   "fill_grey_dl": 0.001,
+   "role_accents": {
+    "risk": "accent_3",
+    "mech": "accent_7",
+    "anat": "neutral",
+    "sign": "accent_1",
+    "inv": "accent_5",
+    "dx": "accent_8",
+    "tx": "accent_2"
+   },
+   "reported": [
+    "anat and dx fills (#36373b, #38391f) differ by 0.001 in greyscale lightness, below 0.03"
+   ]
+  },
+  {
+   "id": "tol-muted-on-catppuccin-macchiato",
+   "family": "Composite",
+   "catalog_mode": "dark",
+   "composite_sources": [
+    "tol-muted",
+    "catppuccin-macchiato"
+   ],
+   "derivable": true,
+   "error": "",
+   "mode": "dark",
+   "source": "derived",
+   "default_eligible": false,
+   "not_eligible_because": "sign and dx strokes (#999933, #3a9650) differ by OKLab 0.050 under protan simulation, below 0.05; mech and tx strokes (#44aa99, #ce6392) differ by OKLab 0.025 under deutan simulation, below 0.05; anat and sign fills (#37383b, #393928) differ by 0.000 in greyscale lightness, below 0.03",
+   "scores": {
+    "balanced": 42.24,
+    "cvd-first": 35.6,
+    "print-first": 39.74,
+    "text-first": 56.61
+   },
+   "components": {
+    "text": 1.0,
+    "nontext": 0.508,
+    "stroke_normal": 0.806,
+    "stroke_red_green": 0.158,
+    "stroke_tritan": 0.425,
+    "stroke_grey": 0.072,
+    "fill_cvd": 0.139,
+    "fill_grey": 0.004
+   },
+   "text_min": 6.22,
+   "nontext_min": 3.02,
+   "text_on_fill_min": 7.02,
+   "stroke_de_ok": {
+    "none": 0.1039,
+    "protan": 0.0495,
+    "deutan": 0.0248,
+    "tritan": 0.0766
+   },
+   "stroke_de00": {
+    "none": 16.13,
+    "protan": 7.53,
+    "deutan": 3.15,
+    "tritan": 8.51
+   },
+   "stroke_grey_dl": 0.0072,
+   "fill_de00": {
+    "none": 3.19,
+    "protan": 2.46,
+    "deutan": 1.39,
+    "tritan": 2.75
+   },
+   "fill_grey_dl": 0.0002,
+   "role_accents": {
+    "risk": "accent_3",
+    "mech": "accent_7",
+    "anat": "neutral",
+    "sign": "accent_8",
+    "inv": "accent_5",
+    "dx": "accent_4",
+    "tx": "accent_6"
+   },
+   "reported": [
+    "sign and dx strokes (#999933, #3a9650) differ by OKLab 0.050 under protan simulation, below 0.05",
+    "mech and tx strokes (#44aa99, #ce6392) differ by OKLab 0.025 under deutan simulation, below 0.05",
+    "anat and sign fills (#37383b, #393928) differ by 0.000 in greyscale lightness, below 0.03"
+   ]
+  },
+  {
+   "id": "tol-muted-on-everforest-dark-medium",
+   "family": "Composite",
+   "catalog_mode": "dark",
+   "composite_sources": [
+    "tol-muted",
+    "everforest-dark-medium"
+   ],
+   "derivable": true,
+   "error": "",
+   "mode": "dark",
+   "source": "derived",
+   "default_eligible": false,
+   "not_eligible_because": "mech and sign strokes (#44aa99, #ce6392) differ by OKLab 0.025 under deutan simulation, below 0.05; sign and tx strokes (#ce6392, #cb63b9) differ by OKLab 0.030 under tritan simulation, below 0.05; anat and dx fills (#41403e, #414132) differ by 0.000 in greyscale lightness, below 0.03",
+   "scores": {
+    "balanced": 31.63,
+    "cvd-first": 26.58,
+    "print-first": 30.05,
+    "text-first": 42.6
+   },
+   "components": {
+    "text": 0.731,
+    "nontext": 0.5,
+    "stroke_normal": 0.467,
+    "stroke_red_green": 0.158,
+    "stroke_tritan": 0.235,
+    "stroke_grey": 0.085,
+    "fill_cvd": 0.089,
+    "fill_grey": 0.002
+   },
+   "text_min": 4.52,
+   "nontext_min": 3.0,
+   "text_on_fill_min": 5.52,
+   "stroke_de_ok": {
+    "none": 0.0599,
+    "protan": 0.0619,
+    "deutan": 0.0248,
+    "tritan": 0.0298
+   },
+   "stroke_de00": {
+    "none": 9.33,
+    "protan": 9.68,
+    "deutan": 3.15,
+    "tritan": 4.69
+   },
+   "stroke_grey_dl": 0.0085,
+   "fill_de00": {
+    "none": 2.97,
+    "protan": 0.89,
+    "deutan": 2.2,
+    "tritan": 1.64
+   },
+   "fill_grey_dl": 0.0001,
+   "role_accents": {
+    "risk": "accent_3",
+    "mech": "accent_7",
+    "anat": "neutral",
+    "sign": "accent_6",
+    "inv": "accent_5",
+    "dx": "accent_8",
+    "tx": "accent_9"
+   },
+   "reported": [
+    "mech and sign strokes (#44aa99, #ce6392) differ by OKLab 0.025 under deutan simulation, below 0.05",
+    "sign and tx strokes (#ce6392, #cb63b9) differ by OKLab 0.030 under tritan simulation, below 0.05",
+    "anat and dx fills (#41403e, #414132) differ by 0.000 in greyscale lightness, below 0.03"
+   ]
+  },
+  {
+   "id": "petroff-6-on-primer-dark-high-contrast",
+   "family": "Composite",
+   "catalog_mode": "dark",
+   "composite_sources": [
+    "petroff-6",
+    "primer-dark-high-contrast"
+   ],
+   "derivable": true,
+   "error": "",
+   "mode": "dark",
+   "source": "derived",
+   "default_eligible": true,
+   "not_eligible_because": "",
+   "scores": {
+    "balanced": 59.58,
+    "cvd-first": 60.99,
+    "print-first": 51.25,
+    "text-first": 68.28
+   },
+   "components": {
+    "text": 1.0,
+    "nontext": 0.504,
+    "stroke_normal": 0.789,
+    "stroke_red_green": 0.613,
+    "stroke_tritan": 0.826,
+    "stroke_grey": 0.025,
+    "fill_cvd": 0.236,
+    "fill_grey": 0.612
+   },
+   "text_min": 9.17,
+   "nontext_min": 3.01,
+   "text_on_fill_min": 12.88,
+   "stroke_de_ok": {
+    "none": 0.1577,
+    "protan": 0.1379,
+    "deutan": 0.1125,
+    "tritan": 0.1094
+   },
+   "stroke_de00": {
+    "none": 15.79,
+    "protan": 12.27,
+    "deutan": 13.8,
+    "tritan": 16.51
+   },
+   "stroke_grey_dl": 0.0025,
+   "fill_de00": {
+    "none": 6.81,
+    "protan": 2.36,
+    "deutan": 3.58,
+    "tritan": 6.56
+   },
+   "fill_grey_dl": 0.0306,
+   "role_accents": {
+    "risk": "accent_3",
+    "mech": "accent_5",
+    "anat": "neutral",
+    "sign": "accent_4",
+    "inv": "accent_1",
+    "dx": "accent_2",
+    "tx": "accent_6"
+   },
+   "reported": []
+  },
+  {
+   "id": "petroff-6-on-modus-vivendi",
+   "family": "Composite",
+   "catalog_mode": "dark",
+   "composite_sources": [
+    "petroff-6",
+    "modus-vivendi"
+   ],
+   "derivable": true,
+   "error": "",
+   "mode": "dark",
+   "source": "derived",
+   "default_eligible": false,
+   "not_eligible_because": "anat and inv fills (#27211c, #062157) differ by 0.011 in greyscale lightness, below 0.03",
+   "scores": {
+    "balanced": 59.03,
+    "cvd-first": 61.75,
+    "print-first": 48.79,
+    "text-first": 67.73
+   },
+   "components": {
+    "text": 1.0,
+    "nontext": 0.508,
+    "stroke_normal": 0.789,
+    "stroke_red_green": 0.62,
+    "stroke_tritan": 0.826,
+    "stroke_grey": 0.032,
+    "fill_cvd": 0.482,
+    "fill_grey": 0.212
+   },
+   "text_min": 5.78,
+   "nontext_min": 3.02,
+   "text_on_fill_min": 13.43,
+   "stroke_de_ok": {
+    "none": 0.1577,
+    "protan": 0.1392,
+    "deutan": 0.1041,
+    "tritan": 0.1092
+   },
+   "stroke_de00": {
+    "none": 15.79,
+    "protan": 12.39,
+    "deutan": 12.59,
+    "tritan": 16.51
+   },
+   "stroke_grey_dl": 0.0032,
+   "fill_de00": {
+    "none": 5.87,
+    "protan": 4.82,
+    "deutan": 5.45,
+    "tritan": 6.75
+   },
+   "fill_grey_dl": 0.0106,
+   "role_accents": {
+    "risk": "accent_3",
+    "mech": "accent_5",
+    "anat": "neutral",
+    "sign": "accent_4",
+    "inv": "accent_1",
+    "dx": "accent_2",
+    "tx": "accent_6"
+   },
+   "reported": [
+    "anat and inv fills (#27211c, #062157) differ by 0.011 in greyscale lightness, below 0.03"
+   ]
+  },
+  {
+   "id": "petroff-6-on-catppuccin-mocha",
+   "family": "Composite",
+   "catalog_mode": "dark",
+   "composite_sources": [
+    "petroff-6",
+    "catppuccin-mocha"
+   ],
+   "derivable": true,
+   "error": "",
+   "mode": "dark",
+   "source": "derived",
+   "default_eligible": false,
+   "not_eligible_because": "anat and inv fills (#3b3d42, #283f68) differ by 0.009 in greyscale lightness, below 0.03",
+   "scores": {
+    "balanced": 46.24,
+    "cvd-first": 44.27,
+    "print-first": 41.21,
+    "text-first": 56.89
+   },
+   "components": {
+    "text": 0.911,
+    "nontext": 0.5,
+    "stroke_normal": 0.697,
+    "stroke_red_green": 0.294,
+    "stroke_tritan": 0.696,
+    "stroke_grey": 0.054,
+    "fill_cvd": 0.249,
+    "fill_grey": 0.174
+   },
+   "text_min": 6.47,
+   "nontext_min": 3.0,
+   "text_on_fill_min": 6.47,
+   "stroke_de_ok": {
+    "none": 0.151,
+    "protan": 0.1013,
+    "deutan": 0.0587,
+    "tritan": 0.1066
+   },
+   "stroke_de00": {
+    "none": 13.93,
+    "protan": 9.66,
+    "deutan": 5.88,
+    "tritan": 13.91
+   },
+   "stroke_grey_dl": 0.0054,
+   "fill_de00": {
+    "none": 2.61,
+    "protan": 2.49,
+    "deutan": 2.71,
+    "tritan": 2.78
+   },
+   "fill_grey_dl": 0.0087,
+   "role_accents": {
+    "risk": "accent_3",
+    "mech": "accent_5",
+    "anat": "neutral",
+    "sign": "accent_4",
+    "inv": "accent_1",
+    "dx": "accent_2",
+    "tx": "accent_6"
+   },
+   "reported": [
+    "anat and inv fills (#3b3d42, #283f68) differ by 0.009 in greyscale lightness, below 0.03"
+   ]
+  },
+  {
+   "id": "petroff-6-on-catppuccin-macchiato",
+   "family": "Composite",
+   "catalog_mode": "dark",
+   "composite_sources": [
+    "petroff-6",
+    "catppuccin-macchiato"
+   ],
+   "derivable": true,
+   "error": "",
+   "mode": "dark",
+   "source": "derived",
+   "default_eligible": false,
+   "not_eligible_because": "inv and tx strokes (#5a93ff, #9f65ff) differ by OKLab 0.039 under deutan simulation, below 0.05; mech and inv fills (#4b4b4d, #2f4875) differ by 0.011 in greyscale lightness, below 0.03",
+   "scores": {
+    "balanced": 40.06,
+    "cvd-first": 37.79,
+    "print-first": 35.58,
+    "text-first": 48.64
+   },
+   "components": {
+    "text": 0.713,
+    "nontext": 0.524,
+    "stroke_normal": 0.697,
+    "stroke_red_green": 0.181,
+    "stroke_tritan": 0.696,
+    "stroke_grey": 0.004,
+    "fill_cvd": 0.309,
+    "fill_grey": 0.216
+   },
+   "text_min": 5.43,
+   "nontext_min": 3.06,
+   "text_on_fill_min": 5.43,
+   "stroke_de_ok": {
+    "none": 0.1308,
+    "protan": 0.0866,
+    "deutan": 0.039,
+    "tritan": 0.0763
+   },
+   "stroke_de00": {
+    "none": 13.93,
+    "protan": 7.78,
+    "deutan": 3.63,
+    "tritan": 13.91
+   },
+   "stroke_grey_dl": 0.0004,
+   "fill_de00": {
+    "none": 3.19,
+    "protan": 3.09,
+    "deutan": 3.32,
+    "tritan": 3.11
+   },
+   "fill_grey_dl": 0.0108,
+   "role_accents": {
+    "risk": "accent_3",
+    "mech": "accent_5",
+    "anat": "neutral",
+    "sign": "accent_4",
+    "inv": "accent_1",
+    "dx": "accent_2",
+    "tx": "accent_6"
+   },
+   "reported": [
+    "inv and tx strokes (#5a93ff, #9f65ff) differ by OKLab 0.039 under deutan simulation, below 0.05",
+    "mech and inv fills (#4b4b4d, #2f4875) differ by 0.011 in greyscale lightness, below 0.03"
+   ]
+  },
+  {
+   "id": "petroff-6-on-everforest-dark-medium",
+   "family": "Composite",
+   "catalog_mode": "dark",
+   "composite_sources": [
+    "petroff-6",
+    "everforest-dark-medium"
+   ],
+   "derivable": true,
+   "error": "",
+   "mode": "dark",
+   "source": "derived",
+   "default_eligible": false,
+   "not_eligible_because": "inv and tx strokes (#6097ff, #a16aff) differ by OKLab 0.041 under deutan simulation, below 0.05; mech and inv fills (#4d4d4f, #374b70) differ by 0.008 in greyscale lightness, below 0.03",
+   "scores": {
+    "balanced": 38.38,
+    "cvd-first": 36.34,
+    "print-first": 34.47,
+    "text-first": 44.07
+   },
+   "components": {
+    "text": 0.544,
+    "nontext": 0.5,
+    "stroke_normal": 0.82,
+    "stroke_red_green": 0.19,
+    "stroke_tritan": 0.683,
+    "stroke_grey": 0.059,
+    "fill_cvd": 0.324,
+    "fill_grey": 0.168
+   },
+   "text_min": 4.52,
+   "nontext_min": 3.0,
+   "text_on_fill_min": 4.68,
+   "stroke_de_ok": {
+    "none": 0.1274,
+    "protan": 0.0918,
+    "deutan": 0.0409,
+    "tritan": 0.0679
+   },
+   "stroke_de00": {
+    "none": 16.39,
+    "protan": 8.22,
+    "deutan": 3.8,
+    "tritan": 13.67
+   },
+   "stroke_grey_dl": 0.0059,
+   "fill_de00": {
+    "none": 4.15,
+    "protan": 4.18,
+    "deutan": 4.18,
+    "tritan": 3.24
+   },
+   "fill_grey_dl": 0.0084,
+   "role_accents": {
+    "risk": "accent_3",
+    "mech": "accent_5",
+    "anat": "neutral",
+    "sign": "accent_4",
+    "inv": "accent_1",
+    "dx": "accent_2",
+    "tx": "accent_6"
+   },
+   "reported": [
+    "inv and tx strokes (#6097ff, #a16aff) differ by OKLab 0.041 under deutan simulation, below 0.05",
+    "mech and inv fills (#4d4d4f, #374b70) differ by 0.008 in greyscale lightness, below 0.03"
+   ]
+  },
+  {
+   "id": "petroff-8-on-primer-dark-high-contrast",
+   "family": "Composite",
+   "catalog_mode": "dark",
+   "composite_sources": [
+    "petroff-8",
+    "primer-dark-high-contrast"
+   ],
+   "derivable": true,
+   "error": "",
+   "mode": "dark",
+   "source": "derived",
+   "default_eligible": true,
+   "not_eligible_because": "",
+   "scores": {
+    "balanced": 58.11,
+    "cvd-first": 54.92,
+    "print-first": 52.8,
+    "text-first": 68.1
+   },
+   "components": {
+    "text": 1.0,
+    "nontext": 0.548,
+    "stroke_normal": 0.921,
+    "stroke_red_green": 0.463,
+    "stroke_tritan": 0.587,
+    "stroke_grey": 0.074,
+    "fill_cvd": 0.357,
+    "fill_grey": 0.654
+   },
+   "text_min": 9.17,
+   "nontext_min": 3.12,
+   "text_on_fill_min": 12.85,
+   "stroke_de_ok": {
+    "none": 0.1251,
+    "protan": 0.0749,
+    "deutan": 0.0925,
+    "tritan": 0.0899
+   },
+   "stroke_de00": {
+    "none": 18.42,
+    "protan": 9.25,
+    "deutan": 14.51,
+    "tritan": 11.74
+   },
+   "stroke_grey_dl": 0.0074,
+   "fill_de00": {
+    "none": 6.69,
+    "protan": 4.81,
+    "deutan": 3.57,
+    "tritan": 5.92
+   },
+   "fill_grey_dl": 0.0327,
+   "role_accents": {
+    "risk": "accent_2",
+    "mech": "accent_6",
+    "anat": "neutral",
+    "sign": "accent_4",
+    "inv": "accent_7",
+    "dx": "accent_5",
+    "tx": "accent_1"
+   },
+   "reported": []
+  },
+  {
+   "id": "petroff-8-on-modus-vivendi",
+   "family": "Composite",
+   "catalog_mode": "dark",
+   "composite_sources": [
+    "petroff-8",
+    "modus-vivendi"
+   ],
+   "derivable": true,
+   "error": "",
+   "mode": "dark",
+   "source": "derived",
+   "default_eligible": false,
+   "not_eligible_because": "risk and anat fills (#481400, #2b2521) differ by 0.003 in greyscale lightness, below 0.03",
+   "scores": {
+    "balanced": 53.7,
+    "cvd-first": 51.98,
+    "print-first": 46.54,
+    "text-first": 64.55
+   },
+   "components": {
+    "text": 1.0,
+    "nontext": 0.5,
+    "stroke_normal": 0.921,
+    "stroke_red_green": 0.463,
+    "stroke_tritan": 0.587,
+    "stroke_grey": 0.074,
+    "fill_cvd": 0.382,
+    "fill_grey": 0.064
+   },
+   "text_min": 5.78,
+   "nontext_min": 3.0,
+   "text_on_fill_min": 12.53,
+   "stroke_de_ok": {
+    "none": 0.1251,
+    "protan": 0.0749,
+    "deutan": 0.0925,
+    "tritan": 0.0899
+   },
+   "stroke_de00": {
+    "none": 18.42,
+    "protan": 9.25,
+    "deutan": 14.51,
+    "tritan": 11.74
+   },
+   "stroke_grey_dl": 0.0074,
+   "fill_de00": {
+    "none": 9.22,
+    "protan": 4.49,
+    "deutan": 5.08,
+    "tritan": 3.82
+   },
+   "fill_grey_dl": 0.0032,
+   "role_accents": {
+    "risk": "accent_2",
+    "mech": "accent_6",
+    "anat": "neutral",
+    "sign": "accent_4",
+    "inv": "accent_7",
+    "dx": "accent_5",
+    "tx": "accent_1"
+   },
+   "reported": [
+    "risk and anat fills (#481400, #2b2521) differ by 0.003 in greyscale lightness, below 0.03"
+   ]
+  },
+  {
+   "id": "petroff-8-on-catppuccin-mocha",
+   "family": "Composite",
+   "catalog_mode": "dark",
+   "composite_sources": [
+    "petroff-8",
+    "catppuccin-mocha"
+   ],
+   "derivable": true,
+   "error": "",
+   "mode": "dark",
+   "source": "derived",
+   "default_eligible": false,
+   "not_eligible_because": "inv and tx strokes (#578dff, #4276ff) differ by OKLab 0.045 under tritan simulation, below 0.05; risk and inv fills (#582b19, #273758) differ by 0.000 in greyscale lightness, below 0.03",
+   "scores": {
+    "balanced": 40.87,
+    "cvd-first": 37.37,
+    "print-first": 36.57,
+    "text-first": 54.47
+   },
+   "components": {
+    "text": 1.0,
+    "nontext": 0.532,
+    "stroke_normal": 0.364,
+    "stroke_red_green": 0.294,
+    "stroke_tritan": 0.269,
+    "stroke_grey": 0.061,
+    "fill_cvd": 0.294,
+    "fill_grey": 0.002
+   },
+   "text_min": 7.1,
+   "nontext_min": 3.08,
+   "text_on_fill_min": 7.15,
+   "stroke_de_ok": {
+    "none": 0.0639,
+    "protan": 0.0635,
+    "deutan": 0.0555,
+    "tritan": 0.0455
+   },
+   "stroke_de00": {
+    "none": 7.28,
+    "protan": 5.88,
+    "deutan": 6.2,
+    "tritan": 5.39
+   },
+   "stroke_grey_dl": 0.0061,
+   "fill_de00": {
+    "none": 4.13,
+    "protan": 3.72,
+    "deutan": 4.08,
+    "tritan": 2.94
+   },
+   "fill_grey_dl": 0.0001,
+   "role_accents": {
+    "risk": "accent_2",
+    "mech": "accent_6",
+    "anat": "neutral",
+    "sign": "accent_8",
+    "inv": "accent_7",
+    "dx": "accent_5",
+    "tx": "accent_1"
+   },
+   "reported": [
+    "inv and tx strokes (#578dff, #4276ff) differ by OKLab 0.045 under tritan simulation, below 0.05",
+    "risk and inv fills (#582b19, #273758) differ by 0.000 in greyscale lightness, below 0.03"
+   ]
+  },
+  {
+   "id": "petroff-8-on-catppuccin-macchiato",
+   "family": "Composite",
+   "catalog_mode": "dark",
+   "composite_sources": [
+    "petroff-8",
+    "catppuccin-macchiato"
+   ],
+   "derivable": true,
+   "error": "",
+   "mode": "dark",
+   "source": "derived",
+   "default_eligible": false,
+   "not_eligible_because": "anat and inv fills (#38393c, #2d3951) differ by 0.000 in greyscale lightness, below 0.03",
+   "scores": {
+    "balanced": 49.08,
+    "cvd-first": 45.43,
+    "print-first": 43.79,
+    "text-first": 61.44
+   },
+   "components": {
+    "text": 1.0,
+    "nontext": 0.5,
+    "stroke_normal": 0.911,
+    "stroke_red_green": 0.333,
+    "stroke_tritan": 0.569,
+    "stroke_grey": 0.074,
+    "fill_cvd": 0.24,
+    "fill_grey": 0.008
+   },
+   "text_min": 6.22,
+   "nontext_min": 3.0,
+   "text_on_fill_min": 7.11,
+   "stroke_de_ok": {
+    "none": 0.1054,
+    "protan": 0.0635,
+    "deutan": 0.0593,
+    "tritan": 0.0827
+   },
+   "stroke_de00": {
+    "none": 18.23,
+    "protan": 6.66,
+    "deutan": 10.28,
+    "tritan": 11.38
+   },
+   "stroke_grey_dl": 0.0074,
+   "fill_de00": {
+    "none": 3.0,
+    "protan": 2.93,
+    "deutan": 2.4,
+    "tritan": 2.7
+   },
+   "fill_grey_dl": 0.0004,
+   "role_accents": {
+    "risk": "accent_2",
+    "mech": "accent_6",
+    "anat": "neutral",
+    "sign": "accent_8",
+    "inv": "accent_7",
+    "dx": "accent_5",
+    "tx": "accent_4"
+   },
+   "reported": [
+    "anat and inv fills (#38393c, #2d3951) differ by 0.000 in greyscale lightness, below 0.03"
+   ]
+  },
+  {
+   "id": "petroff-8-on-everforest-dark-medium",
+   "family": "Composite",
+   "catalog_mode": "dark",
+   "composite_sources": [
+    "petroff-8",
+    "everforest-dark-medium"
+   ],
+   "derivable": true,
+   "error": "",
+   "mode": "dark",
+   "source": "derived",
+   "default_eligible": false,
+   "not_eligible_because": "risk and inv fills (#683b2a, #364767) differ by 0.001 in greyscale lightness, below 0.03",
+   "scores": {
+    "balanced": 43.34,
+    "cvd-first": 45.06,
+    "print-first": 35.14,
+    "text-first": 48.18
+   },
+   "components": {
+    "text": 0.566,
+    "nontext": 0.52,
+    "stroke_normal": 0.823,
+    "stroke_red_green": 0.547,
+    "stroke_tritan": 0.575,
+    "stroke_grey": 0.036,
+    "fill_cvd": 0.164,
+    "fill_grey": 0.014
+   },
+   "text_min": 4.52,
+   "nontext_min": 3.05,
+   "text_on_fill_min": 4.77,
+   "stroke_de_ok": {
+    "none": 0.1216,
+    "protan": 0.0795,
+    "deutan": 0.0674,
+    "tritan": 0.0831
+   },
+   "stroke_de00": {
+    "none": 16.46,
+    "protan": 11.38,
+    "deutan": 10.95,
+    "tritan": 11.49
+   },
+   "stroke_grey_dl": 0.0036,
+   "fill_de00": {
+    "none": 4.13,
+    "protan": 4.06,
+    "deutan": 3.9,
+    "tritan": 1.64
+   },
+   "fill_grey_dl": 0.0007,
+   "role_accents": {
+    "risk": "accent_2",
+    "mech": "accent_6",
+    "anat": "neutral",
+    "sign": "accent_8",
+    "inv": "accent_7",
+    "dx": "accent_5",
+    "tx": "accent_4"
+   },
+   "reported": [
+    "risk and inv fills (#683b2a, #364767) differ by 0.001 in greyscale lightness, below 0.03"
+   ]
+  },
+  {
+   "id": "petroff-10-on-modus-vivendi",
+   "family": "Composite",
+   "catalog_mode": "dark",
+   "composite_sources": [
+    "petroff-10",
+    "modus-vivendi"
+   ],
+   "derivable": true,
+   "error": "",
+   "mode": "dark",
+   "source": "derived",
+   "default_eligible": false,
+   "not_eligible_because": "anat and inv fills (#2b2520, #002443) differ by 0.013 in greyscale lightness, below 0.03",
+   "scores": {
+    "balanced": 62.88,
+    "cvd-first": 60.73,
+    "print-first": 62.91,
+    "text-first": 70.43
+   },
+   "components": {
+    "text": 1.0,
+    "nontext": 0.516,
+    "stroke_normal": 0.775,
+    "stroke_red_green": 0.541,
+    "stroke_tritan": 0.751,
+    "stroke_grey": 0.572,
+    "fill_cvd": 0.2,
+    "fill_grey": 0.266
+   },
+   "text_min": 5.78,
+   "nontext_min": 3.04,
+   "text_on_fill_min": 11.65,
+   "stroke_de_ok": {
+    "none": 0.1175,
+    "protan": 0.0536,
+    "deutan": 0.07,
+    "tritan": 0.1045
+   },
+   "stroke_de00": {
+    "none": 15.51,
+    "protan": 10.83,
+    "deutan": 12.38,
+    "tritan": 15.02
+   },
+   "stroke_grey_dl": 0.0572,
+   "fill_de00": {
+    "none": 7.14,
+    "protan": 3.55,
+    "deutan": 2.0,
+    "tritan": 4.47
+   },
+   "fill_grey_dl": 0.0133,
+   "role_accents": {
+    "risk": "accent_2",
+    "mech": "accent_10",
+    "anat": "neutral",
+    "sign": "accent_3",
+    "inv": "accent_1",
+    "dx": "accent_4",
+    "tx": "accent_6"
+   },
+   "reported": [
+    "anat and inv fills (#2b2520, #002443) differ by 0.013 in greyscale lightness, below 0.03"
+   ]
+  },
+  {
+   "id": "petroff-10-on-catppuccin-mocha",
+   "family": "Composite",
+   "catalog_mode": "dark",
+   "composite_sources": [
+    "petroff-10",
+    "catppuccin-mocha"
+   ],
+   "derivable": false,
+   "error": "palette petroff-10-on-catppuccin-mocha: mech and anat fills (#353938, #38393c) differ by OKLab 0.0091 in normal vision, below 0.02"
+  },
+  {
+   "id": "petroff-10-on-catppuccin-macchiato",
+   "family": "Composite",
+   "catalog_mode": "dark",
+   "composite_sources": [
+    "petroff-10",
+    "catppuccin-macchiato"
+   ],
+   "derivable": false,
+   "error": "palette petroff-10-on-catppuccin-macchiato: anat and dx fills (#3a3a3d, #373a3a) differ by OKLab 0.0077 in normal vision, below 0.02"
+  },
+  {
+   "id": "petroff-10-on-everforest-dark-medium",
+   "family": "Composite",
+   "catalog_mode": "dark",
+   "composite_sources": [
+    "petroff-10",
+    "everforest-dark-medium"
+   ],
+   "derivable": false,
+   "error": "palette petroff-10-on-everforest-dark-medium: anat and dx fills (#383837, #373838) differ by OKLab 0.0023 in normal vision, below 0.02"
+  },
+  {
+   "id": "okabe-ito-on-primer-dark-high-contrast",
+   "family": "Composite",
+   "catalog_mode": "dark",
+   "composite_sources": [
+    "okabe-ito",
+    "primer-dark-high-contrast"
+   ],
+   "derivable": true,
+   "error": "",
+   "mode": "dark",
+   "source": "derived",
+   "default_eligible": true,
+   "not_eligible_because": "",
+   "scores": {
+    "balanced": 65.11,
+    "cvd-first": 61.43,
+    "print-first": 61.54,
+    "text-first": 73.83
+   },
+   "components": {
+    "text": 1.0,
+    "nontext": 0.632,
+    "stroke_normal": 1.0,
+    "stroke_red_green": 0.613,
+    "stroke_tritan": 0.524,
+    "stroke_grey": 0.285,
+    "fill_cvd": 0.289,
+    "fill_grey": 0.648
+   },
+   "text_min": 9.17,
+   "nontext_min": 3.34,
+   "text_on_fill_min": 12.84,
+   "stroke_de_ok": {
+    "none": 0.1607,
+    "protan": 0.0955,
+    "deutan": 0.0761,
+    "tritan": 0.0855
+   },
+   "stroke_de00": {
+    "none": 22.31,
+    "protan": 12.25,
+    "deutan": 15.69,
+    "tritan": 10.47
+   },
+   "stroke_grey_dl": 0.0285,
+   "fill_de00": {
+    "none": 7.56,
+    "protan": 2.89,
+    "deutan": 4.21,
+    "tritan": 3.34
+   },
+   "fill_grey_dl": 0.0324,
+   "role_accents": {
+    "risk": "accent_6",
+    "mech": "accent_3",
+    "anat": "neutral",
+    "sign": "accent_7",
+    "inv": "accent_2",
+    "dx": "accent_4",
+    "tx": "accent_5"
+   },
+   "reported": []
+  },
+  {
+   "id": "okabe-ito-on-modus-vivendi",
+   "family": "Composite",
+   "catalog_mode": "dark",
+   "composite_sources": [
+    "okabe-ito",
+    "modus-vivendi"
+   ],
+   "derivable": true,
+   "error": "",
+   "mode": "dark",
+   "source": "derived",
+   "default_eligible": false,
+   "not_eligible_because": "anat and sign fills (#29231e, #3e162e) differ by 0.001 in greyscale lightness, below 0.03",
+   "scores": {
+    "balanced": 58.94,
+    "cvd-first": 56.42,
+    "print-first": 54.02,
+    "text-first": 69.16
+   },
+   "components": {
+    "text": 1.0,
+    "nontext": 0.583,
+    "stroke_normal": 1.0,
+    "stroke_red_green": 0.613,
+    "stroke_tritan": 0.524,
+    "stroke_grey": 0.285,
+    "fill_cvd": 0.122,
+    "fill_grey": 0.028
+   },
+   "text_min": 5.78,
+   "nontext_min": 3.21,
+   "text_on_fill_min": 10.73,
+   "stroke_de_ok": {
+    "none": 0.1607,
+    "protan": 0.0955,
+    "deutan": 0.0761,
+    "tritan": 0.0855
+   },
+   "stroke_de00": {
+    "none": 22.31,
+    "protan": 12.25,
+    "deutan": 15.69,
+    "tritan": 10.47
+   },
+   "stroke_grey_dl": 0.0285,
+   "fill_de00": {
+    "none": 7.33,
+    "protan": 2.98,
+    "deutan": 1.22,
+    "tritan": 5.09
+   },
+   "fill_grey_dl": 0.0014,
+   "role_accents": {
+    "risk": "accent_6",
+    "mech": "accent_3",
+    "anat": "neutral",
+    "sign": "accent_7",
+    "inv": "accent_2",
+    "dx": "accent_4",
+    "tx": "accent_5"
+   },
+   "reported": [
+    "anat and sign fills (#29231e, #3e162e) differ by 0.001 in greyscale lightness, below 0.03"
+   ]
+  },
+  {
+   "id": "okabe-ito-on-catppuccin-mocha",
+   "family": "Composite",
+   "catalog_mode": "dark",
+   "composite_sources": [
+    "okabe-ito",
+    "catppuccin-mocha"
+   ],
+   "derivable": true,
+   "error": "",
+   "mode": "dark",
+   "source": "derived",
+   "default_eligible": false,
+   "not_eligible_because": "mech and inv strokes (#009e73, #2484c6) differ by OKLab 0.038 under tritan simulation, below 0.05; anat and tx fills (#323336, #412d38) differ by 0.001 in greyscale lightness, below 0.03",
+   "scores": {
+    "balanced": 51.08,
+    "cvd-first": 46.78,
+    "print-first": 45.86,
+    "text-first": 63.6
+   },
+   "components": {
+    "text": 1.0,
+    "nontext": 0.544,
+    "stroke_normal": 1.0,
+    "stroke_red_green": 0.463,
+    "stroke_tritan": 0.413,
+    "stroke_grey": 0.111,
+    "fill_cvd": 0.044,
+    "fill_grey": 0.016
+   },
+   "text_min": 7.1,
+   "nontext_min": 3.11,
+   "text_on_fill_min": 7.2,
+   "stroke_de_ok": {
+    "none": 0.1558,
+    "protan": 0.0632,
+    "deutan": 0.0761,
+    "tritan": 0.0383
+   },
+   "stroke_de00": {
+    "none": 21.72,
+    "protan": 9.27,
+    "deutan": 11.61,
+    "tritan": 8.27
+   },
+   "stroke_grey_dl": 0.0111,
+   "fill_de00": {
+    "none": 8.66,
+    "protan": 2.86,
+    "deutan": 0.44,
+    "tritan": 2.94
+   },
+   "fill_grey_dl": 0.0008,
+   "role_accents": {
+    "risk": "accent_1",
+    "mech": "accent_3",
+    "anat": "neutral",
+    "sign": "accent_6",
+    "inv": "accent_5",
+    "dx": "accent_4",
+    "tx": "accent_7"
+   },
+   "reported": [
+    "mech and inv strokes (#009e73, #2484c6) differ by OKLab 0.038 under tritan simulation, below 0.05",
+    "anat and tx fills (#323336, #412d38) differ by 0.001 in greyscale lightness, below 0.03"
+   ]
+  },
+  {
+   "id": "okabe-ito-on-catppuccin-macchiato",
+   "family": "Composite",
+   "catalog_mode": "dark",
+   "composite_sources": [
+    "okabe-ito",
+    "catppuccin-macchiato"
+   ],
+   "derivable": true,
+   "error": "",
+   "mode": "dark",
+   "source": "derived",
+   "default_eligible": false,
+   "not_eligible_because": "mech and inv strokes (#009e73, #308ed0) differ by OKLab 0.030 under tritan simulation, below 0.05; mech and anat fills (#273931, #353538) differ by 0.000 in greyscale lightness, below 0.03",
+   "scores": {
+    "balanced": 50.28,
+    "cvd-first": 46.09,
+    "print-first": 44.85,
+    "text-first": 62.7
+   },
+   "components": {
+    "text": 1.0,
+    "nontext": 0.5,
+    "stroke_normal": 1.0,
+    "stroke_red_green": 0.463,
+    "stroke_tritan": 0.378,
+    "stroke_grey": 0.097,
+    "fill_cvd": 0.071,
+    "fill_grey": 0.006
+   },
+   "text_min": 6.22,
+   "nontext_min": 3.0,
+   "text_on_fill_min": 7.11,
+   "stroke_de_ok": {
+    "none": 0.1482,
+    "protan": 0.0634,
+    "deutan": 0.0761,
+    "tritan": 0.03
+   },
+   "stroke_de00": {
+    "none": 21.72,
+    "protan": 9.27,
+    "deutan": 11.57,
+    "tritan": 7.55
+   },
+   "stroke_grey_dl": 0.0097,
+   "fill_de00": {
+    "none": 7.23,
+    "protan": 1.21,
+    "deutan": 0.71,
+    "tritan": 2.33
+   },
+   "fill_grey_dl": 0.0003,
+   "role_accents": {
+    "risk": "accent_1",
+    "mech": "accent_3",
+    "anat": "neutral",
+    "sign": "accent_6",
+    "inv": "accent_5",
+    "dx": "accent_4",
+    "tx": "accent_7"
+   },
+   "reported": [
+    "mech and inv strokes (#009e73, #308ed0) differ by OKLab 0.030 under tritan simulation, below 0.05",
+    "mech and anat fills (#273931, #353538) differ by 0.000 in greyscale lightness, below 0.03"
+   ]
+  },
+  {
+   "id": "okabe-ito-on-everforest-dark-medium",
+   "family": "Composite",
+   "catalog_mode": "dark",
+   "composite_sources": [
+    "okabe-ito",
+    "everforest-dark-medium"
+   ],
+   "derivable": true,
+   "error": "",
+   "mode": "dark",
+   "source": "derived",
+   "default_eligible": false,
+   "not_eligible_because": "mech and tx fills (#32413a, #483a41) differ by 0.001 in greyscale lightness, below 0.03",
+   "scores": {
+    "balanced": 47.86,
+    "cvd-first": 47.09,
+    "print-first": 40.62,
+    "text-first": 55.58
+   },
+   "components": {
+    "text": 0.743,
+    "nontext": 0.512,
+    "stroke_normal": 1.0,
+    "stroke_red_green": 0.526,
+    "stroke_tritan": 0.543,
+    "stroke_grey": 0.067,
+    "fill_cvd": 0.108,
+    "fill_grey": 0.01
+   },
+   "text_min": 4.52,
+   "nontext_min": 3.03,
+   "text_on_fill_min": 5.58,
+   "stroke_de_ok": {
+    "none": 0.1401,
+    "protan": 0.0962,
+    "deutan": 0.0761,
+    "tritan": 0.0821
+   },
+   "stroke_de00": {
+    "none": 21.3,
+    "protan": 14.04,
+    "deutan": 10.53,
+    "tritan": 10.87
+   },
+   "stroke_grey_dl": 0.0067,
+   "fill_de00": {
+    "none": 6.69,
+    "protan": 1.99,
+    "deutan": 1.08,
+    "tritan": 1.9
+   },
+   "fill_grey_dl": 0.0005,
+   "role_accents": {
+    "risk": "accent_1",
+    "mech": "accent_3",
+    "anat": "neutral",
+    "sign": "accent_6",
+    "inv": "accent_2",
+    "dx": "accent_4",
+    "tx": "accent_7"
+   },
+   "reported": [
+    "mech and tx fills (#32413a, #483a41) differ by 0.001 in greyscale lightness, below 0.03"
+   ]
+  },
+  {
+   "id": "ibm-colourblind-on-primer-dark-high-contrast",
+   "family": "Composite",
+   "catalog_mode": "dark",
+   "composite_sources": [
+    "ibm-colourblind",
+    "primer-dark-high-contrast"
+   ],
+   "derivable": false,
+   "error": "ibm-colourblind-on-primer-dark-high-contrast: needs 6 accents for the 6 coloured roles, has 5"
+  },
+  {
+   "id": "ibm-colourblind-on-modus-vivendi",
+   "family": "Composite",
+   "catalog_mode": "dark",
+   "composite_sources": [
+    "ibm-colourblind",
+    "modus-vivendi"
+   ],
+   "derivable": false,
+   "error": "ibm-colourblind-on-modus-vivendi: needs 6 accents for the 6 coloured roles, has 5"
+  },
+  {
+   "id": "ibm-colourblind-on-catppuccin-mocha",
+   "family": "Composite",
+   "catalog_mode": "dark",
+   "composite_sources": [
+    "ibm-colourblind",
+    "catppuccin-mocha"
+   ],
+   "derivable": false,
+   "error": "ibm-colourblind-on-catppuccin-mocha: needs 6 accents for the 6 coloured roles, has 5"
+  },
+  {
+   "id": "ibm-colourblind-on-catppuccin-macchiato",
+   "family": "Composite",
+   "catalog_mode": "dark",
+   "composite_sources": [
+    "ibm-colourblind",
+    "catppuccin-macchiato"
+   ],
+   "derivable": false,
+   "error": "ibm-colourblind-on-catppuccin-macchiato: needs 6 accents for the 6 coloured roles, has 5"
+  },
+  {
+   "id": "ibm-colourblind-on-everforest-dark-medium",
+   "family": "Composite",
+   "catalog_mode": "dark",
+   "composite_sources": [
+    "ibm-colourblind",
+    "everforest-dark-medium"
+   ],
+   "derivable": false,
+   "error": "ibm-colourblind-on-everforest-dark-medium: needs 6 accents for the 6 coloured roles, has 5"
+  }
+ ],
+ "order": {
+  "balanced": {
+   "light": [
+    "tol-bright",
+    "tol-muted",
+    "petroff-6",
+    "tol-medium-contrast"
+   ],
+   "dark": [
+    "petroff-10-on-primer-dark-high-contrast",
+    "okabe-ito-on-primer-dark-high-contrast",
+    "tol-muted-on-primer-dark-high-contrast",
+    "tol-medium-contrast-on-primer-dark-high-contrast",
+    "petroff-6-on-primer-dark-high-contrast",
+    "petroff-8-on-primer-dark-high-contrast"
+   ]
+  },
+  "cvd-first": {
+   "light": [
+    "tol-bright",
+    "tol-muted",
+    "petroff-6",
+    "tol-medium-contrast"
+   ],
+   "dark": [
+    "petroff-10-on-primer-dark-high-contrast",
+    "tol-muted-on-primer-dark-high-contrast",
+    "okabe-ito-on-primer-dark-high-contrast",
+    "petroff-6-on-primer-dark-high-contrast",
+    "tol-medium-contrast-on-primer-dark-high-contrast",
+    "petroff-8-on-primer-dark-high-contrast"
+   ]
+  },
+  "print-first": {
+   "light": [
+    "tol-muted",
+    "tol-bright",
+    "petroff-6",
+    "tol-medium-contrast"
+   ],
+   "dark": [
+    "petroff-10-on-primer-dark-high-contrast",
+    "okabe-ito-on-primer-dark-high-contrast",
+    "tol-muted-on-primer-dark-high-contrast",
+    "tol-medium-contrast-on-primer-dark-high-contrast",
+    "petroff-8-on-primer-dark-high-contrast",
+    "petroff-6-on-primer-dark-high-contrast"
+   ]
+  },
+  "text-first": {
+   "light": [
+    "tol-bright",
+    "tol-muted",
+    "petroff-6",
+    "tol-medium-contrast"
+   ],
+   "dark": [
+    "petroff-10-on-primer-dark-high-contrast",
+    "okabe-ito-on-primer-dark-high-contrast",
+    "tol-muted-on-primer-dark-high-contrast",
+    "tol-medium-contrast-on-primer-dark-high-contrast",
+    "petroff-6-on-primer-dark-high-contrast",
+    "petroff-8-on-primer-dark-high-contrast"
+   ]
+  }
+ }
+}

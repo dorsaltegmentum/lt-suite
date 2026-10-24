@@ -1,0 +1,1110 @@
+{
+ "module_id": "c1-r104",
+ "location": {
+  "origin": "https://lt.example.invalid",
+  "pathname": "/i/inst0001/student/courses/1/runs/104/run/page/1"
+ },
+ "globals": {
+  "pageLessonId": 1,
+  "pageCourseLongName": "Example Course 2000 (X101)"
+ },
+ "root": {
+  "lessonTitleDisplay": "1.3 Demo: Team case on tessin storage",
+  "hasCompletionPage": true,
+  "runLocked": false,
+  "showPageMenuPageRemaining": false,
+  "remainingFlowPagesWithoutCheckpoints": 0,
+  "checkpointPageContainer": {
+   "pages": [
+    {
+     "index": 8,
+     "committed": true,
+     "title": "Checkpoint"
+    }
+   ]
+  }
+ },
+ "pages": [
+  {
+   "title": "Orientation",
+   "allPanels": [
+    {
+     "pluginKey": "kcTextArea",
+     "panelKey": "1",
+     "panelState": {
+      "content": {
+       "theText": "<p>Team case: tessin storage.</p>"
+      }
+     }
+    }
+   ],
+   "rows": []
+  },
+  {
+   "title": "Background",
+   "allPanels": [
+    {
+     "pluginKey": "kcTextArea",
+     "panelKey": "1",
+     "panelState": {
+      "content": {
+       "theText": "<p>Stores A to D hold different substances.</p>"
+      }
+     }
+    },
+    {
+     "pluginKey": "image",
+     "panelKey": "2",
+     "panelState": {
+      "content": {
+       "imageResourceKey": "61",
+       "caption": "Figure 1. The four stores.",
+       "altTextDescription": "Four boxes labelled A to D"
+      }
+     }
+    }
+   ],
+   "rows": []
+  },
+  {
+   "title": "Case history",
+   "allPanels": [
+    {
+     "pluginKey": "text-question",
+     "panelKey": "12",
+     "panelState": {
+      "content": {
+       "question": "Give the history in one sentence.",
+       "singleAttempt": true,
+       "assessmentType": "graded",
+       "maximumGrade": 2
+      },
+      "input": {
+       "answer": "Tessin was stored in Store B."
+      },
+      "isReadOnly": true
+     }
+    },
+    {
+     "pluginKey": "text-question",
+     "panelKey": "13",
+     "panelState": {
+      "content": {
+       "question": "Name the store involved.",
+       "singleAttempt": false,
+       "assessmentType": "noAssessment"
+      },
+      "input": {
+       "answer": "Store B."
+      },
+      "isReadOnly": true
+     }
+    },
+    {
+     "pluginKey": "select",
+     "panelKey": "14",
+     "panelState": {
+      "content": {
+       "question": "Which store was involved?",
+       "answers": [
+        {
+         "answer": "Store A"
+        },
+        {
+         "answer": "Store B"
+        },
+        {
+         "answer": "Store C"
+        },
+        {
+         "answer": "Store D"
+        }
+       ],
+       "multiselect": false,
+       "singleAttempt": false,
+       "assessmentType": "noAssessment"
+      },
+      "input": {
+       "selectedAnswers": [
+        1
+       ]
+      },
+      "isReadOnly": true
+     }
+    }
+   ],
+   "rows": []
+  },
+  {
+   "title": "Examination",
+   "allPanels": [
+    {
+     "pluginKey": "text-question",
+     "panelKey": "20",
+     "panelState": {
+      "content": {
+       "question": "State the main finding.",
+       "singleAttempt": false,
+       "assessmentType": "noAssessment"
+      },
+      "input": {
+       "answer": "A raised level."
+      },
+      "isReadOnly": true
+     }
+    },
+    {
+     "pluginKey": "subpage",
+     "panelKey": "21",
+     "panelState": {
+      "content": {
+       "subpages": [
+        {
+         "rows": [
+          {
+           "cells": [
+            {
+             "panels": [
+              {
+               "pluginKey": "table-question",
+               "panelKey": "22",
+               "panelState": {
+                "content": {
+                 "question": "Record the three findings.",
+                 "singleAttempt": false,
+                 "assessmentType": "noAssessment"
+                },
+                "input": {
+                 "rows": [
+                  {
+                   "headerRow": true,
+                   "cells": [
+                    {
+                     "content": "Item"
+                    },
+                    {
+                     "content": "Finding"
+                    }
+                   ]
+                  },
+                  {
+                   "headerRow": false,
+                   "cells": [
+                    {
+                     "content": "Rate"
+                    },
+                    {
+                     "content": ""
+                    }
+                   ]
+                  },
+                  {
+                   "headerRow": false,
+                   "cells": [
+                    {
+                     "content": "Rhythm"
+                    },
+                    {
+                     "content": ""
+                    }
+                   ]
+                  },
+                  {
+                   "headerRow": false,
+                   "cells": [
+                    {
+                     "content": "Tone"
+                    },
+                    {
+                     "content": ""
+                    }
+                   ]
+                  }
+                 ]
+                }
+               }
+              },
+              {
+               "pluginKey": "text-question",
+               "panelKey": "23",
+               "panelState": {
+                "content": {
+                 "question": "Add a note on the findings.",
+                 "singleAttempt": false,
+                 "assessmentType": "noAssessment"
+                },
+                "input": {
+                 "answer": "Noted."
+                }
+               }
+              }
+             ]
+            }
+           ]
+          }
+         ]
+        }
+       ]
+      }
+     }
+    }
+   ],
+   "rows": []
+  },
+  {
+   "title": "Investigations",
+   "allPanels": [
+    {
+     "pluginKey": "table-question",
+     "panelKey": "31",
+     "panelState": {
+      "content": {
+       "question": "List the tests.",
+       "singleAttempt": false,
+       "assessmentType": "noAssessment"
+      },
+      "input": {
+       "rows": [
+        {
+         "headerRow": true,
+         "cells": [
+          {
+           "content": "Item"
+          },
+          {
+           "content": "Finding"
+          }
+         ]
+        },
+        {
+         "headerRow": false,
+         "cells": [
+          {
+           "content": "Level"
+          },
+          {
+           "content": "noted"
+          }
+         ]
+        },
+        {
+         "headerRow": false,
+         "cells": [
+          {
+           "content": "Trend"
+          },
+          {
+           "content": "noted"
+          }
+         ]
+        }
+       ]
+      },
+      "isReadOnly": true
+     }
+    },
+    {
+     "pluginKey": "select",
+     "panelKey": "32",
+     "panelState": {
+      "content": {
+       "question": "Which test is first?",
+       "answers": [
+        {
+         "answer": "Level"
+        },
+        {
+         "answer": "Trend"
+        },
+        {
+         "answer": "Rate"
+        }
+       ],
+       "multiselect": false,
+       "singleAttempt": false,
+       "assessmentType": "noAssessment"
+      },
+      "input": {
+       "selectedAnswers": [
+        0
+       ]
+      },
+      "isReadOnly": true
+     }
+    }
+   ],
+   "rows": []
+  },
+  {
+   "title": "Results",
+   "allPanels": [
+    {
+     "pluginKey": "subpage",
+     "panelKey": "41",
+     "panelState": {
+      "content": {
+       "subpages": [
+        {
+         "rows": [
+          {
+           "cells": [
+            {
+             "panels": [
+              {
+               "pluginKey": "table-question",
+               "panelKey": "42",
+               "panelState": {
+                "content": {
+                 "question": "Record the probe readings.",
+                 "rows": [
+                  {
+                   "headerRow": true,
+                   "cells": [
+                    {
+                     "content": "Probe"
+                    },
+                    {
+                     "content": "Reading"
+                    }
+                   ]
+                  },
+                  {
+                   "headerRow": false,
+                   "cells": [
+                    {
+                     "content": "A"
+                    },
+                    {
+                     "content": ""
+                    }
+                   ]
+                  },
+                  {
+                   "headerRow": false,
+                   "cells": [
+                    {
+                     "content": "B"
+                    },
+                    {
+                     "content": ""
+                    }
+                   ]
+                  },
+                  {
+                   "headerRow": false,
+                   "cells": [
+                    {
+                     "content": "C"
+                    },
+                    {
+                     "content": ""
+                    }
+                   ]
+                  }
+                 ],
+                 "singleAttempt": false,
+                 "assessmentType": "noAssessment"
+                },
+                "input": {
+                 "rows": [
+                  {
+                   "headerRow": true,
+                   "cells": [
+                    {
+                     "content": "Probe"
+                    },
+                    {
+                     "content": "Reading"
+                    }
+                   ]
+                  },
+                  {
+                   "headerRow": false,
+                   "cells": [
+                    {
+                     "content": "A"
+                    },
+                    {
+                     "content": "high"
+                    }
+                   ]
+                  },
+                  {
+                   "headerRow": false,
+                   "cells": [
+                    {
+                     "content": "B"
+                    },
+                    {
+                     "content": "low"
+                    }
+                   ]
+                  }
+                 ]
+                }
+               }
+              },
+              {
+               "pluginKey": "table-question",
+               "panelKey": "43",
+               "panelState": {
+                "content": {
+                 "question": "Record the second set.",
+                 "rows": [
+                  {
+                   "headerRow": true,
+                   "cells": [
+                    {
+                     "content": "Probe"
+                    },
+                    {
+                     "content": "Reading"
+                    }
+                   ]
+                  },
+                  {
+                   "headerRow": false,
+                   "cells": [
+                    {
+                     "content": "A"
+                    },
+                    {
+                     "content": ""
+                    }
+                   ]
+                  },
+                  {
+                   "headerRow": false,
+                   "cells": [
+                    {
+                     "content": "B"
+                    },
+                    {
+                     "content": ""
+                    }
+                   ]
+                  }
+                 ],
+                 "singleAttempt": false,
+                 "assessmentType": "noAssessment"
+                },
+                "input": {
+                 "rows": [
+                  {
+                   "headerRow": true,
+                   "cells": [
+                    {
+                     "content": "Probe"
+                    },
+                    {
+                     "content": "Reading"
+                    }
+                   ]
+                  },
+                  {
+                   "headerRow": false,
+                   "cells": [
+                    {
+                     "content": "A"
+                    },
+                    {
+                     "content": "high"
+                    }
+                   ]
+                  },
+                  {
+                   "headerRow": false,
+                   "cells": [
+                    {
+                     "content": "B"
+                    },
+                    {
+                     "content": ""
+                    }
+                   ]
+                  }
+                 ]
+                }
+               }
+              }
+             ]
+            }
+           ]
+          }
+         ]
+        }
+       ]
+      }
+     }
+    }
+   ],
+   "rows": []
+  },
+  {
+   "title": "Reasoning",
+   "allPanels": [
+    {
+     "pluginKey": "text-question",
+     "panelKey": "51",
+     "panelState": {
+      "content": {
+       "question": "Explain the finding.",
+       "singleAttempt": false,
+       "assessmentType": "noAssessment"
+      },
+      "input": {
+       "answer": "Store B holds the tessin."
+      },
+      "isReadOnly": true
+     }
+    },
+    {
+     "pluginKey": "text-question",
+     "panelKey": "52",
+     "panelState": {
+      "content": {
+       "question": "State the limit of the case.",
+       "singleAttempt": false,
+       "assessmentType": "noAssessment"
+      },
+      "input": {
+       "answer": "One store was sampled."
+      },
+      "isReadOnly": true
+     }
+    }
+   ],
+   "rows": []
+  },
+  {
+   "title": "Plan",
+   "allPanels": [
+    {
+     "pluginKey": "table-question",
+     "panelKey": "61",
+     "panelState": {
+      "content": {
+       "question": "Write the plan.",
+       "singleAttempt": false,
+       "assessmentType": "noAssessment"
+      },
+      "input": {
+       "rows": [
+        {
+         "headerRow": true,
+         "cells": [
+          {
+           "content": "Item"
+          },
+          {
+           "content": "Finding"
+          }
+         ]
+        },
+        {
+         "headerRow": false,
+         "cells": [
+          {
+           "content": "Store"
+          },
+          {
+           "content": "noted"
+          }
+         ]
+        },
+        {
+         "headerRow": false,
+         "cells": [
+          {
+           "content": "Review"
+          },
+          {
+           "content": "noted"
+          }
+         ]
+        }
+       ]
+      },
+      "isReadOnly": true
+     }
+    },
+    {
+     "pluginKey": "text-question",
+     "panelKey": "62",
+     "panelState": {
+      "content": {
+       "question": "State the first step.",
+       "singleAttempt": false,
+       "assessmentType": "noAssessment"
+      },
+      "input": {
+       "answer": "Review Store B."
+      },
+      "isReadOnly": true
+     }
+    }
+   ],
+   "rows": []
+  },
+  {
+   "title": "Team quiz",
+   "allPanels": [
+    {
+     "pluginKey": "select",
+     "panelKey": "71",
+     "panelState": {
+      "content": {
+       "question": "Team question 1: which store holds tessin in the fictional model?",
+       "answers": [
+        {
+         "answer": "Store A"
+        },
+        {
+         "answer": "Store B"
+        },
+        {
+         "answer": "Store C"
+        },
+        {
+         "answer": "Store D"
+        }
+       ],
+       "multiselect": false,
+       "singleAttempt": false,
+       "assessmentType": "noAssessment"
+      },
+      "input": {
+       "selectedAnswers": []
+      },
+      "isReadOnly": false
+     }
+    },
+    {
+     "pluginKey": "select",
+     "panelKey": "72",
+     "panelState": {
+      "content": {
+       "question": "Team question 2: which store holds quillic acid in the fictional model?",
+       "answers": [
+        {
+         "answer": "Store A"
+        },
+        {
+         "answer": "Store B"
+        },
+        {
+         "answer": "Store C"
+        },
+        {
+         "answer": "Store D"
+        }
+       ],
+       "multiselect": false,
+       "singleAttempt": false,
+       "assessmentType": "noAssessment"
+      },
+      "input": {
+       "selectedAnswers": []
+      },
+      "isReadOnly": false
+     }
+    },
+    {
+     "pluginKey": "select",
+     "panelKey": "73",
+     "panelState": {
+      "content": {
+       "question": "Team question 3: which store holds orm salt in the fictional model?",
+       "answers": [
+        {
+         "answer": "Store A"
+        },
+        {
+         "answer": "Store B"
+        },
+        {
+         "answer": "Store C"
+        },
+        {
+         "answer": "Store D"
+        }
+       ],
+       "multiselect": false,
+       "singleAttempt": false,
+       "assessmentType": "noAssessment"
+      },
+      "input": {
+       "selectedAnswers": []
+      },
+      "isReadOnly": false
+     }
+    },
+    {
+     "pluginKey": "select",
+     "panelKey": "74",
+     "panelState": {
+      "content": {
+       "question": "Team question 4: which store holds pell resin in the fictional model?",
+       "answers": [
+        {
+         "answer": "Store A"
+        },
+        {
+         "answer": "Store B"
+        },
+        {
+         "answer": "Store C"
+        },
+        {
+         "answer": "Store D"
+        }
+       ],
+       "multiselect": false,
+       "singleAttempt": false,
+       "assessmentType": "noAssessment"
+      },
+      "input": {
+       "selectedAnswers": []
+      },
+      "isReadOnly": false
+     }
+    },
+    {
+     "pluginKey": "select",
+     "panelKey": "75",
+     "panelState": {
+      "content": {
+       "question": "Team question 5: which store holds zeta wax in the fictional model?",
+       "answers": [
+        {
+         "answer": "Store A"
+        },
+        {
+         "answer": "Store B"
+        },
+        {
+         "answer": "Store C"
+        },
+        {
+         "answer": "Store D"
+        }
+       ],
+       "multiselect": false,
+       "singleAttempt": false,
+       "assessmentType": "noAssessment"
+      },
+      "input": {
+       "selectedAnswers": []
+      },
+      "isReadOnly": false
+     }
+    },
+    {
+     "pluginKey": "select",
+     "panelKey": "76",
+     "panelState": {
+      "content": {
+       "question": "Team question 6: which store holds oram gel in the fictional model?",
+       "answers": [
+        {
+         "answer": "Store A"
+        },
+        {
+         "answer": "Store B"
+        },
+        {
+         "answer": "Store C"
+        },
+        {
+         "answer": "Store D"
+        }
+       ],
+       "multiselect": false,
+       "singleAttempt": false,
+       "assessmentType": "noAssessment"
+      },
+      "input": {
+       "selectedAnswers": []
+      },
+      "isReadOnly": false
+     }
+    },
+    {
+     "pluginKey": "select",
+     "panelKey": "77",
+     "panelState": {
+      "content": {
+       "question": "Team question 7: which store holds vorlan dust in the fictional model?",
+       "answers": [
+        {
+         "answer": "Store A"
+        },
+        {
+         "answer": "Store B"
+        },
+        {
+         "answer": "Store C"
+        },
+        {
+         "answer": "Store D"
+        }
+       ],
+       "multiselect": false,
+       "singleAttempt": false,
+       "assessmentType": "noAssessment"
+      },
+      "input": {
+       "selectedAnswers": []
+      },
+      "isReadOnly": false
+     }
+    },
+    {
+     "pluginKey": "select",
+     "panelKey": "78",
+     "panelState": {
+      "content": {
+       "question": "Team question 8: which store holds quill oil in the fictional model?",
+       "answers": [
+        {
+         "answer": "Store A"
+        },
+        {
+         "answer": "Store B"
+        },
+        {
+         "answer": "Store C"
+        },
+        {
+         "answer": "Store D"
+        }
+       ],
+       "multiselect": false,
+       "singleAttempt": false,
+       "assessmentType": "noAssessment"
+      },
+      "input": {
+       "selectedAnswers": []
+      },
+      "isReadOnly": false
+     }
+    },
+    {
+     "pluginKey": "select",
+     "panelKey": "79",
+     "panelState": {
+      "content": {
+       "question": "Team question 9: which store holds fold lime in the fictional model?",
+       "answers": [
+        {
+         "answer": "Store A"
+        },
+        {
+         "answer": "Store B"
+        },
+        {
+         "answer": "Store C"
+        },
+        {
+         "answer": "Store D"
+        }
+       ],
+       "multiselect": false,
+       "singleAttempt": false,
+       "assessmentType": "noAssessment"
+      },
+      "input": {
+       "selectedAnswers": []
+      },
+      "isReadOnly": false
+     }
+    },
+    {
+     "pluginKey": "select",
+     "panelKey": "80",
+     "panelState": {
+      "content": {
+       "question": "Team question 10: which store holds cap mist in the fictional model?",
+       "answers": [
+        {
+         "answer": "Store A"
+        },
+        {
+         "answer": "Store B"
+        },
+        {
+         "answer": "Store C"
+        },
+        {
+         "answer": "Store D"
+        }
+       ],
+       "multiselect": false,
+       "singleAttempt": false,
+       "assessmentType": "noAssessment"
+      },
+      "input": {
+       "selectedAnswers": []
+      },
+      "isReadOnly": false
+     }
+    },
+    {
+     "pluginKey": "select",
+     "panelKey": "81",
+     "panelState": {
+      "content": {
+       "question": "Team question 11: which store holds duct silt in the fictional model?",
+       "answers": [
+        {
+         "answer": "Store A"
+        },
+        {
+         "answer": "Store B"
+        },
+        {
+         "answer": "Store C"
+        },
+        {
+         "answer": "Store D"
+        }
+       ],
+       "multiselect": false,
+       "singleAttempt": false,
+       "assessmentType": "noAssessment"
+      },
+      "input": {
+       "selectedAnswers": []
+      },
+      "isReadOnly": false
+     }
+    },
+    {
+     "pluginKey": "select",
+     "panelKey": "82",
+     "panelState": {
+      "content": {
+       "question": "Team question 12: which store holds lobe tar in the fictional model?",
+       "answers": [
+        {
+         "answer": "Store A"
+        },
+        {
+         "answer": "Store B"
+        },
+        {
+         "answer": "Store C"
+        },
+        {
+         "answer": "Store D"
+        }
+       ],
+       "multiselect": false,
+       "singleAttempt": false,
+       "assessmentType": "noAssessment"
+      },
+      "input": {
+       "selectedAnswers": []
+      },
+      "isReadOnly": false
+     }
+    },
+    {
+     "pluginKey": "select",
+     "panelKey": "83",
+     "panelState": {
+      "content": {
+       "question": "Team question 13: which store holds stalk dew in the fictional model?",
+       "answers": [
+        {
+         "answer": "Store A"
+        },
+        {
+         "answer": "Store B"
+        },
+        {
+         "answer": "Store C"
+        },
+        {
+         "answer": "Store D"
+        }
+       ],
+       "multiselect": false,
+       "singleAttempt": false,
+       "assessmentType": "noAssessment"
+      },
+      "input": {
+       "selectedAnswers": []
+      },
+      "isReadOnly": false
+     }
+    },
+    {
+     "pluginKey": "select",
+     "panelKey": "84",
+     "panelState": {
+      "content": {
+       "question": "Team question 14: which store holds inlet ash in the fictional model?",
+       "answers": [
+        {
+         "answer": "Store A"
+        },
+        {
+         "answer": "Store B"
+        },
+        {
+         "answer": "Store C"
+        },
+        {
+         "answer": "Store D"
+        }
+       ],
+       "multiselect": false,
+       "singleAttempt": false,
+       "assessmentType": "noAssessment"
+      },
+      "input": {
+       "selectedAnswers": []
+      },
+      "isReadOnly": false
+     }
+    },
+    {
+     "pluginKey": "select",
+     "panelKey": "85",
+     "panelState": {
+      "content": {
+       "question": "Team question 15: which store holds valve foam in the fictional model?",
+       "answers": [
+        {
+         "answer": "Store A"
+        },
+        {
+         "answer": "Store B"
+        },
+        {
+         "answer": "Store C"
+        },
+        {
+         "answer": "Store D"
+        }
+       ],
+       "multiselect": false,
+       "singleAttempt": false,
+       "assessmentType": "noAssessment"
+      },
+      "input": {
+       "selectedAnswers": []
+      },
+      "isReadOnly": false
+     }
+    }
+   ],
+   "rows": []
+  },
+  {
+   "title": "Report",
+   "reportInfoPanels": []
+  }
+ ]
+}

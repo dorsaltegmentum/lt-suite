@@ -1,0 +1,63 @@
+SPDX-FileCopyrightText: 2026 dorsaltegmentum
+SPDX-License-Identifier: AGPL-3.0-or-later
+
+Synthetic data. Output of the command below, with paths shortened to $WORK and $REPO.
+
+$ python3 skills/mechanistic-diagram/engine/build.py $WORK/toy-case --final --trust-case
+
+checks:
+  ACCESS PASSED: lowest text contrast 10.66 (WCAG 4.5), lowest arrow contrast 3.10 (WCAG 3.0); 0 failure(s)
+    full report: python3 $REPO/skills/mechanistic-diagram/engine/access.py $WORK/toy-case  (images in checks/cvd/)
+  FLOOR  grammar minimums  ->  $WORK/toy-case
+    ok    page size                                                     <= 4000 x 3000 px (diagram.page)         1744 x 798
+    ok    smallest text                                                 >= 11 px; box text >= 12 px              11 px (tol-bright: '1'); box text 14 px
+    ok    rendered labels (tol-bright)                                  every geometry node has its text lines   all match
+    ok    label overlaps (tol-bright)                                   0                                        0 in 78 text runs
+    ok    rendered labels (petroff-10-on-primer-dark-high-contrast)     every geometry node has its text lines   all match
+    ok    label overlaps (petroff-10-on-primer-dark-high-contrast)      0                                        0 in 78 text runs
+    ok    box gap                                                       >= 10 px                                 26.0 px (rf_gene / an_clear)
+    ok    edge clearance                                                >= 4 px                                  32.0 px (an_clear->m_low by tx_diet)
+    ok    layout problems                                               0                                        0 (layout_engine)
+    ok    crossings                                                     0                                        0 (layout_engine)
+    ok    unrouted edges                                                0                                        0 (layout_engine)
+    ok    gutters                                                       all 28 px                                9 gaps, all equal
+    ok    PDF pages                                                     1 each                                   5 PDFs, one page each
+    ok    box aspect (2+ lines)                                         >= 1.9000                                1.9512 (i_level 160 x 82)
+    ok    box count                                                     warn above 80 (the limit in floor.json)  11
+    ok    text face                                                     Noto Sans (fonts.sans) at 500/700        Noto Sans at 500/700
+    ok    corner radii (tol-bright)                                     boxes rx 7, containers rx 12             boxes rx 7, containers rx 12
+    ok    corner radii (petroff-10-on-primer-dark-high-contrast)        boxes rx 7, containers rx 12             boxes rx 7, containers rx 12
+    ok    images rounded (SVG tol-bright)                               every image                              no images
+    ok    images rounded (SVG petroff-10-on-primer-dark-high-contrast)  every image                              no images
+    ok    images rounded (.drawio)                                      every image, radius 5-14 px              34 image(s), SVG with a rounded clip, glyph (no square corners), radius 9.0-9.0 px
+    ok    images rounded (deliver .drawio)                              every image, radius 5-14 px              34 image(s), SVG with a rounded clip, glyph (no square corners), radius 9.0-9.0 px
+    ok    images rounded (Artifact)                                     every image                              no images
+    ok    contrast (access.py)                                          text >= 4.5, arrows >= 3                 lowest text 10.66, arrows 3.10; 0 failure(s)
+    WARN  draw.io verify                                                connectors and labels OK                 no verify-result.json (run verify.js in draw.io and save what it returns there)
+  FLOOR HELD: 0 breach(es), 1 warning(s)
+  widows: 0
+  Guideline ledger (treatment guideline) guideline-ledger.json: checked 2000-01-01 by the worked example (invented); 2 treatment box(es), 2 entries
+    consistent tx_enz: verdict consistent (matches the guideline); treatment guideline Invented guideline for the worked example > Enzyme X deficiency: replacement, 2000-01-01
+    consistent tx_diet: verdict consistent (matches the guideline); treatment guideline Invented guideline for the worked example > Enzyme X deficiency: diet, 2000-01-01
+  Guideline ledger (treatment guideline): 2 consistent and current, 0 with an open verdict, 0 stale, 0 missing, 0 without a known verdict (warnings only)
+  consistency: 4 facts from 11 boxes and 4 stage titles against Case notes (invented): 4 found, 0 weak, 0 missing (0 numbers without label or unit not checked)
+  consistency: report written to $WORK/toy-case/consistency-report.md
+checks passed (with warnings above)
+
+final: cleaning deliver/ (metadata, deterministic PDFs, configured cleaners)
+wrote $WORK/toy-case/toy-case.html 655311 bytes
+final: cleaning toy-case.html
+  already-clean  $WORK/toy-case/deliver/toy-case-petroff-10-on-primer-dark-high-contrast.drawio  226371 -> 226371 bytes
+  cleaned        $WORK/toy-case/deliver/toy-case-petroff-10-on-primer-dark-high-contrast.pdf  44957 -> 44739 bytes; metadata stripped and rewritten with a deterministic /ID (ltcore.cleaners): object metadata stripped; 0 JPEG images stripped; exiftool metadata stripped; deterministic rewrite with pikepdf
+  already-clean  $WORK/toy-case/deliver/toy-case-petroff-10-on-primer-dark-high-contrast.png  402997 -> 402997 bytes
+  cleaned        $WORK/toy-case/deliver/toy-case-tol-bright.pdf  44914 -> 44696 bytes; metadata stripped and rewritten with a deterministic /ID (ltcore.cleaners): object metadata stripped; 0 JPEG images stripped; exiftool metadata stripped; deterministic rewrite with pikepdf
+  already-clean  $WORK/toy-case/deliver/toy-case.drawio  226291 -> 226291 bytes
+  cleaned        $WORK/toy-case/deliver/toy-case.pdf  44914 -> 44696 bytes; metadata stripped and rewritten with a deterministic /ID (ltcore.cleaners): object metadata stripped; 0 JPEG images stripped; exiftool metadata stripped; deterministic rewrite with pikepdf
+  already-clean  $WORK/toy-case/deliver/toy-case.png  392579 -> 392579 bytes
+  already-clean  $WORK/toy-case/toy-case.html  655399 -> 655399 bytes
+  check toy-case-petroff-10-on-primer-dark-high-contrast.pdf: 1 page, renders as the draft did
+  check toy-case-petroff-10-on-primer-dark-high-contrast.png: pixels unchanged
+  check toy-case-tol-bright.pdf: 1 page, renders as the draft did
+  check toy-case.pdf: 1 page, renders as the draft did
+  check toy-case.png: pixels unchanged
+final: 3 cleaned, 5 already clean; deliver/ and toy-case.html are final (report: checks/final-report.json)

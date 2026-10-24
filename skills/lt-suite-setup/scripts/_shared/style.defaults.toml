@@ -1,0 +1,33 @@
+# SPDX-FileCopyrightText: 2026 dorsaltegmentum
+# SPDX-License-Identifier: AGPL-3.0-or-later
+#
+# Default palettes and fonts, merged after config.defaults.toml. A user config
+# overrides any key here. Every value is a measured winner; docs/fonts-and-palettes.md
+# shows the measurements and shared/palettes/ranking.json holds the numbers.
+
+[style]
+# The top-scoring themes that pass every gate: contrast, role strokes at least
+# OKLab 0.05 apart under protan, deutan and tritan simulation, role fills at
+# least 0.03 apart in greyscale. No catalog dark theme passes, so the dark
+# companion is Petroff-10's accents on GitHub Primer Dark High Contrast neutrals.
+palettes = ["tol-bright", "petroff-10-on-primer-dark-high-contrast"]
+# Light palette for print and PDF submission: the light winner.
+print_palette = "tol-bright"
+# TOML file of your own palettes ([[palette]] tables, same roles as the catalog).
+custom_palettes_file = ""
+
+[fonts]
+# Bundled with lt-suite (SIL OFL 1.1): the most widely packaged libre sans and mono,
+# with the full Greek block and super/subscripts that medical labels need.
+sans = "Noto Sans"
+mono = "Noto Sans Mono"
+# Explicit font files; empty means resolve fonts.sans and fonts.mono.
+sans_path = ""
+mono_path = ""
+mono_bold_path = ""
+# Diagram node text size in px.
+text_px = 14
+# Setup may download catalog fonts into the data folder after you agree.
+allow_download = true
+# local embeds fonts in HTML and draw.io files; google links Google Fonts instead.
+page_fonts = "local"

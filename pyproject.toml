@@ -1,0 +1,71 @@
+# SPDX-FileCopyrightText: 2026 dorsaltegmentum
+# SPDX-License-Identifier: AGPL-3.0-or-later
+#
+# lt-suite is a set of agent skills, not an installable package: skill scripts run
+# from their own folders with a copy of shared/ beside them. This file declares
+# dependency ranges (one group per skill area) and configures pytest. uv.lock
+# records the resolved versions and hashes used for generated skill requirements.
+#   uv run --python 3.11 --group ci python -m pytest
+#   pip install --group ci        (pip 25.1 or newer)
+
+[project]
+name = "lt-suite"
+version = "0.1.0"
+description = "Unofficial agent skills that capture, draft, fill and export ADInstruments Lt learning modules, and draw mechanism diagrams. Never submits."
+requires-python = ">=3.11"
+license = "AGPL-3.0-or-later"
+license-files = ["LICENSE", "LICENSES/*.txt"]
+authors = [{ name = "dorsaltegmentum" }]
+keywords = ["lt", "learning-module", "agent-skills", "study", "diagram", "pdf"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Operating System :: OS Independent",
+]
+dependencies = []
+
+[project.urls]
+Homepage = "https://github.com/dorsaltegmentum/lt-suite"
+Repository = "https://github.com/dorsaltegmentum/lt-suite"
+Issues = "https://github.com/dorsaltegmentum/lt-suite/issues"
+
+[dependency-groups]
+# Schema validation for handoff files (ltcore.validate exits 3 without it).
+core = ["jsonschema>=4.23"]
+# mechanistic-diagram
+diagram = ["Pillow>=11.0", "numpy>=2.1", "fonttools>=4.55"]
+# lt-module-export
+export = ["reportlab>=4.2", "pypdfium2>=4.30", "Pillow>=11.0", "fonttools>=4.55"]
+# lt-module-fill (micrograph labels and placement)
+fill = ["Pillow>=11.0", "numpy>=2.1", "scipy>=1.14"]
+# Used only when installed.
+optional = ["pikepdf>=9.4", "pymupdf>=1.25", "opencv-python-headless>=4.10", "scikit-learn>=1.6"]
+# Maintainer tools run through uvx in CI; listed here for a local dev environment.
+dev = [
+    { include-group = "ci" },
+    "reuse==6.2.0",
+    "skills-ref==0.1.1",
+]
+# Everything the test suite needs.
+ci = [
+    { include-group = "core" },
+    { include-group = "diagram" },
+    { include-group = "export" },
+    { include-group = "fill" },
+    "pytest>=8.3",
+    "PyYAML>=6.0.2",
+]
+
+[tool.uv]
+package = false
+
+[tool.pytest.ini_options]
+minversion = "8.0"
+testpaths = ["tests"]
+# importlib mode: test files in different folders may share a basename.
+addopts = ["-ra", "--import-mode=importlib"]
+markers = [
+    "requires_bin(*names): skip the test unless every named program is on PATH",
+]

@@ -1,0 +1,33 @@
+{
+ "schema_version": 1,
+ "module_id": "c1-r101",
+ "run_id": 101,
+ "captured_at": "2000-01-01T00:00:00Z",
+ "provenance_of_reference": "student-submitted",
+ "never_load_into_drafting_context": true,
+ "items": [
+  {
+   "item_id": "i-text-1",
+   "student_answer": "Oil matches the refractive index of glass, so more light reaches the objective and resolution improves.",
+   "submitted_at": "2000-01-01T00:00:00Z",
+   "given_grade": null,
+   "maximum_grade": null
+  },
+  {
+   "item_id": "i-text-2",
+   "student_answer": "Fine focus knob.",
+   "submitted_at": "2000-01-01T00:00:00Z"
+  },
+  {
+   "item_id": "i-cat-1",
+   "student_selection": [
+    "Optical parts:Eyepiece",
+    "Mechanical parts:Stage"
+   ],
+   "student_answer": "",
+   "given_grade": 3,
+   "maximum_grade": 4,
+   "grading_feedback": "3 of 4 correct."
+  }
+ ]
+}

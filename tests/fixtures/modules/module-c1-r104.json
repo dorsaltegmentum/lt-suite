@@ -1,0 +1,1152 @@
+{
+ "schema_version": 1,
+ "module_id": "c1-r104",
+ "instance": "inst0001",
+ "course_id": 1,
+ "run_id": 104,
+ "lesson_id": 1,
+ "source_url": "https://lt.example.invalid/i/inst0001/student/courses/1/runs/104/run/page/1",
+ "captured_at": "2000-01-01T00:00:00Z",
+ "capture_method": "view-model",
+ "lesson": {
+  "title": "1.3 Demo: Team case on tessin storage",
+  "course_title": "Example Course 2000 (X101)",
+  "page_count": 10,
+  "has_completion_page": true,
+  "run_locked": false,
+  "show_page_menu_page_remaining": false,
+  "remaining_flow_pages_without_checkpoints": 0,
+  "completion_route": "complete"
+ },
+ "commit_boundaries": {
+  "checkpoint_pages": [],
+  "checkpoints": [
+   {
+    "index": 8,
+    "page_index": null,
+    "committed": true,
+    "in_flow": false,
+    "source": "checkpointPageContainer"
+   }
+  ],
+  "checkpoints_container_present": true,
+  "single_attempt_items": [
+   "p3-12"
+  ],
+  "run_level_commit": {
+   "present": true,
+   "route": "complete",
+   "note": "hasCompletionPage exposes the final route; capture leaves that route unopened."
+  },
+  "unmapped": []
+ },
+ "census": {
+  "pages_total": 10,
+  "captured_total": 31,
+  "answerable_total": 29,
+  "by_type": {
+   "text-response": 7,
+   "multiple-choice": 17,
+   "subpage": 2,
+   "table-completion": 5
+  },
+  "confirmed_by": "panel walk over lessonFlowPages with subpage recursion; answerable = panelState carries an input key"
+ },
+ "pages": [
+  {
+   "page_index": 1,
+   "page_no": 1,
+   "route": null,
+   "url": "https://lt.example.invalid/i/inst0001/student/courses/1/runs/104/run/page/1",
+   "title": "Orientation",
+   "is_report_page": false,
+   "is_checkpoint": false,
+   "content": [
+    {
+     "panel_key": "1",
+     "plugin_key": "kcTextArea",
+     "kind": "text",
+     "text": "Team case: tessin storage."
+    }
+   ],
+   "items": []
+  },
+  {
+   "page_index": 2,
+   "page_no": 2,
+   "route": null,
+   "url": "https://lt.example.invalid/i/inst0001/student/courses/1/runs/104/run/page/2",
+   "title": "Background",
+   "is_report_page": false,
+   "is_checkpoint": false,
+   "content": [
+    {
+     "panel_key": "1",
+     "plugin_key": "kcTextArea",
+     "kind": "text",
+     "text": "Stores A to D hold different substances."
+    },
+    {
+     "panel_key": "2",
+     "plugin_key": "image",
+     "kind": "image",
+     "text": "Figure 1. The four stores.",
+     "media": [
+      {
+       "kind": "image",
+       "key": "61",
+       "alt": "Four boxes labelled A to D",
+       "url": null,
+       "width": null,
+       "height": null,
+       "local_path": null
+      }
+     ]
+    }
+   ],
+   "items": []
+  },
+  {
+   "page_index": 3,
+   "page_no": 3,
+   "route": null,
+   "url": "https://lt.example.invalid/i/inst0001/student/courses/1/runs/104/run/page/3",
+   "title": "Case history",
+   "is_report_page": false,
+   "is_checkpoint": false,
+   "content": [],
+   "items": [
+    {
+     "item_id": "p3-12",
+     "panel_key": "12",
+     "plugin_key": "text-question",
+     "type": "text-response",
+     "prompt_text": "Give the history in one sentence.",
+     "attempts": "single",
+     "assessment_type": "graded",
+     "maximum_grade": 2,
+     "commit_state": "open",
+     "read_only": true,
+     "automation": "structured-path",
+     "answered": true,
+     "parent_item_id": null
+    },
+    {
+     "item_id": "p3-13",
+     "panel_key": "13",
+     "plugin_key": "text-question",
+     "type": "text-response",
+     "prompt_text": "Name the store involved.",
+     "attempts": "multi",
+     "assessment_type": "noAssessment",
+     "maximum_grade": null,
+     "commit_state": "open",
+     "read_only": true,
+     "automation": "structured-path",
+     "answered": true,
+     "parent_item_id": null
+    },
+    {
+     "item_id": "p3-14",
+     "panel_key": "14",
+     "plugin_key": "select",
+     "type": "multiple-choice",
+     "prompt_text": "Which store was involved?",
+     "attempts": "multi",
+     "assessment_type": "noAssessment",
+     "maximum_grade": null,
+     "commit_state": "open",
+     "read_only": true,
+     "automation": "structured-path",
+     "answered": true,
+     "parent_item_id": null,
+     "options": [
+      {
+       "option_id": "o1",
+       "text": "Store A"
+      },
+      {
+       "option_id": "o2",
+       "text": "Store B"
+      },
+      {
+       "option_id": "o3",
+       "text": "Store C"
+      },
+      {
+       "option_id": "o4",
+       "text": "Store D"
+      }
+     ],
+     "constraints": {
+      "options_count": 4,
+      "note": "single-select"
+     }
+    }
+   ]
+  },
+  {
+   "page_index": 4,
+   "page_no": 4,
+   "route": null,
+   "url": "https://lt.example.invalid/i/inst0001/student/courses/1/runs/104/run/page/4",
+   "title": "Examination",
+   "is_report_page": false,
+   "is_checkpoint": false,
+   "content": [],
+   "items": [
+    {
+     "item_id": "p4-20",
+     "panel_key": "20",
+     "plugin_key": "text-question",
+     "type": "text-response",
+     "prompt_text": "State the main finding.",
+     "attempts": "multi",
+     "assessment_type": "noAssessment",
+     "maximum_grade": null,
+     "commit_state": "open",
+     "read_only": true,
+     "automation": "structured-path",
+     "answered": true,
+     "parent_item_id": null
+    },
+    {
+     "item_id": "p4-21",
+     "panel_key": "21",
+     "plugin_key": "subpage",
+     "type": "subpage",
+     "prompt_text": "",
+     "attempts": "multi",
+     "assessment_type": "noAssessment",
+     "commit_state": "open",
+     "automation": "structured-path",
+     "answered": false,
+     "parent_item_id": null
+    },
+    {
+     "item_id": "p4-22",
+     "panel_key": "22",
+     "plugin_key": "table-question",
+     "type": "table-completion",
+     "prompt_text": "Record the three findings.",
+     "attempts": "multi",
+     "assessment_type": "noAssessment",
+     "maximum_grade": null,
+     "commit_state": "open",
+     "read_only": null,
+     "automation": "resilient-selector",
+     "answered": true,
+     "parent_item_id": "p4-21",
+     "constraints": {
+      "rows": 4,
+      "cols": 2,
+      "column_headers": [
+       "Item",
+       "Finding"
+      ]
+     },
+     "answered_evidence": {
+      "filled_map": [
+       "#.",
+       "#.",
+       "#."
+      ],
+      "author_grid": {
+       "status": "absent",
+       "source": "content.rows",
+       "authored_cells": 0
+      },
+      "answered_suspect": {
+       "basis": "Only body column 0 contains values across 3 rows. Those values could be authored labels or responses.",
+       "note": "Keep answered as captured. Inspect the author grid before attributing these values to a learner."
+      }
+     }
+    },
+    {
+     "item_id": "p4-23",
+     "panel_key": "23",
+     "plugin_key": "text-question",
+     "type": "text-response",
+     "prompt_text": "Add a note on the findings.",
+     "attempts": "multi",
+     "assessment_type": "noAssessment",
+     "maximum_grade": null,
+     "commit_state": "open",
+     "read_only": null,
+     "automation": "structured-path",
+     "answered": true,
+     "parent_item_id": "p4-21"
+    }
+   ]
+  },
+  {
+   "page_index": 5,
+   "page_no": 5,
+   "route": null,
+   "url": "https://lt.example.invalid/i/inst0001/student/courses/1/runs/104/run/page/5",
+   "title": "Investigations",
+   "is_report_page": false,
+   "is_checkpoint": false,
+   "content": [],
+   "items": [
+    {
+     "item_id": "p5-31",
+     "panel_key": "31",
+     "plugin_key": "table-question",
+     "type": "table-completion",
+     "prompt_text": "List the tests.",
+     "attempts": "multi",
+     "assessment_type": "noAssessment",
+     "maximum_grade": null,
+     "commit_state": "open",
+     "read_only": true,
+     "automation": "resilient-selector",
+     "answered": true,
+     "parent_item_id": null,
+     "constraints": {
+      "rows": 3,
+      "cols": 2,
+      "column_headers": [
+       "Item",
+       "Finding"
+      ]
+     },
+     "answered_evidence": {
+      "filled_map": [
+       "##",
+       "##"
+      ],
+      "author_grid": {
+       "status": "absent",
+       "source": "content.rows",
+       "authored_cells": 0
+      }
+     }
+    },
+    {
+     "item_id": "p5-32",
+     "panel_key": "32",
+     "plugin_key": "select",
+     "type": "multiple-choice",
+     "prompt_text": "Which test is first?",
+     "attempts": "multi",
+     "assessment_type": "noAssessment",
+     "maximum_grade": null,
+     "commit_state": "open",
+     "read_only": true,
+     "automation": "structured-path",
+     "answered": true,
+     "parent_item_id": null,
+     "options": [
+      {
+       "option_id": "o1",
+       "text": "Level"
+      },
+      {
+       "option_id": "o2",
+       "text": "Trend"
+      },
+      {
+       "option_id": "o3",
+       "text": "Rate"
+      }
+     ],
+     "constraints": {
+      "options_count": 3,
+      "note": "single-select"
+     }
+    }
+   ]
+  },
+  {
+   "page_index": 6,
+   "page_no": 6,
+   "route": null,
+   "url": "https://lt.example.invalid/i/inst0001/student/courses/1/runs/104/run/page/6",
+   "title": "Results",
+   "is_report_page": false,
+   "is_checkpoint": false,
+   "content": [],
+   "items": [
+    {
+     "item_id": "p6-41",
+     "panel_key": "41",
+     "plugin_key": "subpage",
+     "type": "subpage",
+     "prompt_text": "",
+     "attempts": "multi",
+     "assessment_type": "noAssessment",
+     "commit_state": "open",
+     "automation": "structured-path",
+     "answered": false,
+     "parent_item_id": null
+    },
+    {
+     "item_id": "p6-42",
+     "panel_key": "42",
+     "plugin_key": "table-question",
+     "type": "table-completion",
+     "prompt_text": "Record the probe readings.",
+     "attempts": "multi",
+     "assessment_type": "noAssessment",
+     "maximum_grade": null,
+     "commit_state": "open",
+     "read_only": null,
+     "automation": "resilient-selector",
+     "answered": true,
+     "parent_item_id": "p6-41",
+     "constraints": {
+      "rows": 3,
+      "cols": 2,
+      "column_headers": [
+       "Probe",
+       "Reading"
+      ]
+     },
+     "answered_evidence": {
+      "filled_map": [
+       "##",
+       "##"
+      ],
+      "author_grid": {
+       "status": "shape-mismatch",
+       "source": "content.rows",
+       "authored_cells": 0
+      }
+     }
+    },
+    {
+     "item_id": "p6-43",
+     "panel_key": "43",
+     "plugin_key": "table-question",
+     "type": "table-completion",
+     "prompt_text": "Record the second set.",
+     "attempts": "multi",
+     "assessment_type": "noAssessment",
+     "maximum_grade": null,
+     "commit_state": "open",
+     "read_only": null,
+     "automation": "resilient-selector",
+     "answered": true,
+     "parent_item_id": "p6-41",
+     "constraints": {
+      "rows": 3,
+      "cols": 2,
+      "column_headers": [
+       "Probe",
+       "Reading"
+      ],
+      "authored_cells": [
+       {
+        "row": 1,
+        "col": 0,
+        "text": "A"
+       },
+       {
+        "row": 2,
+        "col": 0,
+        "text": "B"
+       }
+      ]
+     },
+     "answered_evidence": {
+      "filled_map": [
+       "a#",
+       "a."
+      ],
+      "author_grid": {
+       "status": "read",
+       "source": "content.rows",
+       "authored_cells": 2
+      }
+     }
+    }
+   ]
+  },
+  {
+   "page_index": 7,
+   "page_no": 7,
+   "route": null,
+   "url": "https://lt.example.invalid/i/inst0001/student/courses/1/runs/104/run/page/7",
+   "title": "Reasoning",
+   "is_report_page": false,
+   "is_checkpoint": false,
+   "content": [],
+   "items": [
+    {
+     "item_id": "p7-51",
+     "panel_key": "51",
+     "plugin_key": "text-question",
+     "type": "text-response",
+     "prompt_text": "Explain the finding.",
+     "attempts": "multi",
+     "assessment_type": "noAssessment",
+     "maximum_grade": null,
+     "commit_state": "open",
+     "read_only": true,
+     "automation": "structured-path",
+     "answered": true,
+     "parent_item_id": null
+    },
+    {
+     "item_id": "p7-52",
+     "panel_key": "52",
+     "plugin_key": "text-question",
+     "type": "text-response",
+     "prompt_text": "State the limit of the case.",
+     "attempts": "multi",
+     "assessment_type": "noAssessment",
+     "maximum_grade": null,
+     "commit_state": "open",
+     "read_only": true,
+     "automation": "structured-path",
+     "answered": true,
+     "parent_item_id": null
+    }
+   ]
+  },
+  {
+   "page_index": 8,
+   "page_no": 8,
+   "route": null,
+   "url": "https://lt.example.invalid/i/inst0001/student/courses/1/runs/104/run/page/8",
+   "title": "Plan",
+   "is_report_page": false,
+   "is_checkpoint": false,
+   "content": [],
+   "items": [
+    {
+     "item_id": "p8-61",
+     "panel_key": "61",
+     "plugin_key": "table-question",
+     "type": "table-completion",
+     "prompt_text": "Write the plan.",
+     "attempts": "multi",
+     "assessment_type": "noAssessment",
+     "maximum_grade": null,
+     "commit_state": "open",
+     "read_only": true,
+     "automation": "resilient-selector",
+     "answered": true,
+     "parent_item_id": null,
+     "constraints": {
+      "rows": 3,
+      "cols": 2,
+      "column_headers": [
+       "Item",
+       "Finding"
+      ]
+     },
+     "answered_evidence": {
+      "filled_map": [
+       "##",
+       "##"
+      ],
+      "author_grid": {
+       "status": "absent",
+       "source": "content.rows",
+       "authored_cells": 0
+      }
+     }
+    },
+    {
+     "item_id": "p8-62",
+     "panel_key": "62",
+     "plugin_key": "text-question",
+     "type": "text-response",
+     "prompt_text": "State the first step.",
+     "attempts": "multi",
+     "assessment_type": "noAssessment",
+     "maximum_grade": null,
+     "commit_state": "open",
+     "read_only": true,
+     "automation": "structured-path",
+     "answered": true,
+     "parent_item_id": null
+    }
+   ]
+  },
+  {
+   "page_index": 9,
+   "page_no": 9,
+   "route": null,
+   "url": "https://lt.example.invalid/i/inst0001/student/courses/1/runs/104/run/page/9",
+   "title": "Team quiz",
+   "is_report_page": false,
+   "is_checkpoint": false,
+   "content": [],
+   "items": [
+    {
+     "item_id": "p9-71",
+     "panel_key": "71",
+     "plugin_key": "select",
+     "type": "multiple-choice",
+     "prompt_text": "Team question 1: which store holds tessin in the fictional model?",
+     "attempts": "multi",
+     "assessment_type": "noAssessment",
+     "maximum_grade": null,
+     "commit_state": "open",
+     "read_only": false,
+     "automation": "structured-path",
+     "answered": false,
+     "parent_item_id": null,
+     "options": [
+      {
+       "option_id": "o1",
+       "text": "Store A"
+      },
+      {
+       "option_id": "o2",
+       "text": "Store B"
+      },
+      {
+       "option_id": "o3",
+       "text": "Store C"
+      },
+      {
+       "option_id": "o4",
+       "text": "Store D"
+      }
+     ],
+     "constraints": {
+      "options_count": 4,
+      "note": "single-select"
+     }
+    },
+    {
+     "item_id": "p9-72",
+     "panel_key": "72",
+     "plugin_key": "select",
+     "type": "multiple-choice",
+     "prompt_text": "Team question 2: which store holds quillic acid in the fictional model?",
+     "attempts": "multi",
+     "assessment_type": "noAssessment",
+     "maximum_grade": null,
+     "commit_state": "open",
+     "read_only": false,
+     "automation": "structured-path",
+     "answered": false,
+     "parent_item_id": null,
+     "options": [
+      {
+       "option_id": "o1",
+       "text": "Store A"
+      },
+      {
+       "option_id": "o2",
+       "text": "Store B"
+      },
+      {
+       "option_id": "o3",
+       "text": "Store C"
+      },
+      {
+       "option_id": "o4",
+       "text": "Store D"
+      }
+     ],
+     "constraints": {
+      "options_count": 4,
+      "note": "single-select"
+     }
+    },
+    {
+     "item_id": "p9-73",
+     "panel_key": "73",
+     "plugin_key": "select",
+     "type": "multiple-choice",
+     "prompt_text": "Team question 3: which store holds orm salt in the fictional model?",
+     "attempts": "multi",
+     "assessment_type": "noAssessment",
+     "maximum_grade": null,
+     "commit_state": "open",
+     "read_only": false,
+     "automation": "structured-path",
+     "answered": false,
+     "parent_item_id": null,
+     "options": [
+      {
+       "option_id": "o1",
+       "text": "Store A"
+      },
+      {
+       "option_id": "o2",
+       "text": "Store B"
+      },
+      {
+       "option_id": "o3",
+       "text": "Store C"
+      },
+      {
+       "option_id": "o4",
+       "text": "Store D"
+      }
+     ],
+     "constraints": {
+      "options_count": 4,
+      "note": "single-select"
+     }
+    },
+    {
+     "item_id": "p9-74",
+     "panel_key": "74",
+     "plugin_key": "select",
+     "type": "multiple-choice",
+     "prompt_text": "Team question 4: which store holds pell resin in the fictional model?",
+     "attempts": "multi",
+     "assessment_type": "noAssessment",
+     "maximum_grade": null,
+     "commit_state": "open",
+     "read_only": false,
+     "automation": "structured-path",
+     "answered": false,
+     "parent_item_id": null,
+     "options": [
+      {
+       "option_id": "o1",
+       "text": "Store A"
+      },
+      {
+       "option_id": "o2",
+       "text": "Store B"
+      },
+      {
+       "option_id": "o3",
+       "text": "Store C"
+      },
+      {
+       "option_id": "o4",
+       "text": "Store D"
+      }
+     ],
+     "constraints": {
+      "options_count": 4,
+      "note": "single-select"
+     }
+    },
+    {
+     "item_id": "p9-75",
+     "panel_key": "75",
+     "plugin_key": "select",
+     "type": "multiple-choice",
+     "prompt_text": "Team question 5: which store holds zeta wax in the fictional model?",
+     "attempts": "multi",
+     "assessment_type": "noAssessment",
+     "maximum_grade": null,
+     "commit_state": "open",
+     "read_only": false,
+     "automation": "structured-path",
+     "answered": false,
+     "parent_item_id": null,
+     "options": [
+      {
+       "option_id": "o1",
+       "text": "Store A"
+      },
+      {
+       "option_id": "o2",
+       "text": "Store B"
+      },
+      {
+       "option_id": "o3",
+       "text": "Store C"
+      },
+      {
+       "option_id": "o4",
+       "text": "Store D"
+      }
+     ],
+     "constraints": {
+      "options_count": 4,
+      "note": "single-select"
+     }
+    },
+    {
+     "item_id": "p9-76",
+     "panel_key": "76",
+     "plugin_key": "select",
+     "type": "multiple-choice",
+     "prompt_text": "Team question 6: which store holds oram gel in the fictional model?",
+     "attempts": "multi",
+     "assessment_type": "noAssessment",
+     "maximum_grade": null,
+     "commit_state": "open",
+     "read_only": false,
+     "automation": "structured-path",
+     "answered": false,
+     "parent_item_id": null,
+     "options": [
+      {
+       "option_id": "o1",
+       "text": "Store A"
+      },
+      {
+       "option_id": "o2",
+       "text": "Store B"
+      },
+      {
+       "option_id": "o3",
+       "text": "Store C"
+      },
+      {
+       "option_id": "o4",
+       "text": "Store D"
+      }
+     ],
+     "constraints": {
+      "options_count": 4,
+      "note": "single-select"
+     }
+    },
+    {
+     "item_id": "p9-77",
+     "panel_key": "77",
+     "plugin_key": "select",
+     "type": "multiple-choice",
+     "prompt_text": "Team question 7: which store holds vorlan dust in the fictional model?",
+     "attempts": "multi",
+     "assessment_type": "noAssessment",
+     "maximum_grade": null,
+     "commit_state": "open",
+     "read_only": false,
+     "automation": "structured-path",
+     "answered": false,
+     "parent_item_id": null,
+     "options": [
+      {
+       "option_id": "o1",
+       "text": "Store A"
+      },
+      {
+       "option_id": "o2",
+       "text": "Store B"
+      },
+      {
+       "option_id": "o3",
+       "text": "Store C"
+      },
+      {
+       "option_id": "o4",
+       "text": "Store D"
+      }
+     ],
+     "constraints": {
+      "options_count": 4,
+      "note": "single-select"
+     }
+    },
+    {
+     "item_id": "p9-78",
+     "panel_key": "78",
+     "plugin_key": "select",
+     "type": "multiple-choice",
+     "prompt_text": "Team question 8: which store holds quill oil in the fictional model?",
+     "attempts": "multi",
+     "assessment_type": "noAssessment",
+     "maximum_grade": null,
+     "commit_state": "open",
+     "read_only": false,
+     "automation": "structured-path",
+     "answered": false,
+     "parent_item_id": null,
+     "options": [
+      {
+       "option_id": "o1",
+       "text": "Store A"
+      },
+      {
+       "option_id": "o2",
+       "text": "Store B"
+      },
+      {
+       "option_id": "o3",
+       "text": "Store C"
+      },
+      {
+       "option_id": "o4",
+       "text": "Store D"
+      }
+     ],
+     "constraints": {
+      "options_count": 4,
+      "note": "single-select"
+     }
+    },
+    {
+     "item_id": "p9-79",
+     "panel_key": "79",
+     "plugin_key": "select",
+     "type": "multiple-choice",
+     "prompt_text": "Team question 9: which store holds fold lime in the fictional model?",
+     "attempts": "multi",
+     "assessment_type": "noAssessment",
+     "maximum_grade": null,
+     "commit_state": "open",
+     "read_only": false,
+     "automation": "structured-path",
+     "answered": false,
+     "parent_item_id": null,
+     "options": [
+      {
+       "option_id": "o1",
+       "text": "Store A"
+      },
+      {
+       "option_id": "o2",
+       "text": "Store B"
+      },
+      {
+       "option_id": "o3",
+       "text": "Store C"
+      },
+      {
+       "option_id": "o4",
+       "text": "Store D"
+      }
+     ],
+     "constraints": {
+      "options_count": 4,
+      "note": "single-select"
+     }
+    },
+    {
+     "item_id": "p9-80",
+     "panel_key": "80",
+     "plugin_key": "select",
+     "type": "multiple-choice",
+     "prompt_text": "Team question 10: which store holds cap mist in the fictional model?",
+     "attempts": "multi",
+     "assessment_type": "noAssessment",
+     "maximum_grade": null,
+     "commit_state": "open",
+     "read_only": false,
+     "automation": "structured-path",
+     "answered": false,
+     "parent_item_id": null,
+     "options": [
+      {
+       "option_id": "o1",
+       "text": "Store A"
+      },
+      {
+       "option_id": "o2",
+       "text": "Store B"
+      },
+      {
+       "option_id": "o3",
+       "text": "Store C"
+      },
+      {
+       "option_id": "o4",
+       "text": "Store D"
+      }
+     ],
+     "constraints": {
+      "options_count": 4,
+      "note": "single-select"
+     }
+    },
+    {
+     "item_id": "p9-81",
+     "panel_key": "81",
+     "plugin_key": "select",
+     "type": "multiple-choice",
+     "prompt_text": "Team question 11: which store holds duct silt in the fictional model?",
+     "attempts": "multi",
+     "assessment_type": "noAssessment",
+     "maximum_grade": null,
+     "commit_state": "open",
+     "read_only": false,
+     "automation": "structured-path",
+     "answered": false,
+     "parent_item_id": null,
+     "options": [
+      {
+       "option_id": "o1",
+       "text": "Store A"
+      },
+      {
+       "option_id": "o2",
+       "text": "Store B"
+      },
+      {
+       "option_id": "o3",
+       "text": "Store C"
+      },
+      {
+       "option_id": "o4",
+       "text": "Store D"
+      }
+     ],
+     "constraints": {
+      "options_count": 4,
+      "note": "single-select"
+     }
+    },
+    {
+     "item_id": "p9-82",
+     "panel_key": "82",
+     "plugin_key": "select",
+     "type": "multiple-choice",
+     "prompt_text": "Team question 12: which store holds lobe tar in the fictional model?",
+     "attempts": "multi",
+     "assessment_type": "noAssessment",
+     "maximum_grade": null,
+     "commit_state": "open",
+     "read_only": false,
+     "automation": "structured-path",
+     "answered": false,
+     "parent_item_id": null,
+     "options": [
+      {
+       "option_id": "o1",
+       "text": "Store A"
+      },
+      {
+       "option_id": "o2",
+       "text": "Store B"
+      },
+      {
+       "option_id": "o3",
+       "text": "Store C"
+      },
+      {
+       "option_id": "o4",
+       "text": "Store D"
+      }
+     ],
+     "constraints": {
+      "options_count": 4,
+      "note": "single-select"
+     }
+    },
+    {
+     "item_id": "p9-83",
+     "panel_key": "83",
+     "plugin_key": "select",
+     "type": "multiple-choice",
+     "prompt_text": "Team question 13: which store holds stalk dew in the fictional model?",
+     "attempts": "multi",
+     "assessment_type": "noAssessment",
+     "maximum_grade": null,
+     "commit_state": "open",
+     "read_only": false,
+     "automation": "structured-path",
+     "answered": false,
+     "parent_item_id": null,
+     "options": [
+      {
+       "option_id": "o1",
+       "text": "Store A"
+      },
+      {
+       "option_id": "o2",
+       "text": "Store B"
+      },
+      {
+       "option_id": "o3",
+       "text": "Store C"
+      },
+      {
+       "option_id": "o4",
+       "text": "Store D"
+      }
+     ],
+     "constraints": {
+      "options_count": 4,
+      "note": "single-select"
+     }
+    },
+    {
+     "item_id": "p9-84",
+     "panel_key": "84",
+     "plugin_key": "select",
+     "type": "multiple-choice",
+     "prompt_text": "Team question 14: which store holds inlet ash in the fictional model?",
+     "attempts": "multi",
+     "assessment_type": "noAssessment",
+     "maximum_grade": null,
+     "commit_state": "open",
+     "read_only": false,
+     "automation": "structured-path",
+     "answered": false,
+     "parent_item_id": null,
+     "options": [
+      {
+       "option_id": "o1",
+       "text": "Store A"
+      },
+      {
+       "option_id": "o2",
+       "text": "Store B"
+      },
+      {
+       "option_id": "o3",
+       "text": "Store C"
+      },
+      {
+       "option_id": "o4",
+       "text": "Store D"
+      }
+     ],
+     "constraints": {
+      "options_count": 4,
+      "note": "single-select"
+     }
+    },
+    {
+     "item_id": "p9-85",
+     "panel_key": "85",
+     "plugin_key": "select",
+     "type": "multiple-choice",
+     "prompt_text": "Team question 15: which store holds valve foam in the fictional model?",
+     "attempts": "multi",
+     "assessment_type": "noAssessment",
+     "maximum_grade": null,
+     "commit_state": "open",
+     "read_only": false,
+     "automation": "structured-path",
+     "answered": false,
+     "parent_item_id": null,
+     "options": [
+      {
+       "option_id": "o1",
+       "text": "Store A"
+      },
+      {
+       "option_id": "o2",
+       "text": "Store B"
+      },
+      {
+       "option_id": "o3",
+       "text": "Store C"
+      },
+      {
+       "option_id": "o4",
+       "text": "Store D"
+      }
+     ],
+     "constraints": {
+      "options_count": 4,
+      "note": "single-select"
+     }
+    }
+   ],
+   "rat_candidate": {
+    "basis": "One page contains only multiple-choice panels: this page, with 15 questions.",
+    "note": "Question types alone cannot distinguish team and individual tests. Inspect the page instructions. Team entry requires user-supplied answers in rat.answers_dir; individual tests remain excluded. Keep the capture immutable."
+   }
+  },
+  {
+   "page_index": 10,
+   "page_no": null,
+   "route": "complete",
+   "url": null,
+   "title": "Report",
+   "is_report_page": true,
+   "is_checkpoint": false,
+   "content": [],
+   "items": []
+  }
+ ]
+}

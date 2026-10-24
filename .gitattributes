@@ -1,0 +1,42 @@
+# SPDX-FileCopyrightText: 2026 dorsaltegmentum
+# SPDX-License-Identifier: AGPL-3.0-or-later
+
+# Text files use LF everywhere, so generated copies and hashes match on every OS.
+* text=auto eol=lf
+
+# Binary files
+*.ttf binary
+*.otf binary
+*.woff binary
+*.woff2 binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.pdf binary
+*.zip binary
+
+# Generated files (written by tools/, checked for drift in CI)
+skills/*/scripts/_shared/** linguist-generated=true
+skills/*/references/_shared/** linguist-generated=true
+skills/*/LICENSE.txt linguist-generated=true
+skills/*/NOTICE.txt linguist-generated=true
+skills/*/requirements.txt linguist-generated=true
+.claude-plugin/plugin.json linguist-generated=true
+.claude-plugin/marketplace.json linguist-generated=true
+plugin.json linguist-generated=true
+mcp.json linguist-generated=true
+.mcp.json linguist-generated=true
+mcp_config.json linguist-generated=true
+gemini-extension.json linguist-generated=true
+rules/lt-suite-safety.md linguist-generated=true
+examples/mcp/** linguist-generated=true
+docs/configuration.md linguist-generated=true
+tests/fixtures/modules/** linguist-generated=true
+tests/fixtures/answers/** linguist-generated=true
+tests/fixtures/references/** linguist-generated=true
+tests/fixtures/fill-reports/** linguist-generated=true
+tests/fixtures/runs/** linguist-generated=true
+tests/fixtures/viewmodels/** linguist-generated=true
+tests/fixtures/media/** linguist-generated=true

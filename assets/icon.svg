@@ -1,0 +1,10 @@
+<!-- SPDX-FileCopyrightText: 2026 dorsaltegmentum -->
+<!-- SPDX-License-Identifier: AGPL-3.0-or-later -->
+<!-- Original connected-node icon using Tol Bright blue and green. -->
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-labelledby="title">
+  <title id="title">lt-suite connected learning steps</title>
+  <path d="M128 128H336Q384 128 384 176V384" fill="none" stroke="#4477AA" stroke-width="32" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="64" y="64" width="128" height="128" rx="24" fill="#4477AA"/>
+  <rect x="320" y="64" width="128" height="128" rx="24" fill="#228833"/>
+  <rect x="320" y="320" width="128" height="128" rx="24" fill="#4477AA"/>
+</svg>

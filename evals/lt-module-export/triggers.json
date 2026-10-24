@@ -1,0 +1,108 @@
+{
+  "SPDX-FileCopyrightText": "2026 dorsaltegmentum",
+  "SPDX-License-Identifier": "AGPL-3.0-or-later",
+  "description": "Neutral trigger prompts for export routing.",
+  "skill_name": "lt-module-export",
+  "cases": [
+    {
+      "id": "export-01",
+      "query": "Export this worked Lt module as a notes page and PDFs.",
+      "should_trigger": true
+    },
+    {
+      "id": "export-02",
+      "query": "Save module.json and answers.json as revision notes.",
+      "should_trigger": true
+    },
+    {
+      "id": "export-03",
+      "query": "Create a PDF from this exported module page.",
+      "should_trigger": true
+    },
+    {
+      "id": "export-04",
+      "query": "Prepare the outcome map and flashcard source for my completed module.",
+      "should_trigger": true
+    },
+    {
+      "id": "export-05",
+      "query": "Put this worked module into my notes graph.",
+      "should_trigger": true
+    },
+    {
+      "id": "export-06",
+      "query": "Re-export the module and preserve the edits I made to its notes page.",
+      "should_trigger": true
+    },
+    {
+      "id": "export-07",
+      "query": "Is this stamped page my own Lt module output?",
+      "should_trigger": true
+    },
+    {
+      "id": "export-08",
+      "query": "List the module-output pages in my notes graph.",
+      "should_trigger": true
+    },
+    {
+      "id": "export-09",
+      "query": "Make print and screen copies of this module page.",
+      "should_trigger": true
+    },
+    {
+      "id": "export-10",
+      "query": "Write a tracker handoff for the completed module.",
+      "should_trigger": true
+    },
+    {
+      "id": "export-11",
+      "query": "Capture every question from the Lt tab.",
+      "should_trigger": false
+    },
+    {
+      "id": "export-12",
+      "query": "Research answers for my new practical.",
+      "should_trigger": false
+    },
+    {
+      "id": "export-13",
+      "query": "Type these drafted answers into Lt.",
+      "should_trigger": false
+    },
+    {
+      "id": "export-14",
+      "query": "Draw the feedback mechanism for this fictional case.",
+      "should_trigger": false
+    },
+    {
+      "id": "export-15",
+      "query": "Build a spaced-repetition deck from this textbook chapter.",
+      "should_trigger": false
+    },
+    {
+      "id": "export-16",
+      "query": "Update my semester calendar and assessment deadlines.",
+      "should_trigger": false
+    },
+    {
+      "id": "export-17",
+      "query": "Correct the captions for this lecture recording.",
+      "should_trigger": false
+    },
+    {
+      "id": "export-18",
+      "query": "Install the suite and choose my fonts.",
+      "should_trigger": false
+    },
+    {
+      "id": "export-19",
+      "query": "Summarise this article without using an Lt capture.",
+      "should_trigger": false
+    },
+    {
+      "id": "export-20",
+      "query": "Submit the completed module in the browser.",
+      "should_trigger": false
+    }
+  ]
+}

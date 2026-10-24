@@ -1,0 +1,80 @@
+# Hand-tuned diagram theme for the Everforest Dark Medium palette (Everforest colour values, MIT, Copyright (c) 2019 sainnhe).
+# ltcore.palettes.derive_theme() uses this file instead of deriving the theme from the
+# catalog roles. Role fills and strokes were built in Oklch at each accent's hue with one
+# fill lightness and one stroke lightness for every role; they pass every contrast check.
+# Their colour-vision separation is reported, not gated (cvd = "report"); role icons,
+# the key and the line styles carry each role without colour.
+# Roles: fill L 0.42 C 0.05 and stroke L 0.77 C 0.09 at each role's Everforest hue (risk
+# yellow, dx green, sign red, mech blue, tx purple, inv at bg_blue's hue, anat at fg's hue).
+id = "everforest-dark-medium"
+name = "Everforest Dark Medium"
+mode = "dark"
+cvd = "report"
+glyph_lc = [0.77, 0.09]
+
+[theme]
+canvas = "#2d353b"
+cl_fill = "#232a2e"
+cl_stroke = "#7a8478"
+cl_text = "#d3c6aa"
+key_fill = "#2d353b"
+key_stroke = "#7a8478"
+ink = "#d3c6aa"
+muted = "#9da9a0"
+label = "#9da9a0"
+
+[theme.roles]  # fill, stroke, text
+risk = ["#5a4b2c", "#d0b070", "#d3c6aa"]
+mech = ["#2a5651", "#6bc7bc", "#d3c6aa"]
+anat = ["#514d44", "#bdb39f", "#d3c6aa"]
+sign = ["#664242", "#e89d9d", "#d3c6aa"]
+inv = ["#2f5264", "#76bfe4", "#d3c6aa"]
+dx = ["#465234", "#a6bf7f", "#d3c6aa"]
+tx = ["#624251", "#e09dbd", "#d3c6aa"]
+
+[theme.edges]  # dash: false solid, true the "depends on" dash, or an SVG dash pattern
+stim = { colour = "#859289", dash = false, head = "arrow" }
+inh = { colour = "#e09dbd", dash = false, head = "tee" }
+excl = { colour = "#859289", dash = "1.6 3.4", head = "tee" }
+req = { colour = "#bdb39f", dash = true, head = "arrow" }
+
+[accents]  # the 14 accent names the glyph layers use
+rosewater = "#e69875"
+flamingo = "#e67e80"
+pink = "#d699b6"
+mauve = "#d699b6"
+red = "#e67e80"
+maroon = "#e67e80"
+peach = "#e69875"
+yellow = "#dbbc7f"
+green = "#a7c080"
+teal = "#83c092"
+sky = "#7fbbb3"
+sapphire = "#7fbbb3"
+blue = "#7fbbb3"
+lavender = "#7fbbb3"
+
+[tokens]  # Everforest Dark Medium palette tokens
+bg_dim = "#232a2e"
+bg0 = "#2d353b"
+bg1 = "#343f44"
+bg2 = "#3d484d"
+bg3 = "#475258"
+bg4 = "#4f585e"
+bg5 = "#56635f"
+bg_visual = "#543a48"
+bg_red = "#514045"
+bg_yellow = "#4d4c43"
+bg_green = "#425047"
+bg_blue = "#3a515d"
+fg = "#d3c6aa"
+red = "#e67e80"
+orange = "#e69875"
+yellow = "#dbbc7f"
+green = "#a7c080"
+aqua = "#83c092"
+blue = "#7fbbb3"
+purple = "#d699b6"
+grey0 = "#7a8478"
+grey1 = "#859289"
+grey2 = "#9da9a0"

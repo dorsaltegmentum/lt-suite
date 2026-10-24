@@ -1,0 +1,28 @@
+{
+ "schema_version": 1,
+ "module_id": "c1-r103",
+ "run_id": 103,
+ "captured_at": "2000-01-01T00:00:00Z",
+ "provenance_of_reference": "student-submitted",
+ "never_load_into_drafting_context": true,
+ "items": [
+  {
+   "item_id": "p2-11",
+   "maximum_grade": null,
+   "student_answer": "arrow: fold @(0.250,0.500)",
+   "note": "annotations=1 student_image=yes"
+  },
+  {
+   "item_id": "p2-13",
+   "maximum_grade": null,
+   "student_answer": "pin: fold @(0.400,0.300)\npin @(0.600,0.700)",
+   "note": "annotations=2 student_image=no"
+  },
+  {
+   "item_id": "p3-21",
+   "maximum_grade": null,
+   "student_answer": "Fold -> location 0\nLobe -> location 1",
+   "note": "linked=2/5"
+  }
+ ]
+}

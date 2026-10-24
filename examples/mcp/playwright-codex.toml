@@ -1,0 +1,8 @@
+# SPDX-FileCopyrightText: 2026 dorsaltegmentum
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Optional alternative browser server. Do not enable additional capabilities.
+[mcp_servers.lt-playwright]
+command = "npx"
+args = ["-y", "@playwright/mcp@0.0.83"]
+enabled_tools = ["browser_tabs", "browser_navigate", "browser_evaluate", "browser_take_screenshot", "browser_wait_for"]
+default_tools_approval_mode = "prompt"

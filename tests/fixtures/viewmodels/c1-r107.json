@@ -1,0 +1,199 @@
+{
+ "module_id": "c1-r107",
+ "location": {
+  "origin": "https://lt.example.invalid",
+  "pathname": "/i/inst0001/student/courses/1/runs/107/run/page/1"
+ },
+ "globals": {
+  "pageLessonId": 1,
+  "pageCourseLongName": "Example Course 2000 (X101)"
+ },
+ "root": {
+  "lessonTitleDisplay": "Demo: Quick tour",
+  "hasCompletionPage": false,
+  "runLocked": false,
+  "showPageMenuPageRemaining": false,
+  "remainingFlowPagesWithoutCheckpoints": 0,
+  "checkpointPageContainer": {
+   "pages": []
+  }
+ },
+ "pages": [
+  {
+   "title": "Start",
+   "allPanels": [
+    {
+     "pluginKey": "kcTextArea",
+     "panelKey": "1",
+     "panelState": {
+      "content": {
+       "theText": "<p>A short tour of the question types.</p>"
+      }
+     }
+    },
+    {
+     "pluginKey": "text-question",
+     "panelKey": "11",
+     "panelState": {
+      "content": {
+       "question": "Why does the tour exist?",
+       "singleAttempt": false,
+       "assessmentType": "noAssessment"
+      },
+      "input": {
+       "answer": ""
+      }
+     }
+    },
+    {
+     "pluginKey": "image-annotation",
+     "panelKey": "12",
+     "panelState": {
+      "content": {
+       "inputMode": "allowImageAndAnnotation",
+       "singleAttempt": false,
+       "assessmentType": "noAssessment"
+      },
+      "input": {
+       "annotations": [],
+       "presentedRatio": 0
+      }
+     }
+    },
+    {
+     "pluginKey": "subpage",
+     "panelKey": "13",
+     "panelState": {
+      "content": {
+       "subpages": [
+        {
+         "rows": [
+          {
+           "cells": [
+            {
+             "panels": [
+              {
+               "pluginKey": "text-question",
+               "panelKey": "14",
+               "panelState": {
+                "content": {
+                 "question": "Add one detail inside the subpage.",
+                 "singleAttempt": false,
+                 "assessmentType": "noAssessment"
+                },
+                "input": {
+                 "answer": ""
+                }
+               }
+              }
+             ]
+            }
+           ]
+          }
+         ]
+        }
+       ]
+      }
+     }
+    },
+    {
+     "pluginKey": "notebook",
+     "panelKey": "16",
+     "panelState": {
+      "content": {
+       "question": "Your notes"
+      },
+      "input": {
+       "notes": ""
+      }
+     }
+    }
+   ],
+   "rows": []
+  },
+  {
+   "title": "Check",
+   "allPanels": [
+    {
+     "pluginKey": "select",
+     "panelKey": "21",
+     "panelState": {
+      "content": {
+       "question": "Which colour is used for stage one?",
+       "answers": [
+        {
+         "answer": "Blue"
+        },
+        {
+         "answer": "Red"
+        },
+        {
+         "answer": "Green"
+        }
+       ],
+       "multiselect": false,
+       "singleAttempt": false,
+       "assessmentType": "noAssessment"
+      },
+      "input": {
+       "selectedAnswers": []
+      }
+     }
+    },
+    {
+     "pluginKey": "select",
+     "panelKey": "22",
+     "panelState": {
+      "content": {
+       "question": "Which colour is used for stage two?",
+       "answers": [
+        {
+         "answer": "Blue"
+        },
+        {
+         "answer": "Red"
+        },
+        {
+         "answer": "Green"
+        }
+       ],
+       "multiselect": false,
+       "singleAttempt": false,
+       "assessmentType": "noAssessment"
+      },
+      "input": {
+       "selectedAnswers": []
+      }
+     }
+    },
+    {
+     "pluginKey": "select",
+     "panelKey": "23",
+     "panelState": {
+      "content": {
+       "question": "Which colour is used for stage three?",
+       "answers": [
+        {
+         "answer": "Blue"
+        },
+        {
+         "answer": "Red"
+        },
+        {
+         "answer": "Green"
+        }
+       ],
+       "multiselect": false,
+       "singleAttempt": false,
+       "assessmentType": "noAssessment"
+      },
+      "input": {
+       "selectedAnswers": []
+      }
+     }
+    }
+   ],
+   "rows": []
+  }
+ ]
+}

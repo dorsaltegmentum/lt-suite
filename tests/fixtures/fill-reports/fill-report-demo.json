@@ -1,0 +1,128 @@
+{
+ "schema_version": 1,
+ "module_id": "c1-r107",
+ "run_id": 107,
+ "started_at": "2000-01-01T00:00:00Z",
+ "ended_at": "2000-01-01T00:00:00Z",
+ "approval_mode": "manual",
+ "source_answers": {
+  "path": "../answers/answers-demo.json",
+  "sha256": "35ee8b289f42ac39dc3ab203cf737c160766b14c420c6f1179475ef462c12b6d"
+ },
+ "source_receipts": {
+  "path": "../runs/c1-r107/receipts.json",
+  "sha256": "03274623570b40d0f1d691fe8d571343cdf3197260df583c204ef4fc462f9a02"
+ },
+ "boundary_reached": {
+  "stopped": false,
+  "class": null,
+  "page_index": null,
+  "item_id": null,
+  "detail": "Nothing stopped the run; every fillable item was written or listed."
+ },
+ "never_navigated": [],
+ "pages_filled": [
+  1
+ ],
+ "items": [
+  {
+   "item_id": "p1-11",
+   "item_type": "text-response",
+   "attempts": "multi",
+   "attempted": true,
+   "method": "view-model",
+   "result": "filled",
+   "verified": true,
+   "receipt": {
+    "expected_hash": 546380983,
+    "observed_hash": 546380983,
+    "observed_at": "2000-01-01T00:00:00Z"
+   }
+  },
+  {
+   "item_id": "p1-12",
+   "item_type": "upload-and-annotate",
+   "attempts": "multi",
+   "attempted": false,
+   "method": "manual-todo",
+   "result": "todo",
+   "verified": false,
+   "todo": {
+    "blocker": "The slot is empty, so its image geometry is unknown until a first upload is read back.",
+    "placement": "Page 1, panel 12. Upload the prepared sketch by hand."
+   }
+  },
+  {
+   "item_id": "p1-14",
+   "item_type": "text-response",
+   "attempts": "multi",
+   "attempted": true,
+   "method": "view-model",
+   "result": "filled",
+   "verified": true,
+   "receipt": {
+    "expected_hash": 11494517,
+    "observed_hash": 11494517,
+    "observed_at": "2000-01-01T00:00:00Z"
+   }
+  },
+  {
+   "item_id": "p1-16",
+   "item_type": "unmapped",
+   "attempts": "multi",
+   "attempted": false,
+   "method": "not-attempted",
+   "result": "skipped",
+   "verified": false,
+   "stopped_reason": "Notebook panel: the suite never writes to it."
+  },
+  {
+   "item_id": "p2-21",
+   "item_type": "multiple-choice",
+   "attempts": "multi",
+   "attempted": false,
+   "method": "not-attempted",
+   "result": "skipped",
+   "verified": false,
+   "stopped_reason": "Team readiness test; the answers have not been supplied."
+  },
+  {
+   "item_id": "p2-22",
+   "item_type": "multiple-choice",
+   "attempts": "multi",
+   "attempted": false,
+   "method": "not-attempted",
+   "result": "skipped",
+   "verified": false,
+   "stopped_reason": "Team readiness test; the answers have not been supplied."
+  },
+  {
+   "item_id": "p2-23",
+   "item_type": "multiple-choice",
+   "attempts": "multi",
+   "attempted": false,
+   "method": "not-attempted",
+   "result": "skipped",
+   "verified": false,
+   "stopped_reason": "Team readiness test; the answers have not been supplied."
+  }
+ ],
+ "save_waits": [
+  {
+   "receipt": "fill-result-1.json",
+   "receipt_sha256": "dfaf7fb452594f46ea6befa21ffb8aa4937fa7ee07675d2af82b3af2311d644e",
+   "pages": [
+    1
+   ],
+   "save_signal": "net",
+   "waited_ms": 450,
+   "keys_total": 2,
+   "keys_saved": 2,
+   "keys_pending": 0,
+   "save_errors": 0,
+   "calibrated": true,
+   "ok": true,
+   "fatal": null
+  }
+ ]
+}

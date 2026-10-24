@@ -1,0 +1,36 @@
+{
+  "checked": "2000-01-01",
+  "by": "the worked example (invented)",
+  "access": "not applicable: an invented case with an invented guideline",
+  "verdicts": {
+    "consistent": "matches the guideline",
+    "partly": "matches in part; see notes",
+    "unchecked": "not checked yet"
+  },
+  "entries": [
+    {
+      "node": "tx_enz",
+      "text": "Weekly enzyme X replacement given by infusion",
+      "text_sha1": "3fee352066e3",
+      "verdict": "consistent",
+      "source": {
+        "guideline": "Invented guideline for the worked example",
+        "topic": "Enzyme X deficiency: replacement",
+        "published": "2000-01-01"
+      },
+      "notes": "An invented guideline; the entry shows the ledger's shape."
+    },
+    {
+      "node": "tx_diet",
+      "text": "Low substrate S diet to slow the build-up",
+      "text_sha1": "ffec1249c794",
+      "verdict": "consistent",
+      "source": {
+        "guideline": "Invented guideline for the worked example",
+        "topic": "Enzyme X deficiency: diet",
+        "published": "2000-01-01"
+      },
+      "notes": "An invented guideline; the entry shows the ledger's shape."
+    }
+  ]
+}

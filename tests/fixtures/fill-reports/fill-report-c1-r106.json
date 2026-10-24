@@ -1,0 +1,98 @@
+{
+ "schema_version": 1,
+ "module_id": "c1-r106",
+ "run_id": 106,
+ "started_at": "2000-01-01T00:00:00Z",
+ "ended_at": "2000-01-01T00:00:00Z",
+ "approval_mode": "manual",
+ "source_answers": {
+  "path": "../answers/answers-c1-r106.json",
+  "sha256": "e0eeae0dc1a6e7cc8f210d5bd535ce7e6073d9fb07fa619e2ee5a3d7393d7b2c"
+ },
+ "source_receipts": {
+  "path": "../runs/c1-r106/receipts.json",
+  "sha256": "4544fbe479ac98351e75aeb358be5091ac0d29929e824c6f3f1eae6c0ddd8f43"
+ },
+ "boundary_reached": {
+  "stopped": true,
+  "class": "checkpoint-page",
+  "page_index": 3,
+  "item_id": null,
+  "detail": "Page 3 is an uncommitted checkpoint, a one-way door. The run stopped before it."
+ },
+ "never_navigated": [
+  {
+   "route": "complete",
+   "reason": "Final completion controls remain outside automatic navigation."
+  }
+ ],
+ "pages_filled": [
+  2
+ ],
+ "items": [
+  {
+   "item_id": "p2-11",
+   "item_type": "table-completion",
+   "attempts": "multi",
+   "attempted": true,
+   "method": "view-model",
+   "stopped_reason": "The save wait reported a server error on this call; the fresh-load receipt decides. Verified on a fresh load at 2000-01-01T00:00:00Z: hash 3160953265 equals the drafted 3160953265.",
+   "result": "filled",
+   "verified": true,
+   "receipt": {
+    "expected_hash": 3160953265,
+    "observed_hash": 3160953265,
+    "observed_at": "2000-01-01T00:00:00Z"
+   }
+  },
+  {
+   "item_id": "p2-12",
+   "item_type": "table-completion",
+   "attempts": "multi",
+   "attempted": true,
+   "method": "view-model",
+   "stopped_reason": "The save wait reported a server error on this call; the fresh-load receipt decides. Verified on a fresh load at 2000-01-01T00:00:00Z: hash 3315370384 equals the drafted 3315370384.",
+   "result": "filled",
+   "verified": true,
+   "receipt": {
+    "expected_hash": 3315370384,
+    "observed_hash": 3315370384,
+    "observed_at": "2000-01-01T00:00:00Z"
+   }
+  }
+ ],
+ "save_waits": [
+  {
+   "receipt": "fill-result-1.json",
+   "receipt_sha256": "4e38231c83d0fe8a4408c6f2ed3dac013bd5e7c66c67bdd43850166543530831",
+   "pages": [
+    2
+   ],
+   "save_signal": "error",
+   "waited_ms": 1500,
+   "keys_total": 2,
+   "keys_saved": 1,
+   "keys_pending": 0,
+   "save_errors": 1,
+   "calibrated": true,
+   "ok": false,
+   "fatal": "One save request failed; the page was filled again."
+  },
+  {
+   "receipt": "fill-result-2.json",
+   "receipt_sha256": "05d4c2dd910c981e3879ea2b0862cb891dd008c84a83cd3410e87d129c480372",
+   "pages": [
+    2
+   ],
+   "save_signal": "model",
+   "waited_ms": 300,
+   "keys_total": 2,
+   "keys_saved": 2,
+   "keys_pending": 0,
+   "save_errors": 0,
+   "calibrated": true,
+   "ok": true,
+   "fatal": null
+  }
+ ]
+}

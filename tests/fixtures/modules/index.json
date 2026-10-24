@@ -1,0 +1,12 @@
+{
+ "note": "module id -> module file. c1-r107 is the demo run, stored as module-demo.json.",
+ "modules": {
+  "c1-r101": "module-c1-r101.json",
+  "c1-r102": "module-c1-r102.json",
+  "c1-r103": "module-c1-r103.json",
+  "c1-r104": "module-c1-r104.json",
+  "c1-r105": "module-c1-r105.json",
+  "c1-r106": "module-c1-r106.json",
+  "c1-r107": "module-demo.json"
+ }
+}

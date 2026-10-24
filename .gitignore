@@ -1,0 +1,39 @@
+# SPDX-FileCopyrightText: 2026 dorsaltegmentum
+# SPDX-License-Identifier: AGPL-3.0-or-later
+
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.cache/
+.hypothesis/
+.venv/
+*.egg-info/
+# uv.lock is shipped for reproducible dependency exports.
+
+# Build output
+dist/
+build/
+node_modules/
+htmlcov/
+.coverage
+coverage.xml
+
+# Local lt-suite config and data (workspace layout written by setup)
+.lt-suite/
+lt-suite.toml
+lt-suite.toml.bak
+
+# Browser state and secrets never belong in the repository
+*.storage-state.json
+*cookies*
+.env
+.env.*
+
+# Editors and OS
+.DS_Store
+*.swp
+.idea/
+.vscode/

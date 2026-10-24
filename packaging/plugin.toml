@@ -1,0 +1,41 @@
+# SPDX-FileCopyrightText: 2026 dorsaltegmentum
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Source for tools/gen_manifests.py. Regenerate after changing this file.
+name = "lt-suite"
+version = "0.1.0"
+description = "Unofficial tools to capture, draft, diagram, fill and export Lt learning modules."
+author = "dorsaltegmentum"
+author_url = "https://github.com/dorsaltegmentum"
+homepage = "https://github.com/dorsaltegmentum/lt-suite"
+repository = "https://github.com/dorsaltegmentum/lt-suite"
+license = "AGPL-3.0-or-later"
+icon = "./assets/icon.png"
+keywords = ["lt", "learning-module", "agent-skills", "study", "diagram", "pdf"]
+marketplace_name = "lt-suite"
+skills = ["lt-suite-setup", "lt-module-capture", "lt-module-answer", "lt-module-fill", "lt-module-export", "mechanistic-diagram"]
+
+# Completion/checkpoint URL patterns are optional: the server rejects combining
+# them with allowedUrlPattern, and their effect on application requests is unmeasured.
+[security]
+blocked_url_patterns = "optional-defense-in-depth"
+
+[package_integrity]
+chrome_devtools_mcp = "sha512-lAGpH0zXT1ZdaPefP1KK/MvxwihOlu7VGQ7p4wbhD9OhN17vUC4KWk/ImUYR9DE4s+7r4r0ySV4xr2OkTa7ZMA=="
+
+[playwright]
+command = "npx"
+args = ["-y", "@playwright/mcp@0.0.83"]
+enabled = ["browser_tabs", "browser_navigate", "browser_evaluate", "browser_take_screenshot", "browser_wait_for"]
+disabled = ["browser_click", "browser_close", "browser_console_messages", "browser_drag", "browser_drop", "browser_emulate_media", "browser_file_upload", "browser_fill_form", "browser_find", "browser_handle_dialog", "browser_hover", "browser_navigate_back", "browser_network_request", "browser_network_requests", "browser_press_key", "browser_resize", "browser_run_code_unsafe", "browser_select_option", "browser_snapshot", "browser_type"]
+
+[owner]
+name = "dorsaltegmentum"
+url = "https://github.com/dorsaltegmentum"
+
+[mcp.lt-chrome]
+command = "npx"
+args = ["-y", "chrome-devtools-mcp@1.12.0", "--autoConnect", "--no-usage-statistics", "--no-performance-crux", "--no-category-input", "--no-category-network", "--no-category-memory", "--no-category-performance", "--no-category-emulation", "--redact-network-headers"]
+
+[tool_filters]
+codex_enabled = ["list_pages", "select_page", "navigate_page", "evaluate_script", "take_screenshot", "wait_for"]
+input_disabled = ["new_page", "click", "click_at", "drag", "fill", "fill_form", "hover", "press_key", "type_text", "upload_file", "handle_dialog"]

@@ -1,0 +1,91 @@
+{
+ "schema_version": 1,
+ "module_id": "c1-r104",
+ "run_id": 104,
+ "captured_at": "2000-01-01T00:00:00Z",
+ "provenance_of_reference": "student-submitted",
+ "never_load_into_drafting_context": true,
+ "items": [
+  {
+   "item_id": "p3-12",
+   "maximum_grade": 2,
+   "student_answer": "Tessin was stored in Store B."
+  },
+  {
+   "item_id": "p3-13",
+   "maximum_grade": null,
+   "student_answer": "Store B."
+  },
+  {
+   "item_id": "p3-14",
+   "maximum_grade": null,
+   "student_answer": "Store B",
+   "student_selection": [
+    "Store B"
+   ]
+  },
+  {
+   "item_id": "p4-20",
+   "maximum_grade": null,
+   "student_answer": "A raised level."
+  },
+  {
+   "item_id": "p4-22",
+   "maximum_grade": null,
+   "student_answer": "Rate | \nRhythm | \nTone | ",
+   "note": "rows=4 body_rows=3"
+  },
+  {
+   "item_id": "p4-23",
+   "maximum_grade": null,
+   "student_answer": "Noted."
+  },
+  {
+   "item_id": "p5-31",
+   "maximum_grade": null,
+   "student_answer": "Level | noted\nTrend | noted",
+   "note": "rows=3 body_rows=2"
+  },
+  {
+   "item_id": "p5-32",
+   "maximum_grade": null,
+   "student_answer": "Level",
+   "student_selection": [
+    "Level"
+   ]
+  },
+  {
+   "item_id": "p6-42",
+   "maximum_grade": null,
+   "student_answer": "A | high\nB | low",
+   "note": "rows=3 body_rows=2"
+  },
+  {
+   "item_id": "p6-43",
+   "maximum_grade": null,
+   "student_answer": "A | high\nB | ",
+   "note": "rows=3 body_rows=2"
+  },
+  {
+   "item_id": "p7-51",
+   "maximum_grade": null,
+   "student_answer": "Store B holds the tessin."
+  },
+  {
+   "item_id": "p7-52",
+   "maximum_grade": null,
+   "student_answer": "One store was sampled."
+  },
+  {
+   "item_id": "p8-61",
+   "maximum_grade": null,
+   "student_answer": "Store | noted\nReview | noted",
+   "note": "rows=3 body_rows=2"
+  },
+  {
+   "item_id": "p8-62",
+   "maximum_grade": null,
+   "student_answer": "Review Store B."
+  }
+ ]
+}

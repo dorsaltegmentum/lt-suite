@@ -1,0 +1,300 @@
+{
+ "about": "Diagram themes of the hand-tuned palettes as the engine drew them before the palette catalog existed. tests/style/test_overrides.py checks that derive_theme() returns these values except the changes listed in override-deltas.json.",
+ "themes": {
+  "catppuccin-latte": {
+   "canvas": "#eff1f5",
+   "cl_fill": "#ccd0da",
+   "cl_stroke": "#9ca0b0",
+   "cl_text": "#4c4f69",
+   "key_fill": "#eff1f5",
+   "key_stroke": "#9ca0b0",
+   "ink": "#4c4f69",
+   "muted": "#6c6f85",
+   "label": "#5c5f77",
+   "roles": {
+    "risk": [
+     "#ffe6c8",
+     "#994d00",
+     "#4c4f69"
+    ],
+    "dx": [
+     "#daf4d5",
+     "#287615",
+     "#4c4f69"
+    ],
+    "sign": [
+     "#ffdfdd",
+     "#a8353e",
+     "#4c4f69"
+    ],
+    "inv": [
+     "#d9ecff",
+     "#315eb7",
+     "#4c4f69"
+    ],
+    "mech": [
+     "#c5f6f9",
+     "#007a86",
+     "#4c4f69"
+    ],
+    "tx": [
+     "#eee5ff",
+     "#6e4bad",
+     "#4c4f69"
+    ],
+    "anat": [
+     "#f3e8e6",
+     "#765c56",
+     "#4c4f69"
+    ]
+   },
+   "edges": {
+    "stim": [
+     "#6c6f85",
+     false,
+     "arrow"
+    ],
+    "inh": [
+     "#6e4bad",
+     false,
+     "tee"
+    ],
+    "excl": [
+     "#6c6f85",
+     "1.6 3.4",
+     "tee"
+    ],
+    "req": [
+     "#765c56",
+     true,
+     "arrow"
+    ]
+   },
+   "accents": {
+    "rosewater": "#dc8a78",
+    "flamingo": "#dd7878",
+    "pink": "#ea76cb",
+    "mauve": "#8839ef",
+    "red": "#d20f39",
+    "maroon": "#e64553",
+    "peach": "#fe640b",
+    "yellow": "#df8e1d",
+    "green": "#40a02b",
+    "teal": "#179299",
+    "sky": "#04a5e5",
+    "sapphire": "#209fb5",
+    "blue": "#1e66f5",
+    "lavender": "#7287fd"
+   },
+   "glyph_lc": [
+    0.5,
+    0.15
+   ]
+  },
+  "catppuccin-frappe": {
+   "canvas": "#303446",
+   "cl_fill": "#292c3c",
+   "cl_stroke": "#737994",
+   "cl_text": "#c6d0f5",
+   "key_fill": "#303446",
+   "key_stroke": "#737994",
+   "ink": "#c6d0f5",
+   "muted": "#a5adce",
+   "label": "#a5adce",
+   "roles": {
+    "risk": [
+     "#605032",
+     "#d6b676",
+     "#c6d0f5"
+    ],
+    "dx": [
+     "#47593c",
+     "#a4c88c",
+     "#c6d0f5"
+    ],
+    "sign": [
+     "#6c4747",
+     "#efa3a3",
+     "#c6d0f5"
+    ],
+    "inv": [
+     "#45526f",
+     "#9fbaf5",
+     "#c6d0f5"
+    ],
+    "mech": [
+     "#305c56",
+     "#72cec2",
+     "#c6d0f5"
+    ],
+    "tx": [
+     "#5c4b67",
+     "#ceaae5",
+     "#c6d0f5"
+    ],
+    "anat": [
+     "#59504e",
+     "#d0b3ad",
+     "#c6d0f5"
+    ]
+   },
+   "edges": {
+    "stim": [
+     "#949cbb",
+     false,
+     "arrow"
+    ],
+    "inh": [
+     "#ceaae5",
+     false,
+     "tee"
+    ],
+    "excl": [
+     "#949cbb",
+     "1.6 3.4",
+     "tee"
+    ],
+    "req": [
+     "#d0b3ad",
+     true,
+     "arrow"
+    ]
+   },
+   "accents": {
+    "rosewater": "#f2d5cf",
+    "flamingo": "#eebebe",
+    "pink": "#f4b8e4",
+    "mauve": "#ca9ee6",
+    "red": "#e78284",
+    "maroon": "#ea999c",
+    "peach": "#ef9f76",
+    "yellow": "#e5c890",
+    "green": "#a6d189",
+    "teal": "#81c8be",
+    "sky": "#99d1db",
+    "sapphire": "#85c1dc",
+    "blue": "#8caaee",
+    "lavender": "#babbf1"
+   },
+   "glyph_lc": [
+    0.79,
+    0.09
+   ]
+  },
+  "everforest-dark-medium": {
+   "canvas": "#2d353b",
+   "cl_fill": "#232a2e",
+   "cl_stroke": "#7a8478",
+   "cl_text": "#d3c6aa",
+   "key_fill": "#2d353b",
+   "key_stroke": "#7a8478",
+   "ink": "#d3c6aa",
+   "muted": "#9da9a0",
+   "label": "#9da9a0",
+   "roles": {
+    "risk": [
+     "#5a4b2c",
+     "#d0b070",
+     "#d3c6aa"
+    ],
+    "dx": [
+     "#465234",
+     "#a6bf7f",
+     "#d3c6aa"
+    ],
+    "sign": [
+     "#664242",
+     "#e89d9d",
+     "#d3c6aa"
+    ],
+    "inv": [
+     "#2f5264",
+     "#76bfe4",
+     "#d3c6aa"
+    ],
+    "mech": [
+     "#2a5651",
+     "#6bc7bc",
+     "#d3c6aa"
+    ],
+    "tx": [
+     "#624251",
+     "#e09dbd",
+     "#d3c6aa"
+    ],
+    "anat": [
+     "#514d44",
+     "#bdb39f",
+     "#d3c6aa"
+    ]
+   },
+   "edges": {
+    "stim": [
+     "#859289",
+     false,
+     "arrow"
+    ],
+    "inh": [
+     "#e09dbd",
+     false,
+     "tee"
+    ],
+    "excl": [
+     "#859289",
+     "1.6 3.4",
+     "tee"
+    ],
+    "req": [
+     "#bdb39f",
+     true,
+     "arrow"
+    ]
+   },
+   "accents": {
+    "rosewater": "#e69875",
+    "flamingo": "#e67e80",
+    "pink": "#d699b6",
+    "mauve": "#d699b6",
+    "red": "#e67e80",
+    "maroon": "#e67e80",
+    "peach": "#e69875",
+    "yellow": "#dbbc7f",
+    "green": "#a7c080",
+    "teal": "#83c092",
+    "sky": "#7fbbb3",
+    "sapphire": "#7fbbb3",
+    "blue": "#7fbbb3",
+    "lavender": "#7fbbb3"
+   },
+   "glyph_lc": [
+    0.77,
+    0.09
+   ],
+   "tokens": {
+    "bg_dim": "#232a2e",
+    "bg0": "#2d353b",
+    "bg1": "#343f44",
+    "bg2": "#3d484d",
+    "bg3": "#475258",
+    "bg4": "#4f585e",
+    "bg5": "#56635f",
+    "bg_visual": "#543a48",
+    "bg_red": "#514045",
+    "bg_yellow": "#4d4c43",
+    "bg_green": "#425047",
+    "bg_blue": "#3a515d",
+    "fg": "#d3c6aa",
+    "red": "#e67e80",
+    "orange": "#e69875",
+    "yellow": "#dbbc7f",
+    "green": "#a7c080",
+    "aqua": "#83c092",
+    "blue": "#7fbbb3",
+    "purple": "#d699b6",
+    "grey0": "#7a8478",
+    "grey1": "#859289",
+    "grey2": "#9da9a0"
+   }
+  }
+ }
+}

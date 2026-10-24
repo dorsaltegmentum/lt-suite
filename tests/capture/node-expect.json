@@ -1,0 +1,18 @@
+{
+ "SPDX-FileCopyrightText": "2026 dorsaltegmentum",
+ "SPDX-License-Identifier": "AGPL-3.0-or-later",
+ "files": 8,
+ "min_tests": 162,
+ "groups": {
+  "handlers": 39,
+  "boundaries": 20,
+  "transport": 14,
+  "mirrors": 10,
+  "fetch-media": 19,
+  "roundtrip": 21,
+  "boundary-oracle": 15,
+  "sanitize": 11,
+  "transport-auth": 6,
+  "media-auth": 7
+ }
+}

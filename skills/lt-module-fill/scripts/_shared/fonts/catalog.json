@@ -1,0 +1,1656 @@
+{
+ "schema_version": 1,
+ "about": "Libre fonts lt-suite can use. 'bundled' files ship in shared/fonts/<id>/ with the upstream OFL.txt; 'fetch' files are downloaded by setup into <data>/fonts/<id>/ and checked against the pinned sha256. package_score counts official packages in Debian/Ubuntu, Fedora, Arch and Homebrew (0-4); preinstalled_default_count counts systems that ship the font by default.",
+ "defaults": {
+  "sans": "noto-sans",
+  "mono": "noto-sans-mono",
+  "low_vision": {
+   "sans": "atkinson-hyperlegible-next",
+   "mono": "atkinson-hyperlegible-mono",
+   "note": "best I/l/1 separation (0.605 against 0.275); Greek letters, arrows and super/subscripts fall back to Noto Sans"
+  },
+  "sans_stack": [
+   "Noto Sans",
+   "Adwaita Sans",
+   "DejaVu Sans",
+   "sans-serif"
+  ],
+  "mono_stack": [
+   "Noto Sans Mono",
+   "Adwaita Mono",
+   "DejaVu Sans Mono",
+   "Cascadia Mono",
+   "monospace"
+  ],
+  "dyslexia_note": "Offer letter- and word-spacing controls instead of a dyslexia font; OpenDyslexic shows no benefit (wery2017, azzarello2026) while spacing has support (zorzi2012, marinus2016). Change letter and word spacing together: letter spacing alone slowed reading in one study (galliussi2020)."
+ },
+ "evidence_tiers": {
+  "A": "large independent peer-reviewed study",
+  "B": "peer-reviewed study by the developers",
+  "C": "design claims, measured metrics only",
+  "D": "creator-run, non-peer-reviewed studies",
+  "N": "negative evidence from controlled studies or meta-analysis"
+ },
+ "method": {
+  "il1_min_distance": "min over pairs I~l, l~1, I~1 of (1 - IoU) of binarised glyph ink rendered at 96 px with Pillow, glyphs centred horizontally on a shared baseline; variable fonts at wght 400, wdth 100. 0 = identical shapes, higher = less confusable. Heuristic proxy for letter differentiation, not a validated legibility measure.",
+  "b_vs_mirrored_d": "1 - IoU of b against horizontally mirrored d; below 0.2 means b and d are near mirror images.",
+  "o_vs_zero": "1 - IoU of O against 0; slashed or dotted zeros in monospace fonts score low because the IoU ignores small inner marks.",
+  "diagram_glyphs_missing": "count missing from 89 code points that diagram labels use: 49 basic Greek letters, 8 arrows (← ↑ → ↓ ↔ ⇄ ⇌ ⇒), 8 maths signs (− ± × ≤ ≥ ≈ ∞ ∆), 22 super/subscripts (⁺ ⁻ ⁰-⁹ ₀-₉), 8 misc (° µ – — • ′ ″ ‰). Missing glyphs fall back to another font at render time.",
+  "x_height_em": "OS/2 sxHeight / unitsPerEm.",
+  "font_files_measured": "Google Fonts repo copies for GF families; upstream release files for DejaVu 2.37, Liberation 2.1.5, Luciole (Luciole.zip), OpenDyslexic 0.91.12 zip, Cantarell 0.311, Nerd Fonts 3.5.1; Adwaita fonts 51 and Iosevka Nerd Font 34.8.0 release files (Nerd-patched, so code point count includes icons)."
+ },
+ "citations": {
+  "wallace2022": "Wallace S, Bylinskii Z, Dobres J, et al. Towards Individuated Reading Experiences: Different Fonts Increase Reading Speed for Different Individuals. ACM Trans Comput-Hum Interact. 2022;29(4):38. doi:10.1145/3502222",
+  "rello2013": "Rello L, Baeza-Yates R. Good fonts for dyslexia. ASSETS '13, ACM; 2013:1-8. doi:10.1145/2513383.2513447",
+  "wery2017": "Wery JJ, Diliberto JA. The effect of a specialized dyslexia font, OpenDyslexic, on reading rate and accuracy. Ann Dyslexia. 2017;67(2):114-127. doi:10.1007/s11881-016-0127-1. PMID 26993270",
+  "kuster2018": "Kuster SM, van Weerdenburg M, Gompel M, Bosman AMT. Dyslexie font does not benefit reading in children with or without dyslexia. Ann Dyslexia. 2018;68(1):25-42. doi:10.1007/s11881-017-0154-6. PMID 29204931",
+  "marinus2016": "Marinus E, Mostard M, Segers E, et al. A Special Font for People with Dyslexia: Does it Work and, if so, why? Dyslexia. 2016;22(3):233-244. doi:10.1002/dys.1527. PMID 27194598",
+  "azzarello2026": "Azzarello C, Paek S, Hodge C, Jameson M, Lewis J. Does font improve reading in dyslexic children?: meta-analysis of dyslexia-friendly fonts and dyslexic children's reading performance. Ann Dyslexia. 2026. doi:10.1007/s11881-026-00389-8. PMID 42536336",
+  "zorzi2012": "Zorzi M, Barbiero C, Facoetti A, et al. Extra-large letter spacing improves reading in dyslexia. Proc Natl Acad Sci USA. 2012;109(28):11455-11459. doi:10.1073/pnas.1205566109. PMID 22665803",
+  "galliussi2020": "Galliussi J, Perondi L, Chia G, Gerbino W, Bernardis P. Inter-letter spacing, inter-word spacing, and font with dyslexia-friendly features. Ann Dyslexia. 2020;70(1):141-152. doi:10.1007/s11881-020-00194-x. PMID 32172467",
+  "galiano2023": "Galiano AR, Augereau-Depoix V, Baltenneck N, Latour L, Drissi H. Luciole, a new font for people with low vision. Acta Psychol (Amst). 2023;236:103926. doi:10.1016/j.actpsy.2023.103926. PMID 37137180",
+  "beier2010": "Beier S, Larson K. Design improvements for frequently misrecognized letters. Information Design Journal. 2010;18(2). doi:10.1075/idj.18.2.03bei"
+ },
+ "fonts": [
+  {
+   "id": "atkinson-hyperlegible",
+   "family": "Atkinson Hyperlegible",
+   "role": "sans",
+   "licence": {
+    "spdx": "OFL-1.1-no-RFN",
+    "text": "OFL-1.1 (no Reserved Font Name; Copyright 2020 Braille Institute of America, Inc.; googlefonts/atkinson-hyperlegible OFL.txt)",
+    "reserved_font_names": []
+   },
+   "upstream_repo": "https://github.com/googlefonts/atkinson-hyperlegible",
+   "upstream_version": "1.006 (May 2020 release; superseded by Atkinson Hyperlegible Next)",
+   "packages": "Debian 13/sid, Ubuntu 24.04/26.04: fonts-atkinson-hyperlegible; Fedora: none (only the Next and Mono successors); Arch: ttf-atkinson-hyperlegible, otf-atkinson-hyperlegible (extra); Homebrew: font-atkinson-hyperlegible; Chocolatey: atkinson-hyperlegible; Scoop, winget: none found",
+   "packaged_in": [
+    "debian-ubuntu",
+    "arch",
+    "homebrew",
+    "chocolatey"
+   ],
+   "preinstalled_on": "None: not preinstalled on Windows 11, macOS 26, Ubuntu 26.04 desktop, Fedora Workstation, Arch, Android (AOSP) or ChromeOS.",
+   "preinstalled_default_count": 0,
+   "package_score": 3,
+   "evidence_tier": "C: design claim plus measured letter differentiation; no peer-reviewed reading study",
+   "readability_evidence": "Braille Institute and Applied Design Works drew it for low-vision readers with distinct I, l, 1 and 0 to raise character recognition (upstream README). The approach follows letter-differentiation research [beier2010]. No peer-reviewed reading-speed or low-vision study of the typeface was found in PubMed or web search; Braille Institute's design-stage tests are unpublished. Measured I/l/1 distance 0.590 (Noto Sans 0.275, Inter 0.000).",
+   "script_coverage": "Latin (Basic, Latin-1, Latin Extended-A). Greek block: 4 code points only (no α β γ κ). No arrows; 4 of 22 super/subscripts (342 code points measured).",
+   "weights": "Regular 400 and Bold 700, each with italic (4 static styles)",
+   "mono_companion": "Atkinson Hyperlegible Mono",
+   "measured": {
+    "file_version": "Version 1.006; ttfautohint (v1.8.3)",
+    "x_height_em": 0.496,
+    "il1_min_distance": 0.59,
+    "o_vs_zero": 0.526,
+    "b_vs_mirrored_d": 0.068,
+    "diagram_glyphs_missing": 74,
+    "diagram_missing_chars": "ΑΒΓΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨαβγδεζηθικλνξορςστυφχψω←↑→↓↔⇄⇌⇒∆⁺⁻⁰⁵⁶⁷⁸⁹₀₁₂₃₄₅₆₇₈₉′″",
+    "codepoints": 342
+   },
+   "bundled": null,
+   "fetch": {
+    "files": [
+     {
+      "url": "https://raw.githubusercontent.com/google/fonts/1b22086d13bdbbf5ec63d01a39a49246e4ac355f/ofl/atkinsonhyperlegible/AtkinsonHyperlegible-Regular.ttf",
+      "sha256": "7fb917c89019896d0b52ee84b7cbb3304c18cb90b19a62f5e32712bd23e97669",
+      "bytes": 54348,
+      "file": "AtkinsonHyperlegible-Regular.ttf"
+     },
+     {
+      "url": "https://raw.githubusercontent.com/google/fonts/1b22086d13bdbbf5ec63d01a39a49246e4ac355f/ofl/atkinsonhyperlegible/AtkinsonHyperlegible-Bold.ttf",
+      "sha256": "5a3b0c8cc8ca545155150b4512a1fa248298df121c50d6557e651e61fbdab92f",
+      "bytes": 55256,
+      "file": "AtkinsonHyperlegible-Bold.ttf"
+     }
+    ],
+    "licence": {
+     "url": "https://raw.githubusercontent.com/google/fonts/1b22086d13bdbbf5ec63d01a39a49246e4ac355f/ofl/atkinsonhyperlegible/OFL.txt",
+     "sha256": "f32d22b3908fcad2c86a74000614ec22e6a7f66ea7e867e616026a27aebdc143",
+     "file": "OFL.txt"
+    },
+    "source": "google/fonts repository, pinned to the commit that last changed each file"
+   }
+  },
+  {
+   "id": "atkinson-hyperlegible-next",
+   "family": "Atkinson Hyperlegible Next",
+   "role": "sans",
+   "licence": {
+    "spdx": "OFL-1.1-no-RFN",
+    "text": "OFL-1.1 (no Reserved Font Name; Copyright 2020-2024 The Atkinson Hyperlegible Next Project Authors)",
+    "reserved_font_names": []
+   },
+   "upstream_repo": "https://github.com/googlefonts/atkinson-hyperlegible-next",
+   "upstream_version": "2.001 (November 2024); repo has no GitHub releases",
+   "packages": "Debian sid, Ubuntu 26.04/26.10: fonts-atkinson-hyperlegible-next; Fedora 44/rawhide: atkinson-hyperlegible-next-fonts; Arch: AUR only (otf-atkinson-hyperlegible-next, ttf-atkinson-hyperlegible-next, ttf-atkinson-hyperlegible-next-variable); Homebrew: font-atkinson-hyperlegible-next; Chocolatey, Scoop, winget: none found",
+   "packaged_in": [
+    "debian-ubuntu",
+    "fedora",
+    "homebrew"
+   ],
+   "preinstalled_on": "None: not preinstalled on Windows 11, macOS 26, Ubuntu 26.04 desktop, Fedora Workstation, Arch, Android (AOSP) or ChromeOS.",
+   "preinstalled_default_count": 0,
+   "package_score": 3,
+   "evidence_tier": "C: design claim plus measured letter differentiation; no peer-reviewed reading study",
+   "readability_evidence": "Same low-vision design rationale as Atkinson Hyperlegible, with more glyphs, better kerning and 7 weights (upstream README, v2.001). No peer-reviewed study of this version found. Measured I/l/1 distance 0.605; x-height 0.496 em.",
+   "script_coverage": "Latin, Latin Extended-A, 9 Vietnamese code points. Greek block: 4 code points. Missing for diagram labels: α β γ κ, ← → ⇌, ⁺ ⁻ ₀-₉, µ (U+00B5), ′ ″ (362 code points measured).",
+   "weights": "Variable wght 200-800 (ExtraLight to ExtraBold), upright and italic",
+   "mono_companion": "Atkinson Hyperlegible Mono",
+   "measured": {
+    "file_version": "Version 2.001",
+    "x_height_em": 0.496,
+    "il1_min_distance": 0.605,
+    "o_vs_zero": 0.507,
+    "b_vs_mirrored_d": 0.112,
+    "diagram_glyphs_missing": 76,
+    "diagram_missing_chars": "ΑΒΓΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨαβγδεζηθικλνξορςστυφχψω←↑→↓↔⇄⇌⇒∆⁺⁻⁰⁴⁵⁶⁷⁸⁹₀₁₂₃₄₅₆₇₈₉µ′″",
+    "codepoints": 362
+   },
+   "bundled": null,
+   "fetch": {
+    "files": [
+     {
+      "url": "https://raw.githubusercontent.com/google/fonts/66eef70728ca29f28c31cdc5e7947f2c2de73e8d/ofl/atkinsonhyperlegiblenext/AtkinsonHyperlegibleNext%5Bwght%5D.ttf",
+      "sha256": "5a455d1cfa099b601ab70751bb9673e8fe1854dc4500c80e1a220d0d75e31745",
+      "bytes": 114552,
+      "file": "AtkinsonHyperlegibleNext[wght].ttf"
+     }
+    ],
+    "licence": {
+     "url": "https://raw.githubusercontent.com/google/fonts/66eef70728ca29f28c31cdc5e7947f2c2de73e8d/ofl/atkinsonhyperlegiblenext/OFL.txt",
+     "sha256": "aca6a428580965d2297d1b718042dd427c2a9443ece3b0d02d758e161e0c4030",
+     "file": "OFL.txt"
+    },
+    "source": "google/fonts repository, pinned to the commit that last changed each file"
+   }
+  },
+  {
+   "id": "atkinson-hyperlegible-mono",
+   "family": "Atkinson Hyperlegible Mono",
+   "role": "mono",
+   "licence": {
+    "spdx": "OFL-1.1",
+    "text": "OFL-1.1 (upstream OFL.txt names no Reserved Font Name; the Nerd Fonts licence audit lists it as OFL-1.1-RFN)",
+    "reserved_font_names": []
+   },
+   "upstream_repo": "https://github.com/googlefonts/atkinson-hyperlegible-next-mono",
+   "upstream_version": "2.001 (November 2024); repo has no GitHub releases",
+   "packages": "Fedora 44/rawhide: atkinson-hyperlegible-mono-fonts; Arch: AUR otf-/ttf-atkinson-hyperlegible-next-mono, extra otf-atkinsonhyperlegiblemono-nerd (Nerd-patched); Homebrew: font-atkinson-hyperlegible-mono; Scoop: nerd-fonts/AtkinsonHyperlegibleMono-NF (patched); Debian/Ubuntu, Chocolatey, winget: none found",
+   "packaged_in": [
+    "fedora",
+    "homebrew"
+   ],
+   "preinstalled_on": "None: not preinstalled on Windows 11, macOS 26, Ubuntu 26.04 desktop, Fedora Workstation, Arch, Android (AOSP) or ChromeOS.",
+   "preinstalled_default_count": 0,
+   "package_score": 2,
+   "evidence_tier": "C: design claim only",
+   "readability_evidence": "New monospace drawn on the Atkinson low-vision principles (upstream README). No study found. Measured I/l/1 distance 0.329 (I~1). The variable font's default instance is wght 200, so set the weight explicitly in SVG and CSS.",
+   "script_coverage": "Same as Atkinson Hyperlegible Next: Latin only, Greek block 4 code points, no arrows, no ⁺ ⁻ (359 code points measured).",
+   "weights": "Variable wght 200-800, upright and italic",
+   "mono_companion": "Is the mono; sans pair is Atkinson Hyperlegible Next",
+   "measured": {
+    "file_version": "Version 2.001",
+    "x_height_em": 0.496,
+    "il1_min_distance": 0.329,
+    "o_vs_zero": 0.286,
+    "b_vs_mirrored_d": 0.147,
+    "diagram_glyphs_missing": 76,
+    "diagram_missing_chars": "ΑΒΓΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨαβγδεζηθικλνξορςστυφχψω←↑→↓↔⇄⇌⇒∆⁺⁻⁰⁴⁵⁶⁷⁸⁹₀₁₂₃₄₅₆₇₈₉µ′″",
+    "codepoints": 359
+   },
+   "bundled": null,
+   "fetch": {
+    "files": [
+     {
+      "url": "https://raw.githubusercontent.com/google/fonts/a4ccc36e525ba9a4241ad4f6153ef85ac67756f1/ofl/atkinsonhyperlegiblemono/AtkinsonHyperlegibleMono%5Bwght%5D.ttf",
+      "sha256": "5ce8b1698d1ded7dff2178c1a3ad159470085a58ea239e8b2cb88f4fb4a6f646",
+      "bytes": 53960,
+      "file": "AtkinsonHyperlegibleMono[wght].ttf"
+     }
+    ],
+    "licence": {
+     "url": "https://raw.githubusercontent.com/google/fonts/a4ccc36e525ba9a4241ad4f6153ef85ac67756f1/ofl/atkinsonhyperlegiblemono/OFL.txt",
+     "sha256": "1ebb31cf7393164f20d10c1d48406cddb5314feff8465531cf1e4ba37e9dd740",
+     "file": "OFL.txt"
+    },
+    "source": "google/fonts repository, pinned to the commit that last changed each file"
+   }
+  },
+  {
+   "id": "lexend",
+   "family": "Lexend",
+   "role": "sans",
+   "licence": {
+    "spdx": "OFL-1.1-RFN",
+    "text": "OFL-1.1 with Reserved Font Name 'RevReading Lexend' (Copyright 2018 The Lexend Project Authors)",
+    "reserved_font_names": [
+     "RevReading Lexend"
+    ]
+   },
+   "upstream_repo": "https://github.com/googlefonts/lexend",
+   "upstream_version": "1.007 in Google Fonts; repo has no GitHub releases",
+   "packages": "Homebrew: font-lexend (plus font-lexend-deca and other widths); Debian/Ubuntu: no system font package (texlive-fonts-extra carries TeX copies); Fedora: texlive-lexend only; Arch: texlive-fontsextra only, AUR lexend-fonts-git; Chocolatey, Scoop, winget: none found",
+   "packaged_in": [
+    "homebrew"
+   ],
+   "preinstalled_on": "None: not preinstalled on Windows 11, macOS 26, Ubuntu 26.04 desktop, Fedora Workstation, Arch, Android (AOSP) or ChromeOS.",
+   "preinstalled_default_count": 0,
+   "package_score": 1,
+   "evidence_tier": "D: creator-run, non-peer-reviewed studies; mechanism partly supported",
+   "readability_evidence": "Weak. Fluency gains come from creator-run trials of Shaver-Troup's text formation factors (for example 20 third-graders reported on lexend.com); no peer-reviewed or independent replication was found. The wider-spacing mechanism has independent support: extra-large letter spacing improved reading in dyslexic children [zorzi2012], and Dyslexie's 7% speed gain vanished once Arial's spacing matched [marinus2016]. Extra letter spacing without extra word spacing slowed reading [galliussi2020]. Measured I/l/1 distance 0.298; x-height 0.525 em.",
+   "script_coverage": "Latin, Latin Extended, Vietnamese (164 of 256 Latin Extended Additional). Greek block 4 code points; no arrows; no ⁺ ⁻ (685 code points measured). Arabic sibling: Readex Pro.",
+   "weights": "Variable wght 100-900; no italics; 8 width-stepped families (Lexend, Deca, Exa, Giga, Mega, Peta, Tera, Zetta)",
+   "mono_companion": "None official",
+   "measured": {
+    "file_version": "Version 1.007",
+    "x_height_em": 0.525,
+    "il1_min_distance": 0.298,
+    "o_vs_zero": 0.617,
+    "b_vs_mirrored_d": 0.13,
+    "diagram_glyphs_missing": 56,
+    "diagram_missing_chars": "ΑΒΓΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨαβγδεζηθικλνξορςστυφχψω←↑→↓↔⇄⇌⇒⁺⁻′",
+    "codepoints": 685
+   },
+   "bundled": null,
+   "fetch": {
+    "files": [
+     {
+      "url": "https://raw.githubusercontent.com/google/fonts/beda156f5a2abc96ec52442f60bb1ab4d122e38d/ofl/lexend/Lexend%5Bwght%5D.ttf",
+      "sha256": "3add53e641fbc81da64da4bb254285e2831b52b029527bc0714e2b9610832ee6",
+      "bytes": 175756,
+      "file": "Lexend[wght].ttf"
+     }
+    ],
+    "licence": {
+     "url": "https://raw.githubusercontent.com/google/fonts/beda156f5a2abc96ec52442f60bb1ab4d122e38d/ofl/lexend/OFL.txt",
+     "sha256": "5da8505887d0fa7fe963445fd58852707fda34adfeb65af25c99d152bab285bd",
+     "file": "OFL.txt"
+    },
+    "source": "google/fonts repository, pinned to the commit that last changed each file"
+   }
+  },
+  {
+   "id": "andika",
+   "family": "Andika",
+   "role": "sans",
+   "licence": {
+    "spdx": "OFL-1.1-RFN",
+    "text": "OFL-1.1 with Reserved Font Names 'Andika' and 'SIL' (Copyright 2004-2026 SIL Global)",
+    "reserved_font_names": [
+     "Andika",
+     "SIL"
+    ]
+   },
+   "upstream_repo": "https://github.com/silnrsi/font-andika",
+   "upstream_version": "7.000 (GitHub release v7.000); Google Fonts carries 6.101",
+   "packages": "Debian 13/sid, Ubuntu 24.04/26.04: fonts-sil-andika (6.200); Fedora: sil-andika-fonts (6.101, 7.000 in rawhide); Arch: AUR ttf-andika (7.000); Homebrew: font-andika; Scoop: nerd-fonts/andika; Chocolatey, winget: none found",
+   "packaged_in": [
+    "debian-ubuntu",
+    "fedora",
+    "homebrew",
+    "scoop"
+   ],
+   "preinstalled_on": "None: not preinstalled on Windows 11, macOS 26, Ubuntu 26.04 desktop, Fedora Workstation, Arch, Android (AOSP) or ChromeOS.",
+   "preinstalled_default_count": 0,
+   "package_score": 3,
+   "evidence_tier": "C: design claim plus measured letter differentiation; no reading study",
+   "readability_evidence": "SIL drew Andika for literacy and beginning readers, with single-storey a and g and distinct I, l, 1. No peer-reviewed reading study found. Measured I/l/1 distance 0.276 (I~1); b vs mirrored d 0.381, so b and d are not mirror images (most fonts here score below 0.2).",
+   "script_coverage": "Latin with full Vietnamese and IPA, Cyrillic (220). README for 7.000 claims nearly full Latin, Cyrillic and Greek; the measured 6.101 file has only 20 of 49 basic Greek letters (2448 code points).",
+   "weights": "Regular, Medium, SemiBold, Bold, each with italic (8 styles in 7.000; Google Fonts 6.101 has 4)",
+   "mono_companion": "None official",
+   "measured": {
+    "file_version": "Version 6.101",
+    "x_height_em": 0.508,
+    "il1_min_distance": 0.276,
+    "o_vs_zero": 0.463,
+    "b_vs_mirrored_d": 0.381,
+    "diagram_glyphs_missing": 31,
+    "diagram_missing_chars": "ΑΒΕΖΗΙΚΛΜΝΟΡΣΤΥΦΧεζηικνξοςτυψ⇄⇌",
+    "codepoints": 2448
+   },
+   "bundled": null,
+   "fetch": {
+    "files": [
+     {
+      "url": "https://raw.githubusercontent.com/google/fonts/f5c0a9e3191755ef64b257bb9a469e56eb3f7542/ofl/andika/Andika-Regular.ttf",
+      "sha256": "202b96b1f174a4a43baefe885b40dacacb81786755efd08ed4b7704e79c45515",
+      "bytes": 669828,
+      "file": "Andika-Regular.ttf"
+     },
+     {
+      "url": "https://raw.githubusercontent.com/google/fonts/f5c0a9e3191755ef64b257bb9a469e56eb3f7542/ofl/andika/Andika-Bold.ttf",
+      "sha256": "4361126189a2d0e0da66999352db58aaf1b4ca940faf8a8239d725f8303d890d",
+      "bytes": 681008,
+      "file": "Andika-Bold.ttf"
+     }
+    ],
+    "licence": {
+     "url": "https://raw.githubusercontent.com/google/fonts/f5c0a9e3191755ef64b257bb9a469e56eb3f7542/ofl/andika/OFL.txt",
+     "sha256": "43ee152fcd7be0c6eb3468f3012e776cb75bf88f5dec548be0aa4619bf438f9e",
+     "file": "OFL.txt"
+    },
+    "source": "google/fonts repository, pinned to the commit that last changed each file"
+   }
+  },
+  {
+   "id": "luciole",
+   "family": "Luciole",
+   "role": "sans",
+   "licence": {
+    "spdx": "CC-BY-4.0",
+    "text": "CC-BY-4.0 for the font files (LICENSE.txt in Luciole.zip, credit 'Luciole © Laurent Bourcellier & Jonathan Perez'); Luciole Math is OFL-1.1",
+    "reserved_font_names": []
+   },
+   "upstream_repo": "https://luciole-vision.com/en/",
+   "upstream_version": "2.001 (nameID 5 of Luciole-Regular.ttf)",
+   "packages": "Arch: AUR ttf-luciole; Homebrew: font-luciole; CTAN/TeX Live: luciole; Debian/Ubuntu, Fedora, Chocolatey, Scoop, winget: none found",
+   "packaged_in": [
+    "homebrew"
+   ],
+   "preinstalled_on": "None: not preinstalled on Windows 11, macOS 26, Ubuntu 26.04 desktop, Fedora Workstation, Arch, Android (AOSP) or ChromeOS.",
+   "preinstalled_default_count": 0,
+   "package_score": 1,
+   "evidence_tier": "B: one peer-reviewed study by the font's developers",
+   "readability_evidence": "One peer-reviewed study [galiano2023]: 145 French readers aged 6-35 (73 low vision) compared Luciole with Arial, OpenDyslexic, Verdana, Eido and Frutiger on paper and screen with eye tracking. About half the low-vision readers preferred Luciole; readability showed a slight advantage over some fonts (Eido, OpenDyslexic). The abstract says 'We designed a new font (Luciole)', so the evaluators are the developers. Built with the Centre Technique Regional pour la Deficience Visuelle (CTRDV) and typographies.fr. Measured I/l/1 distance 0.328; x-height 0.545 em.",
+   "script_coverage": "Latin incl. Latin Extended-A, over 700 characters per style ('almost all European languages'). Greek: 10 of 49 basic letters (γ κ μ missing); arrows partial; no ⁺ ⁻ (716 code points measured).",
+   "weights": "Regular, Bold, each with italic (4 static styles)",
+   "mono_companion": "None",
+   "measured": {
+    "file_version": "Version 2.001",
+    "x_height_em": 0.545,
+    "il1_min_distance": 0.328,
+    "o_vs_zero": 0.448,
+    "b_vs_mirrored_d": 0.099,
+    "diagram_glyphs_missing": 46,
+    "diagram_missing_chars": "ΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨγζηικμξοςστυφχψω↔⇄⇌⁺⁻′″",
+    "codepoints": 716
+   },
+   "bundled": null,
+   "fetch": null
+  },
+  {
+   "id": "inclusive-sans",
+   "family": "Inclusive Sans",
+   "role": "sans",
+   "licence": {
+    "spdx": "OFL-1.1-no-RFN",
+    "text": "OFL-1.1 (no Reserved Font Name; Copyright 2022 The Inclusive Sans Project Authors)",
+    "reserved_font_names": []
+   },
+   "upstream_repo": "https://github.com/LivKing/Inclusive-Sans",
+   "upstream_version": "2.004 in Google Fonts; repo has no GitHub releases",
+   "packages": "Homebrew: font-inclusive-sans; OpenBSD: fonts/inclusive-sans; Debian/Ubuntu, Fedora, Arch (official and AUR), Chocolatey, Scoop, winget: none found",
+   "packaged_in": [
+    "homebrew"
+   ],
+   "preinstalled_on": "None: not preinstalled on Windows 11, macOS 26, Ubuntu 26.04 desktop, Fedora Workstation, Arch, Android (AOSP) or ChromeOS.",
+   "preinstalled_default_count": 0,
+   "package_score": 1,
+   "evidence_tier": "C: design claim plus measured letter differentiation; no reading study",
+   "readability_evidence": "Built to criteria from Sofie Beier's legibility research and Gareth Ford Williams' guide: distinct I l 1, non-mirrored b d p q, distinct O 0, open counters, higher x-height, wider default spacing (upstream README). No reading study found. Measured b vs mirrored d 0.424, the highest in this list, which confirms the non-mirroring claim; I/l/1 distance 0.374.",
+   "script_coverage": "Latin incl. Vietnamese (119 of 256). No Greek; no ⁺ ⁻ or sub/superscript digits; missing ≤ ≥ ≈ (500 code points measured).",
+   "weights": "Variable wght 300-700, upright and italic",
+   "mono_companion": "None",
+   "measured": {
+    "file_version": "Version 2.004",
+    "x_height_em": 0.5,
+    "il1_min_distance": 0.374,
+    "o_vs_zero": 0.544,
+    "b_vs_mirrored_d": 0.424,
+    "diagram_glyphs_missing": 83,
+    "diagram_missing_chars": "ΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩαβγδεζηθικλμνξοπρςστυφχψω⇄⇌⇒≤≥≈∞∆⁺⁻¹²³⁰⁴⁵⁶⁷⁸⁹₀₁₂₃₄₅₆₇₈₉µ′″‰",
+    "codepoints": 500
+   },
+   "bundled": null,
+   "fetch": {
+    "files": [
+     {
+      "url": "https://raw.githubusercontent.com/google/fonts/f65fecd9be0dc1a507033150f997db53b06a517d/ofl/inclusivesans/InclusiveSans%5Bwght%5D.ttf",
+      "sha256": "52ae5fdb8eda45633f1e9817ebdb07d8075c89081d51204f16f78394608a5c4e",
+      "bytes": 112280,
+      "file": "InclusiveSans[wght].ttf"
+     }
+    ],
+    "licence": {
+     "url": "https://raw.githubusercontent.com/google/fonts/f65fecd9be0dc1a507033150f997db53b06a517d/ofl/inclusivesans/OFL.txt",
+     "sha256": "0690e0819628a20c5ee68388a7bae621e5c3e53be57276169decd00111d8f2cf",
+     "file": "OFL.txt"
+    },
+    "source": "google/fonts repository, pinned to the commit that last changed each file"
+   }
+  },
+  {
+   "id": "opendyslexic",
+   "family": "OpenDyslexic",
+   "role": "sans",
+   "licence": {
+    "spdx": "OFL-1.1-RFN",
+    "text": "OFL-1.1 with Reserved Font Name 'OpenDyslexic' for 2019+ releases (Copyright 2019 Abbie Gonzalez). Older releases derived from Bitstream Vera, such as Debian's 20160623, carry the Bitstream Vera licence (Nerd Fonts audit: Bitstream-Vera).",
+    "reserved_font_names": [
+     "OpenDyslexic"
+    ]
+   },
+   "upstream_repo": "https://forge.hackers.town/antijingoist/opendyslexic (moved from github.com/antijingoist/opendyslexic, now a pointer README)",
+   "upstream_version": "GitHub last prerelease v0.91.12 (October 2019); newer releases on forge.hackers.town and itch.io",
+   "packages": "Debian 13/sid, Ubuntu 24.04/26.04: fonts-opendyslexic (20160623); Fedora: opendyslexic-fonts (0.940); Arch: AUR open-dyslexic-fonts; Homebrew: font-opendyslexic; Chocolatey: nerd-fonts-OpenDyslexic (patched); Scoop: nerd-fonts/OpenDyslexic-NF (patched); winget: none found",
+   "packaged_in": [
+    "debian-ubuntu",
+    "fedora",
+    "homebrew"
+   ],
+   "preinstalled_on": "None: not preinstalled on Windows 11, macOS 26, Ubuntu 26.04 desktop, Fedora Workstation, Arch, Android (AOSP) or ChromeOS.",
+   "preinstalled_default_count": 0,
+   "package_score": 3,
+   "evidence_tier": "N: negative; controlled studies and a meta-analysis show no benefit",
+   "readability_evidence": "Negative. No gain in reading rate or accuracy against Arial and Times New Roman, and no child preferred it [wery2017]. No improvement among 12 fonts for 48 dyslexic readers, where sans serif, monospaced and roman styles helped [rello2013]. Luciole read slightly better than OpenDyslexic for low-vision readers [galiano2023]. Meta-analysis of dyslexia fonts: 15 studies, N=688, g=-0.04 (95% CI -0.15 to 0.07) [azzarello2026]. The similar Dyslexie font gave no benefit in 170 and 147 children [kuster2018]. Its measured I/l/1 distance 0.488 and x-height 0.56 em do not yield measured reading gains.",
+   "script_coverage": "Latin, Greek (49/49 basic), Cyrillic, Vietnamese (156), IPA (1586 code points measured in the 0.91.12 Regular).",
+   "weights": "Regular, Bold, Italic, Bold Italic; OpenDyslexic Mono exists upstream",
+   "mono_companion": "OpenDyslexic Mono",
+   "measured": {
+    "file_version": "Version 0.920;hotconv 1.0.109;makeotfexe 2.5.65596",
+    "x_height_em": 0.56,
+    "il1_min_distance": 0.488,
+    "o_vs_zero": 0.802,
+    "b_vs_mirrored_d": 0.176,
+    "diagram_glyphs_missing": 5,
+    "diagram_missing_chars": "⇄⇌∆⁺⁻",
+    "codepoints": 1586
+   },
+   "bundled": null,
+   "fetch": null
+  },
+  {
+   "id": "noto-sans",
+   "family": "Noto Sans",
+   "role": "sans",
+   "licence": {
+    "spdx": "OFL-1.1-no-RFN",
+    "text": "OFL-1.1 (no Reserved Font Name; Copyright 2022 The Noto Project Authors)",
+    "reserved_font_names": []
+   },
+   "upstream_repo": "https://github.com/notofonts/latin-greek-cyrillic",
+   "upstream_version": "2.015 (release NotoSans-v2.015)",
+   "packages": "Debian/Ubuntu: fonts-noto-core (meta: fonts-noto); Fedora: google-noto-sans-vf-fonts (static: google-noto-sans-fonts); Arch: noto-fonts; Homebrew: font-noto-sans; Chocolatey: noto (2017 snapshot 0.20171025); Scoop, winget: none found",
+   "packaged_in": [
+    "debian-ubuntu",
+    "fedora",
+    "arch",
+    "homebrew",
+    "chocolatey"
+   ],
+   "preinstalled_on": "Ubuntu 26.04 desktop: yes, as the generic sans-serif alias and document font (fontconfig 60-latin.conf lists Noto Sans first); the GNOME UI font there is Ubuntu Sans. Fedora 36+: yes, default sans (default-fonts-core-sans requires google-noto-sans-vf-fonts). ChromeOS: not verified. Android (AOSP): Noto Sans for non-Latin scripts only. macOS 26 and Windows 11: no.",
+   "preinstalled_default_count": 2,
+   "package_score": 4,
+   "evidence_tier": "A: large independent peer-reviewed study in typical adult readers",
+   "readability_evidence": "Largest independent study in this list [wallace2022]: 352 adults, 16 size-normalised fonts. Noto Sans had the highest preference (win rate 62%, Elo 1644, both first of 16). Its reading speed was the median (272 WPM) and comprehension mid-table (91%); the study found no population-level font effect on speed, and readers were fastest in their preferred font only at chance. Measured weakness: I and l differ only by height (I~l 0.275, against Atkinson Hyperlegible Next 0.605).",
+   "script_coverage": "Latin, Greek, Cyrillic, Vietnamese, IPA; the Google Fonts build adds Devanagari (3094 code points measured). Separate Noto Sans <Script> families cover most other Unicode scripts. Lacks ← ↑ → ↓ ⇌ ≤ ≥ ≈ ∞ ∆, which fall back to another font. Ubuntu's fonts-noto-core 20201225 build also lacks U+2212 (minus sign); Fedora, Arch and Homebrew ship the newer 2.015 file, which lt-suite bundles.",
+   "weights": "Variable wght 100-900 and wdth 62.5-100, upright and italic",
+   "mono_companion": "Noto Sans Mono",
+   "measured": {
+    "file_version": "Version 2.015",
+    "x_height_em": 0.536,
+    "il1_min_distance": 0.275,
+    "o_vs_zero": 0.757,
+    "b_vs_mirrored_d": 0.145,
+    "diagram_glyphs_missing": 13,
+    "diagram_missing_chars": "←↑→↓↔⇄⇌⇒≤≥≈∞∆",
+    "codepoints": 3094
+   },
+   "bundled": {
+    "files": [
+     {
+      "file": "noto-sans/NotoSans-Variable.ttf",
+      "sha256": "bfb7bb691513f12e734dc346c03a03f784912432d7e3fa8e56efcf906fe86b3d",
+      "upstream_file": "NotoSans[wdth,wght].ttf"
+     }
+    ],
+    "licence_file": "noto-sans/OFL.txt"
+   },
+   "fetch": {
+    "files": [
+     {
+      "url": "https://raw.githubusercontent.com/google/fonts/2984c575fdce412ee02b2baaba67672b9a9434d8/ofl/notosans/NotoSans%5Bwdth%2Cwght%5D.ttf",
+      "sha256": "bfb7bb691513f12e734dc346c03a03f784912432d7e3fa8e56efcf906fe86b3d",
+      "bytes": 2049096,
+      "file": "NotoSans[wdth,wght].ttf"
+     }
+    ],
+    "licence": {
+     "url": "https://raw.githubusercontent.com/google/fonts/2984c575fdce412ee02b2baaba67672b9a9434d8/ofl/notosans/OFL.txt",
+     "sha256": "cee9892f9f0cc8fe882c9e9537ee6a89621d86ee7ceaf70b02e2b2b1c25c061a",
+     "file": "OFL.txt"
+    },
+    "source": "google/fonts repository, pinned to the commit that last changed each file"
+   }
+  },
+  {
+   "id": "noto-sans-mono",
+   "family": "Noto Sans Mono",
+   "role": "mono",
+   "licence": {
+    "spdx": "OFL-1.1-no-RFN",
+    "text": "OFL-1.1 (no Reserved Font Name; Copyright 2022 The Noto Project Authors)",
+    "reserved_font_names": []
+   },
+   "upstream_repo": "https://github.com/notofonts/latin-greek-cyrillic",
+   "upstream_version": "2.014 (release NotoSansMono-v2.014)",
+   "packages": "Debian/Ubuntu: fonts-noto-mono (Regular and Bold only); Fedora: google-noto-sans-mono-vf-fonts (static: google-noto-sans-mono-fonts); Arch: noto-fonts (all weights); Homebrew: font-noto-sans-mono; Chocolatey: inside noto (2017); Scoop, winget: none found",
+   "packaged_in": [
+    "debian-ubuntu",
+    "fedora",
+    "arch",
+    "homebrew"
+   ],
+   "preinstalled_on": "Fedora 36+: yes, default monospace (default-fonts-core-mono requires google-noto-sans-mono-vf-fonts). Ubuntu 26.04 desktop: preinstalled, not the default (ubuntu-desktop recommends fonts-noto-core, which depends on fonts-noto-mono; monospace defaults to DejaVu Sans Mono). ChromeOS: not verified. Windows, macOS, Android, Arch: no.",
+   "preinstalled_default_count": 2,
+   "package_score": 4,
+   "evidence_tier": "C: no font-specific study; monospacing helped dyslexic readers in one study",
+   "readability_evidence": "No font-specific study. Monospaced fonts (Courier) shortened fixations for dyslexic readers [rello2013]; [wallace2022] did not test monospaced fonts. Measured I/l/1 distance 0.293. post.isFixedPitch is 0 although all ASCII advances are equal, so tools that filter on that flag may not list it as monospace.",
+   "script_coverage": "Latin, Greek, Cyrillic, Vietnamese, IPA, box drawing (128), maths operators (104). Of the diagram set it misses only ⇄ ⇌ (3490 code points measured).",
+   "weights": "Variable wght 100-900 and wdth 62.5-100; no italics",
+   "mono_companion": "Is the mono; sans pair is Noto Sans",
+   "measured": {
+    "file_version": "Version 2.014",
+    "x_height_em": 0.536,
+    "il1_min_distance": 0.293,
+    "o_vs_zero": 0.351,
+    "b_vs_mirrored_d": 0.029,
+    "diagram_glyphs_missing": 2,
+    "diagram_missing_chars": "⇄⇌",
+    "codepoints": 3490
+   },
+   "bundled": {
+    "files": [
+     {
+      "file": "noto-sans-mono/NotoSansMono-Variable.ttf",
+      "sha256": "2cb2adb378a8f574213e23df697050b83c54c27df465a2015552740b2769a081",
+      "upstream_file": "NotoSansMono[wdth,wght].ttf"
+     }
+    ],
+    "licence_file": "noto-sans-mono/OFL.txt"
+   },
+   "fetch": {
+    "files": [
+     {
+      "url": "https://raw.githubusercontent.com/google/fonts/a23c2cd328ea51097b6e32d8f9e0241261e2495e/ofl/notosansmono/NotoSansMono%5Bwdth%2Cwght%5D.ttf",
+      "sha256": "2cb2adb378a8f574213e23df697050b83c54c27df465a2015552740b2769a081",
+      "bytes": 1708408,
+      "file": "NotoSansMono[wdth,wght].ttf"
+     }
+    ],
+    "licence": {
+     "url": "https://raw.githubusercontent.com/google/fonts/a23c2cd328ea51097b6e32d8f9e0241261e2495e/ofl/notosansmono/OFL.txt",
+     "sha256": "cee9892f9f0cc8fe882c9e9537ee6a89621d86ee7ceaf70b02e2b2b1c25c061a",
+     "file": "OFL.txt"
+    },
+    "source": "google/fonts repository, pinned to the commit that last changed each file"
+   }
+  },
+  {
+   "id": "dejavu-sans",
+   "family": "DejaVu Sans",
+   "role": "sans",
+   "licence": {
+    "spdx": "Bitstream-Vera AND LicenseRef-Arev-Fonts AND LicenseRef-Public-Domain",
+    "text": "Bitstream Vera licence for the Vera base, Arev Fonts licence for glyphs from Arev (Tavmjong Bah), DejaVu changes public domain (upstream LICENSE)",
+    "reserved_font_names": [
+     "Bitstream",
+     "Vera (modified versions must be renamed)",
+     "Arev"
+    ]
+   },
+   "upstream_repo": "https://github.com/dejavu-fonts/dejavu-fonts",
+   "upstream_version": "2.37 (2016)",
+   "packages": "Debian/Ubuntu: fonts-dejavu-core (Sans, Sans Mono, Serif in Book and Bold), fonts-dejavu-extra, fonts-dejavu-mono (Debian 13+); Fedora: dejavu-sans-fonts; Arch: ttf-dejavu; Homebrew: font-dejavu; Chocolatey: dejavufonts; Scoop, winget: none found",
+   "packaged_in": [
+    "debian-ubuntu",
+    "fedora",
+    "arch",
+    "homebrew",
+    "chocolatey"
+   ],
+   "preinstalled_on": "Ubuntu 26.04 desktop: yes (fonts-dejavu-core is a required seed entry). Fedora: not the default since Fedora 36 (Noto replaced DejaVu); other packages may still pull it in (unverified). Windows, macOS, Android, ChromeOS, Arch: no.",
+   "preinstalled_default_count": 1,
+   "package_score": 4,
+   "evidence_tier": "C: no study; widest coverage",
+   "readability_evidence": "No legibility study of DejaVu or its Bitstream Vera base found. Vera was hinted for low-resolution screens and has a large x-height (measured 0.547 em). Measured weaknesses: I~l 0.133, and b is a near mirror of d (0.003).",
+   "script_coverage": "Widest sans here: Latin, Greek, Cyrillic, Armenian, Georgian, Hebrew, Arabic, IPA, Vietnamese, arrows, maths, box drawing. Complete diagram set (5918 code points measured).",
+   "weights": "Book and Bold with obliques; ExtraLight and Condensed are marked experimental",
+   "mono_companion": "DejaVu Sans Mono",
+   "measured": {
+    "file_version": "Version 2.37",
+    "x_height_em": 0.547,
+    "il1_min_distance": 0.133,
+    "o_vs_zero": 0.652,
+    "b_vs_mirrored_d": 0.003,
+    "diagram_glyphs_missing": 0,
+    "diagram_missing_chars": "",
+    "codepoints": 5918
+   },
+   "bundled": null,
+   "fetch": null
+  },
+  {
+   "id": "dejavu-sans-mono",
+   "family": "DejaVu Sans Mono",
+   "role": "mono",
+   "licence": {
+    "spdx": "Bitstream-Vera AND LicenseRef-Arev-Fonts AND LicenseRef-Public-Domain",
+    "text": "Bitstream Vera licence, Arev Fonts licence, DejaVu changes public domain (upstream LICENSE)",
+    "reserved_font_names": [
+     "Bitstream",
+     "Vera (modified versions must be renamed)",
+     "Arev"
+    ]
+   },
+   "upstream_repo": "https://github.com/dejavu-fonts/dejavu-fonts",
+   "upstream_version": "2.37 (2016)",
+   "packages": "Debian/Ubuntu: fonts-dejavu-core (fonts-dejavu-mono in Debian 13+); Fedora: dejavu-sans-mono-fonts; Arch: ttf-dejavu; Homebrew: font-dejavu; Chocolatey: dejavufonts; Scoop: nerd-fonts/DejaVuSansMono-NF (patched); winget: none found",
+   "packaged_in": [
+    "debian-ubuntu",
+    "fedora",
+    "arch",
+    "homebrew",
+    "chocolatey"
+   ],
+   "preinstalled_on": "Ubuntu 26.04 desktop: yes, default monospace (seed comment: DejaVu Sans Mono is the default in 60-latin.conf). Windows, macOS, Android, ChromeOS, Arch, Fedora default: no.",
+   "preinstalled_default_count": 1,
+   "package_score": 4,
+   "evidence_tier": "C: no study",
+   "readability_evidence": "No study. Measured I/l/1 distance 0.138 (I~1), O~0 0.156. Complete diagram glyph set.",
+   "script_coverage": "Latin, Greek, Cyrillic, Armenian, Georgian, Arabic, IPA, Vietnamese, arrows, maths, box drawing; complete diagram set (3322 code points measured).",
+   "weights": "Book, Bold, Oblique, Bold Oblique",
+   "mono_companion": "Is the mono; sans pair is DejaVu Sans",
+   "measured": {
+    "file_version": "Version 2.37",
+    "x_height_em": 0.547,
+    "il1_min_distance": 0.138,
+    "o_vs_zero": 0.156,
+    "b_vs_mirrored_d": 0.011,
+    "diagram_glyphs_missing": 0,
+    "diagram_missing_chars": "",
+    "codepoints": 3322
+   },
+   "bundled": null,
+   "fetch": null
+  },
+  {
+   "id": "liberation-sans",
+   "family": "Liberation Sans",
+   "role": "sans",
+   "licence": {
+    "spdx": "OFL-1.1-RFN",
+    "text": "OFL-1.1 with Reserved Font Names 'Liberation' (Red Hat) and Arimo, Tinos, Cousine (Google), since 2.00; 1.x releases were GPL-2.0-with-font-exception",
+    "reserved_font_names": [
+     "Liberation",
+     "Arimo",
+     "Tinos",
+     "Cousine"
+    ]
+   },
+   "upstream_repo": "https://github.com/liberationfonts/liberation-fonts",
+   "upstream_version": "2.1.5 (September 2021)",
+   "packages": "Debian/Ubuntu: fonts-liberation (2.1.5; fonts-liberation2 transitional); Fedora: liberation-sans-fonts; Arch: ttf-liberation; Homebrew: font-liberation; Chocolatey: liberationfonts; Scoop, winget: none found",
+   "packaged_in": [
+    "debian-ubuntu",
+    "fedora",
+    "arch",
+    "homebrew",
+    "chocolatey"
+   ],
+   "preinstalled_on": "Ubuntu 26.04 desktop: yes (fonts-liberation is a recommended seed entry). Fedora Workstation: likely through LibreOffice (unverified). ChromeOS ships the Croscore originals Arimo and Cousine that Liberation 2.x builds on, not Liberation itself. Windows, macOS, Android, Arch: no.",
+   "preinstalled_default_count": 1,
+   "package_score": 4,
+   "evidence_tier": "C: no study of this font; Arial results transfer only in part",
+   "readability_evidence": "Metric-compatible with Arial for document layout (upstream README). Arial was the control in the OpenDyslexic and Dyslexie studies and one of the recommended fonts in [rello2013], but glyph shapes differ, so those results transfer only in part. Measured I~l 0.057, the most confusable pair in this list after Inter.",
+   "script_coverage": "Latin, Greek, Cyrillic, Hebrew, Vietnamese, IPA; no ⇄ ⇌ ⇒; 19 of 22 super/subscripts (2327 code points measured).",
+   "weights": "Regular, Bold, Italic, Bold Italic",
+   "mono_companion": "Liberation Mono",
+   "measured": {
+    "file_version": "Version 2.1.5",
+    "x_height_em": 0.528,
+    "il1_min_distance": 0.057,
+    "o_vs_zero": 0.762,
+    "b_vs_mirrored_d": 0.05,
+    "diagram_glyphs_missing": 6,
+    "diagram_missing_chars": "⇄⇌⇒⁺⁻⁰",
+    "codepoints": 2327
+   },
+   "bundled": null,
+   "fetch": null
+  },
+  {
+   "id": "liberation-mono",
+   "family": "Liberation Mono",
+   "role": "mono",
+   "licence": {
+    "spdx": "OFL-1.1-RFN",
+    "text": "OFL-1.1 with Reserved Font Names 'Liberation' and Arimo, Tinos, Cousine, since 2.00",
+    "reserved_font_names": [
+     "Liberation",
+     "Arimo",
+     "Tinos",
+     "Cousine"
+    ]
+   },
+   "upstream_repo": "https://github.com/liberationfonts/liberation-fonts",
+   "upstream_version": "2.1.5 (September 2021)",
+   "packages": "Debian/Ubuntu: fonts-liberation; Fedora: liberation-mono-fonts; Arch: ttf-liberation; Homebrew: font-liberation; Chocolatey: liberationfonts; Scoop: nerd-fonts/LiberationMono-NF (patched); winget: none found",
+   "packaged_in": [
+    "debian-ubuntu",
+    "fedora",
+    "arch",
+    "homebrew",
+    "chocolatey"
+   ],
+   "preinstalled_on": "Ubuntu 26.04 desktop: yes (fonts-liberation recommended in the seed). Fedora Workstation: likely through LibreOffice (unverified). Others: no.",
+   "preinstalled_default_count": 1,
+   "package_score": 4,
+   "evidence_tier": "C: no study of this font",
+   "readability_evidence": "Metric-compatible with Courier New. Courier gave the shortest fixations for dyslexic readers in [rello2013], but Liberation Mono's glyphs differ from Courier. Measured I/l/1 distance 0.428, O~0 0.175.",
+   "script_coverage": "Latin, Greek, Cyrillic, Hebrew, Vietnamese, IPA, partial box drawing (2305 code points measured).",
+   "weights": "Regular, Bold, Italic, Bold Italic",
+   "mono_companion": "Is the mono; sans pair is Liberation Sans",
+   "measured": {
+    "file_version": "Version 2.1.5",
+    "x_height_em": 0.528,
+    "il1_min_distance": 0.428,
+    "o_vs_zero": 0.175,
+    "b_vs_mirrored_d": 0.119,
+    "diagram_glyphs_missing": 6,
+    "diagram_missing_chars": "⇄⇌⇒⁺⁻⁰",
+    "codepoints": 2305
+   },
+   "bundled": null,
+   "fetch": null
+  },
+  {
+   "id": "inter",
+   "family": "Inter",
+   "role": "sans",
+   "licence": {
+    "spdx": "OFL-1.1-no-RFN",
+    "text": "OFL-1.1 (no Reserved Font Name; Copyright 2016 The Inter Project Authors)",
+    "reserved_font_names": []
+   },
+   "upstream_repo": "https://github.com/rsms/inter",
+   "upstream_version": "4.1 (release v4.1)",
+   "packages": "Debian 13/sid, Ubuntu 24.04+: fonts-inter (fonts-inter-variable); Fedora: rsms-inter-fonts (rsms-inter-vf-fonts); Arch: inter-font; Homebrew: font-inter; Chocolatey: inter; Scoop, winget: none found",
+   "packaged_in": [
+    "debian-ubuntu",
+    "fedora",
+    "arch",
+    "homebrew",
+    "chocolatey"
+   ],
+   "preinstalled_on": "None directly. Its derivative Adwaita Sans is the GNOME 48+ UI font.",
+   "preinstalled_default_count": 0,
+   "package_score": 4,
+   "evidence_tier": "C: design claim; measured I/l ambiguity in default glyphs",
+   "readability_evidence": "Drawn for computer UI text with a tall x-height (measured 0.546 em). No reading study found. Measured I~l 0.000: capital I and lowercase l are identical by default. OpenType cv05 ('Lower-case L with tail') and cv08 ('Upper-case i with serif') fix this; Adwaita Sans bakes them in (I~l 0.677).",
+   "script_coverage": "Latin, Greek, Cyrillic, Vietnamese, IPA; misses only ⇄ ⇌ of the diagram set (2849 code points measured).",
+   "weights": "Variable wght 100-900 and opsz 14-32, upright and italic",
+   "mono_companion": "None official; GNOME pairs its Inter derivative with Adwaita Mono",
+   "measured": {
+    "file_version": "Version 4.001;git-66647c0bb",
+    "x_height_em": 0.546,
+    "il1_min_distance": 0.0,
+    "o_vs_zero": 0.602,
+    "b_vs_mirrored_d": 0.032,
+    "diagram_glyphs_missing": 2,
+    "diagram_missing_chars": "⇄⇌",
+    "codepoints": 2849
+   },
+   "bundled": null,
+   "fetch": {
+    "files": [
+     {
+      "url": "https://raw.githubusercontent.com/google/fonts/e1d6480102fed30739fead0faee463101f892c8f/ofl/inter/Inter%5Bopsz%2Cwght%5D.ttf",
+      "sha256": "29160a80ff49ddcab2c97711247e08b1fab27a484a329ce8b813d820dc559031",
+      "bytes": 876576,
+      "file": "Inter[opsz,wght].ttf"
+     }
+    ],
+    "licence": {
+     "url": "https://raw.githubusercontent.com/google/fonts/e1d6480102fed30739fead0faee463101f892c8f/ofl/inter/OFL.txt",
+     "sha256": "5b9321a4298cfeb6b34354164a1c3afc3db114569984c502b9b35d988fd58c57",
+     "file": "OFL.txt"
+    },
+    "source": "google/fonts repository, pinned to the commit that last changed each file"
+   }
+  },
+  {
+   "id": "source-sans-3",
+   "family": "Source Sans 3",
+   "role": "sans",
+   "licence": {
+    "spdx": "OFL-1.1-RFN",
+    "text": "OFL-1.1 with Reserved Font Name 'Source' (Copyright 2010-2024 Adobe)",
+    "reserved_font_names": [
+     "Source"
+    ]
+   },
+   "upstream_repo": "https://github.com/adobe-fonts/source-sans",
+   "upstream_version": "3.052R",
+   "packages": "Debian 13/sid, Ubuntu 26.04: fonts-adobe-sourcesans3; Fedora: adobe-source-sans-pro-fonts (ships 3.052); Arch: adobe-source-sans-fonts; Homebrew: font-source-sans-3; Chocolatey: adobe-source-sans; Scoop, winget: none found",
+   "packaged_in": [
+    "debian-ubuntu",
+    "fedora",
+    "arch",
+    "homebrew",
+    "chocolatey"
+   ],
+   "preinstalled_on": "None as a default. Android AOSP ships the older Source Sans Pro 2.x as the named family 'source-sans-pro' (fonts.xml), not as the system sans.",
+   "preinstalled_default_count": 0,
+   "package_score": 4,
+   "evidence_tier": "C: no study",
+   "readability_evidence": "No study found. Measured I/l/1 distance 0.353; x-height 0.478 em, the smallest in this list. The variable font's default instance is wght 200, so set the weight explicitly.",
+   "script_coverage": "Latin, Greek, Cyrillic, Vietnamese, IPA; misses only ⇄ ⇌ of the diagram set (1615 code points measured).",
+   "weights": "Variable wght 200-900, upright and italic; static ExtraLight-Black",
+   "mono_companion": "Source Code Pro",
+   "measured": {
+    "file_version": "Version 3.052;hotconv 1.1.0;makeotfexe 2.6.0",
+    "x_height_em": 0.478,
+    "il1_min_distance": 0.353,
+    "o_vs_zero": 0.759,
+    "b_vs_mirrored_d": 0.071,
+    "diagram_glyphs_missing": 2,
+    "diagram_missing_chars": "⇄⇌",
+    "codepoints": 1615
+   },
+   "bundled": null,
+   "fetch": {
+    "files": [
+     {
+      "url": "https://raw.githubusercontent.com/google/fonts/4591e3457ab8be6d70167aa6818922b91e78ab2d/ofl/sourcesans3/SourceSans3%5Bwght%5D.ttf",
+      "sha256": "042fe2cc0b933e328410d7acbd0aa6a1873dca5aef81875f4bc214b08825c7b9",
+      "bytes": 646340,
+      "file": "SourceSans3[wght].ttf"
+     }
+    ],
+    "licence": {
+     "url": "https://raw.githubusercontent.com/google/fonts/4591e3457ab8be6d70167aa6818922b91e78ab2d/ofl/sourcesans3/OFL.txt",
+     "sha256": "09746787287a289323b0ec3cff4d1a4a801331b82b7207c1e186f5d26619a392",
+     "file": "OFL.txt"
+    },
+    "source": "google/fonts repository, pinned to the commit that last changed each file"
+   }
+  },
+  {
+   "id": "source-code-pro",
+   "family": "Source Code Pro",
+   "role": "mono",
+   "licence": {
+    "spdx": "OFL-1.1-RFN",
+    "text": "OFL-1.1 with Reserved Font Name 'Source' (Adobe)",
+    "reserved_font_names": [
+     "Source"
+    ]
+   },
+   "upstream_repo": "https://github.com/adobe-fonts/source-code-pro",
+   "upstream_version": "2.042R upright / 1.062R italic / 1.026R variable",
+   "packages": "Fedora: adobe-source-code-pro-fonts (+ adobe-source-code-vf-fonts); Arch: adobe-source-code-pro-fonts; Homebrew: font-source-code-pro; Chocolatey: SourceCodePro; Scoop: nerd-fonts/SourceCodePro-NF (patched); Debian/Ubuntu: no font package (only embedded web copies); winget: none found",
+   "packaged_in": [
+    "fedora",
+    "arch",
+    "homebrew",
+    "chocolatey"
+   ],
+   "preinstalled_on": "Not a current default anywhere. It was the GNOME default monospace until GNOME 48 replaced it with Adwaita Mono, so Fedora Workstation 41 and earlier shipped it.",
+   "preinstalled_default_count": 0,
+   "package_score": 3,
+   "evidence_tier": "C: no study",
+   "readability_evidence": "No study found. Measured I/l/1 distance 0.266 (I~1), O~0 0.330; x-height 0.478 em.",
+   "script_coverage": "Latin, Greek, Cyrillic, Vietnamese, IPA, box drawing (1334 code points measured).",
+   "weights": "Variable wght 200-900, upright and italic",
+   "mono_companion": "Is the mono; sans pair is Source Sans 3",
+   "measured": {
+    "file_version": "Version 1.026;hotconv 1.1.0;makeotfexe 2.6.0",
+    "x_height_em": 0.478,
+    "il1_min_distance": 0.266,
+    "o_vs_zero": 0.33,
+    "b_vs_mirrored_d": 0.079,
+    "diagram_glyphs_missing": 4,
+    "diagram_missing_chars": "⇄⇌⁺⁻",
+    "codepoints": 1334
+   },
+   "bundled": null,
+   "fetch": {
+    "files": [
+     {
+      "url": "https://raw.githubusercontent.com/google/fonts/b6ba0c72868dd42746f8a0a7dd12754663e55a0f/ofl/sourcecodepro/SourceCodePro%5Bwght%5D.ttf",
+      "sha256": "b400fc584e10aff25d0e775ce181b4fc1c5ea1b5dc37b81aeb2084375b945790",
+      "bytes": 212340,
+      "file": "SourceCodePro[wght].ttf"
+     }
+    ],
+    "licence": {
+     "url": "https://raw.githubusercontent.com/google/fonts/b6ba0c72868dd42746f8a0a7dd12754663e55a0f/ofl/sourcecodepro/OFL.txt",
+     "sha256": "cb30d3086a8b3ce0b9e3690bf48d6620402b61160bc658076f95180ccd9e9dae",
+     "file": "OFL.txt"
+    },
+    "source": "google/fonts repository, pinned to the commit that last changed each file"
+   }
+  },
+  {
+   "id": "ibm-plex-sans",
+   "family": "IBM Plex Sans",
+   "role": "sans",
+   "licence": {
+    "spdx": "OFL-1.1-RFN",
+    "text": "OFL-1.1 with Reserved Font Name 'Plex' (Copyright 2017 IBM Corp.)",
+    "reserved_font_names": [
+     "Plex"
+    ]
+   },
+   "upstream_repo": "https://github.com/IBM/plex",
+   "upstream_version": "@ibm/plex-sans 1.1.0 (November 2024); @ibm/plex-sans-variable 0.2.0 (June 2025)",
+   "packages": "Debian/Ubuntu: fonts-ibm-plex; Fedora: ibm-plex-sans-fonts; Arch: ttf-ibm-plex (AUR otf-ibm-plex); Homebrew: font-ibm-plex-sans; Scoop: nerd-fonts/IBMPlexSans; Chocolatey, winget: none found",
+   "packaged_in": [
+    "debian-ubuntu",
+    "fedora",
+    "arch",
+    "homebrew",
+    "scoop"
+   ],
+   "preinstalled_on": "None: not preinstalled on Windows 11, macOS 26, Ubuntu 26.04 desktop, Fedora Workstation, Arch, Android (AOSP) or ChromeOS.",
+   "preinstalled_default_count": 0,
+   "package_score": 4,
+   "evidence_tier": "C: no study; measured differentiation",
+   "readability_evidence": "No study found. Serifed capital I gives measured I/l/1 distance 0.533; x-height 0.516 em.",
+   "script_coverage": "Latin, Greek, Cyrillic, Vietnamese; separate Plex families for Arabic, Devanagari, Hebrew, Thai, Japanese, Korean and Chinese (891 code points measured in the Latin file).",
+   "weights": "Variable wght 100-700 and wdth 75-100, upright and italic; static Thin to Bold plus Text",
+   "mono_companion": "IBM Plex Mono",
+   "measured": {
+    "file_version": "Version 3.201",
+    "x_height_em": 0.516,
+    "il1_min_distance": 0.533,
+    "o_vs_zero": 0.555,
+    "b_vs_mirrored_d": 0.031,
+    "diagram_glyphs_missing": 4,
+    "diagram_missing_chars": "⇌⇒⁺⁻",
+    "codepoints": 891
+   },
+   "bundled": null,
+   "fetch": {
+    "files": [
+     {
+      "url": "https://raw.githubusercontent.com/google/fonts/8409f033cd7dee08914990602f0df5f5e70e0c14/ofl/ibmplexsans/IBMPlexSans%5Bwdth%2Cwght%5D.ttf",
+      "sha256": "3b031aa4216174205bd8471f88a49b91f093169e9e87bd5262242bc5967fe2e3",
+      "bytes": 537244,
+      "file": "IBMPlexSans[wdth,wght].ttf"
+     }
+    ],
+    "licence": {
+     "url": "https://raw.githubusercontent.com/google/fonts/8409f033cd7dee08914990602f0df5f5e70e0c14/ofl/ibmplexsans/OFL.txt",
+     "sha256": "7e6b2818edbd8f6a01ae80641cc8f16a51080d08fb4e532be3a0b6f74adb07da",
+     "file": "OFL.txt"
+    },
+    "source": "google/fonts repository, pinned to the commit that last changed each file"
+   }
+  },
+  {
+   "id": "ibm-plex-mono",
+   "family": "IBM Plex Mono",
+   "role": "mono",
+   "licence": {
+    "spdx": "OFL-1.1-RFN",
+    "text": "OFL-1.1 with Reserved Font Name 'Plex' (IBM Corp.)",
+    "reserved_font_names": [
+     "Plex"
+    ]
+   },
+   "upstream_repo": "https://github.com/IBM/plex",
+   "upstream_version": "@ibm/plex-mono 2.5.0 (June 2026); @ibm/plex-mono-variable 1.0.0 (July 2026)",
+   "packages": "Debian/Ubuntu: fonts-ibm-plex; Fedora: ibm-plex-mono-fonts; Arch: ttf-ibm-plex; Homebrew: font-ibm-plex-mono; Scoop: nerd-fonts/IBMPlexMono; Chocolatey, winget: none found",
+   "packaged_in": [
+    "debian-ubuntu",
+    "fedora",
+    "arch",
+    "homebrew",
+    "scoop"
+   ],
+   "preinstalled_on": "None: not preinstalled on Windows 11, macOS 26, Ubuntu 26.04 desktop, Fedora Workstation, Arch, Android (AOSP) or ChromeOS.",
+   "preinstalled_default_count": 0,
+   "package_score": 4,
+   "evidence_tier": "C: no study",
+   "readability_evidence": "No study found. Measured I/l/1 distance 0.258, O~0 0.096.",
+   "script_coverage": "Latin, Cyrillic, Vietnamese, box drawing. The measured Google Fonts file (2.3) has 1 Greek code point, so α β need a fallback; upstream 2.5.0 not measured (930 code points measured).",
+   "weights": "Thin to Bold (100-700) with italics; variable build since plex-mono-variable 1.0.0",
+   "mono_companion": "Is the mono; sans pair is IBM Plex Sans",
+   "measured": {
+    "file_version": "Version 2.3",
+    "x_height_em": 0.516,
+    "il1_min_distance": 0.258,
+    "o_vs_zero": 0.096,
+    "b_vs_mirrored_d": 0.09,
+    "diagram_glyphs_missing": 52,
+    "diagram_missing_chars": "ΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩαβγδεζηθικλμνξορςστυφχψω⇌⇒⁺⁻",
+    "codepoints": 930
+   },
+   "bundled": null,
+   "fetch": {
+    "files": [
+     {
+      "url": "https://raw.githubusercontent.com/google/fonts/633f3200539c52ee0aba2dfd7f46921417a81877/ofl/ibmplexmono/IBMPlexMono-Regular.ttf",
+      "sha256": "6a3412f058c7d8dfd9170c41e85ade48e5156ecb89356110ca57a0a27734af46",
+      "bytes": 135580,
+      "file": "IBMPlexMono-Regular.ttf"
+     },
+     {
+      "url": "https://raw.githubusercontent.com/google/fonts/633f3200539c52ee0aba2dfd7f46921417a81877/ofl/ibmplexmono/IBMPlexMono-Bold.ttf",
+      "sha256": "ac27abd6450a64dd94467580a02fe6235156d5b92f2926ebbc8e7489df64e0be",
+      "bytes": 137784,
+      "file": "IBMPlexMono-Bold.ttf"
+     }
+    ],
+    "licence": {
+     "url": "https://raw.githubusercontent.com/google/fonts/633f3200539c52ee0aba2dfd7f46921417a81877/ofl/ibmplexmono/OFL.txt",
+     "sha256": "7e6b2818edbd8f6a01ae80641cc8f16a51080d08fb4e532be3a0b6f74adb07da",
+     "file": "OFL.txt"
+    },
+    "source": "google/fonts repository, pinned to the commit that last changed each file"
+   }
+  },
+  {
+   "id": "fira-sans",
+   "family": "Fira Sans",
+   "role": "sans",
+   "licence": {
+    "spdx": "OFL-1.1-no-RFN",
+    "text": "OFL-1.1 (no Reserved Font Name; Mozilla Foundation, Telefonica S.A., Carrois, bBox Type)",
+    "reserved_font_names": []
+   },
+   "upstream_repo": "https://github.com/bBoxType/FiraSans (current); https://github.com/mozilla/Fira (4.202)",
+   "upstream_version": "4.301 (bBoxType, per Arch package); Google Fonts 4.203",
+   "packages": "Fedora: mozilla-fira-sans-fonts; Arch: ttf-fira-sans, otf-fira-sans (4.301); Homebrew: font-fira-sans; Chocolatey: fira; Debian/Ubuntu: no font package (TeX copy in texlive-fonts-extra); Scoop, winget: none found",
+   "packaged_in": [
+    "fedora",
+    "arch",
+    "homebrew",
+    "chocolatey"
+   ],
+   "preinstalled_on": "None: not preinstalled on Windows 11, macOS 26, Ubuntu 26.04 desktop, Fedora Workstation, Arch, Android (AOSP) or ChromeOS.",
+   "preinstalled_default_count": 0,
+   "package_score": 3,
+   "evidence_tier": "C: design claim; measured differentiation",
+   "readability_evidence": "Designed for Firefox OS small screens. No reading study found. Tailed l gives measured I/l/1 distance 0.675; x-height 0.527 em.",
+   "script_coverage": "Latin, Greek, Cyrillic, Vietnamese (157), IPA (1686 code points measured).",
+   "weights": "Thin 100 to Black 900, each with italic (18 styles in Google Fonts); upstream adds further cuts",
+   "mono_companion": "Fira Mono (Fira Code adds ligatures)",
+   "measured": {
+    "file_version": "Version 4.203",
+    "x_height_em": 0.527,
+    "il1_min_distance": 0.675,
+    "o_vs_zero": 0.62,
+    "b_vs_mirrored_d": 0.162,
+    "diagram_glyphs_missing": 6,
+    "diagram_missing_chars": "↔⇄⇌⇒′″",
+    "codepoints": 1686
+   },
+   "bundled": null,
+   "fetch": {
+    "files": [
+     {
+      "url": "https://raw.githubusercontent.com/google/fonts/ed7143b8f0c9587f9dcfbcdf5b34ec1a7bc07fca/ofl/firasans/FiraSans-Regular.ttf",
+      "sha256": "c29556a2719bf613ef3d5e070e40d903a8965d9c081beca1375dc1e6e0f93c23",
+      "bytes": 456996,
+      "file": "FiraSans-Regular.ttf"
+     },
+     {
+      "url": "https://raw.githubusercontent.com/google/fonts/ed7143b8f0c9587f9dcfbcdf5b34ec1a7bc07fca/ofl/firasans/FiraSans-Bold.ttf",
+      "sha256": "a4d8e149ecdd4874a0726eb0af894488b3b31c423d6b0017c8f415ed1b795b45",
+      "bytes": 489720,
+      "file": "FiraSans-Bold.ttf"
+     }
+    ],
+    "licence": {
+     "url": "https://raw.githubusercontent.com/google/fonts/ed7143b8f0c9587f9dcfbcdf5b34ec1a7bc07fca/ofl/firasans/OFL.txt",
+     "sha256": "8f24842e9174beda18a556c2ae7d54f5dc444340c19a3a9ef77e23bca366adbd",
+     "file": "OFL.txt"
+    },
+    "source": "google/fonts repository, pinned to the commit that last changed each file"
+   }
+  },
+  {
+   "id": "fira-code",
+   "family": "Fira Code",
+   "role": "mono",
+   "licence": {
+    "spdx": "OFL-1.1-no-RFN",
+    "text": "OFL-1.1 (no Reserved Font Name; Copyright 2014 The Fira Code Project Authors)",
+    "reserved_font_names": []
+   },
+   "upstream_repo": "https://github.com/tonsky/FiraCode",
+   "upstream_version": "6.2",
+   "packages": "Debian/Ubuntu: fonts-firacode; Fedora: fira-code-fonts; Arch: ttf-fira-code; Homebrew: font-fira-code; Chocolatey: firacode; Scoop: nerd-fonts/FiraCode; winget: none found",
+   "packaged_in": [
+    "debian-ubuntu",
+    "fedora",
+    "arch",
+    "homebrew",
+    "chocolatey",
+    "scoop"
+   ],
+   "preinstalled_on": "None: not preinstalled on Windows 11, macOS 26, Ubuntu 26.04 desktop, Fedora Workstation, Arch, Android (AOSP) or ChromeOS.",
+   "preinstalled_default_count": 0,
+   "package_score": 4,
+   "evidence_tier": "C: no study",
+   "readability_evidence": "No study found. Programming ligatures redraw sequences such as != and -> as single symbols, which can mislead readers who do not know them (opinion). Measured I/l/1 distance 0.403. The variable font's default instance is wght 300.",
+   "script_coverage": "Latin, Greek, Cyrillic, box drawing; 9 Vietnamese code points (1551 measured).",
+   "weights": "Variable wght 300-700 (Light, Regular, Retina 450, Medium, SemiBold, Bold); no italics",
+   "mono_companion": "Is the mono; sans pair is Fira Sans",
+   "measured": {
+    "file_version": "Version 5.002",
+    "x_height_em": 0.525,
+    "il1_min_distance": 0.403,
+    "o_vs_zero": 0.413,
+    "b_vs_mirrored_d": 0.164,
+    "diagram_glyphs_missing": 5,
+    "diagram_missing_chars": "⇄⇌⇒′″",
+    "codepoints": 1551
+   },
+   "bundled": null,
+   "fetch": {
+    "files": [
+     {
+      "url": "https://raw.githubusercontent.com/google/fonts/30485dad1f47216a16c95042e455d0a3105e031c/ofl/firacode/FiraCode%5Bwght%5D.ttf",
+      "sha256": "9335b082b3c7850d98a64b584f3417f65355f3471278bb5eeb8c6c0e8657aeeb",
+      "bytes": 260364,
+      "file": "FiraCode[wght].ttf"
+     }
+    ],
+    "licence": {
+     "url": "https://raw.githubusercontent.com/google/fonts/30485dad1f47216a16c95042e455d0a3105e031c/ofl/firacode/OFL.txt",
+     "sha256": "926041dac670e6922505e35ac1661a4e8d20f1ffeabbbcb5edb5544370702369",
+     "file": "OFL.txt"
+    },
+    "source": "google/fonts repository, pinned to the commit that last changed each file"
+   }
+  },
+  {
+   "id": "public-sans",
+   "family": "Public Sans",
+   "role": "sans",
+   "licence": {
+    "spdx": "OFL-1.1-no-RFN",
+    "text": "OFL-1.1; GSA modifications are CC0 in the US, and LICENSE.md says to use the combined font under OFL-1.1",
+    "reserved_font_names": []
+   },
+   "upstream_repo": "https://github.com/uswds/public-sans",
+   "upstream_version": "2.001",
+   "packages": "Fedora: uswds-public-sans-fonts (1.008, old); Arch: AUR otf-public-sans, ttf-public-sans-variable; Homebrew: font-public-sans; Debian/Ubuntu, Chocolatey, Scoop, winget: none found",
+   "packaged_in": [
+    "fedora",
+    "homebrew"
+   ],
+   "preinstalled_on": "None: not preinstalled on Windows 11, macOS 26, Ubuntu 26.04 desktop, Fedora Workstation, Arch, Android (AOSP) or ChromeOS.",
+   "preinstalled_default_count": 0,
+   "package_score": 2,
+   "evidence_tier": "C: design claim; measured differentiation",
+   "readability_evidence": "US Web Design System's neutral UI font. No reading study found. Measured I/l/1 distance 0.594. The variable font's default instance is wght 100.",
+   "script_coverage": "Latin incl. Vietnamese (110). Greek 1 code point; no arrows (565 code points measured).",
+   "weights": "Variable wght 100-900, upright and italic",
+   "mono_companion": "None",
+   "measured": {
+    "file_version": "Version 2.001",
+    "x_height_em": 0.517,
+    "il1_min_distance": 0.594,
+    "o_vs_zero": 0.483,
+    "b_vs_mirrored_d": 0.188,
+    "diagram_glyphs_missing": 70,
+    "diagram_missing_chars": "ΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩαβγδεζηθικλμνξορςστυφχψω←↑→↓↔⇄⇌⇒⁺⁻₀₁₂₃₄₅₆₇₈₉′″",
+    "codepoints": 565
+   },
+   "bundled": null,
+   "fetch": {
+    "files": [
+     {
+      "url": "https://raw.githubusercontent.com/google/fonts/37caf657942042c2de8f5f11d9d6866a1b689b84/ofl/publicsans/PublicSans%5Bwght%5D.ttf",
+      "sha256": "d75a7dc1a27eb9e336d5b33f55489d2ecb5621bf694d5c43b2415bce2ca830a8",
+      "bytes": 103316,
+      "file": "PublicSans[wght].ttf"
+     }
+    ],
+    "licence": {
+     "url": "https://raw.githubusercontent.com/google/fonts/37caf657942042c2de8f5f11d9d6866a1b689b84/ofl/publicsans/OFL.txt",
+     "sha256": "157a9e77f7580246e97c769490e2e977ae94399f9d30f4556015c41fe8c28bac",
+     "file": "OFL.txt"
+    },
+    "source": "google/fonts repository, pinned to the commit that last changed each file"
+   }
+  },
+  {
+   "id": "readex-pro",
+   "family": "Readex Pro",
+   "role": "sans",
+   "licence": {
+    "spdx": "OFL-1.1-RFN",
+    "text": "OFL-1.1 with Reserved Font Name 'RevReading Lexend' (Copyright 2018 The Readex Pro Project Authors)",
+    "reserved_font_names": [
+     "RevReading Lexend"
+    ]
+   },
+   "upstream_repo": "https://github.com/ThomasJockin/readexpro",
+   "upstream_version": "1.205 in Google Fonts; repo has no GitHub releases",
+   "packages": "Arch: AUR ttf-readex-pro; Homebrew: font-readex-pro; Debian/Ubuntu, Fedora, Chocolatey, Scoop, winget: none found",
+   "packaged_in": [
+    "homebrew"
+   ],
+   "preinstalled_on": "None: not preinstalled on Windows 11, macOS 26, Ubuntu 26.04 desktop, Fedora Workstation, Arch, Android (AOSP) or ChromeOS.",
+   "preinstalled_default_count": 0,
+   "package_score": 1,
+   "evidence_tier": "D: inherits Lexend's creator-run evidence; no Arabic study found",
+   "readability_evidence": "Lexend extended to Arabic with Nadine Chahine applying the Shaver-Troup formulation (Lexend README). Same weak evidence as Lexend; no Arabic reading study found. Measured I/l/1 distance 0.298 (Latin glyphs match Lexend).",
+   "script_coverage": "Arabic (73 code points in the Arabic block), Latin, Vietnamese. Greek 4 code points; no arrows (761 code points measured).",
+   "weights": "Variable wght 160-700 and HEXP (hyper-expansion) 0-100",
+   "mono_companion": "None",
+   "measured": {
+    "file_version": "Version 1.205",
+    "x_height_em": 0.525,
+    "il1_min_distance": 0.298,
+    "o_vs_zero": 0.617,
+    "b_vs_mirrored_d": 0.13,
+    "diagram_glyphs_missing": 56,
+    "diagram_missing_chars": "ΑΒΓΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨαβγδεζηθικλνξορςστυφχψω←↑→↓↔⇄⇌⇒⁺⁻′",
+    "codepoints": 761
+   },
+   "bundled": null,
+   "fetch": {
+    "files": [
+     {
+      "url": "https://raw.githubusercontent.com/google/fonts/d81dbc630ed0e3cfd8d1af36893674157c2e6b88/ofl/readexpro/ReadexPro%5BHEXP%2Cwght%5D.ttf",
+      "sha256": "268bba7e1e8f3b14d798b3fb0e40ebaa3fc39308c9ac0020e2faf6df181cc30e",
+      "bytes": 278544,
+      "file": "ReadexPro[HEXP,wght].ttf"
+     }
+    ],
+    "licence": {
+     "url": "https://raw.githubusercontent.com/google/fonts/d81dbc630ed0e3cfd8d1af36893674157c2e6b88/ofl/readexpro/OFL.txt",
+     "sha256": "b41267a3903a45955f77b44596e080480c577fb7221df59672d0bc8cd8cd4b6f",
+     "file": "OFL.txt"
+    },
+    "source": "google/fonts repository, pinned to the commit that last changed each file"
+   }
+  },
+  {
+   "id": "adwaita-sans",
+   "family": "Adwaita Sans",
+   "role": "sans",
+   "licence": {
+    "spdx": "OFL-1.1-no-RFN",
+    "text": "OFL-1.1 (no Reserved Font Name; Inter Project Authors, Renzhi Li, Jamie Gravendeel, Florian Müllner)",
+    "reserved_font_names": []
+   },
+   "upstream_repo": "https://gitlab.gnome.org/GNOME/adwaita-fonts (mirror https://github.com/GNOME/adwaita-fonts)",
+   "upstream_version": "51.0",
+   "packages": "Debian sid, Ubuntu 26.04+: fonts-adwaita-sans (fonts-adwaita is a metapackage); Fedora: adwaita-sans-fonts; Arch: adwaita-fonts (a hard dependency of gtk3, gtk4, gsettings-desktop-schemas); Homebrew: font-adwaita; Chocolatey, Scoop, winget: none found",
+   "packaged_in": [
+    "debian-ubuntu",
+    "fedora",
+    "arch",
+    "homebrew"
+   ],
+   "preinstalled_on": "Fedora Workstation 42+: yes, GNOME 48 default UI font. Arch: present on any install with GTK 3 or 4 (pacman dependency). Other GNOME 48+ desktops usually. Ubuntu 26.04 desktop: not in the seed (Ubuntu Sans is the UI font). Windows, macOS, Android, ChromeOS: no.",
+   "preinstalled_default_count": 2,
+   "package_score": 4,
+   "evidence_tier": "C: no study; measured differentiation and coverage",
+   "readability_evidence": "Inter with its disambiguation alternates applied (Debian description: built from Inter with the required OpenType features). No reading study found. Measured I/l/1 distance 0.677 against Inter's 0.000; x-height 0.546 em; misses only ⇄ ⇌ of the diagram set.",
+   "script_coverage": "Latin, Greek, Cyrillic, Vietnamese, IPA (2852 code points measured).",
+   "weights": "Variable wght 100-900 and opsz 14-32, upright and italic",
+   "mono_companion": "Adwaita Mono",
+   "measured": {
+    "file_version": "Version 4.001;git-9221beed3",
+    "x_height_em": 0.546,
+    "il1_min_distance": 0.677,
+    "o_vs_zero": 0.602,
+    "b_vs_mirrored_d": 0.032,
+    "diagram_glyphs_missing": 2,
+    "diagram_missing_chars": "⇄⇌",
+    "codepoints": 2852
+   },
+   "bundled": null,
+   "fetch": null
+  },
+  {
+   "id": "adwaita-mono",
+   "family": "Adwaita Mono",
+   "role": "mono",
+   "licence": {
+    "spdx": "OFL-1.1-no-RFN",
+    "text": "OFL-1.1 (no Reserved Font Name; Iosevka by Renzhi Li, customised for GNOME)",
+    "reserved_font_names": []
+   },
+   "upstream_repo": "https://gitlab.gnome.org/GNOME/adwaita-fonts (mirror https://github.com/GNOME/adwaita-fonts)",
+   "upstream_version": "51.0 (glyphs from Iosevka 34.8.0)",
+   "packages": "Fedora: adwaita-mono-fonts; Arch: adwaita-fonts; Homebrew: font-adwaita; Scoop: nerd-fonts/AdwaitaMono-NF (patched); Debian/Ubuntu: not packaged (fonts-adwaita 51.0+dfsg ships Sans only); Chocolatey, winget: none found",
+   "packaged_in": [
+    "fedora",
+    "arch",
+    "homebrew",
+    "scoop"
+   ],
+   "preinstalled_on": "Fedora Workstation 42+: yes, GNOME 48 default monospace. Arch: present with GTK 3 or 4. Ubuntu, Windows, macOS, Android, ChromeOS: no.",
+   "preinstalled_default_count": 2,
+   "package_score": 3,
+   "evidence_tier": "C: no study; complete diagram coverage",
+   "readability_evidence": "Iosevka customised to match Inter (upstream README). No study found. Measured I/l/1 distance 0.381; O~0 0.090 because the zero is marked by an inner stroke the IoU proxy under-scores. Complete diagram glyph set.",
+   "script_coverage": "Latin, Greek, Cyrillic, Armenian, Vietnamese, IPA, arrows, maths, box drawing (7559 code points measured).",
+   "weights": "Regular, Bold, Italic, Bold Italic (static)",
+   "mono_companion": "Is the mono; sans pair is Adwaita Sans",
+   "measured": {
+    "file_version": "Version 34.8.0; ttfautohint (v1.8.4)",
+    "x_height_em": 0.52,
+    "il1_min_distance": 0.381,
+    "o_vs_zero": 0.09,
+    "b_vs_mirrored_d": 0.071,
+    "diagram_glyphs_missing": 0,
+    "diagram_missing_chars": "",
+    "codepoints": 7559
+   },
+   "bundled": null,
+   "fetch": null
+  },
+  {
+   "id": "iosevka",
+   "family": "Iosevka",
+   "role": "mono",
+   "licence": {
+    "spdx": "OFL-1.1-no-RFN",
+    "text": "OFL-1.1 (no Reserved Font Name; Copyright 2015-2026 Renzhi Li). Nerd-patched builds keep OFL-1.1 for the base glyphs; icons carry their own licences (see symbols-nerd-font).",
+    "reserved_font_names": []
+   },
+   "upstream_repo": "https://github.com/be5invis/Iosevka",
+   "upstream_version": "34.9.0",
+   "packages": "Debian sid, Ubuntu 26.04+: fonts-iosevka (+ fonts-iosevka-term, fonts-iosevka-slab); Arch: ttc-iosevka (+ aile, etoile, slab, ss01-ss18), Nerd: ttf-iosevka-nerd; Homebrew: font-iosevka, font-iosevka-nerd-font; Chocolatey: nerd-fonts-Iosevka; Scoop: nerd-fonts/Iosevka-NF; Fedora: none (COPR peterwu/iosevka); winget: none found",
+   "packaged_in": [
+    "debian-ubuntu",
+    "arch",
+    "homebrew",
+    "chocolatey",
+    "scoop"
+   ],
+   "preinstalled_on": "None: not preinstalled on Windows 11, macOS 26, Ubuntu 26.04 desktop, Fedora Workstation, Arch, Android (AOSP) or ChromeOS.",
+   "preinstalled_default_count": 0,
+   "package_score": 3,
+   "evidence_tier": "C: no study; narrow design",
+   "readability_evidence": "No study found. The narrow 0.5 em advance packs more columns but tightens letter spacing, which crowding research links to slower reading for dyslexic readers [zorzi2012] (inference). The Extended width relieves this. Measured on Iosevka Nerd Font 34.8.0: I/l/1 distance 0.174, O~0 0.127. Complete diagram glyph set.",
+   "script_coverage": "Latin, Greek, Cyrillic, Armenian, Vietnamese, IPA, arrows, maths, box drawing; README lists 248 languages.",
+   "weights": "9 weights Thin-Heavy (100-900); Normal and Extended widths; upright, italic, oblique; Term and Fixed spacings; quasi-proportional Aile and Etoile",
+   "mono_companion": "Is the mono; proportional companions Iosevka Aile and Iosevka Etoile",
+   "measured": {
+    "file_version": "Version 34.8.0; ttfautohint (v1.8.4);Nerd Fonts 3.5.1",
+    "x_height_em": 0.52,
+    "il1_min_distance": 0.174,
+    "o_vs_zero": 0.127,
+    "b_vs_mirrored_d": 0.0,
+    "diagram_glyphs_missing": 0,
+    "diagram_missing_chars": "",
+    "codepoints": 18160
+   },
+   "bundled": null,
+   "fetch": null
+  },
+  {
+   "id": "jetbrains-mono",
+   "family": "JetBrains Mono",
+   "role": "mono",
+   "licence": {
+    "spdx": "OFL-1.1-no-RFN",
+    "text": "OFL-1.1 (no Reserved Font Name; Copyright 2020 The JetBrains Mono Project Authors)",
+    "reserved_font_names": []
+   },
+   "upstream_repo": "https://github.com/JetBrains/JetBrainsMono",
+   "upstream_version": "2.304",
+   "packages": "Debian/Ubuntu: fonts-jetbrains-mono; Fedora: jetbrains-mono-fonts (jetbrains-mono-nl-fonts without ligatures); Arch: ttf-jetbrains-mono; Homebrew: font-jetbrains-mono; Chocolatey: jetbrainsmono; Scoop: nerd-fonts/JetBrains-Mono; winget: DEVCOM.JetBrainsMonoNerdFont (Nerd-patched only)",
+   "packaged_in": [
+    "debian-ubuntu",
+    "fedora",
+    "arch",
+    "homebrew",
+    "chocolatey",
+    "scoop"
+   ],
+   "preinstalled_on": "None as an OS font; bundled inside JetBrains IDEs.",
+   "preinstalled_default_count": 0,
+   "package_score": 4,
+   "evidence_tier": "C: design claim; no study",
+   "readability_evidence": "Designed with an enlarged x-height for code reading; measured 0.550 em, the tallest monospace here. No study found. Measured I/l/1 distance 0.395, O~0 0.215.",
+   "script_coverage": "Latin, Greek, Cyrillic, Vietnamese, box drawing; 5 of 8 diagram arrows (976 code points measured).",
+   "weights": "Variable wght 100-800, upright and italic; NL build without ligatures",
+   "mono_companion": "Is the mono; no sans companion",
+   "measured": {
+    "file_version": "Version 2.211",
+    "x_height_em": 0.55,
+    "il1_min_distance": 0.395,
+    "o_vs_zero": 0.215,
+    "b_vs_mirrored_d": 0.02,
+    "diagram_glyphs_missing": 5,
+    "diagram_missing_chars": "⇄⇌⇒∆⁻",
+    "codepoints": 976
+   },
+   "bundled": null,
+   "fetch": {
+    "files": [
+     {
+      "url": "https://raw.githubusercontent.com/google/fonts/2e05c1cf00a6e4f40a4b931600a90881c26e15cd/ofl/jetbrainsmono/JetBrainsMono%5Bwght%5D.ttf",
+      "sha256": "48715a42ec242c21e9f02692891e147d022299a52e48d5e413e1a942193ffeda",
+      "bytes": 187208,
+      "file": "JetBrainsMono[wght].ttf"
+     }
+    ],
+    "licence": {
+     "url": "https://raw.githubusercontent.com/google/fonts/2e05c1cf00a6e4f40a4b931600a90881c26e15cd/ofl/jetbrainsmono/OFL.txt",
+     "sha256": "b2fe5e8987594e9ffd1d2ca52a2f5d73eb8335243893c5d6254b5ad69269591d",
+     "file": "OFL.txt"
+    },
+    "source": "google/fonts repository, pinned to the commit that last changed each file"
+   }
+  },
+  {
+   "id": "ubuntu",
+   "family": "Ubuntu",
+   "role": "sans",
+   "licence": {
+    "spdx": "Ubuntu-font-1.0",
+    "text": "Ubuntu Font Licence 1.0 (google/fonts ufl/; not OFL)",
+    "reserved_font_names": [
+     "Ubuntu (UFL requires renaming of modified versions)"
+    ]
+   },
+   "upstream_repo": "https://design.ubuntu.com/font (Google Fonts copy: ufl/ubuntu)",
+   "upstream_version": "0.83",
+   "packages": "Debian: fonts-ubuntu (0.83 classic); Ubuntu 24.04+: fonts-ubuntu-classic (fonts-ubuntu now holds Ubuntu Sans); Arch: ttf-ubuntu-font-family; Homebrew: font-ubuntu, font-ubuntu-mono; Chocolatey: ubuntu.font; Fedora, Scoop, winget: none found",
+   "packaged_in": [
+    "debian-ubuntu",
+    "arch",
+    "homebrew",
+    "chocolatey"
+   ],
+   "preinstalled_on": "None current. It was Ubuntu's UI font before Ubuntu Sans replaced it (fonts-ubuntu 0.869 in 24.04).",
+   "preinstalled_default_count": 0,
+   "package_score": 3,
+   "evidence_tier": "C: no study; measured differentiation",
+   "readability_evidence": "Dalton Maag design. No study found. Measured I/l/1 distance 0.616.",
+   "script_coverage": "Latin, Greek, Cyrillic; 8 Vietnamese code points (1194 measured).",
+   "weights": "Light 300, Regular 400, Medium 500, Bold 700 with italics; Ubuntu Condensed; Ubuntu Mono Regular and Bold with italics",
+   "mono_companion": "Ubuntu Mono",
+   "measured": {
+    "file_version": "0.83",
+    "x_height_em": 0.52,
+    "il1_min_distance": 0.616,
+    "o_vs_zero": 0.739,
+    "b_vs_mirrored_d": 0.18,
+    "diagram_glyphs_missing": 12,
+    "diagram_missing_chars": "←↑→↓↔⇄⇌⇒⁺⁻′″",
+    "codepoints": 1194
+   },
+   "bundled": null,
+   "fetch": {
+    "files": [
+     {
+      "url": "https://raw.githubusercontent.com/google/fonts/a50de97857f6626d6628c91e6a34c12ee8a16ede/ufl/ubuntu/Ubuntu-Regular.ttf",
+      "sha256": "3128df86a31805618436d0ae5651ba4285d0c9de0a39057d025f64ee33bceb64",
+      "bytes": 351884,
+      "file": "Ubuntu-Regular.ttf"
+     },
+     {
+      "url": "https://raw.githubusercontent.com/google/fonts/a50de97857f6626d6628c91e6a34c12ee8a16ede/ufl/ubuntu/Ubuntu-Bold.ttf",
+      "sha256": "679b5c1e09cab3156bb8ef529735f9382bf31ca7ac737382ab959297f8d82ad4",
+      "bytes": 331612,
+      "file": "Ubuntu-Bold.ttf"
+     }
+    ],
+    "licence": {
+     "url": "https://raw.githubusercontent.com/google/fonts/a50de97857f6626d6628c91e6a34c12ee8a16ede/ufl/ubuntu/UFL.txt",
+     "sha256": "2f0015108d68627bd788d313f529c21ff4da2c2c42a5e1f3883acc83480f9002",
+     "file": "UFL.txt"
+    },
+    "source": "google/fonts repository, pinned to the commit that last changed each file"
+   },
+   "name": "Ubuntu (classic)"
+  },
+  {
+   "id": "ubuntu-sans",
+   "family": "Ubuntu Sans",
+   "role": "sans",
+   "licence": {
+    "spdx": "Ubuntu-font-1.0",
+    "text": "Ubuntu Font Licence 1.0 (LICENCE.txt in canonical/Ubuntu-Sans-fonts)",
+    "reserved_font_names": [
+     "Ubuntu (UFL requires renaming of modified versions)"
+    ]
+   },
+   "upstream_repo": "https://github.com/canonical/Ubuntu-Sans-fonts",
+   "upstream_version": "1.006; Ubuntu Sans Mono 1.100",
+   "packages": "Ubuntu 24.04+: fonts-ubuntu; Homebrew: font-ubuntu-sans, font-ubuntu-sans-mono; Scoop: nerd-fonts/UbuntuSans-NF (patched); Debian, Fedora, Arch official, Chocolatey, winget: none found",
+   "packaged_in": [
+    "debian-ubuntu",
+    "homebrew"
+   ],
+   "preinstalled_on": "Ubuntu desktop: yes, UI font (seed: 'desktop default via an override in the ubuntu-settings package'). Others: no.",
+   "preinstalled_default_count": 1,
+   "package_score": 2,
+   "evidence_tier": "C: no study; high measured differentiation",
+   "readability_evidence": "No study found. Measured I/l/1 distance 0.706, second only to Cantarell 0.311 (0.749).",
+   "script_coverage": "Latin, Greek, Cyrillic; 15 Vietnamese code points; no arrows (1178 code points measured).",
+   "weights": "Variable wght 100-800 and wdth 75-100, upright and italic",
+   "mono_companion": "Ubuntu Sans Mono (variable wght 400-700)",
+   "measured": {
+    "file_version": "Version 1.006",
+    "x_height_em": 0.518,
+    "il1_min_distance": 0.706,
+    "o_vs_zero": 0.81,
+    "b_vs_mirrored_d": 0.005,
+    "diagram_glyphs_missing": 10,
+    "diagram_missing_chars": "←↑→↓↔⇄⇌⇒⁺⁻",
+    "codepoints": 1178
+   },
+   "bundled": null,
+   "fetch": null
+  },
+  {
+   "id": "cantarell",
+   "family": "Cantarell",
+   "role": "sans",
+   "licence": {
+    "spdx": "OFL-1.1-no-RFN",
+    "text": "OFL-1.1 (no Reserved Font Name; Copyright 2009-2019 The Cantarell Authors)",
+    "reserved_font_names": []
+   },
+   "upstream_repo": "https://gitlab.gnome.org/GNOME/cantarell-fonts (mirror https://github.com/GNOME/cantarell-fonts)",
+   "upstream_version": "0.311; upstream says it is not under active development",
+   "packages": "Debian/Ubuntu: fonts-cantarell (0.303.1; 0.311 in sid); Fedora: abattis-cantarell-vf-fonts (0.301); Arch: cantarell-fonts (0.311); Homebrew: font-cantarell; Chocolatey, Scoop, winget: none found",
+   "packaged_in": [
+    "debian-ubuntu",
+    "fedora",
+    "arch",
+    "homebrew"
+   ],
+   "preinstalled_on": "GNOME 3.0-47 default UI font. Fedora Workstation still installs it (Red Hat bug 2449666 reports its 31-cantarell.conf on fc43/fc44) but default-fonts-core-sans dropped it. Others: no.",
+   "preinstalled_default_count": 0,
+   "package_score": 4,
+   "evidence_tier": "C: no study",
+   "readability_evidence": "No study found. Measured on 0.311: I/l/1 distance 0.749, the highest in this list; x-height 0.482 em. The Google Fonts copy is a 2010 Latin-only build (v1.004) with I~l 0.069, so use the upstream release.",
+   "script_coverage": "0.311: Latin, Greek (74), Cyrillic (178), Vietnamese (166); 4 of 8 diagram arrows (1223 code points measured).",
+   "weights": "Variable wght 100-800 (Thin to ExtraBold); no italics",
+   "mono_companion": "None official; GNOME paired it with Source Code Pro before GNOME 48",
+   "measured": {
+    "file_version": "Version 0.311",
+    "x_height_em": 0.482,
+    "il1_min_distance": 0.749,
+    "o_vs_zero": 0.695,
+    "b_vs_mirrored_d": 0.154,
+    "diagram_glyphs_missing": 6,
+    "diagram_missing_chars": "↔⇄⇌⇒⁺⁻",
+    "codepoints": 1223
+   },
+   "bundled": null,
+   "fetch": null
+  },
+  {
+   "id": "symbols-nerd-font",
+   "family": "Symbols Nerd Font",
+   "role": "icons",
+   "licence": {
+    "spdx": "MIT AND CC-BY-4.0 AND Apache-2.0 AND OFL-1.1-RFN AND OFL-1.1 AND Unlicense",
+    "text": "MIT for the Nerd Fonts patcher and the Symbols Only package; each icon set keeps its own licence: Font Awesome CC-BY-4.0, Codicons CC-BY-4.0, Material Design Icons Apache-2.0, Octicons MIT, Devicons MIT, Seti-UI MIT, Powerline Symbols MIT, Powerline Extra MIT, IEC Power Symbols MIT, Font Awesome Extension MIT, Font Logos Unlicense, Pomicons OFL-1.1 (RFN), Weather Icons OFL-1.1 (patched-fonts/NerdFontsSymbolsOnly/README.md, license-audit.md)",
+    "reserved_font_names": [
+     "Pomicons"
+    ]
+   },
+   "upstream_repo": "https://github.com/ryanoasis/nerd-fonts",
+   "upstream_version": "3.5.1",
+   "packages": "Debian sid/14, Ubuntu 26.10: fonts-nerd-symbols (3.4.0); Arch: ttf-nerd-fonts-symbols, ttf-nerd-fonts-symbols-mono (3.5.1); Homebrew: font-symbols-only-nerd-font; Chocolatey: nerd-fonts-NerdFontsSymbolsOnly; Scoop: nerd-fonts/NerdFontsSymbolsOnly; Fedora, winget: none found",
+   "packaged_in": [
+    "debian-ubuntu",
+    "arch",
+    "homebrew",
+    "chocolatey",
+    "scoop"
+   ],
+   "preinstalled_on": "None: not preinstalled on Windows 11, macOS 26, Ubuntu 26.04 desktop, Fedora Workstation, Arch, Android (AOSP) or ChromeOS.",
+   "preinstalled_default_count": 0,
+   "package_score": 3,
+   "evidence_tier": "n/a: icon font",
+   "readability_evidence": "Not a text face, so reading evidence does not apply. 10,610 of its 10,624 code points sit in the Private Use Area (3714 BMP, 6896 supplementary), so text extraction, screen readers and machines without the font get no meaning. Pair every icon with a visible text label (WCAG 2.2 SC 1.1.1 Non-text Content).",
+   "script_coverage": "Private Use Area only; no letters or digits.",
+   "weights": "Single Regular; 'Symbols Nerd Font Mono' variant fits icons to a monospace cell",
+   "mono_companion": "Symbols Nerd Font Mono",
+   "measured": {
+    "file_version": "Version 001.000;Nerd Fonts 3.5.1",
+    "x_height_em": null,
+    "il1_min_distance": null,
+    "o_vs_zero": null,
+    "b_vs_mirrored_d": null,
+    "diagram_glyphs_missing": null,
+    "diagram_missing_chars": null,
+    "codepoints": 10624
+   },
+   "bundled": null,
+   "fetch": null
+  },
+  {
+   "id": "cascadia-mono",
+   "family": "Cascadia Mono",
+   "role": "mono",
+   "licence": {
+    "spdx": "OFL-1.1-RFN",
+    "text": "OFL-1.1 with Reserved Font Name 'Cascadia Code' (Copyright (c) 2019 - Present, Microsoft Corporation)",
+    "reserved_font_names": [
+     "Cascadia Code"
+    ]
+   },
+   "upstream_repo": "https://github.com/microsoft/cascadia-code",
+   "packages": "Preinstalled on Windows 11; Debian/Ubuntu: fonts-cascadia-code; Fedora: cascadia-mono-fonts; Homebrew: font-cascadia-mono",
+   "preinstalled_on": "Windows 11: yes (Microsoft font list: added in Windows 11). Others: no.",
+   "preinstalled_default_count": 1,
+   "evidence_tier": "C: design claims only",
+   "readability_evidence": "No reading study found. Listed so the mono fallback stack names a font Windows 11 has.",
+   "measured": {},
+   "bundled": null,
+   "fetch": null
+  }
+ ]
+}

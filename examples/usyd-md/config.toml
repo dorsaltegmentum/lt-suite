@@ -1,0 +1,116 @@
+# SPDX-FileCopyrightText: 2026 dorsaltegmentum
+# SPDX-License-Identifier: AGPL-3.0-or-later
+#
+# Example lt-suite config for the University of Sydney Doctor of Medicine (MD).
+# Public programme values only. Replace the placeholder paths and add your own
+# Lt address before use; see README.md beside this file.
+#
+# Palettes and fonts are absent on purpose: the example inherits the defaults.
+
+schema_version = 1
+
+[institution]
+profile = "usyd-md"
+name = "University of Sydney, Doctor of Medicine (MD)"
+unit_code = "MDMP5512"
+locale = "en-AU"
+timezone = "Australia/Sydney"
+
+[lt]
+# Your Lt address, https://<tenant>.lt.app. Left empty here: capture and fill
+# refuse to run until you set it.
+origin = ""
+
+[notes]
+# Placeholder: point this at your own notes graph.
+graph_path = "~/Notes/Logseq"
+format = "logseq"
+page_namespace = "Lt"
+page_title = "{namespace}/{week} {title}"
+file_name_format = "triple-lowbar"
+
+[curriculum]
+# Placeholder: the folder that holds your block and week folders.
+root = "~/Notes/Curriculum"
+learning_outcomes_file = "ILO.md"
+# Weeks are numbered N.M (block week and session), as in "3.2 Example Topic".
+# The first capture group is the week, the second the session.
+week_number_pattern = '(?i)(?:^|\b)(?:week\s+)?(\d{1,2})\.(\d{1,2})(?:\b|[^\d])'
+week_dir_pattern = '^(?i:week\s*)?{num}(?:\D|$)'
+title_stopwords = ["system"]
+
+[curriculum.patterns]
+# Module titles such as "3.2: Example Topic" or "Week 3.2 Example Topic".
+lesson = '(?i)^\s*(?:week\s+)?(\d{1,2}\.\d{1,2})\s*[:\u2013\u2014-]?\s*(.*)$'
+# A leading module number such as "3. Example Module" (not a week).
+bare_number = '(?i)^\s*(?:module\s+)?\d{1,2}\s*[.:\u2013\u2014-]\s*'
+# Learning outcomes file: "### 3.2 Title" headings, then "*Kind · Discipline*".
+ilo_heading = '^###\s+(\d{1,2}\.\d{1,2})\s+(.+?)\s*$'
+ilo_kind = '^\*(.+?)\s*·\s*(.+?)\*\s*$'
+
+[rat]
+# Individual RATs are out of scope; team RAT answers come from a folder you supply.
+irat = "skip"
+trat = "from_dir"
+# Placeholder: the folder that holds your team RAT answers.
+answers_dir = "~/Notes/RATs"
+
+[model_answer]
+read = true
+
+[tiers]
+reference_set = ["eTG Complete"]
+fallback_sources = ["Australian specialty colleges", "PubMed"]
+framing = "Australian practice; nearest jurisdiction first (NSW, then Australian, then international)."
+
+[[tiers.tier]]
+id = 1
+label = "Course material: lecture slides, transcripts, learning outcomes, practical and TBL material for the week"
+tag_template = "[T1:{source}]"
+
+[[tiers.tier]]
+id = 2
+label = "eTG Complete (Therapeutic Guidelines)"
+tag_template = "[T2:eTG:{topic}]"
+requires_accessed = true
+access_note = "through the university library sign-in in the signed-in browser"
+
+[[tiers.tier]]
+id = 3
+label = "Clinical practice guidance from a named institution"
+tag_template = "[T3:{issuer}:{topic}]"
+issuer_order = ["NSW Health and its agencies", "Australian hospitals and health services", "International specialty societies"]
+
+[[tiers.tier]]
+id = 4
+label = "Recent peer-reviewed evidence (DOI or PMID)"
+tag_template = "[T4:{doi_or_pmid}]"
+
+[export.outputs]
+notes_graph = true
+whiteboard = true
+ilo_map = true
+flashcard_source = true
+
+[export.citations]
+kind_pages = { ilo = "ILO" }
+hidden_skip_reasons = ["course-feedback"]
+
+[diagram.header]
+required_fields = ["title", "group", "members"]
+members_order = "surname"
+
+[diagram.naming]
+case_slug_pattern = "tbl-{n}"
+eyebrow_template = "TBL {n}"
+
+[diagram.delivery]
+lms_name = "Canvas"
+submission_label = "post-TBL submission"
+
+[diagram.treatment_check]
+provider_label = "eTG"
+ledger_name = "etg-ledger.json"
+
+[diagram.anki]
+tag_prefix = "TBL::"

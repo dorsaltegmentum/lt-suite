@@ -1,0 +1,759 @@
+{
+ "module_id": "c1-r105",
+ "location": {
+  "origin": "https://lt.example.invalid",
+  "pathname": "/i/inst0001/student/courses/1/runs/105/run/page/1"
+ },
+ "globals": {
+  "pageLessonId": 1,
+  "pageCourseLongName": "Example Course 2000 (X101)"
+ },
+ "root": {
+  "lessonTitleDisplay": "2.2 Demo: Diagnostic reasoning",
+  "hasCompletionPage": true,
+  "runLocked": false,
+  "showPageMenuPageRemaining": false,
+  "remainingFlowPagesWithoutCheckpoints": 0,
+  "checkpointPageContainer": {
+   "pages": []
+  }
+ },
+ "pages": [
+  {
+   "title": "Starting observations",
+   "allPanels": [
+    {
+     "pluginKey": "kcTextArea",
+     "panelKey": "1",
+     "panelState": {
+      "content": {
+       "theText": "<p>A fictional reaction produces little quillic acid.</p>"
+      }
+     }
+    },
+    {
+     "pluginKey": "table-question",
+     "panelKey": "11",
+     "panelState": {
+      "content": {
+       "question": "Pair fictional observations with explanations.",
+       "rows": [
+        {
+         "headerRow": true,
+         "cells": [
+          {
+           "content": "Cue"
+          },
+          {
+           "content": "Why it matters"
+          }
+         ]
+        },
+        {
+         "headerRow": false,
+         "cells": [
+          {
+           "content": ""
+          },
+          {
+           "content": ""
+          }
+         ]
+        },
+        {
+         "headerRow": false,
+         "cells": [
+          {
+           "content": ""
+          },
+          {
+           "content": ""
+          }
+         ]
+        }
+       ],
+       "singleAttempt": false,
+       "assessmentType": "noAssessment"
+      },
+      "input": {
+       "rows": [
+        {
+         "headerRow": true,
+         "cells": [
+          {
+           "content": "Cue"
+          },
+          {
+           "content": "Why it matters"
+          }
+         ]
+        },
+        {
+         "headerRow": false,
+         "cells": [
+          {
+           "content": "tessin surplus"
+          },
+          {
+           "content": "blocked conversion"
+          }
+         ]
+        },
+        {
+         "headerRow": false,
+         "cells": [
+          {
+           "content": "low quillic acid"
+          },
+          {
+           "content": "reduced output"
+          }
+         ]
+        }
+       ]
+      },
+      "isReadOnly": false
+     }
+    }
+   ],
+   "rows": []
+  },
+  {
+   "title": "Findings",
+   "allPanels": [
+    {
+     "pluginKey": "table-question",
+     "panelKey": "21",
+     "panelState": {
+      "content": {
+       "question": "Describe the invented case features.",
+       "rows": [
+        {
+         "headerRow": true,
+         "cells": [
+          {
+           "content": "Cue"
+          },
+          {
+           "content": "Why it matters"
+          }
+         ]
+        },
+        {
+         "headerRow": false,
+         "cells": [
+          {
+           "content": ""
+          },
+          {
+           "content": ""
+          }
+         ]
+        },
+        {
+         "headerRow": false,
+         "cells": [
+          {
+           "content": ""
+          },
+          {
+           "content": ""
+          }
+         ]
+        }
+       ],
+       "singleAttempt": false,
+       "assessmentType": "noAssessment"
+      },
+      "input": {
+       "rows": [
+        {
+         "headerRow": true,
+         "cells": [
+          {
+           "content": "Cue"
+          },
+          {
+           "content": "Why it matters"
+          }
+         ]
+        },
+        {
+         "headerRow": false,
+         "cells": [
+          {
+           "content": "age"
+          },
+          {
+           "content": "narrows the list"
+          }
+         ]
+        },
+        {
+         "headerRow": false,
+         "cells": [
+          {
+           "content": "onset"
+          },
+          {
+           "content": "sets the pace"
+          }
+         ]
+        }
+       ]
+      },
+      "isReadOnly": false
+     }
+    },
+    {
+     "pluginKey": "text-question",
+     "panelKey": "22",
+     "panelState": {
+      "content": {
+       "question": "State your provisional diagnosis.",
+       "singleAttempt": false,
+       "assessmentType": "noAssessment"
+      },
+      "input": {
+       "answer": "Vorlase deficiency."
+      },
+      "isReadOnly": false
+     }
+    }
+   ],
+   "rows": []
+  },
+  {
+   "title": "Tests",
+   "allPanels": [
+    {
+     "pluginKey": "table-question",
+     "panelKey": "31",
+     "panelState": {
+      "content": {
+       "question": "Choose tests for the fictional pathway.",
+       "rows": [
+        {
+         "headerRow": true,
+         "cells": [
+          {
+           "content": "Cue"
+          },
+          {
+           "content": "Why it matters"
+          }
+         ]
+        },
+        {
+         "headerRow": false,
+         "cells": [
+          {
+           "content": ""
+          },
+          {
+           "content": ""
+          }
+         ]
+        },
+        {
+         "headerRow": false,
+         "cells": [
+          {
+           "content": ""
+          },
+          {
+           "content": ""
+          }
+         ]
+        }
+       ],
+       "singleAttempt": false,
+       "assessmentType": "noAssessment"
+      },
+      "input": {
+       "rows": [
+        {
+         "headerRow": true,
+         "cells": [
+          {
+           "content": "Cue"
+          },
+          {
+           "content": "Why it matters"
+          }
+         ]
+        },
+        {
+         "headerRow": false,
+         "cells": [
+          {
+           "content": "level"
+          },
+          {
+           "content": "confirms the cause"
+          }
+         ]
+        },
+        {
+         "headerRow": false,
+         "cells": [
+          {
+           "content": "scan"
+          },
+          {
+           "content": "shows the site"
+          }
+         ]
+        }
+       ]
+      },
+      "isReadOnly": false
+     }
+    },
+    {
+     "pluginKey": "table-question",
+     "panelKey": "32",
+     "panelState": {
+      "content": {
+       "question": "Arrange the fictional follow-up steps.",
+       "rows": [
+        {
+         "headerRow": true,
+         "cells": [
+          {
+           "content": "Cue"
+          },
+          {
+           "content": "Why it matters"
+          }
+         ]
+        },
+        {
+         "headerRow": false,
+         "cells": [
+          {
+           "content": ""
+          },
+          {
+           "content": ""
+          }
+         ]
+        },
+        {
+         "headerRow": false,
+         "cells": [
+          {
+           "content": ""
+          },
+          {
+           "content": ""
+          }
+         ]
+        }
+       ],
+       "singleAttempt": false,
+       "assessmentType": "noAssessment"
+      },
+      "input": {
+       "rows": [
+        {
+         "headerRow": true,
+         "cells": [
+          {
+           "content": "Cue"
+          },
+          {
+           "content": "Why it matters"
+          }
+         ]
+        },
+        {
+         "headerRow": false,
+         "cells": [
+          {
+           "content": "rest"
+          },
+          {
+           "content": "first step"
+          }
+         ]
+        },
+        {
+         "headerRow": false,
+         "cells": [
+          {
+           "content": "review"
+          },
+          {
+           "content": "second step"
+          }
+         ]
+        }
+       ]
+      },
+      "isReadOnly": false
+     }
+    }
+   ],
+   "rows": []
+  },
+  {
+   "title": "Review observations",
+   "allPanels": [
+    {
+     "pluginKey": "table-question",
+     "panelKey": "41",
+     "panelState": {
+      "content": {
+       "question": "Pair fictional observations with explanations.",
+       "rows": [
+        {
+         "headerRow": true,
+         "cells": [
+          {
+           "content": "Cue"
+          },
+          {
+           "content": "Why it matters"
+          }
+         ]
+        },
+        {
+         "headerRow": false,
+         "cells": [
+          {
+           "content": ""
+          },
+          {
+           "content": ""
+          }
+         ]
+        },
+        {
+         "headerRow": false,
+         "cells": [
+          {
+           "content": ""
+          },
+          {
+           "content": ""
+          }
+         ]
+        }
+       ],
+       "singleAttempt": false,
+       "assessmentType": "noAssessment"
+      },
+      "input": {
+       "rows": [
+        {
+         "headerRow": true,
+         "cells": [
+          {
+           "content": "Cue"
+          },
+          {
+           "content": "Why it matters"
+          }
+         ]
+        },
+        {
+         "headerRow": false,
+         "cells": [
+          {
+           "content": "tessin surplus"
+          },
+          {
+           "content": "blocked conversion"
+          }
+         ]
+        },
+        {
+         "headerRow": false,
+         "cells": [
+          {
+           "content": "low quillic acid"
+          },
+          {
+           "content": "reduced output"
+          }
+         ]
+        }
+       ]
+      }
+     }
+    },
+    {
+     "pluginKey": "table-question",
+     "panelKey": "42",
+     "panelState": {
+      "content": {
+       "question": "Describe the invented case features.",
+       "rows": [
+        {
+         "headerRow": true,
+         "cells": [
+          {
+           "content": "Cue"
+          },
+          {
+           "content": "Why it matters"
+          }
+         ]
+        },
+        {
+         "headerRow": false,
+         "cells": [
+          {
+           "content": ""
+          },
+          {
+           "content": ""
+          }
+         ]
+        },
+        {
+         "headerRow": false,
+         "cells": [
+          {
+           "content": ""
+          },
+          {
+           "content": ""
+          }
+         ]
+        }
+       ],
+       "singleAttempt": false,
+       "assessmentType": "noAssessment"
+      },
+      "input": {
+       "rows": [
+        {
+         "headerRow": true,
+         "cells": [
+          {
+           "content": "Cue"
+          },
+          {
+           "content": "Why it matters"
+          }
+         ]
+        },
+        {
+         "headerRow": false,
+         "cells": [
+          {
+           "content": "age"
+          },
+          {
+           "content": "narrows the list"
+          }
+         ]
+        },
+        {
+         "headerRow": false,
+         "cells": [
+          {
+           "content": "onset"
+          },
+          {
+           "content": "sets the pace"
+          }
+         ]
+        }
+       ]
+      }
+     }
+    },
+    {
+     "pluginKey": "table-question",
+     "panelKey": "43",
+     "panelState": {
+      "content": {
+       "question": "Choose tests for the fictional pathway.",
+       "rows": [
+        {
+         "headerRow": true,
+         "cells": [
+          {
+           "content": "Cue"
+          },
+          {
+           "content": "Why it matters"
+          }
+         ]
+        },
+        {
+         "headerRow": false,
+         "cells": [
+          {
+           "content": ""
+          },
+          {
+           "content": ""
+          }
+         ]
+        },
+        {
+         "headerRow": false,
+         "cells": [
+          {
+           "content": ""
+          },
+          {
+           "content": ""
+          }
+         ]
+        }
+       ],
+       "singleAttempt": false,
+       "assessmentType": "noAssessment"
+      },
+      "input": {
+       "rows": [
+        {
+         "headerRow": true,
+         "cells": [
+          {
+           "content": "Cue"
+          },
+          {
+           "content": "Why it matters"
+          }
+         ]
+        },
+        {
+         "headerRow": false,
+         "cells": [
+          {
+           "content": "level"
+          },
+          {
+           "content": "confirms the cause"
+          }
+         ]
+        },
+        {
+         "headerRow": false,
+         "cells": [
+          {
+           "content": "scan"
+          },
+          {
+           "content": "shows the site"
+          }
+         ]
+        }
+       ]
+      }
+     }
+    },
+    {
+     "pluginKey": "table-question",
+     "panelKey": "44",
+     "panelState": {
+      "content": {
+       "question": "Arrange the fictional follow-up steps.",
+       "rows": [
+        {
+         "headerRow": true,
+         "cells": [
+          {
+           "content": "Cue"
+          },
+          {
+           "content": "Why it matters"
+          }
+         ]
+        },
+        {
+         "headerRow": false,
+         "cells": [
+          {
+           "content": ""
+          },
+          {
+           "content": ""
+          }
+         ]
+        },
+        {
+         "headerRow": false,
+         "cells": [
+          {
+           "content": ""
+          },
+          {
+           "content": ""
+          }
+         ]
+        }
+       ],
+       "singleAttempt": false,
+       "assessmentType": "noAssessment"
+      },
+      "input": {
+       "rows": [
+        {
+         "headerRow": true,
+         "cells": [
+          {
+           "content": "Cue"
+          },
+          {
+           "content": "Why it matters"
+          }
+         ]
+        },
+        {
+         "headerRow": false,
+         "cells": [
+          {
+           "content": "fluids"
+          },
+          {
+           "content": "first step"
+          }
+         ]
+        },
+        {
+         "headerRow": false,
+         "cells": [
+          {
+           "content": "recheck"
+          },
+          {
+           "content": ""
+          }
+         ]
+        }
+       ]
+      },
+      "isReadOnly": false
+     }
+    },
+    {
+     "pluginKey": "text-question",
+     "panelKey": "46",
+     "panelState": {
+      "content": {
+       "question": "Write the final diagnosis.",
+       "singleAttempt": false,
+       "assessmentType": "noAssessment"
+      },
+      "input": {
+       "answer": ""
+      },
+      "isReadOnly": false
+     }
+    }
+   ],
+   "rows": []
+  },
+  {
+   "title": "Report",
+   "reportInfoPanels": []
+  }
+ ]
+}

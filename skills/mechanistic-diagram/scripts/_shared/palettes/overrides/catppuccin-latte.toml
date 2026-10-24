@@ -1,0 +1,55 @@
+# Hand-tuned diagram theme for the Catppuccin Latte palette (Catppuccin colour values, MIT, Copyright (c) 2021 Catppuccin).
+# ltcore.palettes.derive_theme() uses this file instead of deriving the theme from the
+# catalog roles. Role fills and strokes were built in Oklch at each accent's hue with one
+# fill lightness and one stroke lightness for every role; they pass every contrast check.
+# Their colour-vision separation is reported, not gated (cvd = "report"); role icons,
+# the key and the line styles carry each role without colour.
+# muted is subtext0 (#6c6f85) stepped 0.08 darker in Oklch L, so it reaches 4.5:1 on
+# the canvas (6.16) and on the container fill (4.52); see tests/style/override-deltas.json.
+id = "catppuccin-latte"
+name = "Catppuccin Latte"
+mode = "light"
+cvd = "report"
+glyph_lc = [0.5, 0.15]
+
+[theme]
+canvas = "#eff1f5"
+cl_fill = "#ccd0da"
+cl_stroke = "#9ca0b0"
+cl_text = "#4c4f69"
+key_fill = "#eff1f5"
+key_stroke = "#9ca0b0"
+ink = "#4c4f69"
+muted = "#56586d"
+label = "#5c5f77"
+
+[theme.roles]  # fill, stroke, text
+risk = ["#ffe6c8", "#994d00", "#4c4f69"]
+mech = ["#c5f6f9", "#007a86", "#4c4f69"]
+anat = ["#f3e8e6", "#765c56", "#4c4f69"]
+sign = ["#ffdfdd", "#a8353e", "#4c4f69"]
+inv = ["#d9ecff", "#315eb7", "#4c4f69"]
+dx = ["#daf4d5", "#287615", "#4c4f69"]
+tx = ["#eee5ff", "#6e4bad", "#4c4f69"]
+
+[theme.edges]  # dash: false solid, true the "depends on" dash, or an SVG dash pattern
+stim = { colour = "#6c6f85", dash = false, head = "arrow" }
+inh = { colour = "#6e4bad", dash = false, head = "tee" }
+excl = { colour = "#6c6f85", dash = "1.6 3.4", head = "tee" }
+req = { colour = "#765c56", dash = true, head = "arrow" }
+
+[accents]  # the 14 accent names the glyph layers use
+rosewater = "#dc8a78"
+flamingo = "#dd7878"
+pink = "#ea76cb"
+mauve = "#8839ef"
+red = "#d20f39"
+maroon = "#e64553"
+peach = "#fe640b"
+yellow = "#df8e1d"
+green = "#40a02b"
+teal = "#179299"
+sky = "#04a5e5"
+sapphire = "#209fb5"
+blue = "#1e66f5"
+lavender = "#7287fd"

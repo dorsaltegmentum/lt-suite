@@ -1,0 +1,172 @@
+{
+ "schema_version": 2,
+ "module_id": "c1-r107",
+ "run_id": 107,
+ "drafted_at": "2000-01-01T00:00:00Z",
+ "source_module": {
+  "path": "../modules/module-demo.json",
+  "sha256": "bc2387c558466b26f9b127dd0c63c041c444a7cbb1120c53c22cd6886ea946e4",
+  "question_digest": "d6a00e0b679563752a8313a264ffb78925c7fe55e0e221767bc716fc5e6cdedb"
+ },
+ "tier1_corpus": [],
+ "items": [
+  {
+   "item_id": "p1-11",
+   "status": "drafted",
+   "segments": [
+    {
+     "kind": "claim",
+     "text": "The tour shows each question type once.",
+     "provenance_refs": [
+      "p1"
+     ]
+    }
+   ],
+   "provenance": [
+    {
+     "ref": "p1",
+     "tier": 4,
+     "source_id": "10.5555/fixture.0001",
+     "locator": "section 1",
+     "tag": "[T4:10.5555/fixture.0001]"
+    }
+   ],
+   "confidence": "high",
+   "tier_descent": [
+    {
+     "from_tier": 1,
+     "to_tier": 2,
+     "reason": "absent"
+    },
+    {
+     "from_tier": 2,
+     "to_tier": 3,
+     "reason": "absent"
+    },
+    {
+     "from_tier": 3,
+     "to_tier": 4,
+     "reason": "absent"
+    }
+   ]
+  },
+  {
+   "item_id": "p1-12",
+   "status": "drafted",
+   "segments": [
+    {
+     "kind": "claim",
+     "text": "The sketch shows the start step leading to the check step.",
+     "provenance_refs": [
+      "p1"
+     ]
+    }
+   ],
+   "provenance": [
+    {
+     "ref": "p1",
+     "tier": 4,
+     "source_id": "10.5555/fixture.0001",
+     "locator": "section 2",
+     "tag": "[T4:10.5555/fixture.0001]"
+    }
+   ],
+   "confidence": "high",
+   "tier_descent": [
+    {
+     "from_tier": 1,
+     "to_tier": 2,
+     "reason": "absent"
+    },
+    {
+     "from_tier": 2,
+     "to_tier": 3,
+     "reason": "absent"
+    },
+    {
+     "from_tier": 3,
+     "to_tier": 4,
+     "reason": "absent"
+    }
+   ],
+   "needs_diagram": true,
+   "diagram_brief": {
+    "intent": "Sketch the tour order.",
+    "nodes": [
+     "start",
+     "check"
+    ],
+    "edges": [
+     {
+      "from": "start",
+      "to": "check",
+      "role": "stimulation"
+     }
+    ]
+   },
+   "asset_refs": [
+    "diagram-p1-12.png"
+   ]
+  },
+  {
+   "item_id": "p1-14",
+   "status": "drafted",
+   "segments": [
+    {
+     "kind": "claim",
+     "text": "The detail inside the subpage is the order of steps.",
+     "provenance_refs": [
+      "p1"
+     ]
+    }
+   ],
+   "provenance": [
+    {
+     "ref": "p1",
+     "tier": 4,
+     "source_id": "10.5555/fixture.0001",
+     "locator": "section 3",
+     "tag": "[T4:10.5555/fixture.0001]"
+    }
+   ],
+   "confidence": "high",
+   "tier_descent": [
+    {
+     "from_tier": 1,
+     "to_tier": 2,
+     "reason": "absent"
+    },
+    {
+     "from_tier": 2,
+     "to_tier": 3,
+     "reason": "absent"
+    },
+    {
+     "from_tier": 3,
+     "to_tier": 4,
+     "reason": "absent"
+    }
+   ]
+  },
+  {
+   "item_id": "p1-16",
+   "status": "skipped",
+   "skip_reason": "unmapped-boundary"
+  },
+  {
+   "item_id": "p2-21",
+   "status": "skipped",
+   "skip_reason": "trat-answers-unavailable"
+  },
+  {
+   "item_id": "p2-22",
+   "status": "skipped",
+   "skip_reason": "trat-answers-unavailable"
+  },
+  {
+   "item_id": "p2-23",
+   "status": "skipped",
+   "skip_reason": "trat-answers-unavailable"
+  }
+ ]
+}

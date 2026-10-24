@@ -1,0 +1,90 @@
+{
+  "slug": "toy-case",
+  "title": "Fictional enzyme X deficiency",
+  "subtitle": "Alex Example, 34 · tiredness and pale skin patches · an invented case",
+  "group": "Worked example",
+  "members": [
+    "Alex Example"
+  ],
+  "aria_label": "Mechanism of fictional enzyme X deficiency: an inherited gene fault lowers enzyme X, substrate S builds up, and the findings, the diagnosis and two treatments each attach to a step of that chain.",
+  "diagram_name": "Toy case mechanism",
+  "verify_probe": "m_build",
+  "stages": [
+    {
+      "id": "cause",
+      "n": 1,
+      "icon": "dna",
+      "when": "from birth"
+    },
+    {
+      "id": "mech",
+      "n": 2,
+      "icon": "flask",
+      "when": "over years"
+    },
+    {
+      "id": "find",
+      "n": 3,
+      "icon": "microscope",
+      "when": "at the visit"
+    },
+    {
+      "id": "care",
+      "n": 4,
+      "icon": "pill",
+      "when": "after the assay"
+    }
+  ],
+  "timeline": {
+    "label": "TIME COURSE"
+  },
+  "inset": {
+    "image": "assets/clearance.svg",
+    "mode": "themed",
+    "title": "CLEARANCE",
+    "icon": "water",
+    "fade": [],
+    "credit": "Drawn for this example",
+    "labels": [
+      {
+        "text": "Vessel",
+        "at": [
+          0.21,
+          0.08
+        ],
+        "side": "left"
+      },
+      {
+        "text": "Substrate S",
+        "at": [
+          0.18,
+          0.37
+        ],
+        "side": "left"
+      },
+      {
+        "text": "Enzyme X",
+        "at": [
+          0.775,
+          0.507
+        ],
+        "side": "right",
+        "bold": true
+      },
+      {
+        "text": "Tissue",
+        "at": [
+          0.81,
+          0.8
+        ],
+        "side": "right"
+      }
+    ]
+  },
+  "sources": [
+    {
+      "label": "Case notes (invented)",
+      "path": "sources/case-notes.md"
+    }
+  ]
+}

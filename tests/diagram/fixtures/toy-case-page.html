@@ -1,0 +1,1046 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fictional enzyme X deficiency: mechanism</title>
+<style>
+</style>
+<style>
+/* A paper page round one wide figure: header, the figure with its view controls, files, findings, sources.
+   Page tokens first; the figure tokens (rings, quiz cards, panel swatches, arrow glyphs) are the diagram's
+   own colours from the configured palettes (style.palettes). */
+:root {
+  --bg: #EEF0F3; --surface: #FFFFFF; --ink: #1F2430; --muted: #5A6070; --rule: #D5D9E1;
+  --accent: #3A8791; --accent-ink: #FFFFFF; --chip: #E4F1F3;
+  --paper: #ffffff; --fig-0: block; --fig-1: none;
+  --sans: 'Noto Sans', system-ui, -apple-system, "Segoe UI", sans-serif; --mono: 'Noto Sans Mono', ui-monospace, monospace;
+  --ring: #000000; --q-mark: #3a3a3a;
+  --r-risk-fill: #fefdfd; --r-risk-line: #8a8a8a;
+  --r-mech-fill: #9bd29d; --r-mech-line: #0d7c26;
+  --r-sign-fill: #ffdfe0; --r-sign-line: #dc5668;
+  --r-inv-fill: #b3d3f4; --r-inv-line: #4477aa;
+  --r-dx-fill: #fdf3b3; --r-dx-line: #9c8c00;
+  --r-tx-fill: #efa2c7; --r-tx-line: #aa3377;
+  --r-anat-fill: #e2d9d3; --r-anat-line: #5b5048;
+  --e-stim: #3a3a3a; --e-inh: #aa3377; --e-excl: #3a3a3a; --e-req: #5b5048;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #151A21; --surface: #1D232C; --ink: #E7EAF0; --muted: #A2AABA; --rule: #333B48;
+    --accent: #6FC0C9; --accent-ink: #0E2226; --chip: #22343A; color-scheme: dark;
+    --paper: #010409; --fig-0: none; --fig-1: block;
+    --ring: #ffffff; --q-mark: #b7bdc8;
+    --r-risk-fill: #3c2400; --r-risk-line: #ffa90e;
+    --r-mech-fill: #103739; --r-mech-line: #92dadd;
+    --r-sign-fill: #1a0300; --r-sign-line: #a96b59;
+    --r-inv-fill: #001125; --r-inv-line: #3f90da;
+    --r-dx-fill: #1b2322; --r-dx-line: #94a4a2;
+    --r-tx-fill: #0b0015; --r-tx-line: #923fc7;
+    --r-anat-fill: #1d1814; --r-anat-line: #efe2d8;
+    --e-stim: #b7bdc8; --e-inh: #923fc7; --e-excl: #b7bdc8; --e-req: #efe2d8;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #151A21; --surface: #1D232C; --ink: #E7EAF0; --muted: #A2AABA; --rule: #333B48;
+  --accent: #6FC0C9; --accent-ink: #0E2226; --chip: #22343A; color-scheme: dark;
+  --paper: #010409; --fig-0: none; --fig-1: block;
+  --ring: #ffffff; --q-mark: #b7bdc8;
+  --r-risk-fill: #3c2400; --r-risk-line: #ffa90e;
+  --r-mech-fill: #103739; --r-mech-line: #92dadd;
+  --r-sign-fill: #1a0300; --r-sign-line: #a96b59;
+  --r-inv-fill: #001125; --r-inv-line: #3f90da;
+  --r-dx-fill: #1b2322; --r-dx-line: #94a4a2;
+  --r-tx-fill: #0b0015; --r-tx-line: #923fc7;
+  --r-anat-fill: #1d1814; --r-anat-line: #efe2d8;
+  --e-stim: #b7bdc8; --e-inh: #923fc7; --e-excl: #b7bdc8; --e-req: #efe2d8;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink);
+  font: 15px/1.55 var(--sans); padding: 0 16px; }
+.wrap { max-width: 1240px; margin: 0 auto; padding-block: 28px 48px; display: grid; gap: 22px; }
+header { display: grid; gap: 6px; }
+.eyebrow { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+h1 { margin: 0; font: 600 clamp(28px, 4.2vw, 42px)/1.12 var(--sans); text-wrap: balance; }
+.lede { margin: 0; max-width: 68ch; color: var(--muted); }
+.team { margin: 0; font-size: 13.5px; color: var(--muted); }
+.team b { color: var(--ink); font-weight: 600; }
+.bar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; }
+.hint { color: var(--muted); font-size: 13px; }
+.seg { display: inline-flex; flex-wrap: wrap; border: 1px solid var(--rule); border-radius: 999px; overflow: hidden; background: var(--surface); }
+.seg button { font: 600 13px var(--sans); border: 0; background: transparent; color: var(--ink);
+  padding: 7px 14px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+.seg button:focus-visible, .files .dl:focus-visible, .btn:focus-visible, .fig-ctl select:focus-visible,
+.ci:focus-visible, .paper:focus-visible, .tp-sel:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.seg button:focus-visible { outline-offset: -3px; }
+.paper { background: var(--paper); border: 1px solid var(--rule); border-radius: 14px; overflow: auto; max-height: 82vh;
+  box-shadow: 0 1px 2px rgba(0,0,0,.05); }
+.paper svg.fig { display: block; width: 1744px; max-width: none; height: auto; }
+.paper svg.fig { display: none; }
+.paper svg.fig-tol-bright { display: var(--fig-0, none); }
+.paper svg.fig-petroff-10-on-primer-dark-high-contrast { display: var(--fig-1, none); }
+.shell.pal-tol-bright { --paper: #ffffff; --fig-0: block; --fig-1: none;
+  --ring: #000000; --q-mark: #3a3a3a;
+  --r-risk-fill: #fefdfd; --r-risk-line: #8a8a8a;
+  --r-mech-fill: #9bd29d; --r-mech-line: #0d7c26;
+  --r-sign-fill: #ffdfe0; --r-sign-line: #dc5668;
+  --r-inv-fill: #b3d3f4; --r-inv-line: #4477aa;
+  --r-dx-fill: #fdf3b3; --r-dx-line: #9c8c00;
+  --r-tx-fill: #efa2c7; --r-tx-line: #aa3377;
+  --r-anat-fill: #e2d9d3; --r-anat-line: #5b5048;
+  --e-stim: #3a3a3a; --e-inh: #aa3377; --e-excl: #3a3a3a; --e-req: #5b5048; }
+.shell.pal-petroff-10-on-primer-dark-high-contrast { --paper: #010409; --fig-0: none; --fig-1: block;
+  --ring: #ffffff; --q-mark: #b7bdc8;
+  --r-risk-fill: #3c2400; --r-risk-line: #ffa90e;
+  --r-mech-fill: #103739; --r-mech-line: #92dadd;
+  --r-sign-fill: #1a0300; --r-sign-line: #a96b59;
+  --r-inv-fill: #001125; --r-inv-line: #3f90da;
+  --r-dx-fill: #1b2322; --r-dx-line: #94a4a2;
+  --r-tx-fill: #0b0015; --r-tx-line: #923fc7;
+  --r-anat-fill: #1d1814; --r-anat-line: #efe2d8;
+  --e-stim: #b7bdc8; --e-inh: #923fc7; --e-excl: #b7bdc8; --e-req: #efe2d8; }
+.paper.fit svg.fig { width: 100%; }
+.paper.zoom { overflow: hidden; }
+.paper.zoom svg.fig { width: 100%; height: auto; aspect-ratio: 16 / 9; max-height: 76vh; }
+figure { margin: 0; display: grid; gap: 10px; }
+figcaption { color: var(--muted); font-size: 13.5px; max-width: 90ch; }
+section { background: var(--surface); border: 1px solid var(--rule); border-radius: 14px; padding: 18px 20px; }
+h2 { margin: 0 0 10px; font: 600 19px/1.3 var(--sans); }
+.files { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+.file { display: grid; gap: 6px; align-content: start; border: 1px solid var(--rule); border-radius: 12px; padding: 14px 16px; }
+.file h3 { margin: 0; font: 600 15px/1.3 var(--sans); }
+.file p { margin: 0; color: var(--muted); font-size: 13.5px; }
+.file code { font-size: 12.5px; background: var(--chip); padding: 1px 5px; border-radius: 5px; }
+.files .dl { justify-self: start; font: 600 13.5px var(--sans); border: 1px solid var(--accent); text-decoration: none;
+  background: var(--accent); color: var(--accent-ink); border-radius: 999px; padding: 7px 16px; cursor: pointer; }
+.tablewrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 14px; }
+th, td { text-align: left; vertical-align: top; padding: 8px 10px; border-bottom: 1px solid var(--rule); }
+th { font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+td.k { white-space: nowrap; color: var(--muted); font-size: 13px; }
+ol { margin: 0; padding-left: 20px; display: grid; gap: 6px; font-size: 14px; }
+
+/* the interactive figure: mode bars, trace panel, overlays */
+.sr-only { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden;
+  clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+.shell { display: grid; gap: 10px; min-width: 0; }
+.fig-ctl { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; min-height: 36px; min-width: 0; }
+.fig-ctl[hidden], .tp[hidden] { display: none; }
+.grp { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 8px; color: var(--muted); font-size: 13px; }
+.btn { font: 600 13px var(--sans); border: 1px solid var(--rule); background: var(--surface);
+  color: var(--ink); border-radius: 999px; padding: 7px 14px; cursor: pointer; }
+.btn:hover:not(:disabled) { border-color: var(--accent); }
+.btn:disabled { color: var(--muted); cursor: default; opacity: .6; }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.fig-ctl select { font: 500 13.5px var(--sans); color: var(--ink); background: var(--surface);
+  border: 1px solid var(--rule); border-radius: 8px; padding: 6px 8px; max-width: min(100%, 420px); min-width: 0; }
+.step { display: grid; gap: 2px; min-width: 0; }
+.step-count { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; letter-spacing: .04em; }
+.step-title { font: 700 13.5px/1.3 var(--mono); color: var(--ink); }
+.step-note { margin: 0; flex-basis: 100%; color: var(--muted); font-size: 14px; max-width: 90ch; }
+.count { font-variant-numeric: tabular-nums; color: var(--ink); font-weight: 600; }
+.area { display: grid; gap: 14px; grid-template-columns: minmax(0, 1fr); min-width: 0; }
+@media (min-width: 1100px) { .area.with-panel { grid-template-columns: minmax(0, 1fr) 300px; } #tr-status { display: none; } }
+.tp { background: var(--surface); border: 1px solid var(--rule); border-radius: 14px; padding: 14px 16px;
+  max-height: 82vh; overflow: auto; min-width: 0; align-self: start; }
+.tp h3 { margin: 0 0 8px; font: 600 15px/1.3 var(--sans); }
+.tp-empty { margin: 0; color: var(--muted); font-size: 13.5px; }
+.tp-sel { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 8px; align-items: start; font-weight: 600;
+  font-size: 14px; border-radius: 8px; }
+.tp-meta { margin: 4px 0 0; color: var(--muted); font-size: 12.5px; }
+.tp h4 { margin: 16px 0 2px; font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.tp-dist { margin: 8px 0 2px; font-size: 12px; color: var(--muted); }
+.tp ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+.ci { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 2px 8px; width: 100%; text-align: left;
+  font: 500 13.5px/1.4 var(--sans); color: var(--ink); background: transparent;
+  border: 0; border-radius: 8px; padding: 6px 6px; cursor: pointer; }
+.ci:hover { background: var(--chip); }
+.cv { grid-column: 2; color: var(--muted); font-size: 12.5px; }
+.sw { display: inline-block; width: 20px; height: 13px; margin-top: 3px; border-radius: 4px;
+  background: var(--sw-fill); border: 1.5px solid var(--sw-line); }
+.sw.r-anat { border-style: dashed; }
+.kg { display: inline-block; vertical-align: -1px; margin-right: 5px; overflow: visible; }
+.kg line, .kg polygon { stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.r-risk { --sw-fill: var(--r-risk-fill); --sw-line: var(--r-risk-line); }
+.r-mech { --sw-fill: var(--r-mech-fill); --sw-line: var(--r-mech-line); }
+.r-sign { --sw-fill: var(--r-sign-fill); --sw-line: var(--r-sign-line); }
+.r-inv { --sw-fill: var(--r-inv-fill); --sw-line: var(--r-inv-line); }
+.r-dx { --sw-fill: var(--r-dx-fill); --sw-line: var(--r-dx-line); }
+.r-tx { --sw-fill: var(--r-tx-fill); --sw-line: var(--r-tx-line); }
+.r-anat { --sw-fill: var(--r-anat-fill); --sw-line: var(--r-anat-line); }
+.kg .ks-stim { stroke: var(--e-stim); } .kg .kf-stim { fill: var(--e-stim); }
+.kg .ks-inh { stroke: var(--e-inh); } .kg .kf-inh { fill: var(--e-inh); }
+.kg .ks-excl { stroke: var(--e-excl); } .kg .kf-excl { fill: var(--e-excl); }
+.kg .ks-req { stroke: var(--e-req); } .kg .kf-req { fill: var(--e-req); }
+.paper svg.fig .node, .paper svg.fig .edge, .paper svg.fig .stage, .paper svg.fig [data-v] {
+  transition: opacity .3s ease, visibility .3s; }
+.paper svg.fig [data-v="past"] { opacity: .5; }
+.paper svg.fig [data-v="fade"] { opacity: .12; }
+.paper svg.fig [data-v="gone"] { opacity: 0; visibility: hidden; }
+.paper svg.fig [data-v="dim"] { opacity: .16; }
+.paper[data-mode="trace"] svg.fig .node { cursor: pointer; }
+.paper svg.fig .node:focus, .paper svg.fig .qcard:focus { outline: none; }
+.paper svg.fig .ov { pointer-events: none; }
+.paper svg.fig .qcard { display: none; }
+.paper[data-mode="quiz"] svg.fig .qcard { display: inline; }
+.paper[data-mode="quiz"] svg.fig .qcard.out { display: none; }
+.paper svg.fig .ov rect { fill: none; vector-effect: non-scaling-stroke; }
+.paper svg.fig .ov .ring { stroke: var(--ring); stroke-width: 3px; }
+.paper svg.fig .ov .ring-next { stroke: var(--ring); stroke-width: 2px; stroke-dasharray: 4 6; stroke-linecap: round; }
+.paper svg.fig .ov .ring-focus { stroke: var(--accent); stroke-width: 3px; }
+.paper svg.fig .qcard { cursor: pointer; transition: opacity .25s ease; }
+.paper svg.fig .qcard.shown { opacity: 0; pointer-events: none; }
+.paper svg.fig .qcard rect { fill: var(--sw-fill); stroke: var(--sw-line); stroke-width: 1.5; }
+.paper svg.fig .qcard.bold rect { stroke-width: 2.2; }
+.paper svg.fig .qcard.r-anat rect { stroke-dasharray: 4.5 5; stroke-linecap: round; }
+.paper svg.fig .qcard text { fill: var(--q-mark); font: 700 17px var(--sans); }
+.paper[data-mode="present"].fit, .paper[data-mode="present"].zoom { touch-action: pan-y pinch-zoom; }
+.shell:fullscreen { background: var(--bg); padding: 16px; display: flex; flex-direction: column; gap: 10px; overflow: auto; }
+.shell:fullscreen .area { flex: 1 1 auto; min-height: 0; grid-template-rows: minmax(0, 1fr); }
+.shell:fullscreen .paper { max-height: none; height: 100%; }
+.shell:fullscreen .paper.fit svg.fig, .shell:fullscreen .paper.zoom svg.fig { width: 100%; height: 100%;
+  aspect-ratio: auto; max-height: none; }
+@media (pointer: coarse) { .seg button, .btn { min-height: 40px; } }
+@media (prefers-reduced-motion: reduce) {
+  * { scroll-behavior: auto; }
+  .paper svg.fig .node, .paper svg.fig .edge, .paper svg.fig .stage, .paper svg.fig [data-v], .paper svg.fig .qcard { transition: none; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Worked example · mechanistic flow chart</div>
+    <h1>Fictional enzyme X deficiency</h1>
+    <p class="lede">Alex Example, 34, has had tiredness after light exercise for two years and pale patches on the skin. The figure follows one invented chain from an inherited gene fault to every finding, the test that makes the diagnosis and the two treatments. Read it left to right and top to bottom, one stage at a time.</p>
+    <p class="team"><b>Worked example</b> · Alex Example</p>
+  </header>
+  <figure>
+    <div class="shell" id="fig-shell" data-mode="read">
+      <div class="bar">
+        <div class="seg" role="group" aria-label="View">
+          <button type="button" id="mode-read" aria-pressed="true">Read</button>
+          <button type="button" id="mode-present" aria-pressed="false">Present</button>
+          <button type="button" id="mode-trace" aria-pressed="false">Trace</button>
+          <button type="button" id="mode-quiz" aria-pressed="false">Quiz</button>
+        </div>
+        <div class="seg" role="group" aria-label="Palette">
+          <button type="button" id="pal-auto" data-pal="" aria-pressed="true" title="Select a light or dark palette to match the page">Auto</button>
+          <button type="button" id="pal-tol-bright" data-pal="tol-bright" aria-pressed="false">Paul Tol Bright</button>
+          <button type="button" id="pal-petroff-10-on-primer-dark-high-contrast" data-pal="petroff-10-on-primer-dark-high-contrast" aria-pressed="false">Petroff 2021 10-colour cycle on GitHub Primer Dark High Contrast</button>
+        </div>
+        <div class="seg" role="group" aria-label="Figure size">
+          <button type="button" id="size-actual" aria-pressed="true">Actual size</button>
+          <button type="button" id="size-fit" aria-pressed="false">Fit width</button>
+          <button type="button" id="size-zoom" aria-pressed="false" hidden>Zoom to stage</button>
+        </div>
+      </div>
+      <div class="fig-ctl" id="bar-read">
+        <span class="hint">Scroll to pan at full size, or fit the whole figure to the width. Present steps through the stages; Trace follows one box’s causes and consequences; Quiz covers the boxes so you can test yourself.</span>
+      </div>
+      <div class="fig-ctl" id="bar-present" hidden>
+        <div class="grp">
+          <button type="button" class="btn" id="pv-prev" aria-keyshortcuts="ArrowLeft">‹ Back</button>
+          <button type="button" class="btn primary" id="pv-next" aria-keyshortcuts="ArrowRight">Next ›</button>
+        </div>
+        <div class="step"><span class="step-count" id="pv-count"></span><span class="step-title" id="pv-title"></span></div>
+        <div class="grp"><span id="pv-later-l">Later stages</span>
+          <div class="seg" role="group" aria-labelledby="pv-later-l">
+            <button type="button" id="pv-gone" aria-pressed="true">Hidden</button>
+            <button type="button" id="pv-fade" aria-pressed="false">Faded</button>
+          </div>
+        </div>
+        <button type="button" class="btn" id="pv-full" aria-pressed="false">Full screen</button>
+        <p class="step-note" id="pv-note" hidden></p>
+      </div>
+      <div class="fig-ctl" id="bar-trace" hidden>
+        <span class="hint">Tap or click a box to see what leads to it and what follows from it.</span>
+        <label class="grp" for="tr-pick">Box <select id="tr-pick"><option value="">Choose a box…</option></select></label>
+        <div class="grp"><span id="tr-depth-l">Steps</span>
+          <div class="seg" role="group" aria-labelledby="tr-depth-l">
+            <button type="button" id="tr-d1" data-depth="1" aria-pressed="false">Direct only</button>
+            <button type="button" id="tr-d2" data-depth="2" aria-pressed="false">2</button>
+            <button type="button" id="tr-d3" data-depth="3" aria-pressed="false">3</button>
+            <button type="button" id="tr-d0" data-depth="0" aria-pressed="true">All</button>
+          </div>
+        </div>
+        <button type="button" class="btn" id="tr-clear" aria-keyshortcuts="Escape" disabled>Clear</button>
+        <p class="step-note" id="tr-status" hidden></p>
+      </div>
+      <div class="fig-ctl" id="bar-quiz" hidden>
+        <label class="grp" for="qz-scope">Cover <select id="qz-scope"><option value="">All stages</option></select></label>
+        <span class="grp"><span class="count" id="qz-count"></span></span>
+        <div class="grp">
+          <button type="button" class="btn primary" id="qz-next">Reveal next</button>
+          <button type="button" class="btn" id="qz-all">Reveal all</button>
+          <button type="button" class="btn" id="qz-reset">Reset</button>
+        </div>
+      </div>
+      <div class="area" id="fig-area">
+        <div class="paper" id="paper" data-mode="read" tabindex="0" role="region" aria-label="Diagram">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1744 798" class="fig fig-tol-bright" data-pal="tol-bright" role="img" aria-label="Mechanism of fictional enzyme X deficiency: an inherited gene fault lowers enzyme X, substrate S builds up, and the findings, the diagnosis and two treatments each attach to a step of that chain.">
+<rect width="1744" height="798" fill="#ffffff"/>
+<g id="header" class="header">
+<text x="42.0" y="64" font-family="'Noto Sans Mono', ui-monospace, monospace" font-size="30" font-weight="700" fill="#000000">Fictional enzyme X deficiency</text>
+<text x="42.0" y="100" font-family="'Noto Sans', sans-serif" font-size="19" font-weight="500" fill="#3a3a3a">Alex Example, 34 · tiredness and pale skin patches · an invented case</text>
+<text x="1702.0" y="64" text-anchor="end" font-family="'Noto Sans Mono', ui-monospace, monospace" font-size="21" font-weight="700" fill="#000000">Worked example</text>
+<text x="1702.0" y="100" text-anchor="end" font-family="'Noto Sans', sans-serif" font-size="17" font-weight="500" fill="#3a3a3a">Alex Example</text>
+</g>
+<g id="key" class="key">
+<rect x="942.0" y="180.0" width="760.0" height="410.0" rx="12" ry="12" fill="#ffffff" stroke="#9e9e9e" stroke-width="1.2"/>
+<text x="958.0" y="206.0" font-family="'Noto Sans Mono', ui-monospace, monospace" font-size="14" font-weight="700" fill="#000000">KEY</text>
+<rect x="960.0" y="228.0" width="34" height="20" rx="6" fill="#fefdfd" stroke="#8a8a8a" stroke-width="1.5"/>
+<circle cx="963.0" cy="229.0" r="8.5" fill="#fefdfd" stroke="#8a8a8a" stroke-width="1.2"/>
+<path transform="translate(957.00,223.00) scale(0.5000)" d="M5.02 3H18.98Q19.82 3 20.41 3.59Q21 4.18 21 5.02V18.98Q21 19.82 20.41 20.41Q19.82 21 18.98 21H5.02Q4.18 21 3.59 20.41Q3 19.82 3 18.98V5.02Q3 4.18 3.59 3.59Q4.18 3 5.02 3ZM6.98 5.02Q6.19 5.02 5.6 5.6Q5.02 6.19 5.02 7.01Q5.02 7.82 5.6 8.41Q6.19 9 7.01 9Q7.82 9 8.41 8.41Q9 7.82 9 7.01Q9 6.19 8.41 5.6Q7.82 5.02 6.98 5.02ZM17.02 15Q16.18 15 15.59 15.59Q15 16.18 15 16.99Q15 17.81 15.59 18.4Q16.18 18.98 16.99 18.98Q17.81 18.98 18.4 18.4Q18.98 17.81 18.98 16.99Q18.98 16.18 18.4 15.59Q17.81 15 17.02 15ZM17.02 5.02Q16.18 5.02 15.59 5.6Q15 6.19 15 7.01Q15 7.82 15.59 8.41Q16.18 9 16.99 9Q17.81 9 18.4 8.41Q18.98 7.82 18.98 7.01Q18.98 6.19 18.4 5.6Q17.81 5.02 17.02 5.02ZM12 9.98Q11.16 9.98 10.57 10.57Q9.98 11.16 9.98 12Q9.98 12.84 10.57 13.43Q11.16 14.02 12 14.02Q12.84 14.02 13.43 13.43Q14.02 12.84 14.02 12Q14.02 11.16 13.43 10.57Q12.84 9.98 12 9.98ZM6.98 15Q6.19 15 5.6 15.59Q5.02 16.18 5.02 16.99Q5.02 17.81 5.6 18.4Q6.19 18.98 7.01 18.98Q7.82 18.98 8.41 18.4Q9 17.81 9 16.99Q9 16.18 8.41 15.59Q7.82 15 6.98 15Z" fill="#8a8a8a"/>
+<text x="1006.0" y="243.0" font-family="'Noto Sans', sans-serif" font-size="14" font-weight="500" fill="#000000">Risk factor</text>
+<rect x="960.0" y="271.5" width="34" height="20" rx="6" fill="#9bd29d" stroke="#0d7c26" stroke-width="1.5"/>
+<circle cx="963.0" cy="272.5" r="8.5" fill="#9bd29d" stroke="#0d7c26" stroke-width="1.2"/>
+<path transform="translate(957.00,266.50) scale(0.5000)" d="M12 15.5Q10.54 15.5 9.52 14.48Q8.5 13.46 8.5 12Q8.5 10.54 9.52 9.52Q10.54 8.5 12 8.5Q13.46 8.5 14.48 9.52Q15.5 10.54 15.5 12Q15.5 13.46 14.48 14.48Q13.46 15.5 12 15.5ZM19.46 12.98Q19.51 12.43 19.5 12Q19.49 11.57 19.46 11.02L21.55 9.38Q21.7 9.24 21.72 9.07Q21.74 8.9 21.65 8.71L19.63 5.26Q19.58 5.11 19.4 5.04Q19.22 4.97 19.03 5.06L16.54 6.05Q15.7 5.4 14.86 5.06L14.5 2.45Q14.5 2.26 14.35 2.14Q14.21 2.02 14.02 2.02H9.98Q9.79 2.02 9.65 2.14Q9.5 2.26 9.5 2.45L9.14 5.06Q8.3 5.4 7.46 6.05L4.97 5.06Q4.78 4.97 4.6 5.04Q4.42 5.11 4.37 5.26L2.35 8.71Q2.26 8.9 2.28 9.07Q2.3 9.24 2.45 9.38L4.54 11.02Q4.49 11.57 4.5 12Q4.51 12.43 4.54 12.98L2.45 14.62Q2.3 14.76 2.28 14.93Q2.26 15.1 2.35 15.29L4.37 18.74Q4.42 18.89 4.6 18.96Q4.78 19.03 4.97 18.94L7.46 17.95Q8.3 18.6 9.14 18.94L9.5 21.55Q9.5 21.74 9.65 21.86Q9.79 21.98 9.98 21.98H14.02Q14.21 21.98 14.35 21.86Q14.5 21.74 14.5 21.55L14.86 18.94Q15.74 18.55 16.54 17.95L19.03 18.94Q19.22 19.03 19.4 18.96Q19.58 18.89 19.63 18.74L21.65 15.29Q21.74 15.1 21.72 14.93Q21.7 14.76 21.55 14.62Z" fill="#0d7c26"/>
+<text x="1006.0" y="286.5" font-family="'Noto Sans', sans-serif" font-size="14" font-weight="500" fill="#000000">Mechanism</text>
+<rect x="960.0" y="315.0" width="34" height="20" rx="6" fill="#e2d9d3" stroke="#5b5048" stroke-width="1.5" stroke-dasharray="4.5 5" stroke-linecap="round"/>
+<circle cx="963.0" cy="316.0" r="8.5" fill="#e2d9d3" stroke="#5b5048" stroke-width="1.2"/>
+<path transform="translate(957.00,310.00) scale(0.5000)" d="M21 9H15V21.98H12.98V15.98H11.02V21.98H9V9H3V6.98H21ZM12 2.02Q12.84 2.02 13.43 2.6Q14.02 3.19 14.02 4.01Q14.02 4.82 13.43 5.41Q12.84 6 12 6Q11.16 6 10.57 5.41Q9.98 4.82 9.98 4.01Q9.98 3.19 10.57 2.6Q11.16 2.02 12 2.02Z" fill="#5b5048"/>
+<text x="1006.0" y="330.0" font-family="'Noto Sans', sans-serif" font-size="14" font-weight="500" fill="#000000">Normal anatomy or physiology</text>
+<rect x="960.0" y="358.5" width="34" height="20" rx="6" fill="#ffdfe0" stroke="#dc5668" stroke-width="1.5"/>
+<circle cx="963.0" cy="359.5" r="8.5" fill="#ffdfe0" stroke="#dc5668" stroke-width="1.2"/>
+<path transform="translate(957.00,353.50) scale(0.5000)" d="M18.98 8.02Q19.42 8.02 19.72 8.29Q20.02 8.57 20.02 9Q20.02 9.43 19.72 9.71Q19.42 9.98 18.98 9.98Q18.55 9.98 18.28 9.71Q18 9.43 18 9Q18 8.57 18.28 8.29Q18.55 8.02 18.98 8.02ZM2.02 2.02V11.02Q2.02 13.22 3.47 14.9Q4.92 16.58 7.13 16.92Q7.61 19.18 9.37 20.58Q11.14 21.98 13.49 21.98Q15.26 21.98 16.75 21.12Q18.24 20.26 19.13 18.76Q20.02 17.26 20.02 15.5V11.81Q20.9 11.47 21.44 10.7Q21.98 9.94 21.98 9Q21.98 7.73 21.12 6.86Q20.26 6 19.01 6Q17.76 6 16.87 6.86Q15.98 7.73 15.98 9Q15.98 9.94 16.55 10.72Q17.11 11.5 18 11.81V15.43Q18 17.3 16.68 18.61Q15.36 19.92 13.49 19.92Q12 19.92 10.82 19.08Q9.65 18.24 9.24 16.92Q11.3 16.44 12.66 14.78Q14.02 13.13 14.02 11.02V2.02H9.98V5.02H12V11.02Q12 12.65 10.82 13.82Q9.65 15 7.99 15Q6.34 15 5.16 13.82Q3.98 12.65 3.98 11.02V5.02H6V2.02Z" fill="#dc5668"/>
+<text x="1006.0" y="373.5" font-family="'Noto Sans', sans-serif" font-size="14" font-weight="500" fill="#000000">Sign or symptom</text>
+<rect x="960.0" y="402.0" width="34" height="20" rx="6" fill="#b3d3f4" stroke="#4477aa" stroke-width="1.5"/>
+<circle cx="963.0" cy="403.0" r="8.5" fill="#b3d3f4" stroke="#4477aa" stroke-width="1.2"/>
+<path transform="translate(957.00,397.00) scale(0.5000)" d="M6.98 2.02V3.98H8.02V18Q8.02 19.63 9.19 20.81Q10.37 21.98 12 21.98Q13.63 21.98 14.81 20.81Q15.98 19.63 15.98 18V3.98H17.02V2.02ZM11.02 15.98Q10.54 15.98 10.26 15.73Q9.98 15.48 9.98 15Q9.98 14.52 10.26 14.27Q10.54 14.02 10.99 14.02Q11.45 14.02 11.72 14.27Q12 14.52 12 15Q12 15.48 11.72 15.73Q11.45 15.98 11.02 15.98ZM12.98 12Q12.55 12 12.28 11.72Q12 11.45 12 10.99Q12 10.54 12.28 10.26Q12.55 9.98 13.01 9.98Q13.46 9.98 13.74 10.26Q14.02 10.54 14.02 10.99Q14.02 11.45 13.74 11.72Q13.46 12 12.98 12ZM14.02 6.98H9.98V3.98H14.02Z" fill="#4477aa"/>
+<text x="1006.0" y="417.0" font-family="'Noto Sans', sans-serif" font-size="14" font-weight="500" fill="#000000">Investigation</text>
+<rect x="960.0" y="445.5" width="34" height="20" rx="6" fill="#fdf3b3" stroke="#9c8c00" stroke-width="1.5"/>
+<circle cx="963.0" cy="446.5" r="8.5" fill="#fdf3b3" stroke="#9c8c00" stroke-width="1.2"/>
+<path transform="translate(957.00,440.50) scale(0.5000)" d="M18.98 4.01H14.81Q14.47 3.12 13.7 2.56Q12.94 1.99 12 1.99Q11.06 1.99 10.28 2.56Q9.5 3.12 9.19 4.01H5.02Q4.18 4.01 3.59 4.6Q3 5.18 3 6.02V19.99Q3 20.83 3.59 21.42Q4.18 22.01 5.02 22.01H18.98Q19.82 22.01 20.41 21.42Q21 20.83 21 19.99V6.02Q21 5.18 20.41 4.6Q19.82 4.01 18.98 4.01ZM12 4.01Q12.43 4.01 12.71 4.28Q12.98 4.56 12.98 4.99Q12.98 5.42 12.71 5.72Q12.43 6.02 12 6.02Q11.57 6.02 11.29 5.72Q11.02 5.42 11.02 4.99Q11.02 4.56 11.29 4.28Q11.57 4.01 12 4.01ZM5.02 14.47H7.18Q7.2 14.47 10.51 8.09L11.45 15.07L13.92 11.88L16.54 14.47H18.98V16.01H15.89L14.06 14.23L10.37 18.91L9.6 13.15L8.11 16.01H5.02Z" fill="#9c8c00"/>
+<text x="1006.0" y="460.5" font-family="'Noto Sans', sans-serif" font-size="14" font-weight="500" fill="#000000">Diagnosis</text>
+<rect x="960.0" y="489.0" width="34" height="20" rx="6" fill="#efa2c7" stroke="#aa3377" stroke-width="1.5"/>
+<circle cx="963.0" cy="490.0" r="8.5" fill="#efa2c7" stroke="#aa3377" stroke-width="1.2"/>
+<path transform="translate(957.00,484.00) scale(0.5000)" d="M9.98 3 8.02 5.02V6.98H5.02Q4.18 6.98 3.64 7.6Q3.1 8.21 3 9L2.02 18.98Q1.92 19.82 2.44 20.41Q2.95 21 3.98 21H20.02Q21.05 21 21.56 20.41Q22.08 19.82 21.98 18.98L21 9Q20.9 8.21 20.34 7.6Q19.78 6.98 18.98 6.98H15.98V5.02L14.02 3ZM9.98 5.02H14.02V6.98H9.98ZM11.02 9.98H12.98V12.98H15.98V15H12.98V18H11.02V15H8.02V12.98H11.02Z" fill="#aa3377"/>
+<text x="1006.0" y="504.0" font-family="'Noto Sans', sans-serif" font-size="14" font-weight="500" fill="#000000">Treatment</text>
+<circle cx="971.0" cy="542.5" r="9.0" fill="#000000"/>
+<text x="971.0" y="546.5" text-anchor="middle" font-family="'Noto Sans Mono', ui-monospace, monospace" font-size="11" font-weight="700" fill="#ffffff">1</text>
+<text x="1006.0" y="547.5" font-family="'Noto Sans', sans-serif" font-size="14" font-weight="500" fill="#000000">Sequence number</text>
+<path d="M1253.5,238.0 L1298.0,238.0" fill="none" stroke="#3a3a3a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M1304.10,239.38 L1299.80,241.44 Q1297.99,242.30 1297.99,240.30 L1297.99,235.70 Q1297.99,233.70 1299.80,234.56 L1304.10,236.62 Q1306.99,238.00 1304.10,239.38 Z" fill="#3a3a3a"/>
+<text x="1319.5" y="243.0" font-family="'Noto Sans', sans-serif" font-size="14" font-weight="500" fill="#000000">Causal link</text>
+<path d="M1253.5,281.5 L1298.0,281.5" fill="none" stroke="#5b5048" stroke-width="1.5" stroke-dasharray="3.5 5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M1304.10,282.88 L1299.80,284.94 Q1297.99,285.80 1297.99,283.80 L1297.99,279.20 Q1297.99,277.20 1299.80,278.06 L1304.10,280.12 Q1306.99,281.50 1304.10,282.88 Z" fill="#5b5048"/>
+<text x="1319.5" y="286.5" font-family="'Noto Sans', sans-serif" font-size="14" font-weight="500" fill="#000000">Required structure or function</text>
+<path d="M1253.5,325.0 L1305.5,325.0" fill="none" stroke="#3a3a3a" stroke-width="1.65" stroke-dasharray="1.6 3.4" stroke-linecap="round" stroke-linejoin="round"/>
+<line x1="1305.5" y1="331.5" x2="1305.5" y2="318.5" stroke="#3a3a3a" stroke-width="2.5" stroke-linecap="round"/>
+<text x="1319.5" y="330.0" font-family="'Noto Sans', sans-serif" font-size="14" font-weight="500" fill="#000000">Evidence against diagnosis</text>
+<path d="M1253.5,368.5 L1305.5,368.5" fill="none" stroke="#aa3377" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"/>
+<line x1="1305.5" y1="375.0" x2="1305.5" y2="362.0" stroke="#aa3377" stroke-width="2.5" stroke-linecap="round"/>
+<text x="1319.5" y="373.5" font-family="'Noto Sans', sans-serif" font-size="14" font-weight="500" fill="#000000">Blocked by treatment</text>
+<circle cx="1279.5" cy="412.0" r="8.0" fill="#bbbbbb" stroke="#ffffff" stroke-width="1.5"/>
+<path transform="translate(1274.30,406.75) scale(0.4375)" d="M12.98 14.5H11.02V9.5H12.98ZM12.98 18.48H11.02V16.46H12.98ZM0.98 21.5H23.02L12 2.5Z" fill="#000000"/>
+<text x="1319.5" y="417.0" font-family="'Noto Sans', sans-serif" font-size="14" font-weight="500" fill="#000000">Pitfall: a common trap</text>
+<circle cx="1279.5" cy="455.5" r="8.0" fill="#4477aa" stroke="#ffffff" stroke-width="1.5"/>
+<path transform="translate(1274.30,450.25) scale(0.4375)" d="M12 17.76 18.19 21.5 16.54 14.45 21.98 9.74 14.81 9.12 12 2.5 9.19 9.12 2.02 9.74 7.46 14.45 5.81 21.5Z" fill="#ffffff"/>
+<text x="1319.5" y="460.5" font-family="'Noto Sans', sans-serif" font-size="14" font-weight="500" fill="#000000">High-yield: a key concept</text>
+<text x="1279.5" y="504.0" text-anchor="middle" font-family="'Noto Sans', sans-serif" font-size="14" font-weight="500" fill="#000000"><tspan fill="#ee6677">↑</tspan>  <tspan fill="#4477aa">↓</tspan></text>
+<text x="1319.5" y="504.0" font-family="'Noto Sans', sans-serif" font-size="14" font-weight="500" fill="#000000">Raised / reduced result</text>
+<rect x="1251.5" y="532.5" width="56" height="20" rx="6" fill="#b3d3f4" stroke="#4477aa" stroke-width="1.5"/>
+<line x1="1259.5" y1="542.5" x2="1291.5" y2="542.5" stroke="#81aad3" stroke-width="1.2" stroke-linecap="round"/>
+<rect x="1265.5" y="539.5" width="12.0" height="6" rx="3" fill="#89b0d8"/>
+<path d="M1295.9,539.1 L1301.1,542.5 L1295.9,545.9" fill="none" stroke="#ee6677" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+<circle cx="1291.5" cy="542.5" r="3.6" fill="#ee6677" stroke="#b3d3f4" stroke-width="1.2"/>
+<text x="1319.5" y="547.5" font-family="'Noto Sans', sans-serif" font-size="14" font-weight="500" fill="#000000">Band: reference interval; dot: result; › beyond scale</text>
+</g>
+<g id="timeline" class="timeline">
+<text x="42.0" y="148.0" font-family="'Noto Sans Mono', ui-monospace, monospace" font-size="14" font-weight="700" fill="#000000">TIME COURSE</text>
+<line class="tl-line" data-stage="mech" x1="276.0" y1="143.0" x2="602.3" y2="143.0" stroke="#3a3a3a" stroke-width="1.2" stroke-linecap="round"/>
+<line class="tl-line" data-stage="find" x1="734.7" y1="143.0" x2="1060.3" y2="143.0" stroke="#3a3a3a" stroke-width="1.2" stroke-linecap="round"/>
+<line class="tl-line" data-stage="care" x1="1193.2" y1="143.0" x2="1518.2" y2="143.0" stroke="#3a3a3a" stroke-width="1.2" stroke-linecap="round"/>
+<g class="tl-line" data-stage="care"><line x1="1680.0" y1="143.0" x2="1694.5" y2="143.0" stroke="#3a3a3a" stroke-width="1.2" stroke-linecap="round"/>
+<path d="M1700.56,144.38 L1696.25,146.44 Q1694.44,147.30 1694.44,145.30 L1694.44,140.70 Q1694.44,138.70 1696.25,139.56 L1700.56,141.62 Q1703.44,143.00 1700.56,144.38 Z" fill="#3a3a3a"/></g>
+<g class="tl-marker" data-stage="cause">
+<circle cx="162.4" cy="143.0" r="10.0" fill="#000000"/>
+<text x="162.4" y="147.3" text-anchor="middle" font-family="'Noto Sans Mono', ui-monospace, monospace" font-size="12" font-weight="700" fill="#ffffff">1</text>
+<path transform="translate(178.40,135.00) scale(0.6667)" d="M3.98 2.02H6V3.98Q6 5.06 6.47 5.95Q6.94 6.84 7.9 7.8Q8.86 8.76 11.11 10.22L9.29 11.4Q7.56 10.22 6.5 9.19Q3.98 6.79 3.98 3.98ZM18 2.02H20.02V3.98Q20.02 6.79 17.5 9.19Q16.56 10.13 15.14 11.11Q14.3 11.71 12.55 12.84Q10.82 13.97 9.98 14.52Q8.66 15.41 7.87 16.22Q6.94 17.16 6.47 18.05Q6 18.94 6 20.02V21.98H3.98V20.02Q3.98 17.21 6.5 14.81Q7.44 13.87 8.86 12.89Q9.7 12.29 11.45 11.16Q13.18 10.03 14.02 9.48Q15.34 8.59 16.13 7.78Q17.06 6.84 17.53 5.95Q18 5.06 18 3.98ZM14.71 12.6Q16.44 13.78 17.5 14.81Q20.02 17.21 20.02 20.02V21.98H18V20.02Q18 18.94 17.53 18.05Q17.06 17.16 16.1 16.2Q15.14 15.24 12.89 13.78ZM6.98 3H17.02V3.98Q17.02 3.96 16.92 4.49H7.08L6.98 3.98ZM7.68 6H16.32Q15.89 6.6 15.43 7.08L14.9 7.51H9.05L8.57 7.08Q8.11 6.6 7.68 6ZM9.1 16.49H14.95L15.43 16.92Q15.91 17.4 16.32 18H7.68Q8.11 17.4 8.57 16.92ZM7.08 19.51H16.92L17.02 20.02V21H6.98V20.02Z" fill="#000000"/>
+<text x="199.4" y="148.0" font-family="'Noto Sans', sans-serif" font-size="14" font-weight="500" fill="#000000">from birth</text>
+</g>
+<g class="tl-marker" data-stage="mech">
+<circle cx="620.3" cy="143.0" r="10.0" fill="#000000"/>
+<text x="620.3" y="147.3" text-anchor="middle" font-family="'Noto Sans Mono', ui-monospace, monospace" font-size="12" font-weight="700" fill="#ffffff">2</text>
+<path transform="translate(636.33,135.00) scale(0.6667)" d="M6 21.98Q4.73 21.98 3.86 21.12Q3 20.26 3 18.98Q3 18.1 3.5 17.4L9 7.82V6Q8.57 6 8.29 5.72Q8.02 5.45 8.02 5.02V3.98Q8.02 3.19 8.6 2.6Q9.19 2.02 9.98 2.02H14.02Q14.81 2.02 15.4 2.6Q15.98 3.19 15.98 3.98V5.02Q15.98 5.45 15.71 5.72Q15.43 6 15 6V7.82L20.5 17.4Q21 18.1 21 18.98Q21 20.26 20.14 21.12Q19.27 21.98 18 21.98ZM5.02 18.98Q5.02 19.42 5.29 19.72Q5.57 20.02 6 20.02H18Q18.43 20.02 18.71 19.72Q18.98 19.42 18.98 18.98Q18.98 18.7 18.79 18.43L16.54 14.5L14.02 17.02L8.95 11.95L5.21 18.43Q5.02 18.7 5.02 18.98ZM12.98 9.98Q12.55 9.98 12.28 10.28Q12 10.58 12 11.02Q12 11.45 12.28 11.72Q12.55 12 12.98 12Q13.42 12 13.72 11.72Q14.02 11.45 14.02 11.02Q14.02 10.58 13.72 10.28Q13.42 9.98 12.98 9.98Z" fill="#000000"/>
+<text x="657.3" y="148.0" font-family="'Noto Sans', sans-serif" font-size="14" font-weight="500" fill="#000000">over years</text>
+</g>
+<g class="tl-marker" data-stage="find">
+<circle cx="1078.3" cy="143.0" r="10.0" fill="#000000"/>
+<text x="1078.3" y="147.3" text-anchor="middle" font-family="'Noto Sans Mono', ui-monospace, monospace" font-size="12" font-weight="700" fill="#ffffff">3</text>
+<path transform="translate(1094.27,135.00) scale(0.6667)" d="M8.98 6.26 10.56 8.98Q8.59 9.17 7.3 10.6Q6 12.02 6 13.99Q6 15.36 6.66 16.5Q7.32 17.64 8.47 18.3Q9.62 18.96 10.99 18.96Q12.53 18.96 13.76 18.14Q15 17.33 15.58 15.96H12.98V13.99H21V15.96H18.77Q18.12 18.36 16.27 19.99Q16.25 19.99 18.98 19.99V21.96H3V19.99H5.69Q4.42 18.86 3.71 17.29Q3 15.72 3 13.99Q3 11.28 4.68 9.12Q6.36 6.96 8.98 6.26ZM12.24 2.04Q12.22 2.04 12.98 3.36L13.85 2.83L17.35 8.93L13.9 10.9L10.37 4.85L11.26 4.34L10.51 3.02Z" fill="#000000"/>
+<text x="1115.3" y="148.0" font-family="'Noto Sans', sans-serif" font-size="14" font-weight="500" fill="#000000">at the visit</text>
+</g>
+<g class="tl-marker" data-stage="care">
+<circle cx="1536.2" cy="143.0" r="10.0" fill="#000000"/>
+<text x="1536.2" y="147.3" text-anchor="middle" font-family="'Noto Sans Mono', ui-monospace, monospace" font-size="12" font-weight="700" fill="#ffffff">4</text>
+<path transform="translate(1552.20,135.00) scale(0.6667)" d="M4.22 11.3 11.3 4.22Q12.48 3.05 13.99 2.65Q15.5 2.26 17.05 2.65Q18.6 3.05 19.78 4.22Q20.95 5.4 21.35 6.92Q21.74 8.45 21.35 9.98Q20.95 11.52 19.78 12.7L12.7 19.78Q11.52 20.95 9.98 21.35Q8.45 21.74 6.92 21.35Q5.4 20.95 4.22 19.78Q3.05 18.6 2.65 17.05Q2.26 15.5 2.65 13.99Q3.05 12.48 4.22 11.3ZM5.62 12.7Q4.87 13.49 4.6 14.52Q4.32 15.55 4.58 16.54L10.58 10.58L14.81 14.81L18.38 11.3Q19.56 10.13 19.55 8.46Q19.54 6.79 18.37 5.63Q17.21 4.46 15.54 4.46Q13.87 4.46 12.7 5.62Z" fill="#000000"/>
+<text x="1573.2" y="148.0" font-family="'Noto Sans', sans-serif" font-size="14" font-weight="500" fill="#000000">after the assay</text>
+</g>
+</g>
+<g id="stage-cause" class="stage" data-stage="cause" data-n="1">
+<rect x="42.0" y="180.0" width="450.0" height="224.0" rx="12" ry="12" fill="#f3f3f3" stroke="#9e9e9e" stroke-width="1.2"/>
+<text x="102.0" y="204.0" font-family="'Noto Sans Mono', ui-monospace, monospace" font-size="14" font-weight="700" fill="#000000">CAUSE  ·  from birth</text>
+<g class="stage-badge">
+<circle cx="65.0" cy="199.5" r="9.0" fill="#000000"/>
+<text x="65.0" y="203.5" text-anchor="middle" font-family="'Noto Sans Mono', ui-monospace, monospace" font-size="11" font-weight="700" fill="#ffffff">1</text>
+<path transform="translate(80.00,191.50) scale(0.6667)" d="M3.98 2.02H6V3.98Q6 5.06 6.47 5.95Q6.94 6.84 7.9 7.8Q8.86 8.76 11.11 10.22L9.29 11.4Q7.56 10.22 6.5 9.19Q3.98 6.79 3.98 3.98ZM18 2.02H20.02V3.98Q20.02 6.79 17.5 9.19Q16.56 10.13 15.14 11.11Q14.3 11.71 12.55 12.84Q10.82 13.97 9.98 14.52Q8.66 15.41 7.87 16.22Q6.94 17.16 6.47 18.05Q6 18.94 6 20.02V21.98H3.98V20.02Q3.98 17.21 6.5 14.81Q7.44 13.87 8.86 12.89Q9.7 12.29 11.45 11.16Q13.18 10.03 14.02 9.48Q15.34 8.59 16.13 7.78Q17.06 6.84 17.53 5.95Q18 5.06 18 3.98ZM14.71 12.6Q16.44 13.78 17.5 14.81Q20.02 17.21 20.02 20.02V21.98H18V20.02Q18 18.94 17.53 18.05Q17.06 17.16 16.1 16.2Q15.14 15.24 12.89 13.78ZM6.98 3H17.02V3.98Q17.02 3.96 16.92 4.49H7.08L6.98 3.98ZM7.68 6H16.32Q15.89 6.6 15.43 7.08L14.9 7.51H9.05L8.57 7.08Q8.11 6.6 7.68 6ZM9.1 16.49H14.95L15.43 16.92Q15.91 17.4 16.32 18H7.68Q8.11 17.4 8.57 16.92ZM7.08 19.51H16.92L17.02 20.02V21H6.98V20.02Z" fill="#000000"/>
+</g>
+</g>
+<g id="stage-mech" class="stage" data-stage="mech" data-n="2">
+<rect x="520.0" y="432.0" width="394.0" height="158.0" rx="12" ry="12" fill="#f3f3f3" stroke="#9e9e9e" stroke-width="1.2"/>
+<text x="580.0" y="456.0" font-family="'Noto Sans Mono', ui-monospace, monospace" font-size="14" font-weight="700" fill="#000000">MECHANISM  ·  over years</text>
+<g class="stage-badge">
+<circle cx="543.0" cy="451.5" r="9.0" fill="#000000"/>
+<text x="543.0" y="455.5" text-anchor="middle" font-family="'Noto Sans Mono', ui-monospace, monospace" font-size="11" font-weight="700" fill="#ffffff">2</text>
+<path transform="translate(558.00,443.50) scale(0.6667)" d="M6 21.98Q4.73 21.98 3.86 21.12Q3 20.26 3 18.98Q3 18.1 3.5 17.4L9 7.82V6Q8.57 6 8.29 5.72Q8.02 5.45 8.02 5.02V3.98Q8.02 3.19 8.6 2.6Q9.19 2.02 9.98 2.02H14.02Q14.81 2.02 15.4 2.6Q15.98 3.19 15.98 3.98V5.02Q15.98 5.45 15.71 5.72Q15.43 6 15 6V7.82L20.5 17.4Q21 18.1 21 18.98Q21 20.26 20.14 21.12Q19.27 21.98 18 21.98ZM5.02 18.98Q5.02 19.42 5.29 19.72Q5.57 20.02 6 20.02H18Q18.43 20.02 18.71 19.72Q18.98 19.42 18.98 18.98Q18.98 18.7 18.79 18.43L16.54 14.5L14.02 17.02L8.95 11.95L5.21 18.43Q5.02 18.7 5.02 18.98ZM12.98 9.98Q12.55 9.98 12.28 10.28Q12 10.58 12 11.02Q12 11.45 12.28 11.72Q12.55 12 12.98 12Q13.42 12 13.72 11.72Q14.02 11.45 14.02 11.02Q14.02 10.58 13.72 10.28Q13.42 9.98 12.98 9.98Z" fill="#000000"/>
+</g>
+</g>
+<g id="stage-find" class="stage" data-stage="find" data-n="3">
+<rect x="520.0" y="618.0" width="1182.0" height="140.0" rx="12" ry="12" fill="#f3f3f3" stroke="#9e9e9e" stroke-width="1.2"/>
+<text x="580.0" y="642.0" font-family="'Noto Sans Mono', ui-monospace, monospace" font-size="14" font-weight="700" fill="#000000">FINDINGS AND DIAGNOSIS  ·  at the visit</text>
+<g class="stage-badge">
+<circle cx="543.0" cy="637.5" r="9.0" fill="#000000"/>
+<text x="543.0" y="641.5" text-anchor="middle" font-family="'Noto Sans Mono', ui-monospace, monospace" font-size="11" font-weight="700" fill="#ffffff">3</text>
+<path transform="translate(558.00,629.50) scale(0.6667)" d="M8.98 6.26 10.56 8.98Q8.59 9.17 7.3 10.6Q6 12.02 6 13.99Q6 15.36 6.66 16.5Q7.32 17.64 8.47 18.3Q9.62 18.96 10.99 18.96Q12.53 18.96 13.76 18.14Q15 17.33 15.58 15.96H12.98V13.99H21V15.96H18.77Q18.12 18.36 16.27 19.99Q16.25 19.99 18.98 19.99V21.96H3V19.99H5.69Q4.42 18.86 3.71 17.29Q3 15.72 3 13.99Q3 11.28 4.68 9.12Q6.36 6.96 8.98 6.26ZM12.24 2.04Q12.22 2.04 12.98 3.36L13.85 2.83L17.35 8.93L13.9 10.9L10.37 4.85L11.26 4.34L10.51 3.02Z" fill="#000000"/>
+</g>
+</g>
+<g id="stage-care" class="stage" data-stage="care" data-n="4">
+<rect x="520.0" y="180.0" width="394.0" height="224.0" rx="12" ry="12" fill="#f3f3f3" stroke="#9e9e9e" stroke-width="1.2"/>
+<text x="580.0" y="204.0" font-family="'Noto Sans Mono', ui-monospace, monospace" font-size="14" font-weight="700" fill="#000000">TREATMENT  ·  after the assay</text>
+<g class="stage-badge">
+<circle cx="543.0" cy="199.5" r="9.0" fill="#000000"/>
+<text x="543.0" y="203.5" text-anchor="middle" font-family="'Noto Sans Mono', ui-monospace, monospace" font-size="11" font-weight="700" fill="#ffffff">4</text>
+<path transform="translate(558.00,191.50) scale(0.6667)" d="M4.22 11.3 11.3 4.22Q12.48 3.05 13.99 2.65Q15.5 2.26 17.05 2.65Q18.6 3.05 19.78 4.22Q20.95 5.4 21.35 6.92Q21.74 8.45 21.35 9.98Q20.95 11.52 19.78 12.7L12.7 19.78Q11.52 20.95 9.98 21.35Q8.45 21.74 6.92 21.35Q5.4 20.95 4.22 19.78Q3.05 18.6 2.65 17.05Q2.26 15.5 2.65 13.99Q3.05 12.48 4.22 11.3ZM5.62 12.7Q4.87 13.49 4.6 14.52Q4.32 15.55 4.58 16.54L10.58 10.58L14.81 14.81L18.38 11.3Q19.56 10.13 19.55 8.46Q19.54 6.79 18.37 5.63Q17.21 4.46 15.54 4.46Q13.87 4.46 12.7 5.62Z" fill="#000000"/>
+</g>
+</g>
+<g id="inset" class="inset" data-inset="inset">
+<rect x="42.0" y="432.0" width="450.0" height="326.0" rx="12" ry="12" fill="#ffffff" stroke="#9e9e9e" stroke-width="1.2"/>
+<path transform="translate(56.00,443.50) scale(0.6667)" d="M12 20.4Q10.37 20.4 8.98 19.58Q7.58 18.77 6.79 17.38Q6 15.98 6 14.4Q6 12.96 6.94 10.99Q7.68 9.41 9 7.49Q9.94 6.14 11.06 4.75L12 3.6L12.94 4.75Q14.06 6.14 15 7.49Q16.32 9.41 17.06 10.99Q18 12.96 18 14.4Q18 15.98 17.21 17.38Q16.42 18.77 15.02 19.58Q13.63 20.4 12 20.4Z" fill="#000000"/>
+<text x="78.0" y="456.0" font-family="'Noto Sans Mono', ui-monospace, monospace" font-size="14" font-weight="700" fill="#000000">CLEARANCE</text>
+<clipPath id="inset-tol-bright-clip"><rect x="187.53" y="446.00" width="158.93" height="298.00" rx="9.0" ry="9.0"/></clipPath>
+<g clip-path="url(#inset-tol-bright-clip)"><g transform="translate(187.533,446.000) scale(0.993333,0.993333)">
+<rect width="160" height="300" fill="#ffffff" />
+<rect x="0" y="0" width="160" height="300" fill="#ffffff" />
+  <path d="M 84 40 Q 150 30 154 120 Q 158 220 114 270 Q 88 292 84 240 Z" fill="#e2d9d3" stroke="#5b5048" stroke-width="3" />
+  <rect x="12" y="12" width="44" height="276" rx="22" fill="#ffdfe0" stroke="#dc5668" stroke-width="3" />
+  <circle cx="34" cy="60" r="7" fill="#8a8a8a" />
+  <circle cx="29" cy="112" r="7" fill="#8a8a8a" />
+  <circle cx="39" cy="164" r="7" fill="#8a8a8a" />
+  <circle cx="31" cy="216" r="7" fill="#8a8a8a" />
+  <path d="M 62 152 L 92 152" stroke="#0d7c26" stroke-width="4" stroke-linecap="round" fill="none" />
+  <path d="M 83 143 L 94 152 L 83 161" stroke="#0d7c26" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+  <polygon points="124,134 140,143 140,161 124,170 108,161 108,143" fill="#9bd29d" stroke="#0d7c26" stroke-width="3" />
+  <circle cx="124" cy="152" r="5" fill="#8a8a8a" />
+</g>
+</g>
+<g class="labels">
+<line x1="159.5" y1="476.0" x2="220.9" y2="469.8" stroke="#ffffff" stroke-width="3.4" stroke-linecap="round"/>
+<line x1="159.5" y1="476.0" x2="220.9" y2="469.8" stroke="#000000" stroke-width="1.0" stroke-linecap="round"/>
+<circle cx="220.9" cy="469.8" r="2.3" fill="#000000" stroke="#ffffff" stroke-width="1.4"/>
+<text x="153.5" y="481.4" text-anchor="end" font-family="'Noto Sans', sans-serif" font-size="14" font-weight="500" fill="#000000">Vessel</text>
+<line x1="159.5" y1="556.3" x2="216.1" y2="556.3" stroke="#ffffff" stroke-width="3.4" stroke-linecap="round"/>
+<line x1="159.5" y1="556.3" x2="216.1" y2="556.3" stroke="#000000" stroke-width="1.0" stroke-linecap="round"/>
+<circle cx="216.1" cy="556.3" r="2.3" fill="#000000" stroke="#ffffff" stroke-width="1.4"/>
+<text x="153.5" y="561.7" text-anchor="end" font-family="'Noto Sans', sans-serif" font-size="14" font-weight="500" fill="#000000">Substrate S</text>
+<line x1="374.5" y1="597.1" x2="321.7" y2="597.1" stroke="#ffffff" stroke-width="3.4" stroke-linecap="round"/>
+<line x1="374.5" y1="597.1" x2="321.7" y2="597.1" stroke="#000000" stroke-width="1.0" stroke-linecap="round"/>
+<circle cx="310.7" cy="597.1" r="11.0" fill="none" stroke="#ffffff" stroke-width="4.0"/>
+<circle cx="310.7" cy="597.1" r="11.0" fill="none" stroke="#dc5668" stroke-width="1.6"/>
+<text x="380.5" y="602.5" text-anchor="start" font-family="'Noto Sans', sans-serif" font-size="14" font-weight="700" fill="#000000">Enzyme X</text>
+<line x1="374.5" y1="684.4" x2="316.3" y2="684.4" stroke="#ffffff" stroke-width="3.4" stroke-linecap="round"/>
+<line x1="374.5" y1="684.4" x2="316.3" y2="684.4" stroke="#000000" stroke-width="1.0" stroke-linecap="round"/>
+<circle cx="316.3" cy="684.4" r="2.3" fill="#000000" stroke="#ffffff" stroke-width="1.4"/>
+<text x="380.5" y="689.8" text-anchor="start" font-family="'Noto Sans', sans-serif" font-size="14" font-weight="500" fill="#000000">Tissue</text>
+</g>
+</g>
+<g id="edge-0" class="edge" data-a="rf_gene" data-b="m_low" data-kind="stim">
+<path d="M367.7,255.0 L500.0,255.0 Q506.0,255.0 506.0,261.0 L506.0,491.0 Q506.0,497.0 512.0,497.0 L529.1,497.0" fill="none" stroke="#3a3a3a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M535.21,498.38 L530.90,500.44 Q529.09,501.30 529.09,499.30 L529.09,494.70 Q529.09,492.70 530.90,493.56 L535.21,495.62 Q538.09,497.00 535.21,498.38 Z" fill="#3a3a3a"/>
+</g>
+<g id="edge-1" class="edge" data-a="an_clear" data-b="m_low" data-kind="req">
+<path d="M474.0,351.0 L500.0,351.0 Q506.0,351.0 506.0,357.0 L506.0,519.0 Q506.0,525.0 512.0,525.0 L529.1,525.0" fill="none" stroke="#5b5048" stroke-width="1.5" stroke-dasharray="3.5 5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M535.21,526.38 L530.90,528.44 Q529.09,529.30 529.09,527.30 L529.09,522.70 Q529.09,520.70 530.90,521.56 L535.21,523.62 Q538.09,525.00 535.21,526.38 Z" fill="#5b5048"/>
+</g>
+<g id="edge-2" class="edge" data-a="m_low" data-b="m_build" data-kind="stim">
+<path d="M703.0,511.0 L722.1,511.0" fill="none" stroke="#3a3a3a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M728.21,512.38 L723.90,514.44 Q722.09,515.30 722.09,513.30 L722.09,508.70 Q722.09,506.70 723.90,507.56 L728.21,509.62 Q731.09,511.00 728.21,512.38 Z" fill="#3a3a3a"/>
+</g>
+<g id="edge-3" class="edge" data-a="m_build" data-b="s_tired" data-kind="stim">
+<path d="M872.0,546.0 L872.0,596.0 Q872.0,602.0 878.0,602.0 L1573.0,602.0 Q1579.0,602.0 1579.0,608.0 L1579.0,650.5" fill="none" stroke="#3a3a3a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M1577.62,656.56 L1575.56,652.25 Q1574.70,650.44 1576.70,650.44 L1581.30,650.44 Q1583.30,650.44 1582.44,652.25 L1580.38,656.56 Q1579.00,659.44 1577.62,656.56 Z" fill="#3a3a3a"/>
+</g>
+<g id="edge-4" class="edge" data-a="m_build" data-b="i_level" data-kind="stim">
+<path d="M848.0,546.0 L848.0,596.0 Q848.0,602.0 854.0,602.0 L1388.0,602.0 Q1394.0,602.0 1394.0,608.0 L1394.0,644.5" fill="none" stroke="#3a3a3a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M1392.62,650.56 L1390.56,646.25 Q1389.70,644.44 1391.70,644.44 L1396.30,644.44 Q1398.30,644.44 1397.44,646.25 L1395.38,650.56 Q1394.00,653.44 1392.62,650.56 Z" fill="#3a3a3a"/>
+</g>
+<g id="edge-5" class="edge" data-a="m_low" data-b="i_assay" data-kind="stim">
+<path d="M623.0,546.0 L623.0,599.0 Q623.0,605.0 629.0,605.0 L1029.0,605.0 Q1035.0,605.0 1035.0,611.0 L1035.0,650.5" fill="none" stroke="#3a3a3a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M1033.62,656.56 L1031.56,652.25 Q1030.70,650.44 1032.70,650.44 L1037.30,650.44 Q1039.30,650.44 1038.44,652.25 L1036.38,656.56 Q1035.00,659.44 1033.62,656.56 Z" fill="#3a3a3a"/>
+</g>
+<g id="edge-6" class="edge" data-a="i_level" data-b="dx_main" data-kind="stim">
+<path d="M1346.0,699.0 L1331.8,699.0" fill="none" stroke="#3a3a3a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M1325.79,697.62 L1330.10,695.56 Q1331.91,694.70 1331.91,696.70 L1331.91,701.30 Q1331.91,703.30 1330.10,702.44 L1325.79,700.38 Q1322.91,699.00 1325.79,697.62 Z" fill="#3a3a3a"/>
+</g>
+<g id="edge-7" class="edge" data-a="i_assay" data-b="dx_main" data-kind="stim">
+<path d="M1110.0,699.0 L1124.2,699.0" fill="none" stroke="#3a3a3a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M1130.21,700.38 L1125.90,702.44 Q1124.09,703.30 1124.09,701.30 L1124.09,696.70 Q1124.09,694.70 1125.90,695.56 L1130.21,697.62 Q1133.09,699.00 1130.21,700.38 Z" fill="#3a3a3a"/>
+</g>
+<g id="edge-8" class="edge" data-a="i_assay" data-b="x_diet" data-kind="excl">
+<path d="M960.0,699.0 L898.0,699.0" fill="none" stroke="#3a3a3a" stroke-width="1.65" stroke-dasharray="1.6 3.4" stroke-linecap="round" stroke-linejoin="round"/>
+<line x1="898.0" y1="692.5" x2="898.0" y2="705.5" stroke="#3a3a3a" stroke-width="2.5" stroke-linecap="round"/>
+</g>
+<g id="edge-9" class="edge" data-a="tx_enz" data-b="m_build" data-kind="inh">
+<path d="M846.0,290.0 L846.0,468.6" fill="none" stroke="#aa3377" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"/>
+<line x1="839.5" y1="468.6" x2="852.5" y2="468.6" stroke="#aa3377" stroke-width="2.5" stroke-linecap="round"/>
+</g>
+<g id="edge-10" class="edge" data-a="tx_diet" data-b="m_build" data-kind="inh">
+<path d="M708.0,351.0 L810.0,351.0 Q816.0,351.0 816.0,357.0 L816.0,468.6" fill="none" stroke="#aa3377" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"/>
+<line x1="809.5" y1="468.6" x2="822.5" y2="468.6" stroke="#aa3377" stroke-width="2.5" stroke-linecap="round"/>
+</g>
+<g id="node-rf_gene" class="node" data-node="rf_gene" data-role="risk" data-stage="cause">
+<rect x="197.7" y="220.0" width="170.0" height="70.0" rx="7" ry="7" fill="#fefdfd" stroke="#8a8a8a" stroke-width="1.5"/>
+<text x="282.7" y="243.6" text-anchor="middle" font-family="'Noto Sans', sans-serif" font-size="14" fill="#000000" font-weight="500">Two faulty copies of</text>
+<text x="282.7" y="260.4" text-anchor="middle" font-family="'Noto Sans', sans-serif" font-size="14" fill="#000000" font-weight="500">gene XA, inherited</text>
+<text x="282.7" y="277.2" text-anchor="middle" font-family="'Noto Sans', sans-serif" font-size="14" fill="#000000" font-weight="500">from both parents</text>
+<g class="glyphs">
+<circle cx="200.7" cy="221.0" r="8.5" fill="#fefdfd" stroke="#8a8a8a" stroke-width="1.2"/>
+<path transform="translate(194.67,215.00) scale(0.5000)" d="M5.02 3H18.98Q19.82 3 20.41 3.59Q21 4.18 21 5.02V18.98Q21 19.82 20.41 20.41Q19.82 21 18.98 21H5.02Q4.18 21 3.59 20.41Q3 19.82 3 18.98V5.02Q3 4.18 3.59 3.59Q4.18 3 5.02 3ZM6.98 5.02Q6.19 5.02 5.6 5.6Q5.02 6.19 5.02 7.01Q5.02 7.82 5.6 8.41Q6.19 9 7.01 9Q7.82 9 8.41 8.41Q9 7.82 9 7.01Q9 6.19 8.41 5.6Q7.82 5.02 6.98 5.02ZM17.02 15Q16.18 15 15.59 15.59Q15 16.18 15 16.99Q15 17.81 15.59 18.4Q16.18 18.98 16.99 18.98Q17.81 18.98 18.4 18.4Q18.98 17.81 18.98 16.99Q18.98 16.18 18.4 15.59Q17.81 15 17.02 15ZM17.02 5.02Q16.18 5.02 15.59 5.6Q15 6.19 15 7.01Q15 7.82 15.59 8.41Q16.18 9 16.99 9Q17.81 9 18.4 8.41Q18.98 7.82 18.98 7.01Q18.98 6.19 18.4 5.6Q17.81 5.02 17.02 5.02ZM12 9.98Q11.16 9.98 10.57 10.57Q9.98 11.16 9.98 12Q9.98 12.84 10.57 13.43Q11.16 14.02 12 14.02Q12.84 14.02 13.43 13.43Q14.02 12.84 14.02 12Q14.02 11.16 13.43 10.57Q12.84 9.98 12 9.98ZM6.98 15Q6.19 15 5.6 15.59Q5.02 16.18 5.02 16.99Q5.02 17.81 5.6 18.4Q6.19 18.98 7.01 18.98Q7.82 18.98 8.41 18.4Q9 17.81 9 16.99Q9 16.18 8.41 15.59Q7.82 15 6.98 15Z" fill="#8a8a8a"/>
+</g>
+</g>
+<g id="node-an_clear" class="node" data-node="an_clear" data-role="anat" data-stage="cause">
+<rect x="314.0" y="316.0" width="160.0" height="70.0" rx="7" ry="7" fill="#e2d9d3" stroke="#5b5048" stroke-width="1.5" stroke-dasharray="4.5 5" stroke-linecap="round"/>
+<text x="394.0" y="339.6" text-anchor="middle" font-family="'Noto Sans', sans-serif" font-size="14" fill="#000000" font-weight="500">Enzyme X normally</text>
+<text x="394.0" y="356.4" text-anchor="middle" font-family="'Noto Sans', sans-serif" font-size="14" fill="#000000" font-weight="500">clears substrate S</text>
+<text x="394.0" y="373.2" text-anchor="middle" font-family="'Noto Sans', sans-serif" font-size="14" fill="#000000" font-weight="500">from the blood</text>
+<g class="glyphs">
+<circle cx="317.0" cy="317.0" r="8.5" fill="#e2d9d3" stroke="#5b5048" stroke-width="1.2"/>
+<path transform="translate(311.00,311.00) scale(0.5000)" d="M21 9H15V21.98H12.98V15.98H11.02V21.98H9V9H3V6.98H21ZM12 2.02Q12.84 2.02 13.43 2.6Q14.02 3.19 14.02 4.01Q14.02 4.82 13.43 5.41Q12.84 6 12 6Q11.16 6 10.57 5.41Q9.98 4.82 9.98 4.01Q9.98 3.19 10.57 2.6Q11.16 2.02 12 2.02Z" fill="#5b5048"/>
+</g>
+</g>
+<g id="node-m_low" class="node" data-node="m_low" data-role="mech" data-stage="mech">
+<rect x="543.0" y="476.0" width="160.0" height="70.0" rx="7" ry="7" fill="#9bd29d" stroke="#0d7c26" stroke-width="2.2"/>
+<text x="623.0" y="499.6" text-anchor="middle" font-family="'Noto Sans', sans-serif" font-size="14" fill="#000000" font-weight="700">Enzyme X activity</text>
+<text x="623.0" y="516.4" text-anchor="middle" font-family="'Noto Sans', sans-serif" font-size="14" fill="#000000" font-weight="700">falls below</text>
+<text x="623.0" y="533.2" text-anchor="middle" font-family="'Noto Sans', sans-serif" font-size="14" fill="#000000" font-weight="700">10 % of normal</text>
+<g class="glyphs">
+<circle cx="546.0" cy="477.0" r="8.5" fill="#9bd29d" stroke="#0d7c26" stroke-width="1.2"/>
+<path transform="translate(540.00,471.00) scale(0.5000)" d="M12 15.5Q10.54 15.5 9.52 14.48Q8.5 13.46 8.5 12Q8.5 10.54 9.52 9.52Q10.54 8.5 12 8.5Q13.46 8.5 14.48 9.52Q15.5 10.54 15.5 12Q15.5 13.46 14.48 14.48Q13.46 15.5 12 15.5ZM19.46 12.98Q19.51 12.43 19.5 12Q19.49 11.57 19.46 11.02L21.55 9.38Q21.7 9.24 21.72 9.07Q21.74 8.9 21.65 8.71L19.63 5.26Q19.58 5.11 19.4 5.04Q19.22 4.97 19.03 5.06L16.54 6.05Q15.7 5.4 14.86 5.06L14.5 2.45Q14.5 2.26 14.35 2.14Q14.21 2.02 14.02 2.02H9.98Q9.79 2.02 9.65 2.14Q9.5 2.26 9.5 2.45L9.14 5.06Q8.3 5.4 7.46 6.05L4.97 5.06Q4.78 4.97 4.6 5.04Q4.42 5.11 4.37 5.26L2.35 8.71Q2.26 8.9 2.28 9.07Q2.3 9.24 2.45 9.38L4.54 11.02Q4.49 11.57 4.5 12Q4.51 12.43 4.54 12.98L2.45 14.62Q2.3 14.76 2.28 14.93Q2.26 15.1 2.35 15.29L4.37 18.74Q4.42 18.89 4.6 18.96Q4.78 19.03 4.97 18.94L7.46 17.95Q8.3 18.6 9.14 18.94L9.5 21.55Q9.5 21.74 9.65 21.86Q9.79 21.98 9.98 21.98H14.02Q14.21 21.98 14.35 21.86Q14.5 21.74 14.5 21.55L14.86 18.94Q15.74 18.55 16.54 17.95L19.03 18.94Q19.22 19.03 19.4 18.96Q19.58 18.89 19.63 18.74L21.65 15.29Q21.74 15.1 21.72 14.93Q21.7 14.76 21.55 14.62Z" fill="#0d7c26"/>
+</g>
+</g>
+<g id="node-m_build" class="node" data-node="m_build" data-role="mech" data-stage="mech">
+<rect x="736.0" y="476.0" width="160.0" height="70.0" rx="7" ry="7" fill="#9bd29d" stroke="#0d7c26" stroke-width="2.2"/>
+<text x="816.0" y="499.6" text-anchor="middle" font-family="'Noto Sans', sans-serif" font-size="14" fill="#000000" font-weight="700">Substrate S builds</text>
+<text x="816.0" y="516.4" text-anchor="middle" font-family="'Noto Sans', sans-serif" font-size="14" fill="#000000" font-weight="700">up in skin and</text>
+<text x="816.0" y="533.2" text-anchor="middle" font-family="'Noto Sans', sans-serif" font-size="14" fill="#000000" font-weight="700">muscle over years</text>
+<g class="glyphs">
+<circle cx="739.0" cy="477.0" r="8.5" fill="#9bd29d" stroke="#0d7c26" stroke-width="1.2"/>
+<path transform="translate(733.00,471.00) scale(0.5000)" d="M12 15.5Q10.54 15.5 9.52 14.48Q8.5 13.46 8.5 12Q8.5 10.54 9.52 9.52Q10.54 8.5 12 8.5Q13.46 8.5 14.48 9.52Q15.5 10.54 15.5 12Q15.5 13.46 14.48 14.48Q13.46 15.5 12 15.5ZM19.46 12.98Q19.51 12.43 19.5 12Q19.49 11.57 19.46 11.02L21.55 9.38Q21.7 9.24 21.72 9.07Q21.74 8.9 21.65 8.71L19.63 5.26Q19.58 5.11 19.4 5.04Q19.22 4.97 19.03 5.06L16.54 6.05Q15.7 5.4 14.86 5.06L14.5 2.45Q14.5 2.26 14.35 2.14Q14.21 2.02 14.02 2.02H9.98Q9.79 2.02 9.65 2.14Q9.5 2.26 9.5 2.45L9.14 5.06Q8.3 5.4 7.46 6.05L4.97 5.06Q4.78 4.97 4.6 5.04Q4.42 5.11 4.37 5.26L2.35 8.71Q2.26 8.9 2.28 9.07Q2.3 9.24 2.45 9.38L4.54 11.02Q4.49 11.57 4.5 12Q4.51 12.43 4.54 12.98L2.45 14.62Q2.3 14.76 2.28 14.93Q2.26 15.1 2.35 15.29L4.37 18.74Q4.42 18.89 4.6 18.96Q4.78 19.03 4.97 18.94L7.46 17.95Q8.3 18.6 9.14 18.94L9.5 21.55Q9.5 21.74 9.65 21.86Q9.79 21.98 9.98 21.98H14.02Q14.21 21.98 14.35 21.86Q14.5 21.74 14.5 21.55L14.86 18.94Q15.74 18.55 16.54 17.95L19.03 18.94Q19.22 19.03 19.4 18.96Q19.58 18.89 19.63 18.74L21.65 15.29Q21.74 15.1 21.72 14.93Q21.7 14.76 21.55 14.62Z" fill="#0d7c26"/>
+</g>
+</g>
+<g id="node-s_tired" class="node" data-node="s_tired" data-role="sign" data-stage="find">
+<rect x="1534.0" y="664.0" width="150.0" height="70.0" rx="7" ry="7" fill="#ffdfe0" stroke="#dc5668" stroke-width="1.5"/>
+<text x="1609.0" y="687.6" text-anchor="middle" font-family="'Noto Sans', sans-serif" font-size="14" fill="#000000" font-weight="500">Tiredness after</text>
+<text x="1609.0" y="704.4" text-anchor="middle" font-family="'Noto Sans', sans-serif" font-size="14" fill="#000000" font-weight="500">light exercise and</text>
+<text x="1609.0" y="721.2" text-anchor="middle" font-family="'Noto Sans', sans-serif" font-size="14" fill="#000000" font-weight="500">pale skin patches</text>
+<g class="glyphs">
+<circle cx="1537.0" cy="665.0" r="8.5" fill="#ffdfe0" stroke="#dc5668" stroke-width="1.2"/>
+<path transform="translate(1531.00,659.00) scale(0.5000)" d="M18.98 8.02Q19.42 8.02 19.72 8.29Q20.02 8.57 20.02 9Q20.02 9.43 19.72 9.71Q19.42 9.98 18.98 9.98Q18.55 9.98 18.28 9.71Q18 9.43 18 9Q18 8.57 18.28 8.29Q18.55 8.02 18.98 8.02ZM2.02 2.02V11.02Q2.02 13.22 3.47 14.9Q4.92 16.58 7.13 16.92Q7.61 19.18 9.37 20.58Q11.14 21.98 13.49 21.98Q15.26 21.98 16.75 21.12Q18.24 20.26 19.13 18.76Q20.02 17.26 20.02 15.5V11.81Q20.9 11.47 21.44 10.7Q21.98 9.94 21.98 9Q21.98 7.73 21.12 6.86Q20.26 6 19.01 6Q17.76 6 16.87 6.86Q15.98 7.73 15.98 9Q15.98 9.94 16.55 10.72Q17.11 11.5 18 11.81V15.43Q18 17.3 16.68 18.61Q15.36 19.92 13.49 19.92Q12 19.92 10.82 19.08Q9.65 18.24 9.24 16.92Q11.3 16.44 12.66 14.78Q14.02 13.13 14.02 11.02V2.02H9.98V5.02H12V11.02Q12 12.65 10.82 13.82Q9.65 15 7.99 15Q6.34 15 5.16 13.82Q3.98 12.65 3.98 11.02V5.02H6V2.02Z" fill="#dc5668"/>
+</g>
+</g>
+<g id="node-i_level" class="node" data-node="i_level" data-role="inv" data-stage="find">
+<rect x="1346.0" y="658.0" width="160.0" height="82.0" rx="7" ry="7" fill="#b3d3f4" stroke="#4477aa" stroke-width="1.5"/>
+<text x="1426.0" y="681.6" text-anchor="middle" font-family="'Noto Sans', sans-serif" font-size="14" fill="#000000" font-weight="500">Blood substrate S</text>
+<text x="1426.0" y="698.4" text-anchor="middle" font-family="'Noto Sans', sans-serif" font-size="14" fill="#000000" font-weight="500">48<tspan fill="#ee6677">↑</tspan> µmol/L</text>
+<text x="1426.0" y="715.2" text-anchor="middle" font-family="'Noto Sans', sans-serif" font-size="14" fill="#000000" font-weight="500">(normal 2–10)</text>
+<g class="rangebar">
+<line x1="1384.0" y1="726.5" x2="1468.0" y2="726.5" stroke="#81aad3" stroke-width="1.2" stroke-linecap="round"/>
+<rect x="1391.6" y="723.5" width="30.5" height="6" rx="3" fill="#89b0d8"/>
+<path d="M1472.4,723.1 L1477.6,726.5 L1472.4,729.9" fill="none" stroke="#ee6677" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+<circle cx="1468.0" cy="726.5" r="3.6" fill="#ee6677" stroke="#b3d3f4" stroke-width="1.2"/>
+</g>
+<g class="glyphs">
+<circle cx="1349.0" cy="659.0" r="8.5" fill="#b3d3f4" stroke="#4477aa" stroke-width="1.2"/>
+<path transform="translate(1343.00,653.00) scale(0.5000)" d="M6.98 2.02V3.98H8.02V18Q8.02 19.63 9.19 20.81Q10.37 21.98 12 21.98Q13.63 21.98 14.81 20.81Q15.98 19.63 15.98 18V3.98H17.02V2.02ZM11.02 15.98Q10.54 15.98 10.26 15.73Q9.98 15.48 9.98 15Q9.98 14.52 10.26 14.27Q10.54 14.02 10.99 14.02Q11.45 14.02 11.72 14.27Q12 14.52 12 15Q12 15.48 11.72 15.73Q11.45 15.98 11.02 15.98ZM12.98 12Q12.55 12 12.28 11.72Q12 11.45 12 10.99Q12 10.54 12.28 10.26Q12.55 9.98 13.01 9.98Q13.46 9.98 13.74 10.26Q14.02 10.54 14.02 10.99Q14.02 11.45 13.74 11.72Q13.46 12 12.98 12ZM14.02 6.98H9.98V3.98H14.02Z" fill="#4477aa"/>
+</g>
+</g>
+<g id="node-i_assay" class="node" data-node="i_assay" data-role="inv" data-stage="find">
+<rect x="960.0" y="664.0" width="150.0" height="70.0" rx="7" ry="7" fill="#b3d3f4" stroke="#4477aa" stroke-width="1.5"/>
+<text x="1035.0" y="687.6" text-anchor="middle" font-family="'Noto Sans', sans-serif" font-size="14" fill="#000000" font-weight="500">Enzyme X assay</text>
+<text x="1035.0" y="704.4" text-anchor="middle" font-family="'Noto Sans', sans-serif" font-size="14" fill="#000000" font-weight="500">in blood cells: 6 %</text>
+<text x="1035.0" y="721.2" text-anchor="middle" font-family="'Noto Sans', sans-serif" font-size="14" fill="#000000" font-weight="500">of normal activity</text>
+<g class="glyphs">
+<circle cx="963.0" cy="665.0" r="8.5" fill="#b3d3f4" stroke="#4477aa" stroke-width="1.2"/>
+<path transform="translate(957.00,659.00) scale(0.5000)" d="M6.98 2.02V3.98H8.02V18Q8.02 19.63 9.19 20.81Q10.37 21.98 12 21.98Q13.63 21.98 14.81 20.81Q15.98 19.63 15.98 18V3.98H17.02V2.02ZM11.02 15.98Q10.54 15.98 10.26 15.73Q9.98 15.48 9.98 15Q9.98 14.52 10.26 14.27Q10.54 14.02 10.99 14.02Q11.45 14.02 11.72 14.27Q12 14.52 12 15Q12 15.48 11.72 15.73Q11.45 15.98 11.02 15.98ZM12.98 12Q12.55 12 12.28 11.72Q12 11.45 12 10.99Q12 10.54 12.28 10.26Q12.55 9.98 13.01 9.98Q13.46 9.98 13.74 10.26Q14.02 10.54 14.02 10.99Q14.02 11.45 13.74 11.72Q13.46 12 12.98 12ZM14.02 6.98H9.98V3.98H14.02Z" fill="#4477aa"/>
+</g>
+</g>
+<g id="node-dx_main" class="node" data-node="dx_main" data-role="dx" data-stage="find" data-flags="high_yield">
+<rect x="1138.0" y="664.0" width="180.0" height="70.0" rx="7" ry="7" fill="#fdf3b3" stroke="#9c8c00" stroke-width="2.2"/>
+<text x="1228.0" y="687.6" text-anchor="middle" font-family="'Noto Sans', sans-serif" font-size="14" fill="#000000" font-weight="700">Fictional enzyme X</text>
+<text x="1228.0" y="704.4" text-anchor="middle" font-family="'Noto Sans', sans-serif" font-size="14" fill="#000000" font-weight="700">deficiency, confirmed</text>
+<text x="1228.0" y="721.2" text-anchor="middle" font-family="'Noto Sans', sans-serif" font-size="14" fill="#000000" font-weight="700">by the assay</text>
+<g class="glyphs">
+<circle cx="1141.0" cy="665.0" r="8.5" fill="#fdf3b3" stroke="#9c8c00" stroke-width="1.2"/>
+<path transform="translate(1135.00,659.00) scale(0.5000)" d="M18.98 4.01H14.81Q14.47 3.12 13.7 2.56Q12.94 1.99 12 1.99Q11.06 1.99 10.28 2.56Q9.5 3.12 9.19 4.01H5.02Q4.18 4.01 3.59 4.6Q3 5.18 3 6.02V19.99Q3 20.83 3.59 21.42Q4.18 22.01 5.02 22.01H18.98Q19.82 22.01 20.41 21.42Q21 20.83 21 19.99V6.02Q21 5.18 20.41 4.6Q19.82 4.01 18.98 4.01ZM12 4.01Q12.43 4.01 12.71 4.28Q12.98 4.56 12.98 4.99Q12.98 5.42 12.71 5.72Q12.43 6.02 12 6.02Q11.57 6.02 11.29 5.72Q11.02 5.42 11.02 4.99Q11.02 4.56 11.29 4.28Q11.57 4.01 12 4.01ZM5.02 14.47H7.18Q7.2 14.47 10.51 8.09L11.45 15.07L13.92 11.88L16.54 14.47H18.98V16.01H15.89L14.06 14.23L10.37 18.91L9.6 13.15L8.11 16.01H5.02Z" fill="#9c8c00"/>
+<circle cx="1315.0" cy="665.0" r="8.0" fill="#4477aa" stroke="#f3f3f3" stroke-width="1.5"/>
+<path transform="translate(1309.75,659.75) scale(0.4375)" d="M12 17.76 18.19 21.5 16.54 14.45 21.98 9.74 14.81 9.12 12 2.5 9.19 9.12 2.02 9.74 7.46 14.45 5.81 21.5Z" fill="#ffffff"/>
+</g>
+</g>
+<g id="node-x_diet" class="node" data-node="x_diet" data-role="dx" data-stage="find" data-flags="pitfall">
+<rect x="741.0" y="664.0" width="150.0" height="70.0" rx="7" ry="7" fill="#fdf3b3" stroke="#9c8c00" stroke-width="1.5"/>
+<text x="816.0" y="687.6" text-anchor="middle" font-family="'Noto Sans', sans-serif" font-size="14" fill="#000000" font-weight="500">Too much</text>
+<text x="816.0" y="704.4" text-anchor="middle" font-family="'Noto Sans', sans-serif" font-size="14" fill="#000000" font-weight="500">substrate S in the</text>
+<text x="816.0" y="721.2" text-anchor="middle" font-family="'Noto Sans', sans-serif" font-size="14" fill="#000000" font-weight="500">diet (ruled out)</text>
+<g class="glyphs">
+<circle cx="744.0" cy="665.0" r="8.5" fill="#fdf3b3" stroke="#9c8c00" stroke-width="1.2"/>
+<path transform="translate(738.00,659.00) scale(0.5000)" d="M18.98 4.01H14.81Q14.47 3.12 13.7 2.56Q12.94 1.99 12 1.99Q11.06 1.99 10.28 2.56Q9.5 3.12 9.19 4.01H5.02Q4.18 4.01 3.59 4.6Q3 5.18 3 6.02V19.99Q3 20.83 3.59 21.42Q4.18 22.01 5.02 22.01H18.98Q19.82 22.01 20.41 21.42Q21 20.83 21 19.99V6.02Q21 5.18 20.41 4.6Q19.82 4.01 18.98 4.01ZM12 4.01Q12.43 4.01 12.71 4.28Q12.98 4.56 12.98 4.99Q12.98 5.42 12.71 5.72Q12.43 6.02 12 6.02Q11.57 6.02 11.29 5.72Q11.02 5.42 11.02 4.99Q11.02 4.56 11.29 4.28Q11.57 4.01 12 4.01ZM5.02 14.47H7.18Q7.2 14.47 10.51 8.09L11.45 15.07L13.92 11.88L16.54 14.47H18.98V16.01H15.89L14.06 14.23L10.37 18.91L9.6 13.15L8.11 16.01H5.02Z" fill="#9c8c00"/>
+<circle cx="888.0" cy="665.0" r="8.0" fill="#bbbbbb" stroke="#f3f3f3" stroke-width="1.5"/>
+<path transform="translate(882.75,659.75) scale(0.4375)" d="M12.98 14.5H11.02V9.5H12.98ZM12.98 18.48H11.02V16.46H12.98ZM0.98 21.5H23.02L12 2.5Z" fill="#000000"/>
+</g>
+</g>
+<g id="node-tx_enz" class="node" data-node="tx_enz" data-role="tx" data-stage="care">
+<rect x="741.0" y="220.0" width="150.0" height="70.0" rx="7" ry="7" fill="#efa2c7" stroke="#aa3377" stroke-width="1.5"/>
+<text x="816.0" y="243.6" text-anchor="middle" font-family="'Noto Sans', sans-serif" font-size="14" fill="#000000" font-weight="500">Weekly enzyme X</text>
+<text x="816.0" y="260.4" text-anchor="middle" font-family="'Noto Sans', sans-serif" font-size="14" fill="#000000" font-weight="500">replacement</text>
+<text x="816.0" y="277.2" text-anchor="middle" font-family="'Noto Sans', sans-serif" font-size="14" fill="#000000" font-weight="500">given by infusion</text>
+<g class="glyphs">
+<circle cx="744.0" cy="221.0" r="8.5" fill="#efa2c7" stroke="#aa3377" stroke-width="1.2"/>
+<path transform="translate(738.00,215.00) scale(0.5000)" d="M9.98 3 8.02 5.02V6.98H5.02Q4.18 6.98 3.64 7.6Q3.1 8.21 3 9L2.02 18.98Q1.92 19.82 2.44 20.41Q2.95 21 3.98 21H20.02Q21.05 21 21.56 20.41Q22.08 19.82 21.98 18.98L21 9Q20.9 8.21 20.34 7.6Q19.78 6.98 18.98 6.98H15.98V5.02L14.02 3ZM9.98 5.02H14.02V6.98H9.98ZM11.02 9.98H12.98V12.98H15.98V15H12.98V18H11.02V15H8.02V12.98H11.02Z" fill="#aa3377"/>
+</g>
+</g>
+<g id="node-tx_diet" class="node" data-node="tx_diet" data-role="tx" data-stage="care">
+<rect x="538.0" y="325.0" width="170.0" height="52.0" rx="7" ry="7" fill="#efa2c7" stroke="#aa3377" stroke-width="1.5"/>
+<text x="623.0" y="348.0" text-anchor="middle" font-family="'Noto Sans', sans-serif" font-size="14" fill="#000000" font-weight="500">Low substrate S diet</text>
+<text x="623.0" y="364.8" text-anchor="middle" font-family="'Noto Sans', sans-serif" font-size="14" fill="#000000" font-weight="500">to slow the build-up</text>
+<g class="glyphs">
+<circle cx="541.0" cy="326.0" r="8.5" fill="#efa2c7" stroke="#aa3377" stroke-width="1.2"/>
+<path transform="translate(535.00,320.00) scale(0.5000)" d="M9.98 3 8.02 5.02V6.98H5.02Q4.18 6.98 3.64 7.6Q3.1 8.21 3 9L2.02 18.98Q1.92 19.82 2.44 20.41Q2.95 21 3.98 21H20.02Q21.05 21 21.56 20.41Q22.08 19.82 21.98 18.98L21 9Q20.9 8.21 20.34 7.6Q19.78 6.98 18.98 6.98H15.98V5.02L14.02 3ZM9.98 5.02H14.02V6.98H9.98ZM11.02 9.98H12.98V12.98H15.98V15H12.98V18H11.02V15H8.02V12.98H11.02Z" fill="#aa3377"/>
+</g>
+</g>
+<g id="credit" class="credit">
+<text x="478.0" y="746.0" text-anchor="end" font-family="'Noto Sans', sans-serif" font-size="11" font-weight="500" fill="#3a3a3a">Drawn for this example</text>
+</g>
+</svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1744 798" class="fig fig-petroff-10-on-primer-dark-high-contrast" data-pal="petroff-10-on-primer-dark-high-contrast" role="img" aria-label="Mechanism of fictional enzyme X deficiency: an inherited gene fault lowers enzyme X, substrate S builds up, and the findings, the diagnosis and two treatments each attach to a step of that chain.">
+<rect width="1744" height="798" fill="#010409"/>
+<g id="header--p1" class="header">
+<text x="42.0" y="64" font-family="'Noto Sans Mono', ui-monospace, monospace" font-size="30" font-weight="700" fill="#ffffff">Fictional enzyme X deficiency</text>
+<text x="42.0" y="100" font-family="'Noto Sans', sans-serif" font-size="19" font-weight="500" fill="#b7bdc8">Alex Example, 34 · tiredness and pale skin patches · an invented case</text>
+<text x="1702.0" y="64" text-anchor="end" font-family="'Noto Sans Mono', ui-monospace, monospace" font-size="21" font-weight="700" fill="#ffffff">Worked example</text>
+<text x="1702.0" y="100" text-anchor="end" font-family="'Noto Sans', sans-serif" font-size="17" font-weight="500" fill="#b7bdc8">Alex Example</text>
+</g>
+<g id="key--p1" class="key">
+<rect x="942.0" y="180.0" width="760.0" height="410.0" rx="12" ry="12" fill="#010409" stroke="#b7bdc8" stroke-width="1.2"/>
+<text x="958.0" y="206.0" font-family="'Noto Sans Mono', ui-monospace, monospace" font-size="14" font-weight="700" fill="#ffffff">KEY</text>
+<rect x="960.0" y="228.0" width="34" height="20" rx="6" fill="#3c2400" stroke="#ffa90e" stroke-width="1.5"/>
+<circle cx="963.0" cy="229.0" r="8.5" fill="#3c2400" stroke="#ffa90e" stroke-width="1.2"/>
+<path transform="translate(957.00,223.00) scale(0.5000)" d="M5.02 3H18.98Q19.82 3 20.41 3.59Q21 4.18 21 5.02V18.98Q21 19.82 20.41 20.41Q19.82 21 18.98 21H5.02Q4.18 21 3.59 20.41Q3 19.82 3 18.98V5.02Q3 4.18 3.59 3.59Q4.18 3 5.02 3ZM6.98 5.02Q6.19 5.02 5.6 5.6Q5.02 6.19 5.02 7.01Q5.02 7.82 5.6 8.41Q6.19 9 7.01 9Q7.82 9 8.41 8.41Q9 7.82 9 7.01Q9 6.19 8.41 5.6Q7.82 5.02 6.98 5.02ZM17.02 15Q16.18 15 15.59 15.59Q15 16.18 15 16.99Q15 17.81 15.59 18.4Q16.18 18.98 16.99 18.98Q17.81 18.98 18.4 18.4Q18.98 17.81 18.98 16.99Q18.98 16.18 18.4 15.59Q17.81 15 17.02 15ZM17.02 5.02Q16.18 5.02 15.59 5.6Q15 6.19 15 7.01Q15 7.82 15.59 8.41Q16.18 9 16.99 9Q17.81 9 18.4 8.41Q18.98 7.82 18.98 7.01Q18.98 6.19 18.4 5.6Q17.81 5.02 17.02 5.02ZM12 9.98Q11.16 9.98 10.57 10.57Q9.98 11.16 9.98 12Q9.98 12.84 10.57 13.43Q11.16 14.02 12 14.02Q12.84 14.02 13.43 13.43Q14.02 12.84 14.02 12Q14.02 11.16 13.43 10.57Q12.84 9.98 12 9.98ZM6.98 15Q6.19 15 5.6 15.59Q5.02 16.18 5.02 16.99Q5.02 17.81 5.6 18.4Q6.19 18.98 7.01 18.98Q7.82 18.98 8.41 18.4Q9 17.81 9 16.99Q9 16.18 8.41 15.59Q7.82 15 6.98 15Z" fill="#ffa90e"/>
+<text x="1006.0" y="243.0" font-family="'Noto Sans', sans-serif" font-size="14" font-weight="500" fill="#ffffff">Risk factor</text>
+<rect x="960.0" y="271.5" width="34" height="20" rx="6" fill="#103739" stroke="#92dadd" stroke-width="1.5"/>
+<circle cx="963.0" cy="272.5" r="8.5" fill="#103739" stroke="#92dadd" stroke-width="1.2"/>
+<path transform="translate(957.00,266.50) scale(0.5000)" d="M12 15.5Q10.54 15.5 9.52 14.48Q8.5 13.46 8.5 12Q8.5 10.54 9.52 9.52Q10.54 8.5 12 8.5Q13.46 8.5 14.48 9.52Q15.5 10.54 15.5 12Q15.5 13.46 14.48 14.48Q13.46 15.5 12 15.5ZM19.46 12.98Q19.51 12.43 19.5 12Q19.49 11.57 19.46 11.02L21.55 9.38Q21.7 9.24 21.72 9.07Q21.74 8.9 21.65 8.71L19.63 5.26Q19.58 5.11 19.4 5.04Q19.22 4.97 19.03 5.06L16.54 6.05Q15.7 5.4 14.86 5.06L14.5 2.45Q14.5 2.26 14.35 2.14Q14.21 2.02 14.02 2.02H9.98Q9.79 2.02 9.65 2.14Q9.5 2.26 9.5 2.45L9.14 5.06Q8.3 5.4 7.46 6.05L4.97 5.06Q4.78 4.97 4.6 5.04Q4.42 5.11 4.37 5.26L2.35 8.71Q2.26 8.9 2.28 9.07Q2.3 9.24 2.45 9.38L4.54 11.02Q4.49 11.57 4.5 12Q4.51 12.43 4.54 12.98L2.45 14.62Q2.3 14.76 2.28 14.93Q2.26 15.1 2.35 15.29L4.37 18.74Q4.42 18.89 4.6 18.96Q4.78 19.03 4.97 18.94L7.46 17.95Q8.3 18.6 9.14 18.94L9.5 21.55Q9.5 21.74 9.65 21.86Q9.79 21.98 9.98 21.98H14.02Q14.21 21.98 14.35 21.86Q14.5 21.74 14.5 21.55L14.86 18.94Q15.74 18.55 16.54 17.95L19.03 18.94Q19.22 19.03 19.4 18.96Q19.58 18.89 19.63 18.74L21.65 15.29Q21.74 15.1 21.72 14.93Q21.7 14.76 21.55 14.62Z" fill="#92dadd"/>
+<text x="1006.0" y="286.5" font-family="'Noto Sans', sans-serif" font-size="14" font-weight="500" fill="#ffffff">Mechanism</text>
+<rect x="960.0" y="315.0" width="34" height="20" rx="6" fill="#1d1814" stroke="#efe2d8" stroke-width="1.5" stroke-dasharray="4.5 5" stroke-linecap="round"/>
+<circle cx="963.0" cy="316.0" r="8.5" fill="#1d1814" stroke="#efe2d8" stroke-width="1.2"/>
+<path transform="translate(957.00,310.00) scale(0.5000)" d="M21 9H15V21.98H12.98V15.98H11.02V21.98H9V9H3V6.98H21ZM12 2.02Q12.84 2.02 13.43 2.6Q14.02 3.19 14.02 4.01Q14.02 4.82 13.43 5.41Q12.84 6 12 6Q11.16 6 10.57 5.41Q9.98 4.82 9.98 4.01Q9.98 3.19 10.57 2.6Q11.16 2.02 12 2.02Z" fill="#efe2d8"/>
+<text x="1006.0" y="330.0" font-family="'Noto Sans', sans-serif" font-size="14" font-weight="500" fill="#ffffff">Normal anatomy or physiology</text>
+<rect x="960.0" y="358.5" width="34" height="20" rx="6" fill="#1a0300" stroke="#a96b59" stroke-width="1.5"/>
+<circle cx="963.0" cy="359.5" r="8.5" fill="#1a0300" stroke="#a96b59" stroke-width="1.2"/>
+<path transform="translate(957.00,353.50) scale(0.5000)" d="M18.98 8.02Q19.42 8.02 19.72 8.29Q20.02 8.57 20.02 9Q20.02 9.43 19.72 9.71Q19.42 9.98 18.98 9.98Q18.55 9.98 18.28 9.71Q18 9.43 18 9Q18 8.57 18.28 8.29Q18.55 8.02 18.98 8.02ZM2.02 2.02V11.02Q2.02 13.22 3.47 14.9Q4.92 16.58 7.13 16.92Q7.61 19.18 9.37 20.58Q11.14 21.98 13.49 21.98Q15.26 21.98 16.75 21.12Q18.24 20.26 19.13 18.76Q20.02 17.26 20.02 15.5V11.81Q20.9 11.47 21.44 10.7Q21.98 9.94 21.98 9Q21.98 7.73 21.12 6.86Q20.26 6 19.01 6Q17.76 6 16.87 6.86Q15.98 7.73 15.98 9Q15.98 9.94 16.55 10.72Q17.11 11.5 18 11.81V15.43Q18 17.3 16.68 18.61Q15.36 19.92 13.49 19.92Q12 19.92 10.82 19.08Q9.65 18.24 9.24 16.92Q11.3 16.44 12.66 14.78Q14.02 13.13 14.02 11.02V2.02H9.98V5.02H12V11.02Q12 12.65 10.82 13.82Q9.65 15 7.99 15Q6.34 15 5.16 13.82Q3.98 12.65 3.98 11.02V5.02H6V2.02Z" fill="#a96b59"/>
+<text x="1006.0" y="373.5" font-family="'Noto Sans', sans-serif" font-size="14" font-weight="500" fill="#ffffff">Sign or symptom</text>
+<rect x="960.0" y="402.0" width="34" height="20" rx="6" fill="#001125" stroke="#3f90da" stroke-width="1.5"/>
+<circle cx="963.0" cy="403.0" r="8.5" fill="#001125" stroke="#3f90da" stroke-width="1.2"/>
+<path transform="translate(957.00,397.00) scale(0.5000)" d="M6.98 2.02V3.98H8.02V18Q8.02 19.63 9.19 20.81Q10.37 21.98 12 21.98Q13.63 21.98 14.81 20.81Q15.98 19.63 15.98 18V3.98H17.02V2.02ZM11.02 15.98Q10.54 15.98 10.26 15.73Q9.98 15.48 9.98 15Q9.98 14.52 10.26 14.27Q10.54 14.02 10.99 14.02Q11.45 14.02 11.72 14.27Q12 14.52 12 15Q12 15.48 11.72 15.73Q11.45 15.98 11.02 15.98ZM12.98 12Q12.55 12 12.28 11.72Q12 11.45 12 10.99Q12 10.54 12.28 10.26Q12.55 9.98 13.01 9.98Q13.46 9.98 13.74 10.26Q14.02 10.54 14.02 10.99Q14.02 11.45 13.74 11.72Q13.46 12 12.98 12ZM14.02 6.98H9.98V3.98H14.02Z" fill="#3f90da"/>
+<text x="1006.0" y="417.0" font-family="'Noto Sans', sans-serif" font-size="14" font-weight="500" fill="#ffffff">Investigation</text>
+<rect x="960.0" y="445.5" width="34" height="20" rx="6" fill="#1b2322" stroke="#94a4a2" stroke-width="1.5"/>
+<circle cx="963.0" cy="446.5" r="8.5" fill="#1b2322" stroke="#94a4a2" stroke-width="1.2"/>
+<path transform="translate(957.00,440.50) scale(0.5000)" d="M18.98 4.01H14.81Q14.47 3.12 13.7 2.56Q12.94 1.99 12 1.99Q11.06 1.99 10.28 2.56Q9.5 3.12 9.19 4.01H5.02Q4.18 4.01 3.59 4.6Q3 5.18 3 6.02V19.99Q3 20.83 3.59 21.42Q4.18 22.01 5.02 22.01H18.98Q19.82 22.01 20.41 21.42Q21 20.83 21 19.99V6.02Q21 5.18 20.41 4.6Q19.82 4.01 18.98 4.01ZM12 4.01Q12.43 4.01 12.71 4.28Q12.98 4.56 12.98 4.99Q12.98 5.42 12.71 5.72Q12.43 6.02 12 6.02Q11.57 6.02 11.29 5.72Q11.02 5.42 11.02 4.99Q11.02 4.56 11.29 4.28Q11.57 4.01 12 4.01ZM5.02 14.47H7.18Q7.2 14.47 10.51 8.09L11.45 15.07L13.92 11.88L16.54 14.47H18.98V16.01H15.89L14.06 14.23L10.37 18.91L9.6 13.15L8.11 16.01H5.02Z" fill="#94a4a2"/>
+<text x="1006.0" y="460.5" font-family="'Noto Sans', sans-serif" font-size="14" font-weight="500" fill="#ffffff">Diagnosis</text>
+<rect x="960.0" y="489.0" width="34" height="20" rx="6" fill="#0b0015" stroke="#923fc7" stroke-width="1.5"/>
+<circle cx="963.0" cy="490.0" r="8.5" fill="#0b0015" stroke="#923fc7" stroke-width="1.2"/>
+<path transform="translate(957.00,484.00) scale(0.5000)" d="M9.98 3 8.02 5.02V6.98H5.02Q4.18 6.98 3.64 7.6Q3.1 8.21 3 9L2.02 18.98Q1.92 19.82 2.44 20.41Q2.95 21 3.98 21H20.02Q21.05 21 21.56 20.41Q22.08 19.82 21.98 18.98L21 9Q20.9 8.21 20.34 7.6Q19.78 6.98 18.98 6.98H15.98V5.02L14.02 3ZM9.98 5.02H14.02V6.98H9.98ZM11.02 9.98H12.98V12.98H15.98V15H12.98V18H11.02V15H8.02V12.98H11.02Z" fill="#923fc7"/>
+<text x="1006.0" y="504.0" font-family="'Noto Sans', sans-serif" font-size="14" font-weight="500" fill="#ffffff">Treatment</text>
+<circle cx="971.0" cy="542.5" r="9.0" fill="#ffffff"/>
+<text x="971.0" y="546.5" text-anchor="middle" font-family="'Noto Sans Mono', ui-monospace, monospace" font-size="11" font-weight="700" fill="#010409">1</text>
+<text x="1006.0" y="547.5" font-family="'Noto Sans', sans-serif" font-size="14" font-weight="500" fill="#ffffff">Sequence number</text>
+<path d="M1253.5,238.0 L1298.0,238.0" fill="none" stroke="#b7bdc8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M1304.10,239.38 L1299.80,241.44 Q1297.99,242.30 1297.99,240.30 L1297.99,235.70 Q1297.99,233.70 1299.80,234.56 L1304.10,236.62 Q1306.99,238.00 1304.10,239.38 Z" fill="#b7bdc8"/>
+<text x="1319.5" y="243.0" font-family="'Noto Sans', sans-serif" font-size="14" font-weight="500" fill="#ffffff">Causal link</text>
+<path d="M1253.5,281.5 L1298.0,281.5" fill="none" stroke="#efe2d8" stroke-width="1.5" stroke-dasharray="3.5 5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M1304.10,282.88 L1299.80,284.94 Q1297.99,285.80 1297.99,283.80 L1297.99,279.20 Q1297.99,277.20 1299.80,278.06 L1304.10,280.12 Q1306.99,281.50 1304.10,282.88 Z" fill="#efe2d8"/>
+<text x="1319.5" y="286.5" font-family="'Noto Sans', sans-serif" font-size="14" font-weight="500" fill="#ffffff">Required structure or function</text>
+<path d="M1253.5,325.0 L1305.5,325.0" fill="none" stroke="#b7bdc8" stroke-width="1.65" stroke-dasharray="1.6 3.4" stroke-linecap="round" stroke-linejoin="round"/>
+<line x1="1305.5" y1="331.5" x2="1305.5" y2="318.5" stroke="#b7bdc8" stroke-width="2.5" stroke-linecap="round"/>
+<text x="1319.5" y="330.0" font-family="'Noto Sans', sans-serif" font-size="14" font-weight="500" fill="#ffffff">Evidence against diagnosis</text>
+<path d="M1253.5,368.5 L1305.5,368.5" fill="none" stroke="#923fc7" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"/>
+<line x1="1305.5" y1="375.0" x2="1305.5" y2="362.0" stroke="#923fc7" stroke-width="2.5" stroke-linecap="round"/>
+<text x="1319.5" y="373.5" font-family="'Noto Sans', sans-serif" font-size="14" font-weight="500" fill="#ffffff">Blocked by treatment</text>
+<circle cx="1279.5" cy="412.0" r="8.0" fill="#ffa90e" stroke="#010409" stroke-width="1.5"/>
+<path transform="translate(1274.30,406.75) scale(0.4375)" d="M12.98 14.5H11.02V9.5H12.98ZM12.98 18.48H11.02V16.46H12.98ZM0.98 21.5H23.02L12 2.5Z" fill="#010409"/>
+<text x="1319.5" y="417.0" font-family="'Noto Sans', sans-serif" font-size="14" font-weight="500" fill="#ffffff">Pitfall: a common trap</text>
+<circle cx="1279.5" cy="455.5" r="8.0" fill="#717581" stroke="#010409" stroke-width="1.5"/>
+<path transform="translate(1274.30,450.25) scale(0.4375)" d="M12 17.76 18.19 21.5 16.54 14.45 21.98 9.74 14.81 9.12 12 2.5 9.19 9.12 2.02 9.74 7.46 14.45 5.81 21.5Z" fill="#ffffff"/>
+<text x="1319.5" y="460.5" font-family="'Noto Sans', sans-serif" font-size="14" font-weight="500" fill="#ffffff">High-yield: a key concept</text>
+<text x="1279.5" y="504.0" text-anchor="middle" font-family="'Noto Sans', sans-serif" font-size="14" font-weight="500" fill="#ffffff"><tspan fill="#a96b59">↑</tspan>  <tspan fill="#3f90da">↓</tspan></text>
+<text x="1319.5" y="504.0" font-family="'Noto Sans', sans-serif" font-size="14" font-weight="500" fill="#ffffff">Raised / reduced result</text>
+<rect x="1251.5" y="532.5" width="56" height="20" rx="6" fill="#001125" stroke="#3f90da" stroke-width="1.5"/>
+<line x1="1259.5" y1="542.5" x2="1291.5" y2="542.5" stroke="#255b8e" stroke-width="1.2" stroke-linecap="round"/>
+<rect x="1265.5" y="539.5" width="12.0" height="6" rx="3" fill="#235789"/>
+<path d="M1295.9,539.1 L1301.1,542.5 L1295.9,545.9" fill="none" stroke="#a96b59" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+<circle cx="1291.5" cy="542.5" r="3.6" fill="#a96b59" stroke="#001125" stroke-width="1.2"/>
+<text x="1319.5" y="547.5" font-family="'Noto Sans', sans-serif" font-size="14" font-weight="500" fill="#ffffff">Band: reference interval; dot: result; › beyond scale</text>
+</g>
+<g id="timeline--p1" class="timeline">
+<text x="42.0" y="148.0" font-family="'Noto Sans Mono', ui-monospace, monospace" font-size="14" font-weight="700" fill="#ffffff">TIME COURSE</text>
+<line class="tl-line" data-stage="mech" x1="276.0" y1="143.0" x2="602.3" y2="143.0" stroke="#b7bdc8" stroke-width="1.2" stroke-linecap="round"/>
+<line class="tl-line" data-stage="find" x1="734.7" y1="143.0" x2="1060.3" y2="143.0" stroke="#b7bdc8" stroke-width="1.2" stroke-linecap="round"/>
+<line class="tl-line" data-stage="care" x1="1193.2" y1="143.0" x2="1518.2" y2="143.0" stroke="#b7bdc8" stroke-width="1.2" stroke-linecap="round"/>
+<g class="tl-line" data-stage="care"><line x1="1680.0" y1="143.0" x2="1694.5" y2="143.0" stroke="#b7bdc8" stroke-width="1.2" stroke-linecap="round"/>
+<path d="M1700.56,144.38 L1696.25,146.44 Q1694.44,147.30 1694.44,145.30 L1694.44,140.70 Q1694.44,138.70 1696.25,139.56 L1700.56,141.62 Q1703.44,143.00 1700.56,144.38 Z" fill="#b7bdc8"/></g>
+<g class="tl-marker" data-stage="cause">
+<circle cx="162.4" cy="143.0" r="10.0" fill="#ffffff"/>
+<text x="162.4" y="147.3" text-anchor="middle" font-family="'Noto Sans Mono', ui-monospace, monospace" font-size="12" font-weight="700" fill="#010409">1</text>
+<path transform="translate(178.40,135.00) scale(0.6667)" d="M3.98 2.02H6V3.98Q6 5.06 6.47 5.95Q6.94 6.84 7.9 7.8Q8.86 8.76 11.11 10.22L9.29 11.4Q7.56 10.22 6.5 9.19Q3.98 6.79 3.98 3.98ZM18 2.02H20.02V3.98Q20.02 6.79 17.5 9.19Q16.56 10.13 15.14 11.11Q14.3 11.71 12.55 12.84Q10.82 13.97 9.98 14.52Q8.66 15.41 7.87 16.22Q6.94 17.16 6.47 18.05Q6 18.94 6 20.02V21.98H3.98V20.02Q3.98 17.21 6.5 14.81Q7.44 13.87 8.86 12.89Q9.7 12.29 11.45 11.16Q13.18 10.03 14.02 9.48Q15.34 8.59 16.13 7.78Q17.06 6.84 17.53 5.95Q18 5.06 18 3.98ZM14.71 12.6Q16.44 13.78 17.5 14.81Q20.02 17.21 20.02 20.02V21.98H18V20.02Q18 18.94 17.53 18.05Q17.06 17.16 16.1 16.2Q15.14 15.24 12.89 13.78ZM6.98 3H17.02V3.98Q17.02 3.96 16.92 4.49H7.08L6.98 3.98ZM7.68 6H16.32Q15.89 6.6 15.43 7.08L14.9 7.51H9.05L8.57 7.08Q8.11 6.6 7.68 6ZM9.1 16.49H14.95L15.43 16.92Q15.91 17.4 16.32 18H7.68Q8.11 17.4 8.57 16.92ZM7.08 19.51H16.92L17.02 20.02V21H6.98V20.02Z" fill="#ffffff"/>
+<text x="199.4" y="148.0" font-family="'Noto Sans', sans-serif" font-size="14" font-weight="500" fill="#ffffff">from birth</text>
+</g>
+<g class="tl-marker" data-stage="mech">
+<circle cx="620.3" cy="143.0" r="10.0" fill="#ffffff"/>
+<text x="620.3" y="147.3" text-anchor="middle" font-family="'Noto Sans Mono', ui-monospace, monospace" font-size="12" font-weight="700" fill="#010409">2</text>
+<path transform="translate(636.33,135.00) scale(0.6667)" d="M6 21.98Q4.73 21.98 3.86 21.12Q3 20.26 3 18.98Q3 18.1 3.5 17.4L9 7.82V6Q8.57 6 8.29 5.72Q8.02 5.45 8.02 5.02V3.98Q8.02 3.19 8.6 2.6Q9.19 2.02 9.98 2.02H14.02Q14.81 2.02 15.4 2.6Q15.98 3.19 15.98 3.98V5.02Q15.98 5.45 15.71 5.72Q15.43 6 15 6V7.82L20.5 17.4Q21 18.1 21 18.98Q21 20.26 20.14 21.12Q19.27 21.98 18 21.98ZM5.02 18.98Q5.02 19.42 5.29 19.72Q5.57 20.02 6 20.02H18Q18.43 20.02 18.71 19.72Q18.98 19.42 18.98 18.98Q18.98 18.7 18.79 18.43L16.54 14.5L14.02 17.02L8.95 11.95L5.21 18.43Q5.02 18.7 5.02 18.98ZM12.98 9.98Q12.55 9.98 12.28 10.28Q12 10.58 12 11.02Q12 11.45 12.28 11.72Q12.55 12 12.98 12Q13.42 12 13.72 11.72Q14.02 11.45 14.02 11.02Q14.02 10.58 13.72 10.28Q13.42 9.98 12.98 9.98Z" fill="#ffffff"/>
+<text x="657.3" y="148.0" font-family="'Noto Sans', sans-serif" font-size="14" font-weight="500" fill="#ffffff">over years</text>
+</g>
+<g class="tl-marker" data-stage="find">
+<circle cx="1078.3" cy="143.0" r="10.0" fill="#ffffff"/>
+<text x="1078.3" y="147.3" text-anchor="middle" font-family="'Noto Sans Mono', ui-monospace, monospace" font-size="12" font-weight="700" fill="#010409">3</text>
+<path transform="translate(1094.27,135.00) scale(0.6667)" d="M8.98 6.26 10.56 8.98Q8.59 9.17 7.3 10.6Q6 12.02 6 13.99Q6 15.36 6.66 16.5Q7.32 17.64 8.47 18.3Q9.62 18.96 10.99 18.96Q12.53 18.96 13.76 18.14Q15 17.33 15.58 15.96H12.98V13.99H21V15.96H18.77Q18.12 18.36 16.27 19.99Q16.25 19.99 18.98 19.99V21.96H3V19.99H5.69Q4.42 18.86 3.71 17.29Q3 15.72 3 13.99Q3 11.28 4.68 9.12Q6.36 6.96 8.98 6.26ZM12.24 2.04Q12.22 2.04 12.98 3.36L13.85 2.83L17.35 8.93L13.9 10.9L10.37 4.85L11.26 4.34L10.51 3.02Z" fill="#ffffff"/>
+<text x="1115.3" y="148.0" font-family="'Noto Sans', sans-serif" font-size="14" font-weight="500" fill="#ffffff">at the visit</text>
+</g>
+<g class="tl-marker" data-stage="care">
+<circle cx="1536.2" cy="143.0" r="10.0" fill="#ffffff"/>
+<text x="1536.2" y="147.3" text-anchor="middle" font-family="'Noto Sans Mono', ui-monospace, monospace" font-size="12" font-weight="700" fill="#010409">4</text>
+<path transform="translate(1552.20,135.00) scale(0.6667)" d="M4.22 11.3 11.3 4.22Q12.48 3.05 13.99 2.65Q15.5 2.26 17.05 2.65Q18.6 3.05 19.78 4.22Q20.95 5.4 21.35 6.92Q21.74 8.45 21.35 9.98Q20.95 11.52 19.78 12.7L12.7 19.78Q11.52 20.95 9.98 21.35Q8.45 21.74 6.92 21.35Q5.4 20.95 4.22 19.78Q3.05 18.6 2.65 17.05Q2.26 15.5 2.65 13.99Q3.05 12.48 4.22 11.3ZM5.62 12.7Q4.87 13.49 4.6 14.52Q4.32 15.55 4.58 16.54L10.58 10.58L14.81 14.81L18.38 11.3Q19.56 10.13 19.55 8.46Q19.54 6.79 18.37 5.63Q17.21 4.46 15.54 4.46Q13.87 4.46 12.7 5.62Z" fill="#ffffff"/>
+<text x="1573.2" y="148.0" font-family="'Noto Sans', sans-serif" font-size="14" font-weight="500" fill="#ffffff">after the assay</text>
+</g>
+</g>
+<g id="stage-cause--p1" class="stage" data-stage="cause" data-n="1">
+<rect x="42.0" y="180.0" width="450.0" height="224.0" rx="12" ry="12" fill="#151b23" stroke="#b7bdc8" stroke-width="1.2"/>
+<text x="102.0" y="204.0" font-family="'Noto Sans Mono', ui-monospace, monospace" font-size="14" font-weight="700" fill="#ffffff">CAUSE  ·  from birth</text>
+<g class="stage-badge">
+<circle cx="65.0" cy="199.5" r="9.0" fill="#ffffff"/>
+<text x="65.0" y="203.5" text-anchor="middle" font-family="'Noto Sans Mono', ui-monospace, monospace" font-size="11" font-weight="700" fill="#010409">1</text>
+<path transform="translate(80.00,191.50) scale(0.6667)" d="M3.98 2.02H6V3.98Q6 5.06 6.47 5.95Q6.94 6.84 7.9 7.8Q8.86 8.76 11.11 10.22L9.29 11.4Q7.56 10.22 6.5 9.19Q3.98 6.79 3.98 3.98ZM18 2.02H20.02V3.98Q20.02 6.79 17.5 9.19Q16.56 10.13 15.14 11.11Q14.3 11.71 12.55 12.84Q10.82 13.97 9.98 14.52Q8.66 15.41 7.87 16.22Q6.94 17.16 6.47 18.05Q6 18.94 6 20.02V21.98H3.98V20.02Q3.98 17.21 6.5 14.81Q7.44 13.87 8.86 12.89Q9.7 12.29 11.45 11.16Q13.18 10.03 14.02 9.48Q15.34 8.59 16.13 7.78Q17.06 6.84 17.53 5.95Q18 5.06 18 3.98ZM14.71 12.6Q16.44 13.78 17.5 14.81Q20.02 17.21 20.02 20.02V21.98H18V20.02Q18 18.94 17.53 18.05Q17.06 17.16 16.1 16.2Q15.14 15.24 12.89 13.78ZM6.98 3H17.02V3.98Q17.02 3.96 16.92 4.49H7.08L6.98 3.98ZM7.68 6H16.32Q15.89 6.6 15.43 7.08L14.9 7.51H9.05L8.57 7.08Q8.11 6.6 7.68 6ZM9.1 16.49H14.95L15.43 16.92Q15.91 17.4 16.32 18H7.68Q8.11 17.4 8.57 16.92ZM7.08 19.51H16.92L17.02 20.02V21H6.98V20.02Z" fill="#ffffff"/>
+</g>
+</g>
+<g id="stage-mech--p1" class="stage" data-stage="mech" data-n="2">
+<rect x="520.0" y="432.0" width="394.0" height="158.0" rx="12" ry="12" fill="#151b23" stroke="#b7bdc8" stroke-width="1.2"/>
+<text x="580.0" y="456.0" font-family="'Noto Sans Mono', ui-monospace, monospace" font-size="14" font-weight="700" fill="#ffffff">MECHANISM  ·  over years</text>
+<g class="stage-badge">
+<circle cx="543.0" cy="451.5" r="9.0" fill="#ffffff"/>
+<text x="543.0" y="455.5" text-anchor="middle" font-family="'Noto Sans Mono', ui-monospace, monospace" font-size="11" font-weight="700" fill="#010409">2</text>
+<path transform="translate(558.00,443.50) scale(0.6667)" d="M6 21.98Q4.73 21.98 3.86 21.12Q3 20.26 3 18.98Q3 18.1 3.5 17.4L9 7.82V6Q8.57 6 8.29 5.72Q8.02 5.45 8.02 5.02V3.98Q8.02 3.19 8.6 2.6Q9.19 2.02 9.98 2.02H14.02Q14.81 2.02 15.4 2.6Q15.98 3.19 15.98 3.98V5.02Q15.98 5.45 15.71 5.72Q15.43 6 15 6V7.82L20.5 17.4Q21 18.1 21 18.98Q21 20.26 20.14 21.12Q19.27 21.98 18 21.98ZM5.02 18.98Q5.02 19.42 5.29 19.72Q5.57 20.02 6 20.02H18Q18.43 20.02 18.71 19.72Q18.98 19.42 18.98 18.98Q18.98 18.7 18.79 18.43L16.54 14.5L14.02 17.02L8.95 11.95L5.21 18.43Q5.02 18.7 5.02 18.98ZM12.98 9.98Q12.55 9.98 12.28 10.28Q12 10.58 12 11.02Q12 11.45 12.28 11.72Q12.55 12 12.98 12Q13.42 12 13.72 11.72Q14.02 11.45 14.02 11.02Q14.02 10.58 13.72 10.28Q13.42 9.98 12.98 9.98Z" fill="#ffffff"/>
+</g>
+</g>
+<g id="stage-find--p1" class="stage" data-stage="find" data-n="3">
+<rect x="520.0" y="618.0" width="1182.0" height="140.0" rx="12" ry="12" fill="#151b23" stroke="#b7bdc8" stroke-width="1.2"/>
+<text x="580.0" y="642.0" font-family="'Noto Sans Mono', ui-monospace, monospace" font-size="14" font-weight="700" fill="#ffffff">FINDINGS AND DIAGNOSIS  ·  at the visit</text>
+<g class="stage-badge">
+<circle cx="543.0" cy="637.5" r="9.0" fill="#ffffff"/>
+<text x="543.0" y="641.5" text-anchor="middle" font-family="'Noto Sans Mono', ui-monospace, monospace" font-size="11" font-weight="700" fill="#010409">3</text>
+<path transform="translate(558.00,629.50) scale(0.6667)" d="M8.98 6.26 10.56 8.98Q8.59 9.17 7.3 10.6Q6 12.02 6 13.99Q6 15.36 6.66 16.5Q7.32 17.64 8.47 18.3Q9.62 18.96 10.99 18.96Q12.53 18.96 13.76 18.14Q15 17.33 15.58 15.96H12.98V13.99H21V15.96H18.77Q18.12 18.36 16.27 19.99Q16.25 19.99 18.98 19.99V21.96H3V19.99H5.69Q4.42 18.86 3.71 17.29Q3 15.72 3 13.99Q3 11.28 4.68 9.12Q6.36 6.96 8.98 6.26ZM12.24 2.04Q12.22 2.04 12.98 3.36L13.85 2.83L17.35 8.93L13.9 10.9L10.37 4.85L11.26 4.34L10.51 3.02Z" fill="#ffffff"/>
+</g>
+</g>
+<g id="stage-care--p1" class="stage" data-stage="care" data-n="4">
+<rect x="520.0" y="180.0" width="394.0" height="224.0" rx="12" ry="12" fill="#151b23" stroke="#b7bdc8" stroke-width="1.2"/>
+<text x="580.0" y="204.0" font-family="'Noto Sans Mono', ui-monospace, monospace" font-size="14" font-weight="700" fill="#ffffff">TREATMENT  ·  after the assay</text>
+<g class="stage-badge">
+<circle cx="543.0" cy="199.5" r="9.0" fill="#ffffff"/>
+<text x="543.0" y="203.5" text-anchor="middle" font-family="'Noto Sans Mono', ui-monospace, monospace" font-size="11" font-weight="700" fill="#010409">4</text>
+<path transform="translate(558.00,191.50) scale(0.6667)" d="M4.22 11.3 11.3 4.22Q12.48 3.05 13.99 2.65Q15.5 2.26 17.05 2.65Q18.6 3.05 19.78 4.22Q20.95 5.4 21.35 6.92Q21.74 8.45 21.35 9.98Q20.95 11.52 19.78 12.7L12.7 19.78Q11.52 20.95 9.98 21.35Q8.45 21.74 6.92 21.35Q5.4 20.95 4.22 19.78Q3.05 18.6 2.65 17.05Q2.26 15.5 2.65 13.99Q3.05 12.48 4.22 11.3ZM5.62 12.7Q4.87 13.49 4.6 14.52Q4.32 15.55 4.58 16.54L10.58 10.58L14.81 14.81L18.38 11.3Q19.56 10.13 19.55 8.46Q19.54 6.79 18.37 5.63Q17.21 4.46 15.54 4.46Q13.87 4.46 12.7 5.62Z" fill="#ffffff"/>
+</g>
+</g>
+<g id="inset--p1" class="inset" data-inset="inset">
+<rect x="42.0" y="432.0" width="450.0" height="326.0" rx="12" ry="12" fill="#010409" stroke="#b7bdc8" stroke-width="1.2"/>
+<path transform="translate(56.00,443.50) scale(0.6667)" d="M12 20.4Q10.37 20.4 8.98 19.58Q7.58 18.77 6.79 17.38Q6 15.98 6 14.4Q6 12.96 6.94 10.99Q7.68 9.41 9 7.49Q9.94 6.14 11.06 4.75L12 3.6L12.94 4.75Q14.06 6.14 15 7.49Q16.32 9.41 17.06 10.99Q18 12.96 18 14.4Q18 15.98 17.21 17.38Q16.42 18.77 15.02 19.58Q13.63 20.4 12 20.4Z" fill="#ffffff"/>
+<text x="78.0" y="456.0" font-family="'Noto Sans Mono', ui-monospace, monospace" font-size="14" font-weight="700" fill="#ffffff">CLEARANCE</text>
+<clipPath id="inset-petroff-10-on-primer-dark-high-contrast-clip--p1"><rect x="187.53" y="446.00" width="158.93" height="298.00" rx="9.0" ry="9.0"/></clipPath>
+<g clip-path="url(#inset-petroff-10-on-primer-dark-high-contrast-clip--p1)"><g transform="translate(187.533,446.000) scale(0.993333,0.993333)">
+<rect width="160" height="300" fill="#010409" />
+<rect x="0" y="0" width="160" height="300" fill="#010409" />
+  <path d="M 84 40 Q 150 30 154 120 Q 158 220 114 270 Q 88 292 84 240 Z" fill="#1d1814" stroke="#efe2d8" stroke-width="3" />
+  <rect x="12" y="12" width="44" height="276" rx="22" fill="#1a0300" stroke="#a96b59" stroke-width="3" />
+  <circle cx="34" cy="60" r="7" fill="#ffa90e" />
+  <circle cx="29" cy="112" r="7" fill="#ffa90e" />
+  <circle cx="39" cy="164" r="7" fill="#ffa90e" />
+  <circle cx="31" cy="216" r="7" fill="#ffa90e" />
+  <path d="M 62 152 L 92 152" stroke="#92dadd" stroke-width="4" stroke-linecap="round" fill="none" />
+  <path d="M 83 143 L 94 152 L 83 161" stroke="#92dadd" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+  <polygon points="124,134 140,143 140,161 124,170 108,161 108,143" fill="#103739" stroke="#92dadd" stroke-width="3" />
+  <circle cx="124" cy="152" r="5" fill="#ffa90e" />
+</g>
+</g>
+<g class="labels">
+<line x1="159.5" y1="476.0" x2="220.9" y2="469.8" stroke="#010409" stroke-width="3.4" stroke-linecap="round"/>
+<line x1="159.5" y1="476.0" x2="220.9" y2="469.8" stroke="#ffffff" stroke-width="1.0" stroke-linecap="round"/>
+<circle cx="220.9" cy="469.8" r="2.3" fill="#ffffff" stroke="#010409" stroke-width="1.4"/>
+<text x="153.5" y="481.4" text-anchor="end" font-family="'Noto Sans', sans-serif" font-size="14" font-weight="500" fill="#ffffff">Vessel</text>
+<line x1="159.5" y1="556.3" x2="216.1" y2="556.3" stroke="#010409" stroke-width="3.4" stroke-linecap="round"/>
+<line x1="159.5" y1="556.3" x2="216.1" y2="556.3" stroke="#ffffff" stroke-width="1.0" stroke-linecap="round"/>
+<circle cx="216.1" cy="556.3" r="2.3" fill="#ffffff" stroke="#010409" stroke-width="1.4"/>
+<text x="153.5" y="561.7" text-anchor="end" font-family="'Noto Sans', sans-serif" font-size="14" font-weight="500" fill="#ffffff">Substrate S</text>
+<line x1="374.5" y1="597.1" x2="321.7" y2="597.1" stroke="#010409" stroke-width="3.4" stroke-linecap="round"/>
+<line x1="374.5" y1="597.1" x2="321.7" y2="597.1" stroke="#ffffff" stroke-width="1.0" stroke-linecap="round"/>
+<circle cx="310.7" cy="597.1" r="11.0" fill="none" stroke="#010409" stroke-width="4.0"/>
+<circle cx="310.7" cy="597.1" r="11.0" fill="none" stroke="#a96b59" stroke-width="1.6"/>
+<text x="380.5" y="602.5" text-anchor="start" font-family="'Noto Sans', sans-serif" font-size="14" font-weight="700" fill="#ffffff">Enzyme X</text>
+<line x1="374.5" y1="684.4" x2="316.3" y2="684.4" stroke="#010409" stroke-width="3.4" stroke-linecap="round"/>
+<line x1="374.5" y1="684.4" x2="316.3" y2="684.4" stroke="#ffffff" stroke-width="1.0" stroke-linecap="round"/>
+<circle cx="316.3" cy="684.4" r="2.3" fill="#ffffff" stroke="#010409" stroke-width="1.4"/>
+<text x="380.5" y="689.8" text-anchor="start" font-family="'Noto Sans', sans-serif" font-size="14" font-weight="500" fill="#ffffff">Tissue</text>
+</g>
+</g>
+<g id="edge-0--p1" class="edge" data-a="rf_gene" data-b="m_low" data-kind="stim">
+<path d="M367.7,255.0 L500.0,255.0 Q506.0,255.0 506.0,261.0 L506.0,491.0 Q506.0,497.0 512.0,497.0 L529.1,497.0" fill="none" stroke="#b7bdc8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M535.21,498.38 L530.90,500.44 Q529.09,501.30 529.09,499.30 L529.09,494.70 Q529.09,492.70 530.90,493.56 L535.21,495.62 Q538.09,497.00 535.21,498.38 Z" fill="#b7bdc8"/>
+</g>
+<g id="edge-1--p1" class="edge" data-a="an_clear" data-b="m_low" data-kind="req">
+<path d="M474.0,351.0 L500.0,351.0 Q506.0,351.0 506.0,357.0 L506.0,519.0 Q506.0,525.0 512.0,525.0 L529.1,525.0" fill="none" stroke="#efe2d8" stroke-width="1.5" stroke-dasharray="3.5 5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M535.21,526.38 L530.90,528.44 Q529.09,529.30 529.09,527.30 L529.09,522.70 Q529.09,520.70 530.90,521.56 L535.21,523.62 Q538.09,525.00 535.21,526.38 Z" fill="#efe2d8"/>
+</g>
+<g id="edge-2--p1" class="edge" data-a="m_low" data-b="m_build" data-kind="stim">
+<path d="M703.0,511.0 L722.1,511.0" fill="none" stroke="#b7bdc8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M728.21,512.38 L723.90,514.44 Q722.09,515.30 722.09,513.30 L722.09,508.70 Q722.09,506.70 723.90,507.56 L728.21,509.62 Q731.09,511.00 728.21,512.38 Z" fill="#b7bdc8"/>
+</g>
+<g id="edge-3--p1" class="edge" data-a="m_build" data-b="s_tired" data-kind="stim">
+<path d="M872.0,546.0 L872.0,596.0 Q872.0,602.0 878.0,602.0 L1573.0,602.0 Q1579.0,602.0 1579.0,608.0 L1579.0,650.5" fill="none" stroke="#b7bdc8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M1577.62,656.56 L1575.56,652.25 Q1574.70,650.44 1576.70,650.44 L1581.30,650.44 Q1583.30,650.44 1582.44,652.25 L1580.38,656.56 Q1579.00,659.44 1577.62,656.56 Z" fill="#b7bdc8"/>
+</g>
+<g id="edge-4--p1" class="edge" data-a="m_build" data-b="i_level" data-kind="stim">
+<path d="M848.0,546.0 L848.0,596.0 Q848.0,602.0 854.0,602.0 L1388.0,602.0 Q1394.0,602.0 1394.0,608.0 L1394.0,644.5" fill="none" stroke="#b7bdc8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M1392.62,650.56 L1390.56,646.25 Q1389.70,644.44 1391.70,644.44 L1396.30,644.44 Q1398.30,644.44 1397.44,646.25 L1395.38,650.56 Q1394.00,653.44 1392.62,650.56 Z" fill="#b7bdc8"/>
+</g>
+<g id="edge-5--p1" class="edge" data-a="m_low" data-b="i_assay" data-kind="stim">
+<path d="M623.0,546.0 L623.0,599.0 Q623.0,605.0 629.0,605.0 L1029.0,605.0 Q1035.0,605.0 1035.0,611.0 L1035.0,650.5" fill="none" stroke="#b7bdc8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M1033.62,656.56 L1031.56,652.25 Q1030.70,650.44 1032.70,650.44 L1037.30,650.44 Q1039.30,650.44 1038.44,652.25 L1036.38,656.56 Q1035.00,659.44 1033.62,656.56 Z" fill="#b7bdc8"/>
+</g>
+<g id="edge-6--p1" class="edge" data-a="i_level" data-b="dx_main" data-kind="stim">
+<path d="M1346.0,699.0 L1331.8,699.0" fill="none" stroke="#b7bdc8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M1325.79,697.62 L1330.10,695.56 Q1331.91,694.70 1331.91,696.70 L1331.91,701.30 Q1331.91,703.30 1330.10,702.44 L1325.79,700.38 Q1322.91,699.00 1325.79,697.62 Z" fill="#b7bdc8"/>
+</g>
+<g id="edge-7--p1" class="edge" data-a="i_assay" data-b="dx_main" data-kind="stim">
+<path d="M1110.0,699.0 L1124.2,699.0" fill="none" stroke="#b7bdc8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M1130.21,700.38 L1125.90,702.44 Q1124.09,703.30 1124.09,701.30 L1124.09,696.70 Q1124.09,694.70 1125.90,695.56 L1130.21,697.62 Q1133.09,699.00 1130.21,700.38 Z" fill="#b7bdc8"/>
+</g>
+<g id="edge-8--p1" class="edge" data-a="i_assay" data-b="x_diet" data-kind="excl">
+<path d="M960.0,699.0 L898.0,699.0" fill="none" stroke="#b7bdc8" stroke-width="1.65" stroke-dasharray="1.6 3.4" stroke-linecap="round" stroke-linejoin="round"/>
+<line x1="898.0" y1="692.5" x2="898.0" y2="705.5" stroke="#b7bdc8" stroke-width="2.5" stroke-linecap="round"/>
+</g>
+<g id="edge-9--p1" class="edge" data-a="tx_enz" data-b="m_build" data-kind="inh">
+<path d="M846.0,290.0 L846.0,468.6" fill="none" stroke="#923fc7" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"/>
+<line x1="839.5" y1="468.6" x2="852.5" y2="468.6" stroke="#923fc7" stroke-width="2.5" stroke-linecap="round"/>
+</g>
+<g id="edge-10--p1" class="edge" data-a="tx_diet" data-b="m_build" data-kind="inh">
+<path d="M708.0,351.0 L810.0,351.0 Q816.0,351.0 816.0,357.0 L816.0,468.6" fill="none" stroke="#923fc7" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"/>
+<line x1="809.5" y1="468.6" x2="822.5" y2="468.6" stroke="#923fc7" stroke-width="2.5" stroke-linecap="round"/>
+</g>
+<g id="node-rf_gene--p1" class="node" data-node="rf_gene" data-role="risk" data-stage="cause">
+<rect x="197.7" y="220.0" width="170.0" height="70.0" rx="7" ry="7" fill="#3c2400" stroke="#ffa90e" stroke-width="1.5"/>
+<text x="282.7" y="243.6" text-anchor="middle" font-family="'Noto Sans', sans-serif" font-size="14" fill="#ffffff" font-weight="500">Two faulty copies of</text>
+<text x="282.7" y="260.4" text-anchor="middle" font-family="'Noto Sans', sans-serif" font-size="14" fill="#ffffff" font-weight="500">gene XA, inherited</text>
+<text x="282.7" y="277.2" text-anchor="middle" font-family="'Noto Sans', sans-serif" font-size="14" fill="#ffffff" font-weight="500">from both parents</text>
+<g class="glyphs">
+<circle cx="200.7" cy="221.0" r="8.5" fill="#3c2400" stroke="#ffa90e" stroke-width="1.2"/>
+<path transform="translate(194.67,215.00) scale(0.5000)" d="M5.02 3H18.98Q19.82 3 20.41 3.59Q21 4.18 21 5.02V18.98Q21 19.82 20.41 20.41Q19.82 21 18.98 21H5.02Q4.18 21 3.59 20.41Q3 19.82 3 18.98V5.02Q3 4.18 3.59 3.59Q4.18 3 5.02 3ZM6.98 5.02Q6.19 5.02 5.6 5.6Q5.02 6.19 5.02 7.01Q5.02 7.82 5.6 8.41Q6.19 9 7.01 9Q7.82 9 8.41 8.41Q9 7.82 9 7.01Q9 6.19 8.41 5.6Q7.82 5.02 6.98 5.02ZM17.02 15Q16.18 15 15.59 15.59Q15 16.18 15 16.99Q15 17.81 15.59 18.4Q16.18 18.98 16.99 18.98Q17.81 18.98 18.4 18.4Q18.98 17.81 18.98 16.99Q18.98 16.18 18.4 15.59Q17.81 15 17.02 15ZM17.02 5.02Q16.18 5.02 15.59 5.6Q15 6.19 15 7.01Q15 7.82 15.59 8.41Q16.18 9 16.99 9Q17.81 9 18.4 8.41Q18.98 7.82 18.98 7.01Q18.98 6.19 18.4 5.6Q17.81 5.02 17.02 5.02ZM12 9.98Q11.16 9.98 10.57 10.57Q9.98 11.16 9.98 12Q9.98 12.84 10.57 13.43Q11.16 14.02 12 14.02Q12.84 14.02 13.43 13.43Q14.02 12.84 14.02 12Q14.02 11.16 13.43 10.57Q12.84 9.98 12 9.98ZM6.98 15Q6.19 15 5.6 15.59Q5.02 16.18 5.02 16.99Q5.02 17.81 5.6 18.4Q6.19 18.98 7.01 18.98Q7.82 18.98 8.41 18.4Q9 17.81 9 16.99Q9 16.18 8.41 15.59Q7.82 15 6.98 15Z" fill="#ffa90e"/>
+</g>
+</g>
+<g id="node-an_clear--p1" class="node" data-node="an_clear" data-role="anat" data-stage="cause">
+<rect x="314.0" y="316.0" width="160.0" height="70.0" rx="7" ry="7" fill="#1d1814" stroke="#efe2d8" stroke-width="1.5" stroke-dasharray="4.5 5" stroke-linecap="round"/>
+<text x="394.0" y="339.6" text-anchor="middle" font-family="'Noto Sans', sans-serif" font-size="14" fill="#ffffff" font-weight="500">Enzyme X normally</text>
+<text x="394.0" y="356.4" text-anchor="middle" font-family="'Noto Sans', sans-serif" font-size="14" fill="#ffffff" font-weight="500">clears substrate S</text>
+<text x="394.0" y="373.2" text-anchor="middle" font-family="'Noto Sans', sans-serif" font-size="14" fill="#ffffff" font-weight="500">from the blood</text>
+<g class="glyphs">
+<circle cx="317.0" cy="317.0" r="8.5" fill="#1d1814" stroke="#efe2d8" stroke-width="1.2"/>
+<path transform="translate(311.00,311.00) scale(0.5000)" d="M21 9H15V21.98H12.98V15.98H11.02V21.98H9V9H3V6.98H21ZM12 2.02Q12.84 2.02 13.43 2.6Q14.02 3.19 14.02 4.01Q14.02 4.82 13.43 5.41Q12.84 6 12 6Q11.16 6 10.57 5.41Q9.98 4.82 9.98 4.01Q9.98 3.19 10.57 2.6Q11.16 2.02 12 2.02Z" fill="#efe2d8"/>
+</g>
+</g>
+<g id="node-m_low--p1" class="node" data-node="m_low" data-role="mech" data-stage="mech">
+<rect x="543.0" y="476.0" width="160.0" height="70.0" rx="7" ry="7" fill="#103739" stroke="#92dadd" stroke-width="2.2"/>
+<text x="623.0" y="499.6" text-anchor="middle" font-family="'Noto Sans', sans-serif" font-size="14" fill="#ffffff" font-weight="700">Enzyme X activity</text>
+<text x="623.0" y="516.4" text-anchor="middle" font-family="'Noto Sans', sans-serif" font-size="14" fill="#ffffff" font-weight="700">falls below</text>
+<text x="623.0" y="533.2" text-anchor="middle" font-family="'Noto Sans', sans-serif" font-size="14" fill="#ffffff" font-weight="700">10 % of normal</text>
+<g class="glyphs">
+<circle cx="546.0" cy="477.0" r="8.5" fill="#103739" stroke="#92dadd" stroke-width="1.2"/>
+<path transform="translate(540.00,471.00) scale(0.5000)" d="M12 15.5Q10.54 15.5 9.52 14.48Q8.5 13.46 8.5 12Q8.5 10.54 9.52 9.52Q10.54 8.5 12 8.5Q13.46 8.5 14.48 9.52Q15.5 10.54 15.5 12Q15.5 13.46 14.48 14.48Q13.46 15.5 12 15.5ZM19.46 12.98Q19.51 12.43 19.5 12Q19.49 11.57 19.46 11.02L21.55 9.38Q21.7 9.24 21.72 9.07Q21.74 8.9 21.65 8.71L19.63 5.26Q19.58 5.11 19.4 5.04Q19.22 4.97 19.03 5.06L16.54 6.05Q15.7 5.4 14.86 5.06L14.5 2.45Q14.5 2.26 14.35 2.14Q14.21 2.02 14.02 2.02H9.98Q9.79 2.02 9.65 2.14Q9.5 2.26 9.5 2.45L9.14 5.06Q8.3 5.4 7.46 6.05L4.97 5.06Q4.78 4.97 4.6 5.04Q4.42 5.11 4.37 5.26L2.35 8.71Q2.26 8.9 2.28 9.07Q2.3 9.24 2.45 9.38L4.54 11.02Q4.49 11.57 4.5 12Q4.51 12.43 4.54 12.98L2.45 14.62Q2.3 14.76 2.28 14.93Q2.26 15.1 2.35 15.29L4.37 18.74Q4.42 18.89 4.6 18.96Q4.78 19.03 4.97 18.94L7.46 17.95Q8.3 18.6 9.14 18.94L9.5 21.55Q9.5 21.74 9.65 21.86Q9.79 21.98 9.98 21.98H14.02Q14.21 21.98 14.35 21.86Q14.5 21.74 14.5 21.55L14.86 18.94Q15.74 18.55 16.54 17.95L19.03 18.94Q19.22 19.03 19.4 18.96Q19.58 18.89 19.63 18.74L21.65 15.29Q21.74 15.1 21.72 14.93Q21.7 14.76 21.55 14.62Z" fill="#92dadd"/>
+</g>
+</g>
+<g id="node-m_build--p1" class="node" data-node="m_build" data-role="mech" data-stage="mech">
+<rect x="736.0" y="476.0" width="160.0" height="70.0" rx="7" ry="7" fill="#103739" stroke="#92dadd" stroke-width="2.2"/>
+<text x="816.0" y="499.6" text-anchor="middle" font-family="'Noto Sans', sans-serif" font-size="14" fill="#ffffff" font-weight="700">Substrate S builds</text>
+<text x="816.0" y="516.4" text-anchor="middle" font-family="'Noto Sans', sans-serif" font-size="14" fill="#ffffff" font-weight="700">up in skin and</text>
+<text x="816.0" y="533.2" text-anchor="middle" font-family="'Noto Sans', sans-serif" font-size="14" fill="#ffffff" font-weight="700">muscle over years</text>
+<g class="glyphs">
+<circle cx="739.0" cy="477.0" r="8.5" fill="#103739" stroke="#92dadd" stroke-width="1.2"/>
+<path transform="translate(733.00,471.00) scale(0.5000)" d="M12 15.5Q10.54 15.5 9.52 14.48Q8.5 13.46 8.5 12Q8.5 10.54 9.52 9.52Q10.54 8.5 12 8.5Q13.46 8.5 14.48 9.52Q15.5 10.54 15.5 12Q15.5 13.46 14.48 14.48Q13.46 15.5 12 15.5ZM19.46 12.98Q19.51 12.43 19.5 12Q19.49 11.57 19.46 11.02L21.55 9.38Q21.7 9.24 21.72 9.07Q21.74 8.9 21.65 8.71L19.63 5.26Q19.58 5.11 19.4 5.04Q19.22 4.97 19.03 5.06L16.54 6.05Q15.7 5.4 14.86 5.06L14.5 2.45Q14.5 2.26 14.35 2.14Q14.21 2.02 14.02 2.02H9.98Q9.79 2.02 9.65 2.14Q9.5 2.26 9.5 2.45L9.14 5.06Q8.3 5.4 7.46 6.05L4.97 5.06Q4.78 4.97 4.6 5.04Q4.42 5.11 4.37 5.26L2.35 8.71Q2.26 8.9 2.28 9.07Q2.3 9.24 2.45 9.38L4.54 11.02Q4.49 11.57 4.5 12Q4.51 12.43 4.54 12.98L2.45 14.62Q2.3 14.76 2.28 14.93Q2.26 15.1 2.35 15.29L4.37 18.74Q4.42 18.89 4.6 18.96Q4.78 19.03 4.97 18.94L7.46 17.95Q8.3 18.6 9.14 18.94L9.5 21.55Q9.5 21.74 9.65 21.86Q9.79 21.98 9.98 21.98H14.02Q14.21 21.98 14.35 21.86Q14.5 21.74 14.5 21.55L14.86 18.94Q15.74 18.55 16.54 17.95L19.03 18.94Q19.22 19.03 19.4 18.96Q19.58 18.89 19.63 18.74L21.65 15.29Q21.74 15.1 21.72 14.93Q21.7 14.76 21.55 14.62Z" fill="#92dadd"/>
+</g>
+</g>
+<g id="node-s_tired--p1" class="node" data-node="s_tired" data-role="sign" data-stage="find">
+<rect x="1534.0" y="664.0" width="150.0" height="70.0" rx="7" ry="7" fill="#1a0300" stroke="#a96b59" stroke-width="1.5"/>
+<text x="1609.0" y="687.6" text-anchor="middle" font-family="'Noto Sans', sans-serif" font-size="14" fill="#ffffff" font-weight="500">Tiredness after</text>
+<text x="1609.0" y="704.4" text-anchor="middle" font-family="'Noto Sans', sans-serif" font-size="14" fill="#ffffff" font-weight="500">light exercise and</text>
+<text x="1609.0" y="721.2" text-anchor="middle" font-family="'Noto Sans', sans-serif" font-size="14" fill="#ffffff" font-weight="500">pale skin patches</text>
+<g class="glyphs">
+<circle cx="1537.0" cy="665.0" r="8.5" fill="#1a0300" stroke="#a96b59" stroke-width="1.2"/>
+<path transform="translate(1531.00,659.00) scale(0.5000)" d="M18.98 8.02Q19.42 8.02 19.72 8.29Q20.02 8.57 20.02 9Q20.02 9.43 19.72 9.71Q19.42 9.98 18.98 9.98Q18.55 9.98 18.28 9.71Q18 9.43 18 9Q18 8.57 18.28 8.29Q18.55 8.02 18.98 8.02ZM2.02 2.02V11.02Q2.02 13.22 3.47 14.9Q4.92 16.58 7.13 16.92Q7.61 19.18 9.37 20.58Q11.14 21.98 13.49 21.98Q15.26 21.98 16.75 21.12Q18.24 20.26 19.13 18.76Q20.02 17.26 20.02 15.5V11.81Q20.9 11.47 21.44 10.7Q21.98 9.94 21.98 9Q21.98 7.73 21.12 6.86Q20.26 6 19.01 6Q17.76 6 16.87 6.86Q15.98 7.73 15.98 9Q15.98 9.94 16.55 10.72Q17.11 11.5 18 11.81V15.43Q18 17.3 16.68 18.61Q15.36 19.92 13.49 19.92Q12 19.92 10.82 19.08Q9.65 18.24 9.24 16.92Q11.3 16.44 12.66 14.78Q14.02 13.13 14.02 11.02V2.02H9.98V5.02H12V11.02Q12 12.65 10.82 13.82Q9.65 15 7.99 15Q6.34 15 5.16 13.82Q3.98 12.65 3.98 11.02V5.02H6V2.02Z" fill="#a96b59"/>
+</g>
+</g>
+<g id="node-i_level--p1" class="node" data-node="i_level" data-role="inv" data-stage="find">
+<rect x="1346.0" y="658.0" width="160.0" height="82.0" rx="7" ry="7" fill="#001125" stroke="#3f90da" stroke-width="1.5"/>
+<text x="1426.0" y="681.6" text-anchor="middle" font-family="'Noto Sans', sans-serif" font-size="14" fill="#ffffff" font-weight="500">Blood substrate S</text>
+<text x="1426.0" y="698.4" text-anchor="middle" font-family="'Noto Sans', sans-serif" font-size="14" fill="#ffffff" font-weight="500">48<tspan fill="#a96b59">↑</tspan> µmol/L</text>
+<text x="1426.0" y="715.2" text-anchor="middle" font-family="'Noto Sans', sans-serif" font-size="14" fill="#ffffff" font-weight="500">(normal 2–10)</text>
+<g class="rangebar">
+<line x1="1384.0" y1="726.5" x2="1468.0" y2="726.5" stroke="#255b8e" stroke-width="1.2" stroke-linecap="round"/>
+<rect x="1391.6" y="723.5" width="30.5" height="6" rx="3" fill="#235789"/>
+<path d="M1472.4,723.1 L1477.6,726.5 L1472.4,729.9" fill="none" stroke="#a96b59" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+<circle cx="1468.0" cy="726.5" r="3.6" fill="#a96b59" stroke="#001125" stroke-width="1.2"/>
+</g>
+<g class="glyphs">
+<circle cx="1349.0" cy="659.0" r="8.5" fill="#001125" stroke="#3f90da" stroke-width="1.2"/>
+<path transform="translate(1343.00,653.00) scale(0.5000)" d="M6.98 2.02V3.98H8.02V18Q8.02 19.63 9.19 20.81Q10.37 21.98 12 21.98Q13.63 21.98 14.81 20.81Q15.98 19.63 15.98 18V3.98H17.02V2.02ZM11.02 15.98Q10.54 15.98 10.26 15.73Q9.98 15.48 9.98 15Q9.98 14.52 10.26 14.27Q10.54 14.02 10.99 14.02Q11.45 14.02 11.72 14.27Q12 14.52 12 15Q12 15.48 11.72 15.73Q11.45 15.98 11.02 15.98ZM12.98 12Q12.55 12 12.28 11.72Q12 11.45 12 10.99Q12 10.54 12.28 10.26Q12.55 9.98 13.01 9.98Q13.46 9.98 13.74 10.26Q14.02 10.54 14.02 10.99Q14.02 11.45 13.74 11.72Q13.46 12 12.98 12ZM14.02 6.98H9.98V3.98H14.02Z" fill="#3f90da"/>
+</g>
+</g>
+<g id="node-i_assay--p1" class="node" data-node="i_assay" data-role="inv" data-stage="find">
+<rect x="960.0" y="664.0" width="150.0" height="70.0" rx="7" ry="7" fill="#001125" stroke="#3f90da" stroke-width="1.5"/>
+<text x="1035.0" y="687.6" text-anchor="middle" font-family="'Noto Sans', sans-serif" font-size="14" fill="#ffffff" font-weight="500">Enzyme X assay</text>
+<text x="1035.0" y="704.4" text-anchor="middle" font-family="'Noto Sans', sans-serif" font-size="14" fill="#ffffff" font-weight="500">in blood cells: 6 %</text>
+<text x="1035.0" y="721.2" text-anchor="middle" font-family="'Noto Sans', sans-serif" font-size="14" fill="#ffffff" font-weight="500">of normal activity</text>
+<g class="glyphs">
+<circle cx="963.0" cy="665.0" r="8.5" fill="#001125" stroke="#3f90da" stroke-width="1.2"/>
+<path transform="translate(957.00,659.00) scale(0.5000)" d="M6.98 2.02V3.98H8.02V18Q8.02 19.63 9.19 20.81Q10.37 21.98 12 21.98Q13.63 21.98 14.81 20.81Q15.98 19.63 15.98 18V3.98H17.02V2.02ZM11.02 15.98Q10.54 15.98 10.26 15.73Q9.98 15.48 9.98 15Q9.98 14.52 10.26 14.27Q10.54 14.02 10.99 14.02Q11.45 14.02 11.72 14.27Q12 14.52 12 15Q12 15.48 11.72 15.73Q11.45 15.98 11.02 15.98ZM12.98 12Q12.55 12 12.28 11.72Q12 11.45 12 10.99Q12 10.54 12.28 10.26Q12.55 9.98 13.01 9.98Q13.46 9.98 13.74 10.26Q14.02 10.54 14.02 10.99Q14.02 11.45 13.74 11.72Q13.46 12 12.98 12ZM14.02 6.98H9.98V3.98H14.02Z" fill="#3f90da"/>
+</g>
+</g>
+<g id="node-dx_main--p1" class="node" data-node="dx_main" data-role="dx" data-stage="find" data-flags="high_yield">
+<rect x="1138.0" y="664.0" width="180.0" height="70.0" rx="7" ry="7" fill="#1b2322" stroke="#94a4a2" stroke-width="2.2"/>
+<text x="1228.0" y="687.6" text-anchor="middle" font-family="'Noto Sans', sans-serif" font-size="14" fill="#ffffff" font-weight="700">Fictional enzyme X</text>
+<text x="1228.0" y="704.4" text-anchor="middle" font-family="'Noto Sans', sans-serif" font-size="14" fill="#ffffff" font-weight="700">deficiency, confirmed</text>
+<text x="1228.0" y="721.2" text-anchor="middle" font-family="'Noto Sans', sans-serif" font-size="14" fill="#ffffff" font-weight="700">by the assay</text>
+<g class="glyphs">
+<circle cx="1141.0" cy="665.0" r="8.5" fill="#1b2322" stroke="#94a4a2" stroke-width="1.2"/>
+<path transform="translate(1135.00,659.00) scale(0.5000)" d="M18.98 4.01H14.81Q14.47 3.12 13.7 2.56Q12.94 1.99 12 1.99Q11.06 1.99 10.28 2.56Q9.5 3.12 9.19 4.01H5.02Q4.18 4.01 3.59 4.6Q3 5.18 3 6.02V19.99Q3 20.83 3.59 21.42Q4.18 22.01 5.02 22.01H18.98Q19.82 22.01 20.41 21.42Q21 20.83 21 19.99V6.02Q21 5.18 20.41 4.6Q19.82 4.01 18.98 4.01ZM12 4.01Q12.43 4.01 12.71 4.28Q12.98 4.56 12.98 4.99Q12.98 5.42 12.71 5.72Q12.43 6.02 12 6.02Q11.57 6.02 11.29 5.72Q11.02 5.42 11.02 4.99Q11.02 4.56 11.29 4.28Q11.57 4.01 12 4.01ZM5.02 14.47H7.18Q7.2 14.47 10.51 8.09L11.45 15.07L13.92 11.88L16.54 14.47H18.98V16.01H15.89L14.06 14.23L10.37 18.91L9.6 13.15L8.11 16.01H5.02Z" fill="#94a4a2"/>
+<circle cx="1315.0" cy="665.0" r="8.0" fill="#717581" stroke="#151b23" stroke-width="1.5"/>
+<path transform="translate(1309.75,659.75) scale(0.4375)" d="M12 17.76 18.19 21.5 16.54 14.45 21.98 9.74 14.81 9.12 12 2.5 9.19 9.12 2.02 9.74 7.46 14.45 5.81 21.5Z" fill="#ffffff"/>
+</g>
+</g>
+<g id="node-x_diet--p1" class="node" data-node="x_diet" data-role="dx" data-stage="find" data-flags="pitfall">
+<rect x="741.0" y="664.0" width="150.0" height="70.0" rx="7" ry="7" fill="#1b2322" stroke="#94a4a2" stroke-width="1.5"/>
+<text x="816.0" y="687.6" text-anchor="middle" font-family="'Noto Sans', sans-serif" font-size="14" fill="#ffffff" font-weight="500">Too much</text>
+<text x="816.0" y="704.4" text-anchor="middle" font-family="'Noto Sans', sans-serif" font-size="14" fill="#ffffff" font-weight="500">substrate S in the</text>
+<text x="816.0" y="721.2" text-anchor="middle" font-family="'Noto Sans', sans-serif" font-size="14" fill="#ffffff" font-weight="500">diet (ruled out)</text>
+<g class="glyphs">
+<circle cx="744.0" cy="665.0" r="8.5" fill="#1b2322" stroke="#94a4a2" stroke-width="1.2"/>
+<path transform="translate(738.00,659.00) scale(0.5000)" d="M18.98 4.01H14.81Q14.47 3.12 13.7 2.56Q12.94 1.99 12 1.99Q11.06 1.99 10.28 2.56Q9.5 3.12 9.19 4.01H5.02Q4.18 4.01 3.59 4.6Q3 5.18 3 6.02V19.99Q3 20.83 3.59 21.42Q4.18 22.01 5.02 22.01H18.98Q19.82 22.01 20.41 21.42Q21 20.83 21 19.99V6.02Q21 5.18 20.41 4.6Q19.82 4.01 18.98 4.01ZM12 4.01Q12.43 4.01 12.71 4.28Q12.98 4.56 12.98 4.99Q12.98 5.42 12.71 5.72Q12.43 6.02 12 6.02Q11.57 6.02 11.29 5.72Q11.02 5.42 11.02 4.99Q11.02 4.56 11.29 4.28Q11.57 4.01 12 4.01ZM5.02 14.47H7.18Q7.2 14.47 10.51 8.09L11.45 15.07L13.92 11.88L16.54 14.47H18.98V16.01H15.89L14.06 14.23L10.37 18.91L9.6 13.15L8.11 16.01H5.02Z" fill="#94a4a2"/>
+<circle cx="888.0" cy="665.0" r="8.0" fill="#ffa90e" stroke="#151b23" stroke-width="1.5"/>
+<path transform="translate(882.75,659.75) scale(0.4375)" d="M12.98 14.5H11.02V9.5H12.98ZM12.98 18.48H11.02V16.46H12.98ZM0.98 21.5H23.02L12 2.5Z" fill="#010409"/>
+</g>
+</g>
+<g id="node-tx_enz--p1" class="node" data-node="tx_enz" data-role="tx" data-stage="care">
+<rect x="741.0" y="220.0" width="150.0" height="70.0" rx="7" ry="7" fill="#0b0015" stroke="#923fc7" stroke-width="1.5"/>
+<text x="816.0" y="243.6" text-anchor="middle" font-family="'Noto Sans', sans-serif" font-size="14" fill="#ffffff" font-weight="500">Weekly enzyme X</text>
+<text x="816.0" y="260.4" text-anchor="middle" font-family="'Noto Sans', sans-serif" font-size="14" fill="#ffffff" font-weight="500">replacement</text>
+<text x="816.0" y="277.2" text-anchor="middle" font-family="'Noto Sans', sans-serif" font-size="14" fill="#ffffff" font-weight="500">given by infusion</text>
+<g class="glyphs">
+<circle cx="744.0" cy="221.0" r="8.5" fill="#0b0015" stroke="#923fc7" stroke-width="1.2"/>
+<path transform="translate(738.00,215.00) scale(0.5000)" d="M9.98 3 8.02 5.02V6.98H5.02Q4.18 6.98 3.64 7.6Q3.1 8.21 3 9L2.02 18.98Q1.92 19.82 2.44 20.41Q2.95 21 3.98 21H20.02Q21.05 21 21.56 20.41Q22.08 19.82 21.98 18.98L21 9Q20.9 8.21 20.34 7.6Q19.78 6.98 18.98 6.98H15.98V5.02L14.02 3ZM9.98 5.02H14.02V6.98H9.98ZM11.02 9.98H12.98V12.98H15.98V15H12.98V18H11.02V15H8.02V12.98H11.02Z" fill="#923fc7"/>
+</g>
+</g>
+<g id="node-tx_diet--p1" class="node" data-node="tx_diet" data-role="tx" data-stage="care">
+<rect x="538.0" y="325.0" width="170.0" height="52.0" rx="7" ry="7" fill="#0b0015" stroke="#923fc7" stroke-width="1.5"/>
+<text x="623.0" y="348.0" text-anchor="middle" font-family="'Noto Sans', sans-serif" font-size="14" fill="#ffffff" font-weight="500">Low substrate S diet</text>
+<text x="623.0" y="364.8" text-anchor="middle" font-family="'Noto Sans', sans-serif" font-size="14" fill="#ffffff" font-weight="500">to slow the build-up</text>
+<g class="glyphs">
+<circle cx="541.0" cy="326.0" r="8.5" fill="#0b0015" stroke="#923fc7" stroke-width="1.2"/>
+<path transform="translate(535.00,320.00) scale(0.5000)" d="M9.98 3 8.02 5.02V6.98H5.02Q4.18 6.98 3.64 7.6Q3.1 8.21 3 9L2.02 18.98Q1.92 19.82 2.44 20.41Q2.95 21 3.98 21H20.02Q21.05 21 21.56 20.41Q22.08 19.82 21.98 18.98L21 9Q20.9 8.21 20.34 7.6Q19.78 6.98 18.98 6.98H15.98V5.02L14.02 3ZM9.98 5.02H14.02V6.98H9.98ZM11.02 9.98H12.98V12.98H15.98V15H12.98V18H11.02V15H8.02V12.98H11.02Z" fill="#923fc7"/>
+</g>
+</g>
+<g id="credit--p1" class="credit">
+<text x="478.0" y="746.0" text-anchor="end" font-family="'Noto Sans', sans-serif" font-size="11" font-weight="500" fill="#b7bdc8">Drawn for this example</text>
+</g>
+</svg>
+        </div>
+        <aside class="tp" id="trace-panel" aria-labelledby="tp-h" hidden>
+          <h3 id="tp-h">Chain</h3>
+          <div id="tp-body"></div>
+        </aside>
+      </div>
+      <p class="sr-only" id="fig-live" aria-live="polite"></p>
+    </div>
+    <figcaption>Two faulty copies of gene XA leave enzyme X below 10&nbsp;% of normal, so substrate S builds up over years. The build-up explains the tiredness, the skin patches and the high blood level; the low enzyme assay explains why a dietary excess is ruled out. Both treatments act on the build-up.</figcaption>
+  </figure>
+  <section aria-labelledby="files-h">
+    <h2 id="files-h">Files</h2>
+    <div class="files">
+      <div class="file">
+        <h3>PDF, Paul Tol Bright</h3>
+        <p>The diagram as one vector page, <code>toy-case-tol-bright.pdf</code>. This is the submission copy.</p>
+        <a class="dl" id="save-pdf-tol-bright" href="data:application/pdf;base64," download="toy-case-tol-bright.pdf">Save PDF</a>
+      </div>
+      <div class="file">
+        <h3>PDF, Petroff 2021 10-colour cycle on GitHub Primer Dark High Contrast</h3>
+        <p>The diagram as one vector page, <code>toy-case-petroff-10-on-primer-dark-high-contrast.pdf</code>.</p>
+        <a class="dl" id="save-pdf-petroff-10-on-primer-dark-high-contrast" href="data:application/pdf;base64," download="toy-case-petroff-10-on-primer-dark-high-contrast.pdf">Save PDF</a>
+      </div>
+      <div class="file">
+        <h3>draw.io masters</h3>
+        <p><code>toy-case.drawio</code>, <code>toy-case-petroff-10-on-primer-dark-high-contrast.drawio</code>: the same diagram as the PDFs, ready to edit in draw.io, in one zip.</p>
+        <a class="dl" id="save-drawio" href="data:application/zip;base64," download="toy-case-drawio.zip">Save .drawio files (zip)</a>
+      </div>
+    </div>
+  </section>
+  <section>
+    <h2>Findings checklist</h2>
+    <div class="tablewrap"><table>
+      <thead><tr><th>From</th><th>Finding</th><th>Explained by</th></tr></thead>
+      <tbody>
+<tr><td class="k">History</td><td>Tiredness after light exercise for two years</td><td>Substrate S builds up in muscle</td></tr>
+<tr><td class="k">Examination</td><td>Pale patches on the skin</td><td>Substrate S builds up in skin</td></tr>
+<tr><td class="k">Investigation</td><td>Blood substrate S 48 µmol/L (normal 2–10)</td><td>Enzyme X no longer clears substrate S</td></tr>
+<tr><td class="k">Investigation</td><td>Enzyme X assay 6 % of normal activity</td><td>Two faulty copies of gene XA</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+  <section>
+    <h2>Sources</h2>
+    <ol>
+<li>Case notes (invented for this example): sources/case-notes.md</li>
+<li>Treatment check: guideline-ledger.json (an invented guideline)</li>
+    </ol>
+  </section>
+</div>
+<script type="application/json" id="fig-data">{"W":1744.0,"H":798.0,"vb":[0.0,0.0,1744.0,798.0],"nodes":{"rf_gene":{"t":"Two faulty copies of gene XA, inherited from both parents","r":"risk","s":"cause","b":false,"x":197.7,"y":220.0,"w":170.0,"h":70.0},"an_clear":{"t":"Enzyme X normally clears substrate S from the blood","r":"anat","s":"cause","b":false,"x":314.0,"y":316.0,"w":160.0,"h":70.0},"m_low":{"t":"Enzyme X activity falls below 10 % of normal","r":"mech","s":"mech","b":true,"x":543.0,"y":476.0,"w":160.0,"h":70.0},"m_build":{"t":"Substrate S builds up in skin and muscle over years","r":"mech","s":"mech","b":true,"x":736.0,"y":476.0,"w":160.0,"h":70.0},"s_tired":{"t":"Tiredness after light exercise and pale skin patches","r":"sign","s":"find","b":false,"x":1534.0,"y":664.0,"w":150.0,"h":70.0},"i_level":{"t":"Blood substrate S 48 µmol/L (normal 2–10)","r":"inv","s":"find","b":false,"x":1346.0,"y":658.0,"w":160.0,"h":82.0},"i_assay":{"t":"Enzyme X assay in blood cells: 6 % of normal activity","r":"inv","s":"find","b":false,"x":960.0,"y":664.0,"w":150.0,"h":70.0},"dx_main":{"t":"Fictional enzyme X deficiency, confirmed by the assay","r":"dx","s":"find","b":true,"x":1138.0,"y":664.0,"w":180.0,"h":70.0},"x_diet":{"t":"Too much substrate S in the diet (ruled out)","r":"dx","s":"find","b":false,"x":741.0,"y":664.0,"w":150.0,"h":70.0},"tx_enz":{"t":"Weekly enzyme X replacement given by infusion","r":"tx","s":"care","b":false,"x":741.0,"y":220.0,"w":150.0,"h":70.0},"tx_diet":{"t":"Low substrate S diet to slow the build-up","r":"tx","s":"care","b":false,"x":538.0,"y":325.0,"w":170.0,"h":52.0}},"order":["rf_gene","an_clear","m_low","m_build","s_tired","i_level","i_assay","dx_main","x_diet","tx_enz","tx_diet"],"edges":[{"a":"rf_gene","b":"m_low","k":"stim"},{"a":"an_clear","b":"m_low","k":"req"},{"a":"m_low","b":"m_build","k":"stim"},{"a":"m_build","b":"s_tired","k":"stim"},{"a":"m_build","b":"i_level","k":"stim"},{"a":"m_low","b":"i_assay","k":"stim"},{"a":"i_level","b":"dx_main","k":"stim"},{"a":"i_assay","b":"dx_main","k":"stim"},{"a":"i_assay","b":"x_diet","k":"excl"},{"a":"tx_enz","b":"m_build","k":"inh"},{"a":"tx_diet","b":"m_build","k":"inh"}],"stages":[{"id":"cause","title":"CAUSE · from birth","n":1,"rect":[42.0,180.0,492.0,404.0],"note":"Both copies of the gene must be faulty for the enzyme to fail."},{"id":"mech","title":"MECHANISM · over years","n":2,"rect":[520.0,432.0,914.0,590.0],"note":"Every finding traces back to the build-up of substrate S."},{"id":"find","title":"FINDINGS AND DIAGNOSIS · at the visit","n":3,"rect":[520.0,618.0,1702.0,758.0],"note":"The blood level points to the build-up; the assay points to the cause and rules out a dietary excess."},{"id":"care","title":"TREATMENT · after the assay","n":4,"rect":[520.0,180.0,914.0,404.0],"note":"One treatment replaces the enzyme; the other lowers the intake of substrate S."}],"roles":{"risk":"Risk factor","mech":"Mechanism","anat":"Normal anatomy or physiology","sign":"Sign or symptom","inv":"Investigation","dx":"Diagnosis","tx":"Treatment"},"italic":[],"kinds":{"excl":{"dash":"1.6 3.4","round":true},"req":{"dash":"1.4 3.6","round":true}},"storageKey":"toy-case-fit","palettes":["tol-bright","petroff-10-on-primer-dark-high-contrast"]}</script>
+<script>/* ENGINE_SCRIPTS */</script>
+<script>
+(function () {
+  /* the Palette switch: a class on the shell (empty: Auto, the page theme decides); remembered per browser */
+  var PALS = ["tol-bright","petroff-10-on-primer-dark-high-contrast"];
+  var shell = document.getElementById('fig-shell'), PK = 'toy-case-fit-palette';
+  var palBtns = Array.prototype.slice.call(document.querySelectorAll('button[data-pal]'));
+  function setPal(p) {
+    PALS.forEach(function (k) { shell.classList.toggle('pal-' + k, k === p); });
+    palBtns.forEach(function (b) { b.setAttribute('aria-pressed', String(b.getAttribute('data-pal') === p)); });
+  }
+  var savedPal = null;
+  try { savedPal = localStorage.getItem(PK); } catch (e) { /* storage blocked */ }
+  setPal(PALS.indexOf(savedPal) >= 0 ? savedPal : '');
+  palBtns.forEach(function (b) {
+    b.addEventListener('click', function () {
+      var p = b.getAttribute('data-pal');
+      setPal(p);
+      try { localStorage.setItem(PK, p); } catch (e) { /* storage blocked */ }
+    });
+  });
+})();
+</script>
+</body>
+</html>

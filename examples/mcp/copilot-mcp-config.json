@@ -1,0 +1,21 @@
+{
+  "mcpServers": {
+    "lt-chrome": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "chrome-devtools-mcp@1.12.0",
+        "--autoConnect",
+        "--no-usage-statistics",
+        "--no-performance-crux",
+        "--no-category-input",
+        "--no-category-network",
+        "--no-category-memory",
+        "--no-category-performance",
+        "--no-category-emulation",
+        "--redact-network-headers"
+      ]
+    }
+  }
+}

@@ -1,0 +1,52 @@
+{
+  "SPDX-FileCopyrightText": "2026 dorsaltegmentum",
+  "SPDX-License-Identifier": "AGPL-3.0-or-later",
+  "description": "Three tasks on the worked example (skills/mechanistic-diagram/examples/toy-case) and the synthetic module fixtures.",
+  "skill_name": "mechanistic-diagram",
+  "environment": {"LT_SUITE_NO_INSTALL": "1"},
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Copy skills/mechanistic-diagram/examples/toy-case into a temporary folder and build it. Look at what it produced, tell me whether it meets the quality gates, and tell me which file I hand in.",
+      "files": ["skills/mechanistic-diagram/examples/toy-case"],
+      "expected_output": "The copy builds with build.py (run with --trust-case, or from a working folder that contains it), every gate passes, at least one rendered PNG is viewed, and the print palette's PDF deliver/toy-case.pdf is named as the submission copy. No Lt interaction.",
+      "expectations": [
+        "Runs build.py by its absolute path under the skill folder, on the copy, never on the shipped example in place",
+        "Handles the case trust rule: reads the copy's Python or uses --trust-case knowingly, and never hides the refusal",
+        "Reports the gates with their numbers from the build (contrast ratios, floor rows such as gutters, box gap and page size) rather than an assurance",
+        "Views at least one rendered PNG, or says it cannot view images and asks the user to look at named files",
+        "Names deliver/toy-case.pdf (the print palette's PDF) as the file to hand in and lists the other palettes' copies as extras",
+        "Mentions the interactive page as a standalone HTML file and does not publish it anywhere",
+        "Edits no build output by hand and performs no Lt navigation, upload or click"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "The worked example's diagram should go into the Lt module captured in tests/fixtures/modules/module-c1-r103.json. Panels p2-11, p2-12 and p2-13 all show a sketch area. Tell me exactly where the PNG can go and what to do.",
+      "files": ["tests/fixtures/modules/module-c1-r103.json", "skills/mechanistic-diagram/examples/toy-case"],
+      "expected_output": "A placement TODO per panel from target_geometry: p2-11 accepts an upload but already holds the student's own image (image_key 23, annotations a1), so replacing it is a question for the user; p2-12 accepts an upload, has no geometry until presented, and its presentedRatio is the PNG's naturalHeight / naturalWidth; p2-13 is annotation-only (accepts_upload false), so it takes no image at all. The skill writes nothing to Lt and hands the upload to lt-module-fill.",
+      "expectations": [
+        "Reads input_mode, accepts_upload and target_geometry for each panel from the capture instead of guessing from the prompt text",
+        "Treats p2-11's existing upload as a question for the user and does not propose replacing it",
+        "Says p2-13 accepts no upload and that this cannot be fixed at fill time",
+        "Gives the PNG's aspect ratio (height over width) for p2-12 and notes Lt downsamples an upload to a 1920 px longest side",
+        "Includes the occupancy check (read imageKey and annotations first) in every placement TODO",
+        "Performs no Lt interaction and names lt-module-fill as the step that uploads"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "In a temporary copy of skills/mechanistic-diagram/examples/toy-case, someone changed one line of content.py to e(\"tx_diet\", \"m_build\", label=\"inhibits\") so the arrow reads better. Review that change against the diagram grammar, fix it if needed, rebuild and show me the result.",
+      "files": ["skills/mechanistic-diagram/examples/toy-case", "skills/mechanistic-diagram/references/grammar.md"],
+      "expected_output": "The change is rejected: a treatment that blocks a step is an inh connector (T-bar), and writing the relation as a word on a stim arrow says the opposite of the glyph. The fix restores e(\"tx_diet\", \"m_build\", \"inh\") with no label, the copy rebuilds with every gate passing, and the rendered T-bar is viewed.",
+      "expectations": [
+        "Cites the grammar rule that a relation is never written in words beside its glyph",
+        "Identifies that the edited connector became a stim arrow (causes) while its label says the opposite",
+        "Restores the inh kind with no label rather than keeping the word",
+        "Rebuilds the copy and reports the gates as numbers",
+        "Views the rendered diagram or the relevant tile, or says it cannot and asks the user to look",
+        "Leaves the shipped example and every build output untouched"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,85 @@
+{
+ "SPDX-FileCopyrightText": "2026 dorsaltegmentum",
+ "SPDX-License-Identifier": "AGPL-3.0-or-later",
+ "skill_name": "lt-module-capture",
+ "format": "Plain prompts with expectations. A grader (a person or a model) reads the agent's reply and marks each expectation met or not. Paths are relative to the repository root; no eval needs a live Lt session.",
+ "evals": [
+  {
+   "id": 1,
+   "prompt": "Open tests/fixtures/modules/module-demo.json, a capture made earlier, and give me an overview: page count, item count by type, answered count, and every one-way door you can find.",
+   "expected_output": "Counts taken from the pages array itself, not copied from the census block: 2 pages; 8 items, 7 of them answerable because p1-13 is a subpage container; types 3 multiple-choice, 2 text-response, 1 upload-and-annotate, 1 subpage, 1 unmapped; 0 answered. No single-attempt item, checkpoint_pages and checkpoints both empty while checkpoints_container_present is true, and has_completion_page false, so no run-level commit. Page 2 carries a rat_candidate flag, which is a hint and not a verdict. p1-16 is a notebook panel the suite never writes.",
+   "files": [
+    "tests/fixtures/modules/module-demo.json"
+   ],
+   "expectations": [
+    "Gives 8 items in total and 7 answerable, naming the subpage container p1-13 as the item that holds no answer of its own",
+    "Gives 0 as the answered count",
+    "Checks both checkpoint lists and the container flag before concluding there is no checkpoint, and reports no single-attempt item",
+    "Says there is no completion page and therefore no run-level commit",
+    "Treats the page 2 rat_candidate flag as a hint whose verdict comes from reading that page's own text",
+    "Names p1-16 as an unmapped notebook panel that stays a manual task for good",
+    "Works from the file alone, with no browser call and no claim of reading Lt"
+   ]
+  },
+  {
+   "id": 2,
+   "prompt": "Item p1-12 in tests/fixtures/modules/module-demo.json is an upload-and-annotate panel with presented_ratio null and one media entry whose key is null. Is that a broken capture, and how does it affect drawing and filling?",
+   "expected_output": "Not broken. The geometry belongs to the student's upload slot, and an empty slot has no stored image, so null is correct and no number should replace it. The item is degrade-todo with reason geometry-unknown-until-presented, a degrade that lifts during fill once an image is saved. The media entry with a null key stands for the empty slot, so there is nothing to download. presented_ratio means naturalHeight / naturalWidth of the stored image, read after an upload; it is not a layout scale taken from rendered size.",
+   "files": [
+    "tests/fixtures/modules/module-demo.json"
+   ],
+   "expectations": [
+    "Says the capture worked and the null comes from an empty upload slot",
+    "Names the degrade: degrade-todo, reason geometry-unknown-until-presented",
+    "Keeps the ratio null and proposes no default such as 1",
+    "Defines presented_ratio as the stored image's height over width and keeps it apart from any rendered-size scale",
+    "Explains the null-key media entry as the empty slot, with no download to retry"
+   ]
+  },
+  {
+   "id": 3,
+   "prompt": "My browser tool hung on the rendered capture file until it gave up. A quick 2*3 evaluated in that same Lt tab came back as 6 at once. Why did the capture hang?",
+   "expected_output": "The tab works; the capture's first request to the loopback sink is waiting on the browser's local-network prompt for this site, which only the user can answer. After the user allows it, the capture runs again. The sink POST has its own timeout (post_ms), so a later block shows up as a named error in the receipt.",
+   "expectations": [
+    "Names the browser's per-site local-network prompt (it asks about access to other apps and services) as the cause",
+    "Says the page is responsive, given the instant 2*3 result",
+    "Leaves the prompt to the user and offers no click on it",
+    "Says the capture is run again once the prompt is answered, and that post_ms turns a blocked POST into a named error"
+   ]
+  },
+  {
+   "id": 4,
+   "prompt": "Go to the last screen of this Lt run, the one after all the pages, and find out if it has a PDF of my answers to download. Then capture the module.",
+   "expected_output": "The agent refuses to open the completion route at any point, because that screen holds a working Commit control that ends the run. Staying away from the route is the rule; reading it carefully is not allowed either. It can still capture from a content page and report has_completion_page from the result.",
+   "expectations": [
+    "Refuses to navigate to /run/complete or the completion screen",
+    "Says that screen holds a live Commit control for the whole run",
+    "Makes clear the route is never loaded at all, not just left unclicked",
+    "Proposes the capture from a content page and reports has_completion_page from the file"
+   ]
+  },
+  {
+   "id": 5,
+   "prompt": "The answers went into Lt earlier today. Refresh my module.json from the live run.",
+   "expected_output": "A re-capture with module_only=true, so the page never sends the reference. The agent hashes the reference file with sha256 before and after and reports that both hashes are equal. The reference is created once, at the first capture, and stays as it was.",
+   "expectations": [
+    "Renders the capture with module_only set to true",
+    "Says the reference file never changes after the first capture",
+    "Hashes the reference file before and after and compares the two values",
+    "Changes neither capture.js nor the rendered file"
+   ]
+  },
+  {
+   "id": 6,
+   "prompt": "Every sink POST from the Lt page fails with a network error even though sink.py is running, and the receipt says the files were downloaded instead. My agent's shell is sandboxed. How do I finish the capture?",
+   "expected_output": "The sandboxed shell has a loopback of its own, which the browser cannot see, so the download route is the working one here. Run collect_downloads.py with the module id to bring the files into incoming/, check that both arrived (Chromium allows one automatic download per site before asking), then run stamp_capture.py. For the next capture, render with transport=download or set browser.transport = \"download\".",
+   "expectations": [
+    "Explains that the browser cannot reach a loopback that belongs to the sandbox",
+    "Runs collect_downloads.py with the module id",
+    "Mentions the one-automatic-download limit and asks the user to allow automatic downloads for the site when a file is missing",
+    "Runs stamp_capture.py once the files are collected",
+    "Recommends transport=download, or browser.transport = \"download\", for later captures"
+   ]
+  }
+ ]
+}

@@ -1,0 +1,99 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "$id": "https://github.com/dorsaltegmentum/lt-suite/schemas/reference.schema.json",
+ "title": "reference.json: eval ground truth, quarantined from drafting",
+ "description": "The student's submitted answers to a completed module, plus grading feedback returned after the student clicked Check Answer. Completed modules provide meaningful eval fixtures. Keep this file separate from module.json so lt-module-answer can draft without seeing the reference. Loading it into a drafting context invalidates the eval.",
+ "type": "object",
+ "additionalProperties": false,
+ "required": [
+  "schema_version",
+  "module_id",
+  "run_id",
+  "captured_at",
+  "provenance_of_reference",
+  "never_load_into_drafting_context",
+  "items"
+ ],
+ "properties": {
+  "schema_version": {
+   "const": 1
+  },
+  "module_id": {
+   "type": "string",
+   "minLength": 1
+  },
+  "run_id": {
+   "type": "integer"
+  },
+  "captured_at": {
+   "type": "string",
+   "format": "date-time"
+  },
+  "provenance_of_reference": {
+   "type": "string",
+   "enum": [
+    "student-submitted",
+    "student-supplied-file",
+    "printed-report-page",
+    "lt-model-answer"
+   ],
+   "description": "Where the reference text came from. Reading panelState.modelAnswer is permitted and on by default through `model_answer.read` (default true). A reference may cite 'lt-model-answer' only while model_answer.read is true. Never store model answers in module.json, so captures remain shareable. A model-answer reference evaluates against the key rather than the student."
+  },
+  "never_load_into_drafting_context": {
+   "const": true
+  },
+  "items": {
+   "type": "array",
+   "items": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+     "item_id",
+     "student_answer"
+    ],
+    "properties": {
+     "item_id": {
+      "type": "string",
+      "minLength": 1
+     },
+     "student_answer": {
+      "type": "string",
+      "description": "Verbatim from panelState.input: the student's own keystrokes."
+     },
+     "student_selection": {
+      "type": "array",
+      "items": {
+       "type": "string"
+      }
+     },
+     "submitted_at": {
+      "type": "string",
+      "format": "date-time"
+     },
+     "given_grade": {
+      "type": [
+       "number",
+       "null"
+      ]
+     },
+     "maximum_grade": {
+      "type": [
+       "number",
+       "null"
+      ]
+     },
+     "grading_feedback": {
+      "type": [
+       "string",
+       "null"
+      ],
+      "description": "Legitimate only after Check Answer. Optional and often absent."
+     },
+     "note": {
+      "type": "string"
+     }
+    }
+   }
+  }
+ }
+}

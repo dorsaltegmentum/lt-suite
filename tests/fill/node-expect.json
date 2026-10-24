@@ -1,0 +1,17 @@
+{
+ "groups": {
+  "lost-save": 9,
+  "transport": 8,
+  "batch": 21,
+  "verify": 18,
+  "identity": 8,
+  "guard": 3,
+  "confirm-dialog": 30,
+  "upload": 12,
+  "model-answer": 9,
+  "probe": 81,
+  "rail": 102
+ },
+ "files": 5,
+ "min_tests": 379
+}

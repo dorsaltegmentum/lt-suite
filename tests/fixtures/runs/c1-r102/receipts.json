@@ -1,0 +1,32 @@
+[
+ {
+  "item_id": "p2-11",
+  "expected_hash": 2329825780,
+  "observed_hash": 2329825780,
+  "observed_at": "2000-01-01T00:00:00Z"
+ },
+ {
+  "item_id": "p2-12",
+  "expected_hash": 800100134,
+  "observed_hash": 800100134,
+  "observed_at": "2000-01-01T00:00:00Z"
+ },
+ {
+  "item_id": "p2-13",
+  "expected_hash": 3342686121,
+  "observed_hash": 3342686121,
+  "observed_at": "2000-01-01T00:00:00Z"
+ },
+ {
+  "item_id": "p3-22",
+  "expected_hash": 3186285457,
+  "observed_hash": 3186285457,
+  "observed_at": "2000-01-01T00:00:00Z"
+ },
+ {
+  "item_id": "p4-31",
+  "expected_hash": 3253454806,
+  "observed_hash": 3253454806,
+  "observed_at": "2000-01-01T00:00:00Z"
+ }
+]

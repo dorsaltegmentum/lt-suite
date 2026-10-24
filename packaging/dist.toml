@@ -1,0 +1,11 @@
+# SPDX-FileCopyrightText: 2026 dorsaltegmentum
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Upload layouts enforced by tools/build_dist.py and tests/packaging.
+version = 1
+compression = "stored"
+timestamp = "1980-01-01T00:00:00"
+source_allowlist = "packaging/runtime-files.json"
+skill_targets = ["claude-ai", "claude-api", "gemini-app", "gemini-enterprise", "perplexity-api", "perplexity-ui"]
+root_skill_targets = ["perplexity-ui"]
+gemini_frontmatter = ["name", "description", "license", "metadata"]
+plugin_prefix = "lt-suite"

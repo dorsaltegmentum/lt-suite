@@ -1,0 +1,647 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "$id": "https://github.com/dorsaltegmentum/lt-suite/schemas/answers.schema.json",
+ "title": "answers.json: lt-module-answer → lt-module-fill / mechanistic-diagram / lt-module-export",
+ "description": "Drafted answers with per-segment provenance. Represent each draft as segments so every sentence is structurally traceable to a tag.",
+ "type": "object",
+ "additionalProperties": false,
+ "required": [
+  "schema_version",
+  "module_id",
+  "run_id",
+  "drafted_at",
+  "source_module",
+  "items"
+ ],
+ "properties": {
+  "schema_version": {
+   "enum": [
+    1,
+    2
+   ],
+   "description": "Version 2 adds label_placements and requires it for drafted image-labeling, drag-and-drop-labeling and categorization items. Version 1 remains valid and readable so older drafts can be re-exported. Emit 2 on every new draft."
+  },
+  "module_id": {
+   "type": "string",
+   "minLength": 1
+  },
+  "run_id": {
+   "type": "integer"
+  },
+  "drafted_at": {
+   "type": "string",
+   "format": "date-time"
+  },
+  "source_module": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "path",
+    "sha256"
+   ],
+   "description": "Binds the draft to an exact capture. `sha256` identifies the capture. `question_digest` establishes whether its questions remain unchanged. A re-capture that changes questions invalidates the draft. Recording only the student's answers does not.",
+   "properties": {
+    "path": {
+     "type": "string",
+     "description": "The capture this draft answers. A relative path resolves against this answers file's own folder. The validator checks the binding only when the path resolves to a file."
+    },
+    "sha256": {
+     "type": "string",
+     "pattern": "^[0-9a-f]{64}$"
+    },
+    "question_digest": {
+     "type": "string",
+     "pattern": "^[0-9a-f]{64}$",
+     "description": "sha256 of the questions alone, as ltcore.digest defines them: ids, types, prompts, options and the authored constraints, kept in page order (python3 -m ltcore.digest --view <module.json> prints the hashed view). Optional so older drafts stay valid; write it on every new draft. Without it the validator enforces `sha256` strictly, and a post-fill re-capture fails although no question changed. Media, target_geometry, constraints.note and all state fields are left out: a change there still moves `sha256`, which is then reported as a note while question_digest holds."
+    }
+   }
+  },
+  "tier1_corpus": {
+   "type": "array",
+   "description": "Tier-1 material consulted for this module: lecture ids, transcript paths and ILO sections. An empty list requires a tier_descent record of 'absent'.",
+   "items": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+     "source_id",
+     "path"
+    ],
+    "properties": {
+     "source_id": {
+      "type": "string"
+     },
+     "path": {
+      "type": "string"
+     },
+     "kind": {
+      "type": "string",
+      "enum": [
+       "slides",
+       "transcript",
+       "ilo",
+       "tbl",
+       "practical",
+       "other"
+      ]
+     }
+    }
+   }
+  },
+  "items": {
+   "type": "array",
+   "items": {
+    "$ref": "#/$defs/answer"
+   }
+  }
+ },
+ "$defs": {
+  "answer": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "item_id",
+    "status"
+   ],
+   "properties": {
+    "item_id": {
+     "type": "string",
+     "minLength": 1
+    },
+    "status": {
+     "type": "string",
+     "enum": [
+      "drafted",
+      "skipped",
+      "blocked"
+     ],
+     "description": "blocked = a TODO, which counts as a successful handoff. skipped = standing policy, e.g. an iRAT page."
+    },
+    "skip_reason": {
+     "type": "string",
+     "description": "Required when status is 'skipped'. Include every skipped item and its reason in the review packet to prevent silent omissions. 'already-answered' and 'course-feedback' record those skips. 'irat-policy' and 'trat-answers-unavailable' distinguish permanently excluded closed-book work from a tRAT awaiting an answers file. See docs/design-notes.md for applicable policies. 'read-only-mirror' records a panel flagged by item.mirror_of. Such panels accept no writes and may appear empty, so 'already-answered' does not describe them. Drafting their cells wastes answer content.",
+     "enum": [
+      "irat-policy",
+      "trat-answers-unavailable",
+      "single-attempt-drag",
+      "unmapped-boundary",
+      "no-tier1-and-out-of-scope",
+      "user-excluded",
+      "already-answered",
+      "course-feedback",
+      "read-only-mirror"
+     ]
+    },
+    "segments": {
+     "type": "array",
+     "description": "The draft, in order. Render concatenated for the packet; render with tags inline for audit.",
+     "items": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+       "kind",
+       "text"
+      ],
+      "properties": {
+       "kind": {
+        "type": "string",
+        "enum": [
+         "claim",
+         "connective"
+        ],
+        "description": "claim = carries factual content and REQUIRES >=1 provenance_ref. connective = pure linking prose, no factual content, capped at 120 chars per segment and 25% of the answer by the validator. Those caps are a tripwire against relabelling claims as prose, not a proof of tagging: no validator can tell the two apart, so the packet renders connective segments distinctly for the human."
+       },
+       "text": {
+        "type": "string",
+        "minLength": 1
+       },
+       "provenance_refs": {
+        "type": "array",
+        "items": {
+         "type": "string"
+        }
+       }
+      },
+      "allOf": [
+       {
+        "if": {
+         "properties": {
+          "kind": {
+           "const": "claim"
+          }
+         },
+         "required": [
+          "kind"
+         ]
+        },
+        "then": {
+         "required": [
+          "provenance_refs"
+         ],
+         "properties": {
+          "provenance_refs": {
+           "minItems": 1
+          }
+         }
+        }
+       },
+       {
+        "if": {
+         "properties": {
+          "kind": {
+           "const": "connective"
+          }
+         },
+         "required": [
+          "kind"
+         ]
+        },
+        "then": {
+         "properties": {
+          "text": {
+           "maxLength": 120
+          },
+          "provenance_refs": {
+           "maxItems": 0
+          }
+         }
+        }
+       }
+      ]
+     }
+    },
+    "provenance": {
+     "type": "array",
+     "items": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+       "ref",
+       "tier",
+       "source_id",
+       "locator"
+      ],
+      "properties": {
+       "ref": {
+        "type": "string",
+        "minLength": 1,
+        "description": "Local id referenced by segments, e.g. 'p1'."
+       },
+       "tier": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 4
+       },
+       "source_id": {
+        "type": "string",
+        "minLength": 1,
+        "description": "Tier 4 MUST be a resolvable DOI (10.x/…) or PMID:<digits>. An unresolvable identifier is a fabrication and is deleted, not softened."
+       },
+       "locator": {
+        "type": "string",
+        "minLength": 1,
+        "description": "slide number, timestamp, section, page."
+       },
+       "accessed": {
+        "type": "string",
+        "format": "date"
+       },
+       "title": {
+        "type": "string"
+       },
+       "tag": {
+        "type": "string",
+        "description": "Rendered provenance tag, e.g. [T1:lecture-1:slide-14]. Derived from the authoritative structured fields."
+       }
+      },
+      "allOf": [
+       {
+        "if": {
+         "properties": {
+          "tier": {
+           "const": 2
+          }
+         },
+         "required": [
+          "tier"
+         ]
+        },
+        "then": {
+         "required": [
+          "accessed"
+         ]
+        }
+       }
+      ]
+     }
+    },
+    "tier_descent": {
+     "type": "array",
+     "description": "Record a reason for descending each tier. Reaching tier 3 requires accounts of tiers 1 and 2. Validated for completeness.",
+     "items": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+       "from_tier",
+       "to_tier",
+       "reason"
+      ],
+      "properties": {
+       "from_tier": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 3
+       },
+       "to_tier": {
+        "type": "integer",
+        "minimum": 2,
+        "maximum": 4
+       },
+       "reason": {
+        "type": "string",
+        "enum": [
+         "absent",
+         "insufficient-depth",
+         "contradicted"
+        ]
+       },
+       "note": {
+        "type": "string"
+       }
+      }
+     }
+    },
+    "confidence": {
+     "type": "string",
+     "enum": [
+      "high",
+      "medium",
+      "low"
+     ]
+    },
+    "uncertainties": {
+     "type": "array",
+     "description": "State each uncertainty as a question without smoothing it over. 'low' confidence requires at least one.",
+     "items": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+       "question"
+      ],
+      "properties": {
+       "question": {
+        "type": "string",
+        "minLength": 1
+       },
+       "why_it_matters": {
+        "type": "string"
+       }
+      }
+     }
+    },
+    "conflicts": {
+     "type": "array",
+     "description": "Surface conflicts without silently reconciling them. Renders as ⚠ Conflict in the export.",
+     "items": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+       "higher_ref",
+       "lower_ref",
+       "higher_claim",
+       "lower_claim"
+      ],
+      "properties": {
+       "higher_ref": {
+        "type": "string"
+       },
+       "lower_ref": {
+        "type": "string"
+       },
+       "higher_claim": {
+        "type": "string"
+       },
+       "lower_claim": {
+        "type": "string"
+       },
+       "note": {
+        "type": "string"
+       }
+      }
+     }
+    },
+    "needs_diagram": {
+     "type": "boolean"
+    },
+    "diagram_brief": {
+     "type": "object",
+     "additionalProperties": false,
+     "description": "Handed to mechanistic-diagram together with the item's target_geometry from module.json.",
+     "properties": {
+      "intent": {
+       "type": "string"
+      },
+      "nodes": {
+       "type": "array",
+       "items": {
+        "type": "string"
+       }
+      },
+      "edges": {
+       "type": "array",
+       "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+         "from",
+         "to",
+         "role"
+        ],
+        "properties": {
+         "from": {
+          "type": "string"
+         },
+         "to": {
+          "type": "string"
+         },
+         "role": {
+          "type": "string",
+          "enum": [
+           "stimulation",
+           "inhibition",
+           "necessary-stimulation",
+           "catalysis",
+           "modulation"
+          ],
+          "description": "SBGN Activity Flow semantics using the suite's glyphs."
+         }
+        }
+       }
+      }
+     }
+    },
+    "needs_external_image": {
+     "type": "boolean"
+    },
+    "asset_refs": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    },
+    "asset_captions": {
+     "type": "object",
+     "description": "Caption per asset_refs entry, keyed by the entry as written. Write the caption here when an Lt figure attached to the relevant item lacks alt text in the capture.",
+     "additionalProperties": {
+      "type": "string"
+     }
+    },
+    "single_attempt_approval": {
+     "type": "object",
+     "additionalProperties": false,
+     "required": [
+      "approved_by",
+      "approval_id"
+     ],
+     "description": "Records approval to type this single-attempt item's draft into Lt. Store the approval in <data>/runs/<module_id>/approvals.json with an approval_id matching ^A-[0-9a-f]{8}$. emit_fill.py requires approval for single-attempt items and rejects it on items the capture does not mark single-attempt. Approval covers only writing through the model. Fill scripts never click Submit or Check Answer. The human submits.",
+     "properties": {
+      "approved_by": {
+       "const": "user"
+      },
+      "approval_id": {
+       "type": "string",
+       "pattern": "^A-[0-9a-f]{8}$",
+       "description": "The approval_id identifying the user's approval in <data>/runs/<module_id>/approvals.json. Format: A- plus 8 hexadecimal characters, matching ^A-[0-9a-f]{8}$. emit_fill.py checks that the approval exists."
+      },
+      "note": {
+       "type": "string"
+      }
+     }
+    },
+    "proposed_selection": {
+     "type": "array",
+     "description": "For multiple-choice, option_ids supported by reasoning in segments. Reading panelState.modelAnswer is permitted and on by default. `model_answer.read` (default true) can disable it. Drafted selections still require reasoning and provenance tags. Copying the key would evaluate the suite against the key instead of its research.",
+     "items": {
+      "type": "string"
+     }
+    },
+    "label_placements": {
+     "type": "array",
+     "description": "Required in schema_version 2 for drafted image-labeling, drag-and-drop-labeling and categorization items. Records where each label goes, as table_cells records grid answers. Describe the target in prose. Capture emits no anchor coordinates, and option_id refers to a position in an alphabetically sorted pool. Describe anchors so a fill run can resolve them against the picture.",
+     "items": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+       "label",
+       "target"
+      ],
+      "properties": {
+       "label": {
+        "type": "string",
+        "minLength": 1,
+        "description": "Label text verbatim from the item's options[].text. The cross-check rejects other text to prevent invented vocabulary."
+       },
+       "target": {
+        "type": "string",
+        "minLength": 1,
+        "description": "Where the label goes. For the two labelling types, describe an anchor so a human or fill run can find it, e.g. 'the upper-left circle'. For categorization, use the bin title verbatim from constraints.categories. There is no category_titles field."
+       },
+       "target_index": {
+        "type": [
+         "integer",
+         "null"
+        ],
+        "minimum": 0,
+        "description": "Only where the index is genuinely knowable from the capture - a categorization bin's position in constraints.categories, which is emitted in the order the student sees it and is therefore knowable. NEVER guess one for an image anchor."
+       },
+       "confidence": {
+        "enum": [
+         "high",
+         "medium",
+         "low"
+        ],
+        "description": "Confidence per placement. medium or low requires `alternative`, enforced by the validator (ltcore.validate). See docs/design-notes.md for confidence limits."
+       },
+       "alternative": {
+        "type": "string",
+        "description": "The competing reading: the structure this label might sit on instead. Named, not gestured at."
+       }
+      }
+     }
+    },
+    "table_cells": {
+     "type": "array",
+     "description": "For table-completion: one entry per cell to be written.",
+     "items": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+       "row",
+       "col",
+       "text"
+      ],
+      "properties": {
+       "row": {
+        "type": "integer",
+        "minimum": 0
+       },
+       "col": {
+        "type": "integer",
+        "minimum": 0
+       },
+       "text": {
+        "type": "string"
+       }
+      }
+     }
+    },
+    "todo": {
+     "type": "object",
+     "additionalProperties": false,
+     "description": "A clear TODO counts as a successful handoff. Required when status is 'blocked'.",
+     "required": [
+      "blocker",
+      "placement"
+     ],
+     "properties": {
+      "blocker": {
+       "type": "string",
+       "minLength": 1
+      },
+      "placement": {
+       "type": "string",
+       "minLength": 1
+      },
+      "artefact_path": {
+       "type": "string"
+      }
+     }
+    }
+   },
+   "allOf": [
+    {
+     "if": {
+      "properties": {
+       "status": {
+        "const": "drafted"
+       }
+      },
+      "required": [
+       "status"
+      ]
+     },
+     "then": {
+      "required": [
+       "segments",
+       "provenance",
+       "confidence"
+      ],
+      "properties": {
+       "segments": {
+        "minItems": 1
+       },
+       "provenance": {
+        "minItems": 1
+       }
+      }
+     }
+    },
+    {
+     "if": {
+      "properties": {
+       "status": {
+        "const": "skipped"
+       }
+      },
+      "required": [
+       "status"
+      ]
+     },
+     "then": {
+      "required": [
+       "skip_reason"
+      ]
+     }
+    },
+    {
+     "if": {
+      "properties": {
+       "status": {
+        "const": "blocked"
+       }
+      },
+      "required": [
+       "status"
+      ]
+     },
+     "then": {
+      "required": [
+       "todo"
+      ]
+     }
+    },
+    {
+     "if": {
+      "properties": {
+       "confidence": {
+        "const": "low"
+       }
+      },
+      "required": [
+       "confidence"
+      ]
+     },
+     "then": {
+      "required": [
+       "uncertainties"
+      ],
+      "properties": {
+       "uncertainties": {
+        "minItems": 1
+       }
+      }
+     }
+    }
+   ]
+  }
+ }
+}

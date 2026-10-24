@@ -1,0 +1,36 @@
+{
+ "save_waits": [
+  {
+   "receipt": "fill-result-1.json",
+   "receipt_sha256": "4e38231c83d0fe8a4408c6f2ed3dac013bd5e7c66c67bdd43850166543530831",
+   "pages": [
+    2
+   ],
+   "save_signal": "error",
+   "waited_ms": 1500,
+   "keys_total": 2,
+   "keys_saved": 1,
+   "keys_pending": 0,
+   "save_errors": 1,
+   "calibrated": true,
+   "ok": false,
+   "fatal": "One save request failed; the page was filled again."
+  },
+  {
+   "receipt": "fill-result-2.json",
+   "receipt_sha256": "05d4c2dd910c981e3879ea2b0862cb891dd008c84a83cd3410e87d129c480372",
+   "pages": [
+    2
+   ],
+   "save_signal": "model",
+   "waited_ms": 300,
+   "keys_total": 2,
+   "keys_saved": 2,
+   "keys_pending": 0,
+   "save_errors": 0,
+   "calibrated": true,
+   "ok": true,
+   "fatal": null
+  }
+ ]
+}

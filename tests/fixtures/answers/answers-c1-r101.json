@@ -1,0 +1,254 @@
+{
+ "schema_version": 2,
+ "module_id": "c1-r101",
+ "run_id": 101,
+ "drafted_at": "2000-01-01T00:00:00Z",
+ "source_module": {
+  "path": "../modules/module-c1-r101.json",
+  "sha256": "2f12813053377b3bce539feb340a7dd543874d01b63fb92bf67916b536e4a277",
+  "question_digest": "2e6187eef829b6a5cbddbfac246a6313b289533dc89255ede75aae037eaa9153"
+ },
+ "tier1_corpus": [
+  {
+   "source_id": "DEMO-1-1-SLIDES",
+   "path": "tests/fixtures/curriculum/Block A/Week 1.1 Demo/Lectures/slides.md",
+   "kind": "slides"
+  },
+  {
+   "source_id": "DEMO-1-1-TRANSCRIPT",
+   "path": "tests/fixtures/curriculum/Block A/Week 1.1 Demo/Lectures/transcript.vtt",
+   "kind": "transcript"
+  },
+  {
+   "source_id": "DEMO-1-1-ILO",
+   "path": "tests/fixtures/curriculum/ILO.md",
+   "kind": "ilo"
+  }
+ ],
+ "items": [
+  {
+   "item_id": "p2-11",
+   "status": "drafted",
+   "segments": [
+    {
+     "kind": "claim",
+     "text": "The first sign is a delayed response to a tessin load.",
+     "provenance_refs": [
+      "p1"
+     ]
+    }
+   ],
+   "provenance": [
+    {
+     "ref": "p1",
+     "tier": 1,
+     "source_id": "DEMO-1-1-SLIDES",
+     "locator": "slide 4",
+     "tag": "[T1:DEMO-1-1-SLIDES:slide 4]"
+    }
+   ],
+   "confidence": "high"
+  },
+  {
+   "item_id": "p2-12",
+   "status": "drafted",
+   "segments": [
+    {
+     "kind": "claim",
+     "text": "Without vorlase the step from tessin to quillic acid stops.",
+     "provenance_refs": [
+      "p1"
+     ]
+    },
+    {
+     "kind": "connective",
+     "text": "So"
+    },
+    {
+     "kind": "claim",
+     "text": "tessin collects behind the blocked step.",
+     "provenance_refs": [
+      "p2"
+     ]
+    }
+   ],
+   "provenance": [
+    {
+     "ref": "p1",
+     "tier": 1,
+     "source_id": "DEMO-1-1-SLIDES",
+     "locator": "slide 3",
+     "tag": "[T1:DEMO-1-1-SLIDES:slide 3]"
+    },
+    {
+     "ref": "p2",
+     "tier": 1,
+     "source_id": "DEMO-1-1-TRANSCRIPT",
+     "locator": "00:05:40",
+     "tag": "[T1:DEMO-1-1-TRANSCRIPT:00:05:40]"
+    }
+   ],
+   "confidence": "high"
+  },
+  {
+   "item_id": "p2-13",
+   "status": "skipped",
+   "skip_reason": "already-answered"
+  },
+  {
+   "item_id": "p2-14",
+   "status": "drafted",
+   "segments": [
+    {
+     "kind": "claim",
+     "text": "Tessin is stored in the quillen gland and the orm lobe.",
+     "provenance_refs": [
+      "p1"
+     ]
+    }
+   ],
+   "provenance": [
+    {
+     "ref": "p1",
+     "tier": 1,
+     "source_id": "DEMO-1-1-SLIDES",
+     "locator": "slide 5",
+     "tag": "[T1:DEMO-1-1-SLIDES:slide 5]"
+    }
+   ],
+   "confidence": "high",
+   "proposed_selection": [
+    "o1",
+    "o3"
+   ]
+  },
+  {
+   "item_id": "p3-21",
+   "status": "drafted",
+   "segments": [
+    {
+     "kind": "claim",
+     "text": "A load test shows a high peak that clears slowly in deficiency.",
+     "provenance_refs": [
+      "p1"
+     ]
+    }
+   ],
+   "provenance": [
+    {
+     "ref": "p1",
+     "tier": 1,
+     "source_id": "DEMO-1-1-SLIDES",
+     "locator": "slide 4",
+     "tag": "[T1:DEMO-1-1-SLIDES:slide 4]"
+    }
+   ],
+   "confidence": "high",
+   "table_cells": [
+    {
+     "row": 1,
+     "col": 1,
+     "text": "low"
+    },
+    {
+     "row": 1,
+     "col": 2,
+     "text": "normal baseline"
+    },
+    {
+     "row": 2,
+     "col": 1,
+     "text": "high"
+    },
+    {
+     "row": 2,
+     "col": 2,
+     "text": "tessin builds up"
+    },
+    {
+     "row": 3,
+     "col": 1,
+     "text": "moderate"
+    },
+    {
+     "row": 3,
+     "col": 2,
+     "text": "slow clearance"
+    }
+   ]
+  },
+  {
+   "item_id": "p3-22",
+   "status": "drafted",
+   "segments": [
+    {
+     "kind": "claim",
+     "text": "The data come from one patient only.",
+     "provenance_refs": [
+      "p1"
+     ]
+    }
+   ],
+   "provenance": [
+    {
+     "ref": "p1",
+     "tier": 1,
+     "source_id": "DEMO-1-1-SLIDES",
+     "locator": "slide 4",
+     "tag": "[T1:DEMO-1-1-SLIDES:slide 4]"
+    }
+   ],
+   "confidence": "medium"
+  },
+  {
+   "item_id": "p4-31",
+   "status": "drafted",
+   "segments": [
+    {
+     "kind": "claim",
+     "text": "Each named structure sits at the matching marked site on the section.",
+     "provenance_refs": [
+      "p1"
+     ]
+    }
+   ],
+   "provenance": [
+    {
+     "ref": "p1",
+     "tier": 1,
+     "source_id": "DEMO-1-1-SLIDES",
+     "locator": "slide 5",
+     "tag": "[T1:DEMO-1-1-SLIDES:slide 5]"
+    }
+   ],
+   "confidence": "high",
+   "label_placements": [
+    {
+     "label": "Zeta fold",
+     "target": "the upper right fold, anchor 1 at 60.0% across, 25.0% down",
+     "confidence": "high"
+    },
+    {
+     "label": "Orm lobe",
+     "target": "the upper left lobe, anchor 0 at 20.0% across, 30.0% down",
+     "confidence": "high"
+    },
+    {
+     "label": "Pell duct",
+     "target": "the tube at lower right, anchor 3 at 80.0% across, 65.0% down",
+     "confidence": "high"
+    },
+    {
+     "label": "Quillen cap",
+     "target": "the cap at lower left, anchor 2 at 35.0% across, 70.0% down",
+     "confidence": "high"
+    }
+   ]
+  },
+  {
+   "item_id": "p4-32",
+   "status": "skipped",
+   "skip_reason": "single-attempt-drag"
+  }
+ ]
+}

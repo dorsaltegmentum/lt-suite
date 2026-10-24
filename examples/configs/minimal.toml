@@ -1,0 +1,13 @@
+# SPDX-FileCopyrightText: 2026 dorsaltegmentum
+# SPDX-License-Identifier: AGPL-3.0-or-later
+#
+# The smallest working lt-suite config. Every other key keeps its default
+# (docs/configuration.md lists them). Copy this file to the platform config path,
+# or run the lt-suite-setup skill, which writes a full config for you.
+
+schema_version = 1
+
+[lt]
+# Your institution's Lt address, https://<tenant>.lt.app, with no path.
+# The placeholder below is a reserved name that never resolves; replace it.
+origin = "https://lt.example.invalid"

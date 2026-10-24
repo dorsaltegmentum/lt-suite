@@ -1,0 +1,72 @@
+# SPDX-FileCopyrightText: 2026 dorsaltegmentum
+# SPDX-License-Identifier: AGPL-3.0-or-later
+#
+# Allowlist for tools/privacy_gate.py. A hit is dropped when one entry covers it.
+#
+# Each [[allow]]:
+#   path        glob or list of globs, relative to the repo root ("**" any depth,
+#               "*" inside one folder). Default "**". Ignored for scope "commit-message".
+#   pattern     public pattern id, list of ids, "*" (every public pattern), or
+#               "private:<tag>" (private-layer patterns carrying that tag).
+#               Private tags have fixed path restrictions enforced by the loader.
+#   reason      why the hit is not a leak. Required.
+#   match       optional regex searched in the matched text.
+#   line_match  optional regex searched in the whole line.
+#   scope       "file" (default: contents and names) or "commit-message".
+#
+# Never allowlisted here: the ids in patterns.toml [policy].never_allow outside
+# tools/privacy/** and tests/privacy/**, numbered private hits and shingle hits.
+# Benign shingle overlaps go in the private shingle-allowlist.toml.
+
+[[allow]]
+path = ["tools/privacy/**", "tests/privacy/**"]
+pattern = "*"
+reason = "The patterns and their tests must contain what the patterns match."
+
+[[allow]]
+path = ["CHANGELOG.md", "docs/platforms.md"]
+pattern = "study-date"
+reason = "Release dates and platform verification dates."
+
+[[allow]]
+path = ["shared/lexicon/**", "skills/*/references/_shared/lexicon/**"]
+pattern = "study-date"
+line_match = '^review_by: \d{4}-\d{2}-\d{2}$'
+reason = "Lexicon entries carry a review_by date one year after the release."
+
+[[allow]]
+pattern = "email"
+match = '(@example\.(org|com|net|invalid)|^208164922\+dorsaltegmentum@users\.noreply\.github\.com)$'
+reason = "Reserved example domains and the release identity's noreply address (no other noreply address)."
+
+[[allow]]
+pattern = "lt-tenant-host"
+match = '^example\.lt\.app$'
+reason = "Generic placeholder host used in docs and tests."
+
+[[allow]]
+path = ["shared/ltcore/ltjs.py", "docs/lt-client.md"]
+pattern = "lt-instance-path"
+match = '^/i/0{8}/$'
+reason = "All-zero placeholder instance id in URL examples."
+
+[[allow]]
+path = ["examples/usyd-md/**", "docs/configuration.md"]
+pattern = "unit-code"
+reason = "The institution example config shows its public unit code as a label."
+
+[[allow]]
+path = ["examples/usyd-md/**", "docs/configuration.md"]
+pattern = "private:example-institution"
+reason = "The institution example config and the generated config docs name the example institution and its public sources."
+
+[[allow]]
+path = ["examples/usyd-md/**"]
+pattern = "private:example-format"
+reason = "The institution example config carries its week-number and learning-outcome heading patterns."
+
+[[allow]]
+pattern = "f-id"
+match = '^F\d{3}$'
+line_match = '#\s*noqa:'
+reason = "Lint rule codes such as F401 in noqa comments are not finding ids."

@@ -1,0 +1,1059 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/dorsaltegmentum/lt-suite/schemas/config.schema.json",
+  "title": "lt-suite config",
+  "description": "One TOML file read by every lt-suite skill. Keys not listed here are errors. x-path marks path keys: 'config' resolves a relative value against the config file's folder, 'curriculum' against curriculum.root, 'data' against the data dir. x-regex marks regular expressions that must compile; 'template' means {num} is substituted first.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "enum": [
+        1
+      ],
+      "default": 1,
+      "description": "Config format version. This release reads version 1."
+    },
+    "institution": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Who the config is for. Labels only; nothing here gates a run.",
+      "properties": {
+        "profile": {
+          "type": "string",
+          "default": "generic",
+          "description": "Free label recorded in run.json."
+        },
+        "name": {
+          "type": "string",
+          "default": "",
+          "description": "Institution and programme name, for display only."
+        },
+        "unit_code": {
+          "type": "string",
+          "default": "",
+          "description": "Optional unit or course code recorded in run.json. No gate reads it."
+        },
+        "locale": {
+          "type": "string",
+          "enum": [
+            "en",
+            "en-AU",
+            "en-GB",
+            "en-US"
+          ],
+          "default": "en",
+          "description": "Spelling and synonym set used by the diagram consistency checks."
+        },
+        "timezone": {
+          "type": "string",
+          "pattern": "^$|^[A-Za-z_]+(/[A-Za-z0-9_+-]+)*$",
+          "default": "",
+          "description": "IANA time zone name, for example Europe/London. Empty means the system zone."
+        }
+      }
+    },
+    "lt": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "The Lt address the capture and fill skills may open.",
+      "properties": {
+        "origin": {
+          "type": "string",
+          "pattern": "^$|^https://[A-Za-z0-9.-]+(:[0-9]{1,5})?$",
+          "default": "",
+          "description": "Lt address, https://<tenant>.lt.app, with no path. Capture and fill refuse to run while it is empty."
+        },
+        "instance": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_-]*$",
+          "default": "",
+          "description": "Optional Lt instance id. Empty means read it from the page URL."
+        },
+        "allowed_url_patterns": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "description": "URL patterns for the browser server's --allowedUrlPattern option, shown in the setup docs."
+        }
+      }
+    },
+    "paths": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Where lt-suite keeps its files.",
+      "properties": {
+        "data_dir": {
+          "type": "string",
+          "x-path": "config",
+          "default": "",
+          "description": "Data folder for runs, captures, state, fonts and the venv. Empty means LT_SUITE_DATA, then the platform default."
+        },
+        "captures_dir": {
+          "type": "string",
+          "x-path": "data",
+          "default": "captures",
+          "description": "Captured modules and references."
+        },
+        "runs_dir": {
+          "type": "string",
+          "x-path": "data",
+          "default": "runs",
+          "description": "Per-module run folders."
+        },
+        "downloads_dir": {
+          "type": "string",
+          "x-path": "config",
+          "default": "",
+          "description": "Browser download folder for the download transport. Empty means the platform Downloads folder."
+        },
+        "downloads_mode": {
+          "type": "string",
+          "enum": [
+            "move",
+            "copy"
+          ],
+          "default": "move",
+          "description": "move or copy files out of the download folder. Use copy when a sandbox cannot delete outside the workspace."
+        },
+        "cache_dir": {
+          "type": "string",
+          "x-path": "config",
+          "default": "",
+          "description": "Cache folder for derived themes and font instances. Empty means LT_SUITE_CACHE, then the platform default."
+        }
+      }
+    },
+    "notes": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "The notes graph that export writes pages into.",
+      "properties": {
+        "graph_path": {
+          "type": "string",
+          "x-path": "config",
+          "default": "",
+          "description": "Notes graph root folder. Empty turns every notes output off."
+        },
+        "format": {
+          "type": "string",
+          "enum": [
+            "logseq",
+            "obsidian",
+            "markdown"
+          ],
+          "default": "logseq",
+          "description": "Page format: logseq, obsidian or markdown."
+        },
+        "pages_dir": {
+          "type": "string",
+          "default": "pages",
+          "description": "Pages folder inside the graph."
+        },
+        "assets_dir": {
+          "type": "string",
+          "default": "assets",
+          "description": "Assets folder inside the graph."
+        },
+        "whiteboards_dir": {
+          "type": "string",
+          "default": "whiteboards",
+          "description": "Whiteboards folder inside the graph."
+        },
+        "page_namespace": {
+          "type": "string",
+          "default": "Lt",
+          "description": "Namespace of exported module pages."
+        },
+        "page_title": {
+          "type": "string",
+          "default": "{namespace}/{week} {title}",
+          "description": "Page title template. Placeholders: {namespace}, {week}, {title}, {module_id}."
+        },
+        "file_name_format": {
+          "type": "string",
+          "enum": [
+            "triple-lowbar",
+            "legacy"
+          ],
+          "default": "triple-lowbar",
+          "description": "Logseq file name format; triple-lowbar is Logseq's default for new graphs."
+        },
+        "stamp_property": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9-]*$",
+          "default": "lt-module",
+          "description": "Page property that marks a page as lt-suite module output. Drafting skips stamped pages."
+        }
+      }
+    },
+    "curriculum": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "The course material tree the answer skill reads as Tier 1.",
+      "properties": {
+        "root": {
+          "type": "string",
+          "x-path": "config",
+          "default": "",
+          "description": "Course material folder. Empty turns week lookup off."
+        },
+        "learning_outcomes_file": {
+          "type": "string",
+          "x-path": "curriculum",
+          "default": "",
+          "description": "Learning outcomes file."
+        },
+        "skip_dirs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "description": "Folder names under curriculum.root that never hold week folders."
+        },
+        "text_extensions": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^\\.[A-Za-z0-9]+$"
+          },
+          "default": [
+            ".md",
+            ".txt",
+            ".vtt",
+            ".pdf",
+            ".pptx",
+            ".docx"
+          ],
+          "description": "File types counted as course text."
+        },
+        "week_number_pattern": {
+          "type": "string",
+          "x-regex": "week",
+          "default": "(?i)\\bweek\\s*(\\d{1,2})\\b",
+          "description": "Regular expression that finds the week in a module title. The first capture group is the week; an optional second group is the session."
+        },
+        "week_dir_pattern": {
+          "type": "string",
+          "x-regex": "template",
+          "default": "^(?i:week\\s*)?{num}(?:\\D|$)",
+          "description": "Regular expression for a week folder name; {num} is replaced by the escaped week number."
+        },
+        "title_stopwords": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "description": "Extra words ignored when matching a title to a folder."
+        },
+        "patterns": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Title and learning-outcome patterns used by export.",
+          "properties": {
+            "lesson": {
+              "type": "string",
+              "x-regex": true,
+              "default": "(?i)\\blesson\\s*(\\d+)",
+              "description": "Regular expression for a lesson number in a module title."
+            },
+            "bare_number": {
+              "type": "string",
+              "x-regex": true,
+              "default": "^\\d+$",
+              "description": "Regular expression for a title that is only a number."
+            },
+            "ilo_heading": {
+              "type": "string",
+              "x-regex": true,
+              "default": "(?i)^#+\\s*learning outcomes?\\b",
+              "description": "Regular expression for a heading in the learning outcomes file."
+            },
+            "ilo_kind": {
+              "type": "string",
+              "x-regex": true,
+              "default": "",
+              "description": "Regular expression for the kind line under a learning-outcome heading. Empty means none."
+            }
+          }
+        }
+      }
+    },
+    "rat": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Readiness assurance tests (individual iRAT and team tRAT).",
+      "properties": {
+        "answers_dir": {
+          "type": "string",
+          "x-path": "config",
+          "default": "",
+          "description": "Folder with team-RAT answers the user supplies. Empty means ask."
+        },
+        "irat": {
+          "type": "string",
+          "enum": [
+            "skip",
+            "ask"
+          ],
+          "default": "skip",
+          "description": "Individual RAT pages: skip or ask."
+        },
+        "trat": {
+          "type": "string",
+          "enum": [
+            "from_dir",
+            "ask",
+            "skip"
+          ],
+          "default": "ask",
+          "description": "Team RAT pages: from_dir, ask or skip."
+        }
+      }
+    },
+    "model_answer": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Lt's model answer in page data.",
+      "properties": {
+        "read": {
+          "type": "boolean",
+          "default": true,
+          "description": "Read Lt's panelState.modelAnswer from page data into the run folder. false turns it off; module.json never carries it."
+        }
+      }
+    },
+    "tiers": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Provenance tiers for drafted answers, in order.",
+      "properties": {
+        "tier": {
+          "type": "array",
+          "minItems": 1,
+          "x-unique": "id",
+          "description": "Source tiers in search order.",
+          "default": [
+            {
+              "id": 1,
+              "label": "Course material (slides, transcripts, learning outcomes)",
+              "tag_template": "[T1:{source}]",
+              "requires_accessed": false,
+              "issuer_order": [],
+              "access_note": ""
+            },
+            {
+              "id": 2,
+              "label": "Licensed reference or guideline service",
+              "tag_template": "[T2:{issuer}:{topic}]",
+              "requires_accessed": true,
+              "issuer_order": [],
+              "access_note": ""
+            },
+            {
+              "id": 3,
+              "label": "Published clinical or institutional guidance",
+              "tag_template": "[T3:{issuer}:{topic}]",
+              "requires_accessed": false,
+              "issuer_order": [],
+              "access_note": ""
+            },
+            {
+              "id": 4,
+              "label": "Peer-reviewed literature (DOI or PMID)",
+              "tag_template": "[T4:{doi_or_pmid}]",
+              "requires_accessed": false,
+              "issuer_order": [],
+              "access_note": ""
+            }
+          ],
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "label",
+              "tag_template"
+            ],
+            "properties": {
+              "id": {
+                "type": "integer",
+                "minimum": 1,
+                "description": "Tier number."
+              },
+              "label": {
+                "type": "string",
+                "minLength": 1,
+                "description": "What the tier holds."
+              },
+              "tag_template": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Provenance tag template, for example [T2:{issuer}:{topic}]."
+              },
+              "requires_accessed": {
+                "type": "boolean",
+                "default": false,
+                "description": "The tag must record the date the source was read."
+              },
+              "issuer_order": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "default": [],
+                "description": "Preferred issuers, nearest first."
+              },
+              "access_note": {
+                "type": "string",
+                "default": "",
+                "description": "How the user reaches this tier's sources."
+              }
+            }
+          }
+        },
+        "reference_set": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "description": "Reference works the user trusts."
+        },
+        "fallback_sources": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "description": "Ordered search list after Tier 1."
+        },
+        "framing": {
+          "type": "string",
+          "default": "",
+          "description": "Jurisdiction framing sentence for drafted answers."
+        }
+      }
+    },
+    "export": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "What the export skill writes.",
+      "properties": {
+        "outputs": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Switches for each export output.",
+          "properties": {
+            "module_page": {
+              "type": "boolean",
+              "default": true,
+              "description": "Markdown page for the module."
+            },
+            "pdf": {
+              "type": "boolean",
+              "default": true,
+              "description": "PDF of the module page, once per palette."
+            },
+            "notes_graph": {
+              "type": "boolean",
+              "default": false,
+              "description": "Install the page into notes.graph_path."
+            },
+            "whiteboard": {
+              "type": "boolean",
+              "default": false,
+              "description": "Notes-graph whiteboard file; needs notes_graph."
+            },
+            "ilo_map": {
+              "type": "boolean",
+              "default": false,
+              "description": "Map items to learning outcomes."
+            },
+            "flashcard_source": {
+              "type": "boolean",
+              "default": false,
+              "description": "Flashcard source file for a flashcard tool."
+            },
+            "tracker_handoff": {
+              "type": "boolean",
+              "default": false,
+              "description": "Study tracker handoff file."
+            }
+          }
+        },
+        "flashcard_source": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Flashcard source file settings.",
+          "properties": {
+            "file": {
+              "type": "string",
+              "default": "flashcard-source.md",
+              "description": "File name written in the run folder."
+            },
+            "tag_prefix": {
+              "type": "string",
+              "default": "Lt::",
+              "description": "Tag prefix for generated cards."
+            }
+          }
+        },
+        "citations": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "How provenance tags render as links on the exported page.",
+          "properties": {
+            "page_aliases": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              },
+              "default": {},
+              "description": "Source id to notes page name."
+            },
+            "url_aliases": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string",
+                "pattern": "^https?://"
+              },
+              "default": {},
+              "description": "Source id to URL."
+            },
+            "kind_pages": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              },
+              "default": {},
+              "description": "Source kind to notes page name."
+            },
+            "hidden_skip_reasons": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "default": [],
+              "description": "Skip reasons whose items are left off the page."
+            }
+          }
+        }
+      }
+    },
+    "pdf": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "PDF output settings.",
+      "properties": {
+        "author": {
+          "type": "string",
+          "default": "",
+          "description": "PDF Author field. Empty writes no author."
+        },
+        "strip_metadata": {
+          "type": "boolean",
+          "default": true,
+          "description": "Run the built-in metadata strip on every PDF."
+        }
+      }
+    },
+    "style": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Palettes. Defaults live in shared/style.defaults.toml.",
+      "properties": {
+        "palettes": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9-]*$"
+          },
+          "description": "Palette catalog ids; every final export is made once per palette."
+        },
+        "print_palette": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9-]*$",
+          "description": "Light palette for print and PDF submission."
+        },
+        "custom_palettes_file": {
+          "type": "string",
+          "x-path": "config",
+          "description": "TOML file of user palettes with the same roles as the catalog. Empty means none."
+        }
+      }
+    },
+    "fonts": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Fonts. Defaults live in shared/style.defaults.toml.",
+      "properties": {
+        "sans": {
+          "type": "string",
+          "description": "Sans family name from the font catalog, or a file path."
+        },
+        "mono": {
+          "type": "string",
+          "description": "Mono family name from the font catalog, or a file path."
+        },
+        "sans_path": {
+          "type": "string",
+          "x-path": "config",
+          "description": "Explicit sans font file. Empty means resolve fonts.sans."
+        },
+        "mono_path": {
+          "type": "string",
+          "x-path": "config",
+          "description": "Explicit mono font file. Empty means resolve fonts.mono."
+        },
+        "mono_bold_path": {
+          "type": "string",
+          "x-path": "config",
+          "description": "Explicit bold mono font file. Empty means resolve fonts.mono."
+        },
+        "text_px": {
+          "type": "integer",
+          "minimum": 8,
+          "maximum": 72,
+          "description": "Diagram node text size in px."
+        },
+        "allow_download": {
+          "type": "boolean",
+          "description": "Setup may fetch catalog fonts into the data folder, after the user says yes."
+        },
+        "page_fonts": {
+          "type": "string",
+          "enum": [
+            "local",
+            "google"
+          ],
+          "description": "local embeds fonts in HTML and drawio files; google keeps the Google Fonts link."
+        }
+      }
+    },
+    "browser": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "How skills reach the signed-in browser.",
+      "properties": {
+        "adapter": {
+          "type": "string",
+          "enum": [
+            "auto",
+            "claude-in-chrome",
+            "chrome-devtools-mcp",
+            "playwright-mcp",
+            "antigravity",
+            "manual-paste"
+          ],
+          "default": "auto",
+          "description": "Browser tool used to run page scripts."
+        },
+        "transport": {
+          "type": "string",
+          "enum": [
+            "sink",
+            "download"
+          ],
+          "default": "sink",
+          "description": "Capture output route: sink (loopback POST) or download."
+        },
+        "sink_port": {
+          "type": "integer",
+          "minimum": 1024,
+          "maximum": 65535,
+          "default": 8731,
+          "description": "Loopback port of the capture sink."
+        },
+        "lib_mode": {
+          "type": "string",
+          "enum": [
+            "inline",
+            "served"
+          ],
+          "default": "inline",
+          "description": "Fill scripts carry the library inline or load it from the loopback server."
+        },
+        "lib_port": {
+          "type": "integer",
+          "minimum": 1024,
+          "maximum": 65535,
+          "default": 8733,
+          "description": "Loopback port of the fill library server."
+        },
+        "js_tmp_dir": {
+          "type": "string",
+          "x-path": "config",
+          "default": "",
+          "description": "Folder for rendered page scripts. Empty means the OS temp folder's lt-suite-js-<uid>/ (mode 0700, checked on every render). Setup records the folder that worked."
+        }
+      }
+    },
+    "fill": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Fill skill behaviour.",
+      "properties": {
+        "approval_mode": {
+          "type": "string",
+          "enum": [
+            "manual",
+            "auto",
+            "skip-all"
+          ],
+          "default": "manual",
+          "description": "manual, auto or skip-all. Boundary pages always need manual."
+        },
+        "max_pages_per_call": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 20,
+          "default": 5,
+          "description": "Most pages filled per browser call. Values above 1 apply only after the origin's cross-page calibration passes."
+        },
+        "save_wait": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Event-driven save wait.",
+          "properties": {
+            "quiet_ms": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 300,
+              "description": "No request in flight for this long after every key is saved."
+            },
+            "max_ms": {
+              "type": "integer",
+              "minimum": 1000,
+              "default": 20000,
+              "description": "Cap counted from the last write; reaching it returns unconfirmed."
+            },
+            "fallback_ms": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 4000,
+              "description": "Uncalibrated rule: wait at least this long after the last write."
+            },
+            "render_wait_ms": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 5000,
+              "description": "Categories panel render wait."
+            }
+          }
+        },
+        "dialog": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Confirm-dialog wait.",
+          "properties": {
+            "max_ms": {
+              "type": "integer",
+              "minimum": 1000,
+              "default": 15000,
+              "description": "Confirm-dialog cap."
+            },
+            "fallback_ms": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 6000,
+              "description": "Confirm-dialog wait when uncalibrated."
+            }
+          }
+        }
+      }
+    },
+    "text_cleaners": {
+      "type": "array",
+      "default": [],
+      "description": "External text or file cleaners run on outputs. Each entry: name, stage, argv, timeout_s.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "name",
+          "stage",
+          "argv"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Label shown in logs."
+          },
+          "stage": {
+            "type": "string",
+            "enum": [
+              "fill-text",
+              "pdf",
+              "diagram"
+            ],
+            "description": "fill-text, pdf or diagram."
+          },
+          "argv": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string"
+            },
+            "description": "Command and arguments. fill-text and diagram use {in} and {out}; pdf uses {pdf}."
+          },
+          "timeout_s": {
+            "type": "integer",
+            "minimum": 1,
+            "default": 60,
+            "description": "Seconds before the cleaner is stopped."
+          }
+        }
+      }
+    },
+    "annotate": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Micrograph label drawing.",
+      "properties": {
+        "casing": {
+          "type": "string",
+          "pattern": "^#[0-9A-Fa-f]{6}$",
+          "default": "#101010",
+          "description": "Label casing colour."
+        },
+        "ink": {
+          "type": "string",
+          "pattern": "^#[0-9A-Fa-f]{6}$",
+          "default": "#FFD400",
+          "description": "Label ink colour."
+        },
+        "margin_fill": {
+          "type": "string",
+          "pattern": "^#[0-9A-Fa-f]{6}$",
+          "default": "#101010",
+          "description": "Margin fill colour."
+        },
+        "font_path": {
+          "type": "string",
+          "x-path": "config",
+          "default": "",
+          "description": "Label font file. Empty means fonts.sans, then Pillow's default."
+        },
+        "naming_rules": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "description": "Label style rules shown to the agent."
+        }
+      }
+    },
+    "diagram": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Mechanistic diagram skill.",
+      "properties": {
+        "floor_path": {
+          "type": "string",
+          "x-path": "config",
+          "default": "",
+          "description": "Quality floor file. Empty means the engine's floor.json."
+        },
+        "page": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Absolute page size limits.",
+          "properties": {
+            "max_w": {
+              "type": "integer",
+              "minimum": 200,
+              "default": 4000,
+              "description": "Largest page width in px."
+            },
+            "max_h": {
+              "type": "integer",
+              "minimum": 200,
+              "default": 3000,
+              "description": "Largest page height in px."
+            }
+          }
+        },
+        "rubric_path": {
+          "type": "string",
+          "x-path": "config",
+          "default": "",
+          "description": "Rubric file. Empty means references/rubric-template.md."
+        },
+        "example_case": {
+          "type": "string",
+          "x-path": "config",
+          "default": "",
+          "description": "Worked example case folder. Empty means examples/toy-case."
+        },
+        "header": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Diagram header fields.",
+          "properties": {
+            "required_fields": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "default": [
+                "title"
+              ],
+              "description": "Header fields a case must fill."
+            },
+            "members_order": {
+              "type": "string",
+              "enum": [
+                "as-given",
+                "surname"
+              ],
+              "default": "as-given",
+              "description": "Order of member names: as-given or surname."
+            }
+          }
+        },
+        "naming": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Case folder and eyebrow naming.",
+          "properties": {
+            "case_slug_pattern": {
+              "type": "string",
+              "default": "case-{n}",
+              "description": "Case folder name template."
+            },
+            "eyebrow_template": {
+              "type": "string",
+              "default": "",
+              "description": "Small label above the title. Empty means none."
+            }
+          }
+        },
+        "delivery": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Where the finished diagram goes.",
+          "properties": {
+            "lms_name": {
+              "type": "string",
+              "default": "",
+              "description": "Learning management system name shown in delivery notes."
+            },
+            "submission_label": {
+              "type": "string",
+              "default": "",
+              "description": "Label for the submission file."
+            }
+          }
+        },
+        "illustration": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Illustration credit.",
+          "properties": {
+            "credit": {
+              "type": "string",
+              "default": "",
+              "description": "Credit line for inset illustrations. Empty means none."
+            }
+          }
+        },
+        "treatment_check": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Treatment guideline check.",
+          "properties": {
+            "provider_label": {
+              "type": "string",
+              "default": "treatment guideline",
+              "description": "Name of the guideline source in messages."
+            },
+            "ledger_name": {
+              "type": "string",
+              "default": "guideline-ledger.json",
+              "description": "Ledger file name in the case folder."
+            }
+          }
+        },
+        "anki": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Flashcards made from a diagram.",
+          "properties": {
+            "tag_prefix": {
+              "type": "string",
+              "default": "Diagram::",
+              "description": "Tag prefix for diagram flashcards."
+            }
+          }
+        },
+        "layout": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Layout search.",
+          "properties": {
+            "workers": {
+              "type": "string",
+              "pattern": "^(auto|serial|[1-9][0-9]*)$",
+              "default": "auto",
+              "description": "auto uses fork on POSIX and serial elsewhere; serial or a worker count."
+            }
+          }
+        }
+      }
+    },
+    "capture": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Capture skill.",
+      "properties": {
+        "drop_text_patterns": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "x-regex": true
+          },
+          "default": [
+            "^Copyright ©"
+          ],
+          "description": "Regular expressions for author text dropped from captures."
+        },
+        "timeouts": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Capture timeouts.",
+          "properties": {
+            "post_ms": {
+              "type": "integer",
+              "minimum": 1000,
+              "default": 30000,
+              "description": "Timeout for one POST to the sink."
+            }
+          }
+        }
+      }
+    },
+    "improvement": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Run review and the improvement loop.",
+      "properties": {
+        "benchmark_cells": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "description": "Benchmark cells the improvement loop compares before and after a change."
+        }
+      }
+    }
+  }
+}

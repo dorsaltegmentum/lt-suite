@@ -1,0 +1,461 @@
+{
+ "schema_version": 1,
+ "module_id": "c1-r103",
+ "instance": "inst0001",
+ "course_id": 1,
+ "run_id": 103,
+ "lesson_id": 1,
+ "source_url": "https://lt.example.invalid/i/inst0001/student/courses/1/runs/103/run/page/1",
+ "captured_at": "2000-01-01T00:00:00Z",
+ "capture_method": "view-model",
+ "lesson": {
+  "title": "2.1 Demo: Reading a Zeta section",
+  "course_title": "Example Course 2000 (X101)",
+  "page_count": 4,
+  "has_completion_page": false,
+  "run_locked": false,
+  "show_page_menu_page_remaining": false,
+  "remaining_flow_pages_without_checkpoints": 0,
+  "completion_route": null
+ },
+ "commit_boundaries": {
+  "checkpoint_pages": [],
+  "checkpoints": [],
+  "checkpoints_container_present": true,
+  "single_attempt_items": [
+   "p4-31"
+  ],
+  "run_level_commit": {
+   "present": false,
+   "route": null,
+   "note": "hasCompletionPage exposes the final route; capture leaves that route unopened."
+  },
+  "unmapped": []
+ },
+ "census": {
+  "pages_total": 4,
+  "captured_total": 8,
+  "answerable_total": 8,
+  "by_type": {
+   "upload-and-annotate": 2,
+   "image-annotation": 2,
+   "image-labeling": 2,
+   "drag-and-drop-labeling": 1,
+   "categorization": 1
+  },
+  "confirmed_by": "panel walk over lessonFlowPages with subpage recursion; answerable = panelState carries an input key"
+ },
+ "pages": [
+  {
+   "page_index": 1,
+   "page_no": 1,
+   "route": null,
+   "url": "https://lt.example.invalid/i/inst0001/student/courses/1/runs/103/run/page/1",
+   "title": "Overview",
+   "is_report_page": false,
+   "is_checkpoint": false,
+   "content": [
+    {
+     "panel_key": "1",
+     "plugin_key": "kcTextArea",
+     "kind": "text",
+     "text": "Study the Zeta section before you annotate it."
+    },
+    {
+     "panel_key": "2",
+     "plugin_key": "image",
+     "kind": "image",
+     "text": "Figure 1. The supplied Zeta section.",
+     "media": [
+      {
+       "kind": "image",
+       "key": "23",
+       "alt": "Zeta section, author figure",
+       "url": null,
+       "width": null,
+       "height": null,
+       "local_path": null
+      }
+     ]
+    }
+   ],
+   "items": []
+  },
+  {
+   "page_index": 2,
+   "page_no": 2,
+   "route": null,
+   "url": "https://lt.example.invalid/i/inst0001/student/courses/1/runs/103/run/page/2",
+   "title": "Annotate",
+   "is_report_page": false,
+   "is_checkpoint": false,
+   "content": [],
+   "items": [
+    {
+     "item_id": "p2-11",
+     "panel_key": "11",
+     "plugin_key": "image-annotation",
+     "type": "upload-and-annotate",
+     "prompt_text": "Upload your annotated sketch of the Zeta section.",
+     "attempts": "multi",
+     "assessment_type": "noAssessment",
+     "maximum_grade": null,
+     "commit_state": "open",
+     "read_only": null,
+     "automation": "structured-path",
+     "answered": true,
+     "parent_item_id": null,
+     "input_mode": "allowImageAndAnnotation",
+     "media": [
+      {
+       "kind": "image",
+       "role": "student-upload",
+       "key": "23",
+       "alt": null,
+       "url": null,
+       "width": null,
+       "height": null,
+       "local_path": null
+      }
+     ],
+     "target_geometry": {
+      "presented_ratio": 0.625,
+      "accepts_upload": true,
+      "geometry_source": "captured",
+      "image_key": "23",
+      "annotations_key": "a1"
+     }
+    },
+    {
+     "item_id": "p2-12",
+     "panel_key": "12",
+     "plugin_key": "image-annotation",
+     "type": "upload-and-annotate",
+     "prompt_text": "Upload a sketch of the duct layout.",
+     "attempts": "multi",
+     "assessment_type": "noAssessment",
+     "maximum_grade": null,
+     "commit_state": "open",
+     "read_only": null,
+     "automation": "degrade-todo",
+     "answered": false,
+     "parent_item_id": null,
+     "input_mode": "allowImageAndAnnotation",
+     "media": [
+      {
+       "kind": "image",
+       "role": "student-upload",
+       "key": null,
+       "alt": null,
+       "url": null,
+       "width": null,
+       "height": null,
+       "local_path": null
+      }
+     ],
+     "target_geometry": {
+      "presented_ratio": null,
+      "accepts_upload": true,
+      "geometry_source": "unavailable-until-presented",
+      "image_key": null,
+      "annotations_key": null
+     },
+     "degrade": {
+      "class": "lifts-at-fill",
+      "reason": "geometry-unknown-until-presented",
+      "note": "An empty upload slot has no geometry. Read presentedRatio after saving the first image to obtain its stored proportions."
+     }
+    },
+    {
+     "item_id": "p2-13",
+     "panel_key": "13",
+     "plugin_key": "image-annotation",
+     "type": "image-annotation",
+     "prompt_text": "Mark the fold on the supplied section.",
+     "attempts": "multi",
+     "assessment_type": "noAssessment",
+     "maximum_grade": null,
+     "commit_state": "open",
+     "read_only": null,
+     "automation": "resilient-selector",
+     "answered": true,
+     "parent_item_id": null,
+     "input_mode": "allowAnnotation",
+     "media": [
+      {
+       "kind": "image",
+       "role": "author-supplied",
+       "key": "52",
+       "alt": "Supplied Zeta section",
+       "url": null,
+       "width": null,
+       "height": null,
+       "local_path": null
+      }
+     ],
+     "target_geometry": {
+      "presented_ratio": 0.8125,
+      "accepts_upload": false,
+      "geometry_source": "captured",
+      "image_key": "52",
+      "annotations_key": null
+     }
+    },
+    {
+     "item_id": "p2-14",
+     "panel_key": "14",
+     "plugin_key": "image-annotation",
+     "type": "image-annotation",
+     "prompt_text": "Mark the duct on the supplied section.",
+     "attempts": "multi",
+     "assessment_type": "noAssessment",
+     "maximum_grade": null,
+     "commit_state": "open",
+     "read_only": null,
+     "automation": "degrade-todo",
+     "answered": false,
+     "parent_item_id": null,
+     "input_mode": "allowAnnotation",
+     "media": [
+      {
+       "kind": "image",
+       "role": "author-supplied",
+       "key": "53",
+       "alt": "Supplied duct section",
+       "url": null,
+       "width": null,
+       "height": null,
+       "local_path": null
+      }
+     ],
+     "target_geometry": {
+      "presented_ratio": null,
+      "accepts_upload": false,
+      "geometry_source": "unavailable-until-presented",
+      "image_key": "53",
+      "annotations_key": null
+     },
+     "degrade": {
+      "class": "permanent",
+      "reason": "panel-accepts-no-upload",
+      "note": "allowAnnotation permits marking the provided image; replacement uploads are unsupported."
+     }
+    }
+   ]
+  },
+  {
+   "page_index": 3,
+   "page_no": 3,
+   "route": null,
+   "url": "https://lt.example.invalid/i/inst0001/student/courses/1/runs/103/run/page/3",
+   "title": "Labelling",
+   "is_report_page": false,
+   "is_checkpoint": false,
+   "content": [],
+   "items": [
+    {
+     "item_id": "p3-21",
+     "panel_key": "21",
+     "plugin_key": "kcImageLabelling",
+     "type": "image-labeling",
+     "prompt_text": "Label the structures.",
+     "attempts": "multi",
+     "assessment_type": "noAssessment",
+     "maximum_grade": null,
+     "commit_state": "open",
+     "read_only": null,
+     "automation": "structured-path",
+     "answered": true,
+     "parent_item_id": null,
+     "media": [
+      {
+       "kind": "image",
+       "key": "54",
+       "alt": "Zeta section with four drop zones",
+       "url": null,
+       "width": null,
+       "height": null,
+       "local_path": null
+      }
+     ],
+     "options": [
+      {
+       "option_id": "o1",
+       "text": "Cap"
+      },
+      {
+       "option_id": "o2",
+       "text": "Duct"
+      },
+      {
+       "option_id": "o3",
+       "text": "Fold"
+      },
+      {
+       "option_id": "o4",
+       "text": "Lobe"
+      },
+      {
+       "option_id": "o5",
+       "text": "Stalk"
+      }
+     ],
+     "constraints": {
+      "options_count": 5,
+      "note": "presentedRatio=0.7500 locations=4"
+     }
+    },
+    {
+     "item_id": "p3-22",
+     "panel_key": "22",
+     "plugin_key": "drag-and-drop",
+     "type": "drag-and-drop-labeling",
+     "prompt_text": "Drag each term onto its place.",
+     "attempts": "multi",
+     "assessment_type": "noAssessment",
+     "maximum_grade": null,
+     "commit_state": "open",
+     "read_only": null,
+     "automation": "structured-path",
+     "answered": false,
+     "parent_item_id": null,
+     "media": [
+      {
+       "kind": "image",
+       "key": "55",
+       "alt": "Valve diagram with three zones",
+       "url": null,
+       "width": null,
+       "height": null,
+       "local_path": null
+      }
+     ],
+     "options": [
+      {
+       "option_id": "o1",
+       "text": "Inlet"
+      },
+      {
+       "option_id": "o2",
+       "text": "Outlet"
+      },
+      {
+       "option_id": "o3",
+       "text": "Valve"
+      }
+     ],
+     "constraints": {
+      "options_count": 3,
+      "note": "presentedRatio=0.5000 locations=3"
+     }
+    },
+    {
+     "item_id": "p3-23",
+     "panel_key": "23",
+     "plugin_key": "categories",
+     "type": "categorization",
+     "prompt_text": "Sort the terms.",
+     "attempts": "multi",
+     "assessment_type": "noAssessment",
+     "maximum_grade": null,
+     "commit_state": "open",
+     "read_only": null,
+     "automation": "structured-path",
+     "answered": false,
+     "parent_item_id": null,
+     "options": [
+      {
+       "option_id": "o1",
+       "text": "burst"
+      },
+      {
+       "option_id": "o2",
+       "text": "peak"
+      },
+      {
+       "option_id": "o3",
+       "text": "recovery"
+      },
+      {
+       "option_id": "o4",
+       "text": "rest"
+      },
+      {
+       "option_id": "o5",
+       "text": "warm-up"
+      }
+     ],
+     "constraints": {
+      "options_count": 5,
+      "categories": [
+       "Early",
+       "Late"
+      ],
+      "note": "Grouping fixture: 2 categories; 5 labels; input shape empty-collection; 0 answer entries; label fields title/label"
+     }
+    }
+   ]
+  },
+  {
+   "page_index": 4,
+   "page_no": 4,
+   "route": null,
+   "url": "https://lt.example.invalid/i/inst0001/student/courses/1/runs/103/run/page/4",
+   "title": "Final labelling",
+   "is_report_page": false,
+   "is_checkpoint": false,
+   "content": [],
+   "items": [
+    {
+     "item_id": "p4-31",
+     "panel_key": "31",
+     "plugin_key": "kcImageLabelling",
+     "type": "image-labeling",
+     "prompt_text": "Final labelling: place each name.",
+     "attempts": "single",
+     "assessment_type": "graded",
+     "maximum_grade": 3,
+     "commit_state": "open",
+     "read_only": null,
+     "automation": "degrade-todo",
+     "answered": false,
+     "parent_item_id": null,
+     "media": [
+      {
+       "kind": "image",
+       "key": "56",
+       "alt": "Compass diagram",
+       "url": null,
+       "width": null,
+       "height": null,
+       "local_path": null
+      }
+     ],
+     "options": [
+      {
+       "option_id": "o1",
+       "text": "East"
+      },
+      {
+       "option_id": "o2",
+       "text": "North"
+      },
+      {
+       "option_id": "o3",
+       "text": "South"
+      }
+     ],
+     "constraints": {
+      "options_count": 3,
+      "note": "presentedRatio=0.5000 locations=3"
+     },
+     "degrade": {
+      "class": "permanent",
+      "reason": "single-attempt-drag",
+      "note": "Single-attempt drag placement always requires manual interaction."
+     }
+    }
+   ]
+  }
+ ]
+}

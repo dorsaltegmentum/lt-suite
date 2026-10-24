@@ -1,0 +1,87 @@
+{
+ "started_at": "2000-01-01T00:00:00Z",
+ "ended_at": "2000-01-01T00:00:00Z",
+ "approval_mode": "manual",
+ "boundary_reached": {
+  "stopped": false,
+  "class": null,
+  "page_index": null,
+  "item_id": null,
+  "detail": "Nothing stopped the run; every fillable item was written or listed."
+ },
+ "pages_filled": [
+  2,
+  3
+ ],
+ "never_navigated": [],
+ "items": {
+  "p2-11": {
+   "method": "selector",
+   "selector_used": "input[type=file][accept*='image/png']"
+  },
+  "p2-12": {
+   "result": "todo",
+   "attempted": false,
+   "method": "manual-todo",
+   "stopped_reason": "The slot is empty, so its image geometry is unknown until a first upload is read back.",
+   "todo": {
+    "blocker": "The slot is empty, so its image geometry is unknown until a first upload is read back.",
+    "placement": "Page 2, panel 12. Upload the prepared diagram by hand."
+   }
+  },
+  "p2-13": {
+   "result": "todo",
+   "attempted": false,
+   "method": "manual-todo",
+   "stopped_reason": "Annotation on an image Lt supplies has no tested write path.",
+   "todo": {
+    "blocker": "Annotation on an image Lt supplies has no tested write path.",
+    "placement": "Page 2, panel 13. Mark the fold by hand."
+   }
+  },
+  "p2-14": {
+   "result": "todo",
+   "attempted": false,
+   "method": "manual-todo",
+   "stopped_reason": "Annotation on an image Lt supplies has no tested write path.",
+   "todo": {
+    "blocker": "Annotation on an image Lt supplies has no tested write path.",
+    "placement": "Page 2, panel 14. Mark the duct by hand."
+   }
+  },
+  "p3-21": {
+   "method": "view-model"
+  },
+  "p3-22": {
+   "method": "view-model"
+  },
+  "p3-23": {
+   "method": "view-model"
+  },
+  "p4-31": {
+   "result": "todo",
+   "attempted": false,
+   "method": "manual-todo",
+   "stopped_reason": "This drag question allows one attempt. Partial placement risks an irreversible change, so manual placement is required.",
+   "todo": {
+    "blocker": "This drag question allows one attempt. Partial placement risks an irreversible change, so manual placement is required.",
+    "placement": "Page 4, panel 31. Place the three names by hand."
+   }
+  }
+ },
+ "selector_events": [
+  {
+   "selector": "input[type=file][accept*='image/png']",
+   "item_type": "upload-and-annotate",
+   "outcome": "hit",
+   "recorded_at": "2000-01-01T00:00:00Z"
+  }
+ ],
+ "connection_events": [
+  {
+   "at": "2000-01-01T00:00:00Z",
+   "kind": "screenshot-timeout",
+   "detail": "A screenshot timed out on an annotation page; the run fell through to the view model."
+  }
+ ]
+}

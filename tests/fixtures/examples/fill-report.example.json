@@ -1,0 +1,173 @@
+{
+ "schema_version": 1,
+ "module_id": "c1-r101",
+ "run_id": 101,
+ "started_at": "2000-01-01T00:00:00Z",
+ "ended_at": "2000-01-01T00:22:00Z",
+ "approval_mode": "manual",
+ "source_answers": {
+  "path": "answers.example.json",
+  "sha256": "9a5fdb11d2e8f31028275ed598a80d30f9050b3b01b9aa6af9fac350a134520a"
+ },
+ "boundary_reached": {
+  "stopped": true,
+  "class": "single-attempt-item",
+  "page_index": 4,
+  "item_id": "i-cat-1",
+  "detail": "i-cat-1 on page 4 is a single-attempt categorization, and a drag there is never automated. The run ended before page 4. The unmapped panel on page 3 only became a TODO; page 3 was filled around it."
+ },
+ "never_navigated": [
+  {
+   "route": "complete",
+   "reason": "Completion route: an enabled Commit button sits there, so the run never opens it."
+  }
+ ],
+ "pages_filled": [
+  3
+ ],
+ "items": [
+  {
+   "item_id": "i-rat-1",
+   "item_type": "multiple-choice",
+   "attempts": "multi",
+   "attempted": false,
+   "method": "not-attempted",
+   "result": "skipped",
+   "verified": false,
+   "stopped_reason": "Standing policy skips the iRAT; a tRAT would use the answers in rat.answers_dir"
+  },
+  {
+   "item_id": "i-rat-2",
+   "item_type": "multiple-choice",
+   "attempts": "multi",
+   "attempted": false,
+   "method": "not-attempted",
+   "result": "skipped",
+   "verified": false,
+   "stopped_reason": "Standing policy skips the iRAT; a tRAT would use the answers in rat.answers_dir"
+  },
+  {
+   "item_id": "i-upann-1",
+   "item_type": "upload-and-annotate",
+   "attempts": "multi",
+   "attempted": true,
+   "method": "selector",
+   "selector_used": "input[type=file][accept*='image/png']",
+   "result": "filled",
+   "verified": true
+  },
+  {
+   "item_id": "i-ann-1",
+   "item_type": "image-annotation",
+   "attempts": "multi",
+   "attempted": true,
+   "method": "manual-todo",
+   "result": "todo",
+   "verified": false,
+   "todo": {
+    "blocker": "No tested way exists to draw on this canvas.",
+    "placement": "Page 3, pk-6: draw the grid square and scale bar from the prepared PNG.",
+    "artefact_path": "assets/c1-r101/grid-annotated.png"
+   }
+  },
+  {
+   "item_id": "i-text-1",
+   "item_type": "text-response",
+   "attempts": "multi",
+   "attempted": true,
+   "method": "view-model",
+   "result": "filled",
+   "verified": true,
+   "lt_conflict": {
+    "observed_via": "model-answer",
+    "held_answer": "Immersion oil matches the refractive index of glass, so light is not bent away from the objective lens.",
+    "lt_indicated": "Immersion oil magnifies the image.",
+    "draft_ref": "p1",
+    "note": "Lt's model answer gives another reason. Slide 14 supports the draft, so it stays; Lt's wording is kept as a note on what the marker expects."
+   }
+  },
+  {
+   "item_id": "i-text-2",
+   "item_type": "text-response",
+   "attempts": "multi",
+   "attempted": true,
+   "method": "view-model",
+   "result": "filled-unverified",
+   "verified": false,
+   "stopped_reason": "The read-back came back blank, so the editor may still hold the text. A human checks it; no blind retry."
+  },
+  {
+   "item_id": "i-table-1",
+   "item_type": "table-completion",
+   "attempts": "multi",
+   "attempted": true,
+   "method": "selector",
+   "selector_used": "div[data-panel-key='pk-11'] table td input",
+   "result": "filled",
+   "verified": true
+  },
+  {
+   "item_id": "i-unmapped-1",
+   "item_type": "unmapped",
+   "attempts": "multi",
+   "attempted": false,
+   "method": "manual-todo",
+   "result": "todo",
+   "verified": false,
+   "todo": {
+    "blocker": "kcDataValue has no tested write path. One item skipped; the run went on.",
+    "placement": "Page 3, pk-12: type the diameter manually; a new write path plus a fresh capture would automate it."
+   }
+  },
+  {
+   "item_id": "i-cat-1",
+   "item_type": "categorization",
+   "attempts": "single",
+   "attempted": false,
+   "method": "manual-todo",
+   "result": "todo",
+   "verified": false,
+   "todo": {
+    "blocker": "Single-attempt drag. A half-landed synthetic drag cannot be taken back, so it is never automated.",
+    "placement": "Page 4, pk-7: sort the three parts by hand."
+   }
+  }
+ ],
+ "selector_events": [
+  {
+   "selector": "input[type=file][accept*='image/png']",
+   "item_type": "upload-and-annotate",
+   "outcome": "hit",
+   "recorded_at": "2000-01-01T00:00:00Z"
+  },
+  {
+   "selector": "div[data-panel-key='pk-11'] table td input",
+   "item_type": "table-completion",
+   "outcome": "hit",
+   "recorded_at": "2000-01-01T00:00:00Z"
+  }
+ ],
+ "connection_events": [
+  {
+   "at": "2000-01-01T00:08:00Z",
+   "kind": "screenshot-timeout",
+   "detail": "The screenshot call timed out on a busy page; the run read the view model instead."
+  }
+ ],
+ "save_waits": [
+  {
+   "pages": [
+    3
+   ],
+   "save_signal": "fallback",
+   "waited_ms": 4200,
+   "keys_total": 3,
+   "keys_saved": null,
+   "keys_pending": null,
+   "save_errors": 0,
+   "calibrated": false,
+   "ok": true,
+   "fatal": null
+  }
+ ]
+}

@@ -1,0 +1,313 @@
+{
+ "schema_version": 1,
+ "module_id": "c1-r104",
+ "run_id": 104,
+ "started_at": "2000-01-01T00:00:00Z",
+ "ended_at": "2000-01-01T00:00:00Z",
+ "approval_mode": "auto",
+ "source_answers": {
+  "path": "../answers/answers-c1-r104.json",
+  "sha256": "4fdbaba4cc6dc3b75e2cc523b6d55d9c3ef3d93280fd2488a7693ae6dda5a217"
+ },
+ "source_receipts": {
+  "path": "../runs/c1-r104/receipts.json",
+  "sha256": "3e68c81f77c8e5be633f851981a88de3e6a44cbb88e2c35d5cdacac21d1f9a42"
+ },
+ "user_decisions": [
+  {
+   "rail": "approval-manual-at-boundary",
+   "who": "the user",
+   "when": "2000-01-01T00:00:00Z",
+   "why": "Synthetic approval permits automatic entry of team selections before the completion route.",
+   "approval_id": "A-add2e6ec",
+   "quote": "Run it on auto, I accept that it ends at the completion page."
+  },
+  {
+   "rail": "passed-single-approval",
+   "item_ids": [
+    "p3-12"
+   ],
+   "who": "the user",
+   "when": "2000-01-01T00:00:00Z",
+   "why": "The submitted item on page 3 is already locked; the user accepted a run that reaches page 9 without manual approval.",
+   "approval_id": "A-868b40fc",
+   "quote": "Go on past page 3, I know p3-12 is already submitted."
+  }
+ ],
+ "boundary_reached": {
+  "stopped": true,
+  "class": "run-level-commit",
+  "page_index": null,
+  "item_id": null,
+  "detail": "Team selections are saved. Navigation stops before the final completion route."
+ },
+ "never_navigated": [
+  {
+   "route": "complete",
+   "reason": "Final completion controls remain outside automatic navigation."
+  }
+ ],
+ "pages_filled": [
+  9
+ ],
+ "items": [
+  {
+   "item_id": "p3-12",
+   "item_type": "text-response",
+   "attempts": "single",
+   "attempted": false,
+   "method": "not-attempted",
+   "result": "skipped",
+   "verified": false,
+   "stopped_reason": "Submission is already recorded and this panel is locked."
+  },
+  {
+   "item_id": "p3-13",
+   "item_type": "text-response",
+   "attempts": "multi",
+   "attempted": false,
+   "method": "not-attempted",
+   "result": "skipped",
+   "verified": false,
+   "stopped_reason": "The page is locked after the committed checkpoint."
+  },
+  {
+   "item_id": "p3-14",
+   "item_type": "multiple-choice",
+   "attempts": "multi",
+   "attempted": false,
+   "method": "not-attempted",
+   "result": "skipped",
+   "verified": false,
+   "stopped_reason": "The page is locked after the committed checkpoint."
+  },
+  {
+   "item_id": "p9-71",
+   "item_type": "multiple-choice",
+   "attempts": "multi",
+   "attempted": true,
+   "method": "view-model",
+   "result": "filled",
+   "verified": true,
+   "receipt": {
+    "expected_hash": 890495101,
+    "observed_hash": 890495101,
+    "observed_at": "2000-01-01T00:00:00Z"
+   }
+  },
+  {
+   "item_id": "p9-72",
+   "item_type": "multiple-choice",
+   "attempts": "multi",
+   "attempted": true,
+   "method": "view-model",
+   "result": "filled",
+   "verified": true,
+   "receipt": {
+    "expected_hash": 2270141005,
+    "observed_hash": 2270141005,
+    "observed_at": "2000-01-01T00:00:00Z"
+   }
+  },
+  {
+   "item_id": "p9-73",
+   "item_type": "multiple-choice",
+   "attempts": "multi",
+   "attempted": true,
+   "method": "view-model",
+   "result": "filled",
+   "verified": true,
+   "receipt": {
+    "expected_hash": 1263065865,
+    "observed_hash": 1263065865,
+    "observed_at": "2000-01-01T00:00:00Z"
+   }
+  },
+  {
+   "item_id": "p9-74",
+   "item_type": "multiple-choice",
+   "attempts": "multi",
+   "attempted": true,
+   "method": "view-model",
+   "result": "filled",
+   "verified": true,
+   "receipt": {
+    "expected_hash": 2734036352,
+    "observed_hash": 2734036352,
+    "observed_at": "2000-01-01T00:00:00Z"
+   }
+  },
+  {
+   "item_id": "p9-75",
+   "item_type": "multiple-choice",
+   "attempts": "multi",
+   "attempted": true,
+   "method": "view-model",
+   "result": "filled",
+   "verified": true,
+   "receipt": {
+    "expected_hash": 1514441421,
+    "observed_hash": 1514441421,
+    "observed_at": "2000-01-01T00:00:00Z"
+   }
+  },
+  {
+   "item_id": "p9-76",
+   "item_type": "multiple-choice",
+   "attempts": "multi",
+   "attempted": true,
+   "method": "view-model",
+   "result": "filled",
+   "verified": true,
+   "receipt": {
+    "expected_hash": 2672636476,
+    "observed_hash": 2672636476,
+    "observed_at": "2000-01-01T00:00:00Z"
+   }
+  },
+  {
+   "item_id": "p9-77",
+   "item_type": "multiple-choice",
+   "attempts": "multi",
+   "attempted": true,
+   "method": "view-model",
+   "result": "filled",
+   "verified": true,
+   "receipt": {
+    "expected_hash": 3722054475,
+    "observed_hash": 3722054475,
+    "observed_at": "2000-01-01T00:00:00Z"
+   }
+  },
+  {
+   "item_id": "p9-78",
+   "item_type": "multiple-choice",
+   "attempts": "multi",
+   "attempted": true,
+   "method": "view-model",
+   "result": "filled",
+   "verified": true,
+   "receipt": {
+    "expected_hash": 2144911287,
+    "observed_hash": 2144911287,
+    "observed_at": "2000-01-01T00:00:00Z"
+   }
+  },
+  {
+   "item_id": "p9-79",
+   "item_type": "multiple-choice",
+   "attempts": "multi",
+   "attempted": true,
+   "method": "view-model",
+   "result": "filled",
+   "verified": true,
+   "receipt": {
+    "expected_hash": 3509752575,
+    "observed_hash": 3509752575,
+    "observed_at": "2000-01-01T00:00:00Z"
+   }
+  },
+  {
+   "item_id": "p9-80",
+   "item_type": "multiple-choice",
+   "attempts": "multi",
+   "attempted": true,
+   "method": "view-model",
+   "result": "filled",
+   "verified": true,
+   "receipt": {
+    "expected_hash": 3934428583,
+    "observed_hash": 3934428583,
+    "observed_at": "2000-01-01T00:00:00Z"
+   }
+  },
+  {
+   "item_id": "p9-81",
+   "item_type": "multiple-choice",
+   "attempts": "multi",
+   "attempted": true,
+   "method": "view-model",
+   "result": "filled",
+   "verified": true,
+   "receipt": {
+    "expected_hash": 3032010770,
+    "observed_hash": 3032010770,
+    "observed_at": "2000-01-01T00:00:00Z"
+   }
+  },
+  {
+   "item_id": "p9-82",
+   "item_type": "multiple-choice",
+   "attempts": "multi",
+   "attempted": true,
+   "method": "view-model",
+   "result": "filled",
+   "verified": true,
+   "receipt": {
+    "expected_hash": 3282420592,
+    "observed_hash": 3282420592,
+    "observed_at": "2000-01-01T00:00:00Z"
+   }
+  },
+  {
+   "item_id": "p9-83",
+   "item_type": "multiple-choice",
+   "attempts": "multi",
+   "attempted": true,
+   "method": "view-model",
+   "result": "filled",
+   "verified": true,
+   "receipt": {
+    "expected_hash": 780799301,
+    "observed_hash": 780799301,
+    "observed_at": "2000-01-01T00:00:00Z"
+   }
+  },
+  {
+   "item_id": "p9-84",
+   "item_type": "multiple-choice",
+   "attempts": "multi",
+   "attempted": true,
+   "method": "view-model",
+   "result": "filled",
+   "verified": true,
+   "receipt": {
+    "expected_hash": 373265349,
+    "observed_hash": 373265349,
+    "observed_at": "2000-01-01T00:00:00Z"
+   }
+  },
+  {
+   "item_id": "p9-85",
+   "item_type": "multiple-choice",
+   "attempts": "multi",
+   "attempted": true,
+   "method": "view-model",
+   "result": "filled",
+   "verified": true,
+   "receipt": {
+    "expected_hash": 1454909180,
+    "observed_hash": 1454909180,
+    "observed_at": "2000-01-01T00:00:00Z"
+   }
+  }
+ ],
+ "save_waits": [
+  {
+   "receipt": "fill-result-1.json",
+   "receipt_sha256": "155e1a95b30ac8ac2cd74ac52ae62547e341c76df96853c9cab2f8bbb37a3553",
+   "pages": [
+    9
+   ],
+   "save_signal": "net",
+   "waited_ms": 910,
+   "keys_total": 15,
+   "keys_saved": 15,
+   "keys_pending": 0,
+   "save_errors": 0,
+   "calibrated": true,
+   "ok": true,
+   "fatal": null
+  }
+ ]
+}

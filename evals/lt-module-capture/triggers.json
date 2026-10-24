@@ -1,0 +1,113 @@
+{
+ "SPDX-FileCopyrightText": "2026 dorsaltegmentum",
+ "SPDX-License-Identifier": "AGPL-3.0-or-later",
+ "skill_name": "lt-module-capture",
+ "description": "Synthetic queries that should and should not load lt-module-capture. The format matches dev/claude-code/run_trigger_eval.py (cases with id, query, should_trigger). A runner that needs a train and validation split takes every third case of each kind for validation.",
+ "cases": [
+  {
+   "id": "capture-trigger-01",
+   "query": "Copy the Lt lesson in my open tab to disk so I can study it without the browser",
+   "should_trigger": true
+  },
+  {
+   "id": "capture-trigger-02",
+   "query": "How many questions does this Lt practical have, and can any of them only be answered once?",
+   "should_trigger": true
+  },
+  {
+   "id": "capture-trigger-03",
+   "query": "List what I have not answered yet in the Lt lesson I have open",
+   "should_trigger": true
+  },
+  {
+   "id": "capture-trigger-04",
+   "query": "Make a module.json from this Lt run first",
+   "should_trigger": true
+  },
+  {
+   "id": "capture-trigger-05",
+   "query": "Read the structure of the module out of my Lt tab without changing anything on the page",
+   "should_trigger": true
+  },
+  {
+   "id": "capture-trigger-06",
+   "query": "Where are the checkpoints and single-attempt questions in this Lt run?",
+   "should_trigger": true
+  },
+  {
+   "id": "capture-trigger-07",
+   "query": "Get every page title and question prompt from the Lt module that is open",
+   "should_trigger": true
+  },
+  {
+   "id": "capture-trigger-08",
+   "query": "The diagram step needs the image slot sizes from this Lt lesson, can you read them out",
+   "should_trigger": true
+  },
+  {
+   "id": "capture-trigger-09",
+   "query": "Start by snapshotting the Lt module, we will draft answers later",
+   "should_trigger": true
+  },
+  {
+   "id": "capture-trigger-10",
+   "query": "Turn the open Lt run into the files the other lt-suite skills read",
+   "should_trigger": true
+  },
+  {
+   "id": "capture-trigger-11",
+   "query": "We filled the module, refresh module.json from the live page without touching the reference",
+   "should_trigger": true
+  },
+  {
+   "id": "capture-negative-01",
+   "query": "Draft answers for the module we captured earlier",
+   "should_trigger": false
+  },
+  {
+   "id": "capture-negative-02",
+   "query": "Answer the team-based learning questions using this week's slides as sources",
+   "should_trigger": false
+  },
+  {
+   "id": "capture-negative-03",
+   "query": "Build the mechanism diagram for this case",
+   "should_trigger": false
+  },
+  {
+   "id": "capture-negative-04",
+   "query": "Make a draw.io figure of this signalling pathway with blunt-ended inhibition edges",
+   "should_trigger": false
+  },
+  {
+   "id": "capture-negative-05",
+   "query": "Put my drafted answers into the Lt pages, stopping at the first checkpoint",
+   "should_trigger": false
+  },
+  {
+   "id": "capture-negative-06",
+   "query": "Enter the approved answers in Lt but leave submitting to me",
+   "should_trigger": false
+  },
+  {
+   "id": "capture-negative-07",
+   "query": "Export the module notes to my notes app",
+   "should_trigger": false
+  },
+  {
+   "id": "capture-negative-08",
+   "query": "Turn these answers into flashcards",
+   "should_trigger": false
+  },
+  {
+   "id": "capture-negative-09",
+   "query": "Fix errors in this lecture transcript",
+   "should_trigger": false
+  },
+  {
+   "id": "capture-negative-10",
+   "query": "Count the items by type in the module.json that is already saved",
+   "should_trigger": false
+  }
+ ]
+}

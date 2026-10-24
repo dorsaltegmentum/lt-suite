@@ -1,0 +1,197 @@
+{
+ "schema_version": 1,
+ "module_id": "c1-r102",
+ "run_id": 102,
+ "started_at": "2000-01-01T00:00:00Z",
+ "ended_at": "2000-01-01T00:00:00Z",
+ "approval_mode": "manual",
+ "source_answers": {
+  "path": "../answers/answers-c1-r102.json",
+  "sha256": "cb0cd19da7b1b2eb2eb4d9b5bac94080f7231abde71fdcd4a416da7bd130ffb1"
+ },
+ "source_receipts": {
+  "path": "../runs/c1-r102/receipts.json",
+  "sha256": "550714cf8b09e1b111b7125d36b70b981d573e528c3d22e7515deee4e8dc2a01"
+ },
+ "boundary_reached": {
+  "stopped": true,
+  "class": "run-level-commit",
+  "page_index": null,
+  "item_id": null,
+  "detail": "Writable panels are complete. Navigation stops before the final completion route."
+ },
+ "never_navigated": [
+  {
+   "route": "complete",
+   "reason": "Final completion controls remain outside automatic navigation."
+  }
+ ],
+ "pages_filled": [
+  2,
+  3,
+  4
+ ],
+ "items": [
+  {
+   "item_id": "p2-11",
+   "item_type": "text-response",
+   "attempts": "multi",
+   "attempted": true,
+   "method": "view-model",
+   "stopped_reason": "Saved under the fallback wait (no calibrated save signal for this origin); the fresh-load receipt is the proof of the save. Verified on a fresh load at 2000-01-01T00:00:00Z: hash 2329825780 equals the drafted 2329825780.",
+   "result": "filled",
+   "verified": true,
+   "receipt": {
+    "expected_hash": 2329825780,
+    "observed_hash": 2329825780,
+    "observed_at": "2000-01-01T00:00:00Z"
+   }
+  },
+  {
+   "item_id": "p2-12",
+   "item_type": "multiple-choice",
+   "attempts": "multi",
+   "attempted": true,
+   "method": "view-model",
+   "stopped_reason": "Saved under the fallback wait (no calibrated save signal for this origin); the fresh-load receipt is the proof of the save. Verified on a fresh load at 2000-01-01T00:00:00Z: hash 800100134 equals the drafted 800100134.",
+   "result": "filled",
+   "verified": true,
+   "receipt": {
+    "expected_hash": 800100134,
+    "observed_hash": 800100134,
+    "observed_at": "2000-01-01T00:00:00Z"
+   }
+  },
+  {
+   "item_id": "p2-13",
+   "item_type": "table-completion",
+   "attempts": "multi",
+   "attempted": true,
+   "method": "view-model",
+   "stopped_reason": "Saved under the fallback wait (no calibrated save signal for this origin); the fresh-load receipt is the proof of the save. Verified on a fresh load at 2000-01-01T00:00:00Z: hash 3342686121 equals the drafted 3342686121.",
+   "result": "filled",
+   "verified": true,
+   "receipt": {
+    "expected_hash": 3342686121,
+    "observed_hash": 3342686121,
+    "observed_at": "2000-01-01T00:00:00Z"
+   }
+  },
+  {
+   "item_id": "p3-21",
+   "item_type": "text-response",
+   "attempts": "single",
+   "attempted": false,
+   "method": "manual-todo",
+   "result": "todo",
+   "verified": false,
+   "todo": {
+    "blocker": "Single-attempt item with no recorded approval. The suite writes one only with the user's approval and never submits it.",
+    "placement": "Page 3, panel 21. Type the draft by hand, or record an approval and fill again."
+   }
+  },
+  {
+   "item_id": "p3-22",
+   "item_type": "text-response",
+   "attempts": "multi",
+   "attempted": true,
+   "method": "view-model",
+   "result": "filled",
+   "verified": true,
+   "receipt": {
+    "expected_hash": 3186285457,
+    "observed_hash": 3186285457,
+    "observed_at": "2000-01-01T00:00:00Z"
+   },
+   "lt_conflict": {
+    "observed_via": "model-answer",
+    "held_answer": "Release changes with the time of day.",
+    "lt_indicated": "Release changes with the cell count.",
+    "draft_ref": "p1",
+    "note": "The invented slide describes daily timing. Keep that sourced claim and record the model-answer discrepancy separately."
+   }
+  },
+  {
+   "item_id": "p3-23",
+   "item_type": "unmapped",
+   "attempts": "multi",
+   "attempted": false,
+   "method": "manual-todo",
+   "result": "todo",
+   "verified": false,
+   "todo": {
+    "blocker": "No supported writer handles this rating-scale panel. It requires manual entry.",
+    "placement": "Enter the draft in panel 23 on page 3 using the browser."
+   }
+  },
+  {
+   "item_id": "p4-31",
+   "item_type": "multiple-choice",
+   "attempts": "multi",
+   "attempted": true,
+   "method": "view-model",
+   "result": "filled",
+   "verified": true,
+   "receipt": {
+    "expected_hash": 3253454806,
+    "observed_hash": 3253454806,
+    "observed_at": "2000-01-01T00:00:00Z"
+   }
+  },
+  {
+   "item_id": "p4-32",
+   "item_type": "table-completion",
+   "attempts": "multi",
+   "attempted": false,
+   "method": "not-attempted",
+   "result": "skipped",
+   "verified": false,
+   "stopped_reason": "Captured response already present."
+  },
+  {
+   "item_id": "p4-33",
+   "item_type": "text-response",
+   "attempts": "multi",
+   "attempted": false,
+   "method": "not-attempted",
+   "result": "skipped",
+   "verified": false,
+   "stopped_reason": "Captured response already present."
+  }
+ ],
+ "save_waits": [
+  {
+   "receipt": "fill-result-1.json",
+   "receipt_sha256": "2955e428ac4426bc06c81a32a559349ad1921c8e27a0dffa80e0f1c8a01468a9",
+   "pages": [
+    2
+   ],
+   "save_signal": "fallback",
+   "waited_ms": 4200,
+   "keys_total": 3,
+   "keys_saved": null,
+   "keys_pending": null,
+   "save_errors": 0,
+   "calibrated": false,
+   "ok": true,
+   "fatal": null
+  },
+  {
+   "receipt": "fill-result-2.json",
+   "receipt_sha256": "454b3b7bed05f0a71ea974bb2c488fe31cffa70e17a843db7018d600e90cba9f",
+   "pages": [
+    3,
+    4
+   ],
+   "save_signal": "model",
+   "waited_ms": 520,
+   "keys_total": 2,
+   "keys_saved": 2,
+   "keys_pending": 0,
+   "save_errors": 0,
+   "calibrated": true,
+   "ok": true,
+   "fatal": null
+  }
+ ]
+}

@@ -1,0 +1,33 @@
+{
+ "files": {
+  "final-petroff-10-on-primer-dark-high-contrast.png": {
+   "thumbnail": "toy-case-final-petroff-10-on-primer-dark-high-contrast.png"
+  },
+  "final-petroff-10-on-primer-dark-high-contrast.svg": {
+   "sha256": "830745fb23a23f6974f788d142fe0f861376328fd796d81f1829fef814416688"
+  },
+  "final-tol-bright.png": {
+   "thumbnail": "toy-case-final-tol-bright.png"
+  },
+  "final-tol-bright.svg": {
+   "sha256": "71e214e1aee98a83a58ab44b0eaf293f259555b2aa57860422cab810183b09d7"
+  },
+  "geometry.json": {
+   "sha256": "42776f29b7ea293612a0cceb44c1cf5ea8da4e645d241415152daf8fe17d4a9e"
+  },
+  "toy-case-petroff-10-on-primer-dark-high-contrast.drawio": {
+   "sha256": "3e3946d1d36e3ea8c9166e95b64fd9801f78e9fddacf5a40dc6d4c3394e4b7a5"
+  },
+  "toy-case.drawio": {
+   "sha256": "dd34dd50b4f611518740ff622006190c02a88acfe4c922aa46b5a43889b7771a"
+  }
+ },
+ "palettes": [
+  "petroff-10-on-primer-dark-high-contrast",
+  "tol-bright"
+ ],
+ "png_delta": 24,
+ "png_tolerance": 0.005,
+ "slug": "toy-case",
+ "thumb_w": 480
+}

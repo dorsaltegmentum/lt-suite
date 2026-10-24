@@ -1,0 +1,28 @@
+{
+  "SPDX-FileCopyrightText": "2026 dorsaltegmentum",
+  "SPDX-License-Identifier": "AGPL-3.0-or-later",
+  "description": "Neutral trigger prompts for diagram routing.",
+  "skill_name": "mechanistic-diagram",
+  "cases": [
+    {"id": "diagram-01", "query": "Draw the thyroid hormone axis with its negative feedback loop and what stimulates and inhibits it.", "should_trigger": true},
+    {"id": "diagram-02", "query": "Build a mechanism diagram for this case, from the risk factors to the treatment.", "should_trigger": true},
+    {"id": "diagram-03", "query": "Redraw this pathway so each blocking step ends in a T-bar and no edge carries a word like inhibits.", "should_trigger": true},
+    {"id": "diagram-04", "query": "Make this disease mechanism figure accessible in a light and a dark palette.", "should_trigger": true},
+    {"id": "diagram-05", "query": "I need a concept map of how protein loss leads to swelling, with stages.", "should_trigger": true},
+    {"id": "diagram-06", "query": "answers.json flagged needs_diagram on item p2-12; make the figure.", "should_trigger": true},
+    {"id": "diagram-07", "query": "Check this .drawio file for contrast, rounded corners, arrowheads and an even grid.", "should_trigger": true},
+    {"id": "diagram-08", "query": "Map the sites where three blood-pressure drugs act along the renin-angiotensin system.", "should_trigger": true},
+    {"id": "diagram-09", "query": "Turn this mechanism into a one-page PDF figure I can hand in.", "should_trigger": true},
+    {"id": "diagram-10", "query": "Export this figure as PNG and SVG for each palette and list any text below WCAG AA.", "should_trigger": true},
+    {"id": "diagram-11", "query": "Read the Lt lesson in my open browser tab into a file for offline study.", "should_trigger": false},
+    {"id": "diagram-12", "query": "List the one-way commit points in this Lt run.", "should_trigger": false},
+    {"id": "diagram-13", "query": "Draft answers for the module.json we captured, with sources.", "should_trigger": false},
+    {"id": "diagram-14", "query": "Work through the captured practical and tell me where the sources disagree.", "should_trigger": false},
+    {"id": "diagram-15", "query": "Type my reviewed answers into the Lt lesson, halting ahead of any checkpoint.", "should_trigger": false},
+    {"id": "diagram-16", "query": "Put this image into the Lt drawing panel at the right size.", "should_trigger": false},
+    {"id": "diagram-17", "query": "Export the worked module into my notes graph.", "should_trigger": false},
+    {"id": "diagram-18", "query": "Turn these answers into flashcards.", "should_trigger": false},
+    {"id": "diagram-19", "query": "Set up lt-suite and pick an accessible palette.", "should_trigger": false},
+    {"id": "diagram-20", "query": "Validate answers.json against the schema.", "should_trigger": false}
+  ]
+}

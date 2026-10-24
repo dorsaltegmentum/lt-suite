@@ -1,0 +1,189 @@
+{
+ "schema_version": 1,
+ "module_id": "c1-r103",
+ "run_id": 103,
+ "started_at": "2000-01-01T00:00:00Z",
+ "ended_at": "2000-01-01T00:00:00Z",
+ "approval_mode": "manual",
+ "source_answers": {
+  "path": "../answers/answers-c1-r103.json",
+  "sha256": "456fe9e45795a27702135cb24b6d276d004ae4709195aa0c45c1864f4088bdab"
+ },
+ "source_receipts": {
+  "path": "../runs/c1-r103/receipts.json",
+  "sha256": "c5be664a93b5723f12ccd2037f11caa42009295d9fa2bb7613c0ee14929b5ba9"
+ },
+ "boundary_reached": {
+  "stopped": false,
+  "class": null,
+  "page_index": null,
+  "item_id": null,
+  "detail": "Nothing stopped the run; every fillable item was written or listed."
+ },
+ "never_navigated": [],
+ "pages_filled": [
+  2,
+  3
+ ],
+ "items": [
+  {
+   "item_id": "p2-11",
+   "item_type": "upload-and-annotate",
+   "attempts": "multi",
+   "attempted": true,
+   "method": "selector",
+   "selector_used": "input[type=file][accept*='image/png']",
+   "stopped_reason": "The save wait ended unconfirmed; the fresh-load receipt decides. Verified on a fresh load at 2000-01-01T00:00:00Z: hash 478026535 equals the drafted 478026535.",
+   "result": "filled",
+   "verified": true,
+   "receipt": {
+    "expected_hash": 478026535,
+    "observed_hash": 478026535,
+    "observed_at": "2000-01-01T00:00:00Z"
+   }
+  },
+  {
+   "item_id": "p2-12",
+   "item_type": "upload-and-annotate",
+   "attempts": "multi",
+   "attempted": false,
+   "method": "manual-todo",
+   "result": "todo",
+   "verified": false,
+   "todo": {
+    "blocker": "The slot is empty, so its image geometry is unknown until a first upload is read back.",
+    "placement": "Page 2, panel 12. Upload the prepared diagram by hand."
+   }
+  },
+  {
+   "item_id": "p2-13",
+   "item_type": "image-annotation",
+   "attempts": "multi",
+   "attempted": false,
+   "method": "manual-todo",
+   "result": "todo",
+   "verified": false,
+   "todo": {
+    "blocker": "Annotation on an image Lt supplies has no tested write path.",
+    "placement": "Page 2, panel 13. Mark the fold by hand."
+   }
+  },
+  {
+   "item_id": "p2-14",
+   "item_type": "image-annotation",
+   "attempts": "multi",
+   "attempted": false,
+   "method": "manual-todo",
+   "result": "todo",
+   "verified": false,
+   "todo": {
+    "blocker": "Annotation on an image Lt supplies has no tested write path.",
+    "placement": "Page 2, panel 14. Mark the duct by hand."
+   }
+  },
+  {
+   "item_id": "p3-21",
+   "item_type": "image-labeling",
+   "attempts": "multi",
+   "attempted": true,
+   "method": "view-model",
+   "result": "filled",
+   "verified": true,
+   "receipt": {
+    "expected_hash": 2516090106,
+    "observed_hash": 2516090106,
+    "observed_at": "2000-01-01T00:00:00Z"
+   }
+  },
+  {
+   "item_id": "p3-22",
+   "item_type": "drag-and-drop-labeling",
+   "attempts": "multi",
+   "attempted": true,
+   "method": "view-model",
+   "result": "filled",
+   "verified": true,
+   "receipt": {
+    "expected_hash": 3488542314,
+    "observed_hash": 3488542314,
+    "observed_at": "2000-01-01T00:00:00Z"
+   }
+  },
+  {
+   "item_id": "p3-23",
+   "item_type": "categorization",
+   "attempts": "multi",
+   "attempted": true,
+   "method": "view-model",
+   "result": "filled",
+   "verified": true,
+   "receipt": {
+    "expected_hash": 1909208204,
+    "observed_hash": 1909208204,
+    "observed_at": "2000-01-01T00:00:00Z"
+   }
+  },
+  {
+   "item_id": "p4-31",
+   "item_type": "image-labeling",
+   "attempts": "single",
+   "attempted": false,
+   "method": "manual-todo",
+   "result": "todo",
+   "verified": false,
+   "todo": {
+    "blocker": "This drag question allows one attempt. Partial placement risks an irreversible change, so manual placement is required.",
+    "placement": "Page 4, panel 31. Place the three names by hand."
+   }
+  }
+ ],
+ "selector_events": [
+  {
+   "selector": "input[type=file][accept*='image/png']",
+   "item_type": "upload-and-annotate",
+   "outcome": "hit",
+   "recorded_at": "2000-01-01T00:00:00Z"
+  }
+ ],
+ "connection_events": [
+  {
+   "at": "2000-01-01T00:00:00Z",
+   "kind": "screenshot-timeout",
+   "detail": "A screenshot timed out on an annotation page; the run fell through to the view model."
+  }
+ ],
+ "save_waits": [
+  {
+   "receipt": "fill-result-1.json",
+   "receipt_sha256": "44e7adfeb3a165da4e6c6554dad9252d95457c5e27b7a451885786a7cb0f60d5",
+   "pages": [
+    2
+   ],
+   "save_signal": "unconfirmed",
+   "waited_ms": 8000,
+   "keys_total": 1,
+   "keys_saved": 0,
+   "keys_pending": 1,
+   "save_errors": 0,
+   "calibrated": true,
+   "ok": true,
+   "fatal": null
+  },
+  {
+   "receipt": "fill-result-2.json",
+   "receipt_sha256": "837f2d5359a66a3146012fcfb425957fd4470a0692ba1fbd098f9eb42360271e",
+   "pages": [
+    3
+   ],
+   "save_signal": "model",
+   "waited_ms": 410,
+   "keys_total": 3,
+   "keys_saved": 3,
+   "keys_pending": 0,
+   "save_errors": 0,
+   "calibrated": true,
+   "ok": true,
+   "fatal": null
+  }
+ ]
+}

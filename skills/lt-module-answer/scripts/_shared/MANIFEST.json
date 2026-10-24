@@ -1,0 +1,126 @@
+{
+ "generated_by": "tools/sync_shared.py",
+ "skill": "lt-module-answer",
+ "files": [
+  {
+   "path": "references/_shared/browser-adapters.md",
+   "source": "shared/references/browser-adapters.md",
+   "sha256": "ddb45acf1cc23d927ad345c01e049df5d2f00002b338c2d6ffdecdb04fe71b7f"
+  },
+  {
+   "path": "references/_shared/lexicon/answer-provenance-style.md",
+   "source": "shared/lexicon/answer-provenance-style.md",
+   "sha256": "839e19c7d9383be7bebedc390eb879f1ee0b4e7f4a595e44c1ef786268b2be9c"
+  },
+  {
+   "path": "references/_shared/lexicon/recurring-corrections.md",
+   "source": "shared/lexicon/recurring-corrections.md",
+   "sha256": "1ed0b6ba107721f898f50e8e83d1abdd1d7ba5fd335d80dd51520c9797cb8b7a"
+  },
+  {
+   "path": "references/_shared/safety.md",
+   "source": "shared/references/safety.md",
+   "sha256": "57825f33c707e0415eba703a2d3b94c0e270a9e19662c81bf3485f4f539f04aa"
+  },
+  {
+   "path": "scripts/_shared/config.defaults.toml",
+   "source": "shared/config.defaults.toml",
+   "sha256": "5f3f93ff213bb753658e50d0bc901723f496cef93e0e14274be3138cd991ede7"
+  },
+  {
+   "path": "scripts/_shared/ltcore/__init__.py",
+   "source": "shared/ltcore/__init__.py",
+   "sha256": "e4e1d7384629389895ece8156bc2dec337c8ec2103f5579effe5e458fdbd7390"
+  },
+  {
+   "path": "scripts/_shared/ltcore/approvals.py",
+   "source": "shared/ltcore/approvals.py",
+   "sha256": "f6ac520b055b265c181a218f1ab57e8c87986d8ae57d915ed1f0f2bde26683ba"
+  },
+  {
+   "path": "scripts/_shared/ltcore/boundaries.py",
+   "source": "shared/ltcore/boundaries.py",
+   "sha256": "094b526ed3a8ad2e98a9e7a1b198af7a66fdbbd034a647edc423fffceb4dac26"
+  },
+  {
+   "path": "scripts/_shared/ltcore/config.py",
+   "source": "shared/ltcore/config.py",
+   "sha256": "bbb954cf15d74b5f8a321bf4fe72d1777d8a5f9d9a086856242679bc4634b0da"
+  },
+  {
+   "path": "scripts/_shared/ltcore/digest.py",
+   "source": "shared/ltcore/digest.py",
+   "sha256": "ca073dca79bdf5fdbfc91b76bc9e08e527102f899ddb3d820db8f1d17c668ede"
+  },
+  {
+   "path": "scripts/_shared/ltcore/paths.py",
+   "source": "shared/ltcore/paths.py",
+   "sha256": "bcb5bacffa32e605b9723a3edee6e85b3dcae6cb0a221a693f17323ffa2a1e6e"
+  },
+  {
+   "path": "scripts/_shared/ltcore/quarantine.py",
+   "source": "shared/ltcore/quarantine.py",
+   "sha256": "0b082018f6f4b5970ea5cb3fbd4a5dee038afe7d74f27bed54a021dab0009ab6"
+  },
+  {
+   "path": "scripts/_shared/ltcore/requirements.py",
+   "source": "shared/ltcore/requirements.py",
+   "sha256": "bc505607822e4a184b55d50bfdc9a40d69991f9b9bb42bf93a8e9d291ef50bb8"
+  },
+  {
+   "path": "scripts/_shared/ltcore/stamp.py",
+   "source": "shared/ltcore/stamp.py",
+   "sha256": "01611d48d8b0d96afed1101f2ce784dbf7dedeb402d07462b296ff97132cf84b"
+  },
+  {
+   "path": "scripts/_shared/ltcore/store.py",
+   "source": "shared/ltcore/store.py",
+   "sha256": "9a5f0dd065fd55192a595f6ab339824f4746d804edbdf040d219cf53834eac4d"
+  },
+  {
+   "path": "scripts/_shared/ltcore/tomlw.py",
+   "source": "shared/ltcore/tomlw.py",
+   "sha256": "c367bdb0e4235df6849fc3b0197b6137b50efc3a342da0d7c356df01ddc3acff"
+  },
+  {
+   "path": "scripts/_shared/ltcore/validate.py",
+   "source": "shared/ltcore/validate.py",
+   "sha256": "d80fedadd6d2ce91609601e9d22c761d2a82c1749e2bbae0c6fd6351e4d1862e"
+  },
+  {
+   "path": "scripts/_shared/schemas/answers.schema.json",
+   "source": "shared/schemas/answers.schema.json",
+   "sha256": "9425d0db2367e42e1326bf46008ad4b2b34eab66adb94d415cb956bb1a6be287"
+  },
+  {
+   "path": "scripts/_shared/schemas/approvals.schema.json",
+   "source": "shared/schemas/approvals.schema.json",
+   "sha256": "edd34bf18ed5dcac3bfa8323749a26dac4727aac9c46a38f164ad475a852d7a4"
+  },
+  {
+   "path": "scripts/_shared/schemas/config.schema.json",
+   "source": "shared/schemas/config.schema.json",
+   "sha256": "fa4776d89ed475c767f6f030a40e31e82d40a0ec9963fd929acb5c0eb2f26d12"
+  },
+  {
+   "path": "scripts/_shared/schemas/fill-report.schema.json",
+   "source": "shared/schemas/fill-report.schema.json",
+   "sha256": "194c65b31a6f06f27c7f9878a9075bc916fc3d8ddf966a67be85501492454349"
+  },
+  {
+   "path": "scripts/_shared/schemas/module.schema.json",
+   "source": "shared/schemas/module.schema.json",
+   "sha256": "b119aa1a8f8a7b5a9cd36f34021b4c3d196a6e04c34b465ba79d8f6a4fa96d07"
+  },
+  {
+   "path": "scripts/_shared/schemas/reference.schema.json",
+   "source": "shared/schemas/reference.schema.json",
+   "sha256": "61ae57d14db0b97b93eb0dc220f8d3017ab57356ccb6cfcaa3e7779228e3f5d9"
+  },
+  {
+   "path": "scripts/_shared/schemas/run.schema.json",
+   "source": "shared/schemas/run.schema.json",
+   "sha256": "acaf4d66785b674e3d5f6d5eb4c8076298826f906dd72fd92fffecc6b2c9a84f"
+  }
+ ]
+}

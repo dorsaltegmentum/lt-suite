@@ -1,0 +1,259 @@
+{
+ "schema_version": 1,
+ "module_id": "c1-r101",
+ "run_id": 101,
+ "drafted_at": "2000-01-01T00:00:00Z",
+ "source_module": {
+  "path": "module.example.json",
+  "sha256": "37a98fecfd583f92c70cca4eeb751450f17d6c865c85b8571bffc5f8815d9fba",
+  "question_digest": "2464c4beb99c683ca9d9e5d121726d379ed17cbe3b9f20a55525e858841a2bb5"
+ },
+ "tier1_corpus": [
+  {
+   "source_id": "EX-PRAC",
+   "path": "notes/prac-notes.pdf",
+   "kind": "practical"
+  },
+  {
+   "source_id": "ILO",
+   "path": "notes/outcomes.md",
+   "kind": "ilo"
+  }
+ ],
+ "items": [
+  {
+   "item_id": "i-rat-1",
+   "status": "skipped",
+   "skip_reason": "irat-policy"
+  },
+  {
+   "item_id": "i-rat-2",
+   "status": "skipped",
+   "skip_reason": "irat-policy"
+  },
+  {
+   "item_id": "i-text-1",
+   "status": "drafted",
+   "confidence": "high",
+   "segments": [
+    {
+     "kind": "claim",
+     "text": "Immersion oil has a refractive index close to that of glass, so light leaving the slide is not bent away from the objective lens.",
+     "provenance_refs": [
+      "p1"
+     ]
+    },
+    {
+     "kind": "connective",
+     "text": "This matters for two reasons."
+    },
+    {
+     "kind": "claim",
+     "text": "More of the light cone enters the lens, which raises the numerical aperture and so the finest detail the lens can resolve.",
+     "provenance_refs": [
+      "p1",
+      "p2"
+     ]
+    }
+   ],
+   "provenance": [
+    {
+     "ref": "p1",
+     "tier": 1,
+     "source_id": "EX-PRAC",
+     "locator": "slide-14",
+     "tag": "[T1:EX-PRAC:slide-14]"
+    },
+    {
+     "ref": "p2",
+     "tier": 1,
+     "source_id": "EX-LECT",
+     "locator": "00:23:40",
+     "tag": "[T1:EX-LECT:00:23:40]"
+    }
+   ],
+   "needs_diagram": false,
+   "needs_external_image": false
+  },
+  {
+   "item_id": "i-upann-1",
+   "status": "drafted",
+   "confidence": "medium",
+   "segments": [
+    {
+     "kind": "claim",
+     "text": "Light passes from the lamp through the condenser, the specimen, the objective lens and the eyepiece to the eye.",
+     "provenance_refs": [
+      "p1"
+     ]
+    },
+    {
+     "kind": "claim",
+     "text": "A published survey of teaching microscopes reports a typical working distance of a few millimetres at low power.",
+     "provenance_refs": [
+      "p2"
+     ]
+    }
+   ],
+   "provenance": [
+    {
+     "ref": "p1",
+     "tier": 1,
+     "source_id": "EX-PRAC",
+     "locator": "slide-9",
+     "tag": "[T1:EX-PRAC:slide-9]"
+    },
+    {
+     "ref": "p2",
+     "tier": 4,
+     "source_id": "10.5555/synthetic.0001",
+     "locator": "table 2",
+     "accessed": "2000-01-01",
+     "tag": "[T4:10.5555/synthetic.0001]"
+    }
+   ],
+   "tier_descent": [
+    {
+     "from_tier": 1,
+     "to_tier": 2,
+     "note": "The notes trace the light path but give no distance.",
+     "reason": "insufficient-depth"
+    },
+    {
+     "from_tier": 2,
+     "to_tier": 3,
+     "note": "The Tier 2 source has nothing on optics.",
+     "reason": "absent"
+    },
+    {
+     "from_tier": 3,
+     "to_tier": 4,
+     "note": "Nothing at Tier 3 either.",
+     "reason": "absent"
+    }
+   ],
+   "uncertainties": [
+    {
+     "question": "Is a working distance wanted, or the path alone?",
+     "why_it_matters": "An untaught figure can look like filler to a marker."
+    }
+   ],
+   "needs_diagram": true,
+   "diagram_brief": {
+    "intent": "Light path from lamp to eye, sized to the panel's own canvas.",
+    "nodes": [
+     "Lamp",
+     "Condenser",
+     "Specimen",
+     "Objective lens",
+     "Eyepiece",
+     "Eye"
+    ],
+    "edges": [
+     {
+      "from": "Lamp",
+      "to": "Condenser",
+      "role": "stimulation"
+     },
+     {
+      "from": "Condenser",
+      "to": "Specimen",
+      "role": "necessary-stimulation"
+     }
+    ]
+   },
+   "needs_external_image": false,
+   "asset_refs": [
+    "assets/c1-r101/light-path.drawio"
+   ]
+  },
+  {
+   "item_id": "i-text-2",
+   "status": "drafted",
+   "confidence": "low",
+   "segments": [
+    {
+     "kind": "claim",
+     "text": "The fine focus knob adjusts fine focus.",
+     "provenance_refs": [
+      "p1"
+     ]
+    },
+    {
+     "kind": "claim",
+     "text": "A maintenance guide names the same control the micrometer drive.",
+     "provenance_refs": [
+      "p2"
+     ]
+    }
+   ],
+   "provenance": [
+    {
+     "ref": "p1",
+     "tier": 1,
+     "source_id": "EX-PRAC",
+     "locator": "slide-22",
+     "tag": "[T1:EX-PRAC:slide-22]"
+    },
+    {
+     "ref": "p2",
+     "tier": 3,
+     "source_id": "EX-GUIDE",
+     "locator": "section-4",
+     "accessed": "2000-01-01",
+     "tag": "[T3:EX-GUIDE:section-4]"
+    }
+   ],
+   "tier_descent": [
+    {
+     "from_tier": 1,
+     "to_tier": 2,
+     "note": "Slide 22 and the guide name the knob differently; both stay on record.",
+     "reason": "contradicted"
+    },
+    {
+     "from_tier": 2,
+     "to_tier": 3,
+     "note": "The Tier 2 source has nothing on microscopes.",
+     "reason": "absent"
+    }
+   ],
+   "conflicts": [
+    {
+     "higher_ref": "p1",
+     "lower_ref": "p2",
+     "higher_claim": "fine focus knob",
+     "lower_claim": "micrometer drive",
+     "note": "Shown to the reviewer, not merged. The course name wins in a course answer."
+    }
+   ],
+   "uncertainties": [
+    {
+     "question": "Which name does the practical expect?",
+     "why_it_matters": "Two sources, two names, and no rule here for picking one."
+    }
+   ],
+   "needs_diagram": false,
+   "needs_external_image": false
+  },
+  {
+   "item_id": "i-cat-1",
+   "status": "skipped",
+   "skip_reason": "single-attempt-drag"
+  },
+  {
+   "item_id": "i-unmapped-1",
+   "status": "blocked",
+   "todo": {
+    "blocker": "pluginKey 'kcDataValue' has no tested write path.",
+    "placement": "Page 3, panel pk-12, the measured field diameter field. Type the value by hand.",
+    "artefact_path": ""
+   }
+  },
+  {
+   "item_id": "i-table-1",
+   "status": "skipped",
+   "skip_reason": "already-answered"
+  }
+ ]
+}

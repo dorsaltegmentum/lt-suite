@@ -1,0 +1,61 @@
+{
+ "started_at": "2000-01-01T00:00:00Z",
+ "ended_at": "2000-01-01T00:00:00Z",
+ "approval_mode": "manual",
+ "boundary_reached": {
+  "stopped": false,
+  "class": null,
+  "page_index": null,
+  "item_id": null,
+  "detail": "Nothing stopped the run; every fillable item was written or listed."
+ },
+ "pages_filled": [],
+ "never_navigated": [
+  {
+   "route": "complete",
+   "reason": "Final completion controls remain outside automatic navigation."
+  }
+ ],
+ "items": {
+  "p2-11": {
+   "result": "skipped",
+   "attempted": false,
+   "stopped_reason": "The run is locked, so Lt accepts no writes."
+  },
+  "p2-12": {
+   "result": "skipped",
+   "attempted": false,
+   "stopped_reason": "The run is locked, so Lt accepts no writes."
+  },
+  "p2-13": {
+   "result": "skipped",
+   "attempted": false,
+   "stopped_reason": "The run is locked, so Lt accepts no writes."
+  },
+  "p2-14": {
+   "result": "skipped",
+   "attempted": false,
+   "stopped_reason": "The run is locked, so Lt accepts no writes."
+  },
+  "p3-21": {
+   "result": "skipped",
+   "attempted": false,
+   "stopped_reason": "The run is locked, so Lt accepts no writes."
+  },
+  "p3-22": {
+   "result": "skipped",
+   "attempted": false,
+   "stopped_reason": "The run is locked, so Lt accepts no writes."
+  },
+  "p4-31": {
+   "result": "skipped",
+   "attempted": false,
+   "stopped_reason": "The run is locked, so Lt accepts no writes."
+  },
+  "p4-32": {
+   "result": "skipped",
+   "attempted": false,
+   "stopped_reason": "The run is locked, so Lt accepts no writes."
+  }
+ }
+}
