@@ -70,7 +70,7 @@
   {
    "path": "scripts/_shared/lt_chrome/lt-chrome.cjs",
    "source": "shared/lt_chrome/lt-chrome.cjs",
-   "sha256": "a12423637d222a5f78761bf1764c22a25307d044b98af67c63097271be35d2f1"
+   "sha256": "6b9e91a55016492614d868c8318adc16bff6509751a9938a0dccfe43a99acaa5"
   },
   {
    "path": "scripts/_shared/ltcore/__init__.py",
@@ -130,7 +130,7 @@
   {
    "path": "scripts/_shared/ltcore/rat.py",
    "source": "shared/ltcore/rat.py",
-   "sha256": "e9d7bb60434372395e01bedaae78efd23553e26590fcb4a9dcd50ca7c67738b7"
+   "sha256": "fe3de5f99a04d09d7b5257402902518078bfcd6d525b8c2d00c99b78486197f3"
   },
   {
    "path": "scripts/_shared/ltcore/reconcile.py",

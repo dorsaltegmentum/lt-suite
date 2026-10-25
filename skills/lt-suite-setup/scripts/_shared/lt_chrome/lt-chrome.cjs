@@ -238,6 +238,16 @@ function neutralFolder(cache, cwd) {
   try {
     fs.mkdirSync(folder, {recursive: true, mode: 0o700});
     fs.writeFileSync(path.join(folder, 'package.json'), '{}');
+    // npm prepends every ancestor's node_modules/.bin, even with no-workspaces.
+    // Pin its shell and the server's env-node interpreter in the nearer bin.
+    if (process.platform !== 'win32') {
+      const bin = path.join(folder, 'node_modules', '.bin');
+      fs.mkdirSync(bin, {recursive: true, mode: 0o700});
+      [['node', process.execPath], ['sh', '/bin/sh']].forEach(function(entry) {
+        const quoted = "'" + entry[1].replace(/'/g, "'\\''") + "'";
+        fs.writeFileSync(path.join(bin, entry[0]), '#!/bin/sh\nexec ' + quoted + ' "$@"\n', {mode: 0o700});
+      });
+    }
     return {cwd: folder, reason: ''};
   } catch (_) { return {cwd: cwd, reason: 'npx cache working folder cannot be written; npx runs in the agent working folder, as in 0.1.0'}; }
 }

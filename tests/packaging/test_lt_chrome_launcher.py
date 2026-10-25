@@ -6,6 +6,7 @@ import json
 import os
 from pathlib import Path
 import shutil
+import shlex
 import subprocess
 import sys
 import tomllib
@@ -629,6 +630,10 @@ command_for, probe, DOCUMENTED_TOOLS = _probe_module.command_for, _probe_module.
 @pytest.mark.parametrize('root', [True,False])
 @pytest.mark.parametrize('layout', ['sibling','home','workspace-ancestor'])
 def test_npx_workspace_isolation(configured_server, tmp_path, root, layout):
+    workspace_isolation(configured_server, tmp_path, root, layout)
+
+
+def workspace_isolation(configured_server, tmp_path, root, layout, *, interpreters=('node', 'sh'), command=None):
     _, _, _, base_env = configured_server
     isolated_env = _probe_module.isolated_env
     home = tmp_path/'workspace'
@@ -657,14 +662,43 @@ def test_npx_workspace_isolation(configured_server, tmp_path, root, layout):
     userconfig.write_text('')
     env['npm_config_userconfig'] = str(userconfig)
     env['npm_config_fetch_retries'] = '0'
-    if layout=='sibling' and os.name!='nt':
-        folder = home/'node_modules/.bin'; folder.mkdir()
-        for name in ('node','sh'):
+    if os.name!='nt':
+        folder = ancestor/'node_modules/.bin'; folder.mkdir()
+        for name in interpreters:
             f = folder/name
-            f.write_text('#!/bin/sh\necho planted > '+str(marker)+'\nexit 7\n')
+            f.write_text('#!/bin/sh\necho planted-'+name+' > '+shlex.quote(str(marker))+'\nexit 7\n')
             f.chmod(0o755)
-    assert probe(command_for(root),home,env) == DOCUMENTED_TOOLS
-    assert not marker.exists()
+    try:
+        assert probe(command if command is not None else command_for(root),home,env) == DOCUMENTED_TOOLS
+    finally:
+        assert not marker.exists(), 'workspace executable ran: ' + marker.read_text()
+
+
+@pytest.mark.skipif(os.name == 'nt', reason='POSIX macOS path simulation')
+@pytest.mark.parametrize('root', [True, False])
+@pytest.mark.parametrize('alias', [True, False])
+@pytest.mark.parametrize('interpreter', ['node', 'sh'])
+def test_npx_macos_cache_ancestor_interpreters(configured_server, tmp_path, monkeypatch, root, alias, interpreter):
+    # Simulate macOS's HOME/Library/Caches even on Linux. Only the launcher sees
+    # darwin; npm and the tool-list-only server retain the actual host platform.
+    hook = tmp_path / 'darwin.cjs'
+    # A Node installation path may itself contain spaces and shell quotes.
+    node = tmp_path / "node's bin/node"
+    node.parent.mkdir()
+    node.write_text('#!/bin/sh\nexec ' + shlex.quote(NODE) + ' "$@"\n')
+    node.chmod(0o700)
+    hook.write_text("if(process.argv.includes('via=j6')){"
+                    "Object.defineProperty(process,'platform',{value:'darwin'});"
+                    "Object.defineProperty(process,'execPath',{value:" + json.dumps(str(node)) + "});}")
+    monkeypatch.setenv('NODE_OPTIONS', '--require=' + str(hook))
+    physical = tmp_path / 'private/var'
+    physical.mkdir(parents=True)
+    logical = physical
+    if alias:
+        logical = tmp_path / 'var'
+        logical.symlink_to(physical, target_is_directory=True)
+    workspace_isolation(configured_server, logical, root, 'sibling',
+                        interpreters=(interpreter,), command=[*command_for(root), 'via=j6'])
 
 
 def test_npx_argv_roundtrip(configured_server, sandbox):

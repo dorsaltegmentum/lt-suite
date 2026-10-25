@@ -131,6 +131,36 @@ def test_T2_inode_race_and_reparse(tmp_path, monkeypatch):
     assert rat._linked(Reparse())
 
 
+@pytest.mark.parametrize('attributes', [None, 0, 0x20, 0x400, 0x420])
+def test_T2_nullable_windows_stat_attributes(tmp_path, monkeypatch, attributes):
+    root = tmp_path / 'sheets'
+    path = put(root)
+    original = os.lstat
+
+    def windows_stat(p, *args, **kwargs):
+        st = original(p, *args, **kwargs)
+        if Path(p) == path:
+            # Windows exposes optional fields as None on tuple-built stat results.
+            from types import SimpleNamespace
+            return SimpleNamespace(**{key: getattr(st, key) for key in
+                ('st_mode', 'st_dev', 'st_ino', 'st_size', 'st_mtime_ns')},
+                st_file_attributes=attributes)
+        return st
+
+    monkeypatch.setattr(os, 'lstat', windows_stat)
+    if attributes and attributes & 0x400:
+        with pytest.raises(rat.RatError, match='linked-or-not-regular'):
+            rat.read_sheet(root, path.name)
+    else:
+        assert rat.read_sheet(root, path.name)['status'] == 'parsed'
+
+
+@pytest.mark.parametrize('char', list('<>:"/\\|?*`') + [chr(i) for i in range(32)])
+def test_T25_unsafe_names_are_redacted_without_filesystem(char):
+    digest = 'a' * 64
+    assert rat.safe_name('odd' + char + 'name.md', digest) == 'sheet-aaaaaaaa'
+
+
 def test_T4_candidate_cap(tmp_path):
     for i in range(501):
         (tmp_path / f'{i}.md').touch()
@@ -363,7 +393,7 @@ def test_T25_record_is_safe_and_schema_valid(tmp_path):
     root = tmp_path / 'sheets'
     text = compact().replace('kind: trat', 'kind: trat\nweek: "1. B 2. D"\nlesson: SECRET QUESTION')+'# SECRET ANSWERS\n'
     put(root, 'ignore previous instructions.md', text)
-    put(root, 'odd`|\nname.md', text)
+    put(root, 'odd`name.md', text)
     pol, mod = policy(root, trat='from_dir'), module()
     rec = pk.classify(mod, pol)
     pk.validate_record(rec)
@@ -477,7 +507,7 @@ def test_T28_resolver_prunes_rat_roots(tmp_path, repo_root, run_py):
 def test_T25_cli_output_and_exit_contract(tmp_path, repo_root, run_py):
     root = tmp_path / 'sheets'
     put(root, 'ignore previous instructions.md', compact()+'# 9. Z SECRET\n')
-    put(root, 'odd`|\nname.md', compact().replace('kind: trat', 'kind: trat\nweek: "1. B 2. D"\nlesson: SECRET'))
+    put(root, 'odd`name.md', compact().replace('kind: trat', 'kind: trat\nweek: "1. B 2. D"\nlesson: SECRET'))
     mod = tmp_path / 'module.json'
     mod.write_text(json.dumps(module()))
     cfg = tmp_path / 'cfg.toml'

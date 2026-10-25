@@ -115,7 +115,7 @@
   {
    "path": "scripts/_shared/ltcore/rat.py",
    "source": "shared/ltcore/rat.py",
-   "sha256": "e9d7bb60434372395e01bedaae78efd23553e26590fcb4a9dcd50ca7c67738b7"
+   "sha256": "fe3de5f99a04d09d7b5257402902518078bfcd6d525b8c2d00c99b78486197f3"
   },
   {
    "path": "scripts/_shared/ltcore/reconcile.py",

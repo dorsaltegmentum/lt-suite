@@ -560,11 +560,12 @@ def test_module_declares_its_shared_files():
 
 
 def test_render_sanitizes_names_and_refuses_non_json_args(tmp_path, run_py):
-    odd = tmp_path / "x*-alert(1)-*.js"
+    odd = tmp_path / "x`-alert(1)-`.js"
     odd.write_text("return 1;\n")
     info = ltjs.render(str(odd), form="function", out_dir=tmp_path / "o")
     text = Path(info["path"]).read_text()
-    assert "x*-alert" not in text.split("\n", 2)[1]
+    assert "x`-alert" not in text.split("\n", 2)[1]
+    assert ltjs._safe_name("x*-alert(1)-*") == ltjs._safe_name(odd.stem)
     assert "*/" not in Path(info["path"]).name
     body = tmp_path / "y.js"
     body.write_text("return 1;\n")

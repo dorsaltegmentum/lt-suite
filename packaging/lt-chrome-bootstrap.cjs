@@ -15,7 +15,10 @@ if(W){h=e.USERPROFILE?e.USERPROFILE:h;c=P.join(e.LOCALAPPDATA?e.LOCALAPPDATA:P.j
 else if(p=='darwin'){c=P.join(h,'Library','Caches','lt-suite')}
 else{c=P.join(x?(P.isAbsolute(x)?x:P.join(h,'.cache')):P.join(h,'.cache'),'lt-suite')}
 var d=P.join(c,'lt-chrome','run'),w=process.cwd(),r=R.length?'no lt-chrome launcher under the plugin folder':'this agent did not pass the plugin folder',why=r;
-try{fs.mkdirSync(d,{recursive:true,mode:448});fs.writeFileSync(P.join(d,'package.json'),'{}');w=d}catch(z){why=r+'; '+d+' is not writable, so npx runs in the agent folder'}
+try{fs.mkdirSync(d,{recursive:true,mode:448});fs.writeFileSync(P.join(d,'package.json'),'{}');
+// npm adds ancestor .bin folders on POSIX. These nearer shims pin both interpreters.
+if(W==false){var b=P.join(d,'node_modules','.bin');fs.mkdirSync(b,{recursive:true,mode:448});var q=String.fromCharCode(39),Q=String.fromCharCode(34);[['node',process.execPath],['sh','/bin/sh']].forEach(function(t){var s=q+t[1].split(q).join(q+'\\'+q+q)+q;fs.writeFileSync(P.join(b,t[0]),String.fromCharCode(35,33)+'/bin/sh\nexec '+s+' '+Q+'$@'+Q+'\n',{mode:448})})}
+w=d}catch(z){why=r+'; '+d+' is not writable, so npx runs in the agent folder'}
 process.stderr.write('lt-chrome: '+why+'; it runs as in lt-suite 0.1.0 (auto-connect, browser settings ignored). Run setup.py lt-chrome snippet to use your settings.\n');
 var n=P.dirname(process.execPath),j=[P.join(n,'node_modules','npm','bin','npx-cli.js'),P.join(n,'..','lib','node_modules','npm','bin','npx-cli.js')].filter(function(f){return fs.existsSync(f)})[0];
 var A=__ARGV__;

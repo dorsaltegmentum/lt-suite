@@ -92,7 +92,7 @@ def validate_roots(policy, *, data_dir=None, notes_graph=None, curriculum_root=N
 
 
 def _linked(st) -> bool:
-    return stat.S_ISLNK(st.st_mode) or bool(getattr(st, "st_file_attributes", 0) &
+    return stat.S_ISLNK(st.st_mode) or bool((getattr(st, "st_file_attributes", 0) or 0) &
                                          getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0x400))
 
 
