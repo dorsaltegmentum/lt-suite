@@ -124,8 +124,8 @@ def static_set():
     text = ('<?xml version="1.0"?>\n<!DOCTYPE fontconfig SYSTEM "urn:fontconfig:fonts.dtd">\n<fontconfig>\n'
             '  <include ignore_missing="yes">/etc/fonts/fonts.conf</include>\n'
             f"{body}  <cachedir>{escape(str(dest / 'cache'))}</cachedir>\n</fontconfig>\n")
-    if not conf.exists() or conf.read_text() != text:
-        conf.write_text(text)
+    if not conf.exists() or conf.read_text(encoding='utf-8') != text:
+        conf.write_text(text, encoding='utf-8')
     return conf, rename
 
 

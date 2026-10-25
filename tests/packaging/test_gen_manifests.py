@@ -48,7 +48,7 @@ def source(tmp_path):
         target.parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(REPO / name, target)
     config = tmp_path / "packaging/plugin.toml"
-    text = config.read_text()
+    text = config.read_text(encoding='utf-8')
     # This synthetic tree deliberately contains one skill.
     import re
     # This synthetic release stays at 0.1.0, including its sample skill below.
@@ -56,11 +56,11 @@ def source(tmp_path):
     text = re.sub(r"^skills = .*?$", 'skills = ["sample"]', text, flags=re.M)
     if "skills =" not in text:
         text = 'skills = ["sample"]\n' + text
-    config.write_text(text)
-    (tmp_path / "AGENTS.md").write_text("Runtime guide.\n")
+    config.write_text(text, encoding='utf-8')
+    (tmp_path / "AGENTS.md").write_text("Runtime guide.\n", encoding='utf-8')
     skill = tmp_path / "skills/sample/SKILL.md"
     skill.parent.mkdir(parents=True)
-    skill.write_text('---\nname: sample\nmetadata:\n  version: "0.1.0"\n---\nBody.\n')
+    skill.write_text('---\nname: sample\nmetadata:\n  version: "0.1.0"\n---\nBody.\n', encoding='utf-8')
     return tmp_path
 
 
@@ -68,7 +68,7 @@ def run(root, *args):
     env = dict(os.environ, PYTHONDONTWRITEBYTECODE="1")
     return subprocess.run(
         [sys.executable, str(GENERATOR), "--root", str(root), *args],
-        capture_output=True, text=True, env=env, cwd=root.parent,
+        encoding='utf-8', capture_output=True, text=True, env=env, cwd=root.parent,
     )
 
 
@@ -185,7 +185,7 @@ def test_pinned_mcp_commands_and_platform_tool_filters(source):
     assert read(source, "examples/mcp/gemini-settings.json")["mcpServers"]["lt-chrome"]["trust"] is False
     for name in ("mcp_config.json", "examples/mcp/antigravity-mcp.json"):
         assert set(read(source, name)["mcpServers"]["lt-chrome"]["disabledTools"]) == DISABLED
-    codex = tomllib.loads((source / "examples/mcp/codex-config.toml").read_text())
+    codex = tomllib.loads((source / "examples/mcp/codex-config.toml").read_text(encoding='utf-8'))
     server = codex["mcp_servers"]["lt-chrome"]
     assert set(server["enabled_tools"]) == ENABLED
     assert not ENABLED & DISABLED
@@ -206,14 +206,14 @@ def test_check_rejects_skill_version_mismatch_without_editing(source, metadata):
     assert run(source).returncode == 0
     path = source / "skills/sample/SKILL.md"
     content = f'---\nname: sample\n{metadata}\n---\nmetadata:\n  version: "0.1.0"\n'
-    path.write_text(content)
+    path.write_text(content, encoding='utf-8')
     result = run(source, "--check")
     assert result.returncode == 1
     assert "skills/sample/SKILL.md" in result.stdout
     assert "metadata.version" in result.stdout
-    assert path.read_text() == content
+    assert path.read_text(encoding='utf-8') == content
     assert run(source).returncode == 0
-    assert path.read_text() == content
+    assert path.read_text(encoding='utf-8') == content
 
 
 @pytest.mark.parametrize("metadata", [
@@ -223,7 +223,7 @@ def test_check_rejects_skill_version_mismatch_without_editing(source, metadata):
 ])
 def test_check_accepts_skill_metadata_version(source, metadata):
     path = source / "skills/sample/SKILL.md"
-    path.write_text(f"---\nname: sample\n{metadata}\n---\nBody.\n")
+    path.write_text(f"---\nname: sample\n{metadata}\n---\nBody.\n", encoding='utf-8')
     assert run(source).returncode == 0
     assert run(source, "--check").returncode == 0
 
@@ -232,16 +232,16 @@ def test_source_changes_reach_manifests_and_safety_rule(source):
     # Catches hardcoded identity, stale safety copies and missing always-on trigger.
     assert run(source).returncode == 0
     path = source / "packaging/plugin.toml"
-    path.write_text(path.read_text().replace('version = "0.1.0"', 'version = "0.2.0"'))
+    path.write_text(path.read_text(encoding='utf-8').replace('version = "0.1.0"', 'version = "0.2.0"'), encoding='utf-8')
     safety = source / "shared/references/safety.md"
-    safety.write_text(safety.read_text() + "\nAdditional safety instruction.\n")
+    safety.write_text(safety.read_text(encoding='utf-8') + "\nAdditional safety instruction.\n", encoding='utf-8')
     assert run(source, "--check").returncode == 1
     assert run(source).returncode == 0
     for name in ("plugin.json", ".claude-plugin/plugin.json", "gemini-extension.json"):
         assert read(source, name)["version"] == "0.2.0"
-    rule = (source / "rules/lt-suite-safety.md").read_text()
+    rule = (source / "rules/lt-suite-safety.md").read_text(encoding='utf-8')
     assert rule.startswith("---\ntrigger: always_on\n---\n")
-    assert rule.endswith(safety.read_text())
+    assert rule.endswith(safety.read_text(encoding='utf-8'))
 
 
 def test_coordinate_click_is_denied_on_each_denylist_platform(source):
@@ -283,7 +283,7 @@ def test_context_file_is_required_by_check(source):
 def test_nested_or_duplicate_metadata_fails_closed(source, metadata):
     assert run(source).returncode == 0
     path = source / "skills/sample/SKILL.md"
-    path.write_text(f"---\nname: sample\n{metadata}\n---\nBody.\n")
+    path.write_text(f"---\nname: sample\n{metadata}\n---\nBody.\n", encoding='utf-8')
     assert run(source, "--check").returncode == 1
 
 
@@ -296,7 +296,7 @@ def test_playwright_snippets_enforce_reviewed_tools(source):
               "browser_handle_dialog", "browser_hover", "browser_navigate_back", "browser_network_request",
               "browser_network_requests", "browser_press_key", "browser_resize", "browser_run_code_unsafe",
               "browser_select_option", "browser_snapshot", "browser_type"}
-    data = tomllib.loads((source / "examples/mcp/playwright-codex.toml").read_text())
+    data = tomllib.loads((source / "examples/mcp/playwright-codex.toml").read_text(encoding='utf-8'))
     server = data["mcp_servers"]["lt-playwright"]
     assert set(server["enabled_tools"]) == allowed
     assert server["args"] == ["-y", "@playwright/mcp@0.0.83"]
@@ -306,13 +306,13 @@ def test_playwright_snippets_enforce_reviewed_tools(source):
         server = read(source, path)["mcpServers"]["lt-playwright"]
         assert set(server[field]) == denied
         assert server["args"] == ["-y", "@playwright/mcp@0.0.83"]
-        (source / path).write_text('{}')
+        (source / path).write_text('{}', encoding='utf-8')
         assert run(source, "--check").returncode == 1
 
 
 def test_public_package_declares_all_six_skills():
     # A reduced declaration must not silently shrink every generated distribution.
-    data = tomllib.loads((REPO / 'packaging/plugin.toml').read_text())
+    data = tomllib.loads((REPO / 'packaging/plugin.toml').read_text(encoding='utf-8'))
     assert set(data['skills']) == {'lt-suite-setup', 'lt-module-capture', 'lt-module-answer',
                                    'lt-module-fill', 'lt-module-export', 'mechanistic-diagram'}
 
@@ -320,7 +320,7 @@ def test_public_package_declares_all_six_skills():
 def test_playwright_filter_sets_cover_the_observed_runtime_catalog():
     # A denylist copied from memory can leave a real write-capable tool exposed.
     catalog = read(REPO, "packaging/playwright-0.0.83-tools.json")
-    config = tomllib.loads((REPO / "packaging/plugin.toml").read_text())["playwright"]
+    config = tomllib.loads((REPO / "packaging/plugin.toml").read_text(encoding='utf-8'))["playwright"]
     assert catalog["package"] == "@playwright/mcp"
     assert catalog["version"] == "0.0.83"
     assert len(catalog["tools"]) == len(set(catalog["tools"])) == 25
@@ -333,7 +333,7 @@ def test_playwright_filter_sets_cover_the_observed_runtime_catalog():
 def test_check_reports_stale_pins_block(source):
     assert run(source).returncode == 0
     launcher = source / "shared/lt_chrome/lt-chrome.cjs"
-    launcher.write_text(launcher.read_text().replace('"package":"chrome-devtools-mcp@1.12.0"', '"package":"stale"'))
+    launcher.write_text(launcher.read_text(encoding='utf-8').replace('"package":"chrome-devtools-mcp@1.12.0"', '"package":"stale"'), encoding='utf-8')
     result = run(source, "--check")
     assert result.returncode == 1
     assert "shared/lt_chrome/lt-chrome.cjs" in result.stdout
@@ -345,7 +345,7 @@ def test_examples_carry_hardening_env(source):
         if not name.startswith("examples/mcp/"):
             continue
         if name.endswith(".toml"):
-            data = tomllib.loads((source / name).read_text())["mcp_servers"]
+            data = tomllib.loads((source / name).read_text(encoding='utf-8'))["mcp_servers"]
         else:
             doc = read(source, name)
             data = doc.get("mcpServers", doc.get("servers"))

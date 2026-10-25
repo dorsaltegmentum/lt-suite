@@ -753,7 +753,7 @@ def _run_local(entry: dict, fin: Path, fout: Path, timeout: int) -> None:
         raise Refusal(f"text cleaner {entry.get('name')!r}: argv must be a non-empty list of strings")
     cmd = [re.sub(r"\{(in|out)\}", lambda m: str(fin) if m.group(1) == "in" else str(fout), a) for a in argv]
     try:
-        r = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
+        r = subprocess.run(cmd, encoding='utf-8', capture_output=True, text=True, timeout=timeout)
     except subprocess.TimeoutExpired:
         raise Refusal(f"text cleaner {entry.get('name')!r} did not finish within {timeout} s")
     except OSError as e:
@@ -1473,7 +1473,7 @@ def cmd_check(args,cfg):
                single_attempt_locked=[[s['page_index'],str(next(i['panel_key'] for pg in mod['pages'] for i in pg['items'] if i['item_id']==s['item_id']))] for s in pl['boundary_map'].get('single_attempts_passed',[]) if s['page_index']<=int(p)],
                dialog_max_ms=cfg.get('fill.dialog.max_ms'),resumed=bool(args.resume))
         source=out/f'_check-{mid}-p{p}.js'
-        source.write_text(LIB.read_text()+ '\n'+ _check_body()+'\nreturn await LtCheck.run('+json.dumps(c)+','+json.dumps(js)+');\n',encoding='utf-8')
+        source.write_text(LIB.read_text(encoding='utf-8')+ '\n'+ _check_body()+'\nreturn await LtCheck.run('+json.dumps(c)+','+json.dumps(js)+');\n',encoding='utf-8')
         if not args.no_render:
             r=render_script(source,form=args.form,stub=True if args.stub else False if args.no_stub else None,cfg=cfg,plan=checkplan,out_dir=str(out))
             print(r['path'] if 'path' in r else r)
@@ -1505,7 +1505,7 @@ def cmd_check_verify(args,cfg):
         return 2
     source=out/f'_verify-check-{mid}.js'
     c={'module_id':mid,'run_id':mod['run_id'],'origin':origin_of(mod['source_url']),'instance':mod.get('instance'),'course_id':mod.get('course_id')}
-    source.write_text(LIB.read_text()+'\n'+_check_body()+'\nreturn await LtCheck.verify('+json.dumps(c)+','+json.dumps(pages)+');\n',encoding='utf-8')
+    source.write_text(LIB.read_text(encoding='utf-8')+'\n'+_check_body()+'\nreturn await LtCheck.verify('+json.dumps(c)+','+json.dumps(pages)+');\n',encoding='utf-8')
     if not args.no_render:
         print(render_script(source,form=args.form,stub=True if args.stub else False if args.no_stub else None,cfg=cfg,plan=load(out/'check-plan.json'),out_dir=str(out)))
     else:

@@ -41,7 +41,7 @@ def main(argv=None):
                 result = subprocess.run(['uv', 'export', '--frozen', '--offline', '--no-dev',
                                          '--only-group', 'ci', '--no-emit-project', '--no-header',
                                          '--output-file', str(requirements)],
-                                        cwd=ROOT, capture_output=True, text=True)
+                                        encoding='utf-8', cwd=ROOT, capture_output=True, text=True)
                 if result.returncode:
                     print(result.stderr, file=sys.stderr)
                     return result.returncode
@@ -68,7 +68,7 @@ def main(argv=None):
                 raise ValueError('npx is required')
             result = subprocess.run([executable, '-y', '@anthropic-ai/claude-code@2.1.306',
                                      'plugin', 'validate', '.', '--strict', '--json'],
-                                    cwd=ROOT, capture_output=True, text=True, timeout=180)
+                                    encoding='utf-8', cwd=ROOT, capture_output=True, text=True, timeout=180)
             if result.returncode:
                 print(result.stderr, file=sys.stderr)
                 return 1
@@ -99,7 +99,7 @@ def main(argv=None):
         if not all(re.fullmatch(r'[0-9a-f]{40}', ref) for ref in (base, head)):
             raise ValueError('PR_BASE and PR_HEAD must be full commit SHAs')
         result = subprocess.run(['git', 'log', '--no-merges', '--format=%H%x1f%an%x1f%ae%x1f%B%x1e',
-                                 f'{base}..{head}'], cwd=ROOT, capture_output=True, text=True)
+                                 f'{base}..{head}'], encoding='utf-8', cwd=ROOT, capture_output=True, text=True)
         if result.returncode:
             raise ValueError('Cannot read pull-request commit range')
         for record in result.stdout.split('\x1e'):

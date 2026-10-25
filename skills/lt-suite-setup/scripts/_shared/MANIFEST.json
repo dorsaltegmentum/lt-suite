@@ -105,7 +105,7 @@
   {
    "path": "scripts/_shared/ltcore/fonts.py",
    "source": "shared/ltcore/fonts.py",
-   "sha256": "aa0176972df01f8da6183bdca4c55ea4e68fbcaf5b10cc370b4cfa97d311e2c8"
+   "sha256": "0f551461473c660125d1fd62711ed7b20e426dcd6e183070e6ed5727aaa2e9a1"
   },
   {
    "path": "scripts/_shared/ltcore/ltjs.py",

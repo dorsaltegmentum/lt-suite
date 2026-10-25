@@ -51,7 +51,7 @@ def prerequisites(root: Path) -> None:
         if not tool.is_file():
             raise BuildError(f"required prerequisite tool missing: tools/{name}")
         result = subprocess.run(
-            [sys.executable, str(tool), "--check", *(["--strict"] if name == "sync_shared.py" else [])], cwd=root,
+            [sys.executable, str(tool), "--check", *(["--strict"] if name == "sync_shared.py" else [])], encoding='utf-8', cwd=root,
             capture_output=True, text=True,
             env={**os.environ, "PYTHONDONTWRITEBYTECODE": "1"},
         )
@@ -102,7 +102,7 @@ def files_under(folder: Path, *, plugin: bool = False, allowed: set[str] | None 
 
 def font_licenses(files: dict[str, bytes], root: Path = REPO) -> None:
     """Require the bundled font's own license, including copyright notices."""
-    catalog = json.loads((root / "shared/fonts/catalog.json").read_text())
+    catalog = json.loads((root / "shared/fonts/catalog.json").read_text(encoding='utf-8'))
     approved = {}
     for entry in catalog["fonts"]:
         for item in (entry.get("bundled") or {}).get("files", []):

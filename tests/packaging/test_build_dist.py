@@ -80,7 +80,7 @@ def approve_files(root):
 def run(root, out, *args):
     return subprocess.run(
         [sys.executable, str(BUILDER), "--root", str(root), "--out", str(out), *args],
-        cwd=root.parent, capture_output=True, text=True, timeout=60,
+        encoding='utf-8', cwd=root.parent, capture_output=True, text=True, timeout=60,
         env={**os.environ, "PYTHONDONTWRITEBYTECODE": "1"},
     )
 
@@ -97,12 +97,12 @@ def test_builds_all_layouts_and_runs_both_drift_checks(source, tmp_path):
     expected = {f"{target}/sample-{target}-0.1.0.zip" for target in TARGETS}
     expected.add("lt-suite-plugin-0.1.0.zip")
     assert {p.relative_to(out).as_posix() for p in out.rglob("*.zip")} == expected
-    declared = tomllib.loads((REPO / "packaging/dist.toml").read_text())
+    declared = tomllib.loads((REPO / "packaging/dist.toml").read_text(encoding='utf-8'))
     assert {p.name for p in out.iterdir() if p.is_dir()} == set(declared["skill_targets"])
     assert declared["compression"] == "stored"
     assert declared["root_skill_targets"] == ["perplexity-ui"]
     for name in ("gen_manifests", "sync_shared"):
-        assert (source / f"{name}.checked").read_text() == "checked"
+        assert (source / f"{name}.checked").read_text(encoding='utf-8') == "checked"
     for target in TARGETS:
         with zipfile.ZipFile(archive(out, target)) as z:
             prefix = "" if target == "perplexity-ui" else "sample/"
@@ -191,7 +191,7 @@ def test_extracted_skill_runs_help_without_repository(source, tmp_path, target):
         z.extractall(alone)
     skill = alone if target == "perplexity-ui" else alone / "sample"
     result = subprocess.run(
-        [sys.executable, "scripts/hello.py", "--help"], cwd=skill,
+        [sys.executable, "scripts/hello.py", "--help"], encoding='utf-8', cwd=skill,
         env={k: v for k, v in os.environ.items() if not k.startswith("PYTHON")},
         capture_output=True, text=True, timeout=30,
     )
@@ -273,7 +273,7 @@ def test_real_answer_skill_archive_runs_digest_help(source, tmp_path):
     dest = source / "skills/lt-module-answer"
     shutil.copytree(real, dest, ignore=shutil.ignore_patterns("__pycache__", "*.pyc"))
     path = source / "packaging/plugin.toml"
-    path.write_text(path.read_text().replace('["sample"]', '["sample", "lt-module-answer"]'))
+    path.write_text(path.read_text(encoding='utf-8').replace('["sample"]', '["sample", "lt-module-answer"]'), encoding='utf-8')
     approve_files(source)
     out = tmp_path / "dist"
     result = run(source, out)
@@ -282,7 +282,7 @@ def test_real_answer_skill_archive_runs_digest_help(source, tmp_path):
         z.extractall(tmp_path / "alone")
     result = subprocess.run(
         [sys.executable, "scripts/question_digest.py", "--help"],
-        cwd=tmp_path / "alone/lt-module-answer", capture_output=True, text=True,
+        encoding='utf-8', cwd=tmp_path / "alone/lt-module-answer", capture_output=True, text=True,
         env={**{k: v for k, v in os.environ.items() if not k.startswith(("PYTHON", "LT_SUITE_"))},
              "LT_SUITE_NO_INSTALL": "1", "PYTHONNOUSERSITE": "1"}, timeout=30,
     )
@@ -407,12 +407,12 @@ def test_font_pins_reject_unapproved_bytes(source,tmp_path,kind):
 
 def test_fill_palette_runtime_files_are_approved():
     prefix='skills/lt-module-fill/scripts/_shared/'
-    names=set(json.loads((REPO/'packaging/runtime-files.json').read_text()))
+    names=set(json.loads((REPO/'packaging/runtime-files.json').read_text(encoding='utf-8')))
     for name in ['ltcore/palettes.py','palettes/catalog.json','palettes/ATTRIBUTION.md',
                  'palettes/overrides/catppuccin-latte.toml','palettes/overrides/catppuccin-frappe.toml',
                  'palettes/overrides/everforest-dark-medium.toml']:
         assert prefix+name in names and (REPO/(prefix+name)).is_file()
-    notice=(REPO/'skills/lt-module-fill/NOTICE.txt').read_text()
+    notice=(REPO/'skills/lt-module-fill/NOTICE.txt').read_text(encoding='utf-8')
     assert 'Catppuccin' in notice and 'sainnhe' in notice and 'MIT' in notice
 
 
@@ -440,7 +440,7 @@ def test_archives_keep_launcher_without_bootstrap(source, tmp_path):
 def test_check_and_reconcile_standalone_assets(source,tmp_path,skill,script):
     shutil.copytree(REPO/'skills'/skill,source/'skills'/skill,ignore=shutil.ignore_patterns('__pycache__','*.pyc'))
     include_runtime_font_pins(source)
-    p=source/'packaging/plugin.toml';p.write_text(p.read_text().replace('["sample"]',json.dumps(['sample',skill])))
+    p=source/'packaging/plugin.toml';p.write_text(p.read_text(encoding='utf-8').replace('["sample"]',json.dumps(['sample',skill])), encoding='utf-8')
     approve_files(source);out=tmp_path/'dist';result=run(source,out)
     assert result.returncode==0,result.stderr
     with zipfile.ZipFile(out/f'claude-ai/{skill}-claude-ai-0.1.0.zip') as archive:
@@ -456,17 +456,34 @@ def test_check_and_reconcile_standalone_assets(source,tmp_path,skill,script):
 def test_unallowlisted_check_asset_blocks_build(source,tmp_path,skill,member):
     shutil.copytree(REPO/'skills'/skill,source/'skills'/skill,ignore=shutil.ignore_patterns('__pycache__','*.pyc'))
     include_runtime_font_pins(source)
-    p=source/'packaging/plugin.toml';p.write_text(p.read_text().replace('["sample"]',json.dumps(['sample',skill])))
+    p=source/'packaging/plugin.toml';p.write_text(p.read_text(encoding='utf-8').replace('["sample"]',json.dumps(['sample',skill])), encoding='utf-8')
     approve_files(source);manifest=source/'packaging/runtime-files.json'
-    files=json.loads(manifest.read_text());files.remove('skills/'+skill+'/'+member);manifest.write_text(json.dumps(files))
+    files=json.loads(manifest.read_text(encoding='utf-8'));files.remove('skills/'+skill+'/'+member);manifest.write_text(json.dumps(files), encoding='utf-8')
     result=run(source,tmp_path/'dist');assert result.returncode==1
     assert 'unapproved distribution file: skills/'+skill+'/'+member in result.stderr
+
+
+def test_runtime_font_pins_read_utf8_under_cp1252(source, monkeypatch):
+    import io
+    monkeypatch.setattr(io, 'text_encoding', lambda encoding, *args: encoding or 'cp1252')
+    include_runtime_font_pins(source)
+
+
+def test_builder_font_catalog_reads_utf8_under_cp1252(monkeypatch):
+    import importlib.util
+    import io
+    monkeypatch.syspath_prepend(str(REPO / 'tools'))
+    spec = importlib.util.spec_from_file_location('j7_builder', BUILDER)
+    builder = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(builder)
+    monkeypatch.setattr(io, 'text_encoding', lambda encoding, *args: encoding or 'cp1252')
+    builder.font_licenses({}, REPO)
 
 
 def include_runtime_font_pins(source):
     """Copied runtime skills need their reviewed Noto pins beside the synthetic font."""
     path = source/'shared/fonts/catalog.json'
-    catalog = json.loads(path.read_text())
-    runtime = json.loads((REPO/'shared/fonts/catalog.json').read_text())
+    catalog = json.loads(path.read_text(encoding='utf-8'))
+    runtime = json.loads((REPO/'shared/fonts/catalog.json').read_text(encoding='utf-8'))
     catalog['fonts'].extend(entry for entry in runtime['fonts'] if entry.get('bundled'))
-    path.write_text(json.dumps(catalog))
+    path.write_text(json.dumps(catalog), encoding='utf-8')

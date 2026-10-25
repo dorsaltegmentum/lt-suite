@@ -83,7 +83,7 @@ def run_py():
             e["PYTHONPATH"] = str(SHARED) + (os.pathsep + e["PYTHONPATH"] if e.get("PYTHONPATH") else "")
         else:
             e.pop("PYTHONPATH", None)
-        return subprocess.run([sys.executable, *args], cwd=cwd or REPO, env=e, input=stdin,
+        return subprocess.run([sys.executable, *args], encoding='utf-8', cwd=cwd or REPO, env=e, input=stdin,
                               capture_output=True, text=True, timeout=timeout)
     return _run
 

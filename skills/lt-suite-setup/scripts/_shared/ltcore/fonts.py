@@ -314,7 +314,8 @@ def fc_match(family: str, weight: int = 400, italic: bool = False,
     if italic:
         pattern += ":slant=italic"
     try:
-        r = runner([exe, "-f", "%{file}\n%{family}", pattern], capture_output=True, text=True, timeout=20)
+        r = runner([exe, "-f", "%{file}\n%{family}", pattern], capture_output=True,
+                   text=True, encoding="utf-8", timeout=20)
     except (OSError, subprocess.TimeoutExpired):
         return None
     if r.returncode != 0 or not r.stdout:

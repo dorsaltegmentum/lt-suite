@@ -231,7 +231,7 @@ def convert(svg: str | os.PathLike, out: str | os.PathLike, *, fmt: str | None =
         tmp_out = Path(td) / f"out.{fmt}"
         try:
             r = runner(argv + ["-o", str(tmp_out), str(tmp_svg)], env=prep.env, capture_output=True,
-                       text=True, timeout=timeout, cwd=str(src.parent.resolve()))
+                       text=True, encoding="utf-8", timeout=timeout, cwd=str(src.parent.resolve()))
         except subprocess.TimeoutExpired:
             raise RasterError(f"rsvg-convert took longer than {timeout} s on {src}") from None
         if r.returncode != 0 or not tmp_out.is_file():

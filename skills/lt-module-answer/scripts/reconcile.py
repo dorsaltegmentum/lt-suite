@@ -43,7 +43,7 @@ def main(argv=None):
         if args.command=='rebind':inputs.append(args.previous_fill_report)
         if any(rat.within(p,r) for p in inputs for r in roots):
             raise ValueError('reconcile input enters a RAT root')
-        module=json.loads(args.module.read_text());answers=json.loads(args.answers.read_text());report=json.loads(args.fill_report.read_text())
+        module=json.loads(args.module.read_text(encoding='utf-8'));answers=json.loads(args.answers.read_text(encoding='utf-8'));report=json.loads(args.fill_report.read_text(encoding='utf-8'))
         if any(d.get('module_id')!=module['module_id'] for d in (answers,report)) or report.get('source_answers',{}).get('sha256')!=reconcile.sha(args.answers):
             raise ValueError('source_answers pin or module differs')
         if args.command=='prepare':
@@ -54,7 +54,7 @@ def main(argv=None):
             if not work['items']:return 2
             dest=args.out or store.Store(cfg,data_dir=args.data_dir).run_dir(module['module_id'])/'reconcile-worklist.json'
             reconcile.atomic_json(dest,work);print(dest);return 0
-        doc=json.loads(args.reconciled.read_text())
+        doc=json.loads(args.reconciled.read_text(encoding='utf-8'))
         # Explicit inputs must match the pins. The validator also checks the referenced files.
         old=args.previous_fill_report if args.command=='rebind' else args.fill_report
         if doc.get('source_answers',{}).get('sha256')!=reconcile.sha(args.answers) or doc.get('source_fill_report',{}).get('sha256')!=reconcile.sha(old):
@@ -66,7 +66,7 @@ def main(argv=None):
             final_validation=validate.validate_file(args.fill_report,'fill-report',module=args.module,config_path=args.config)
             if final_validation.exit_code:
                 print('rebind: invalid final fill report',file=sys.stderr);return final_validation.exit_code
-            previous=json.loads(old.read_text())
+            previous=json.loads(old.read_text(encoding='utf-8'))
             updated=reconcile.rebind_document(doc,previous,report)
             updated['source_fill_report']={'path':str(args.fill_report.resolve()),'sha256':reconcile.sha(args.fill_report)}
             result=validate.validate_doc(updated,'reconciled',module=module,base_dir=args.reconciled.parent,config_path=args.config)

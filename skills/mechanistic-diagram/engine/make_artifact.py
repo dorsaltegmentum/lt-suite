@@ -78,7 +78,7 @@ def _suffix_ids(svg, suffix):
 def figure(case_dir, flavour, index=0):
     """The inline figure: final-<flavour>.svg with a class instead of its pixel size, font fallbacks, and (after
     the first copy) every id suffixed so the page has no duplicate ids. Returns (svg, width, height)."""
-    svg = (case_dir / f"final-{flavour}.svg").read_text()
+    svg = (case_dir / f"final-{flavour}.svg").read_text(encoding='utf-8')
     head = re.search(r'<svg xmlns="http://www.w3.org/2000/svg"[^>]*>', svg).group(0)
     w = int(re.search(r' width="(\d+)"', head).group(1))
     h = int(re.search(r' height="(\d+)"', head).group(1))
@@ -352,9 +352,9 @@ def make(case, out=None):
     terms = getattr(case.content, "ITALIC", ())
     pp = themes.print_palette()
     pals = [pp] + [fl for fl in themes.final_palettes() if fl != pp]
-    parts = svg_parts((here / f"final-{pp}.svg").read_text())
+    parts = svg_parts((here / f"final-{pp}.svg").read_text(encoding='utf-8'))
     for fl in pals[1:]:
-        if svg_parts((here / f"final-{fl}.svg").read_text()) != parts:
+        if svg_parts((here / f"final-{fl}.svg").read_text(encoding='utf-8')) != parts:
             raise ValueError(f"final-{pp}.svg and final-{fl}.svg differ in their boxes, arrows or stages")
     figs = [figure(here, fl, i) for i, fl in enumerate(pals)]
     FIG_W = figs[0][1]
@@ -368,8 +368,8 @@ def make(case, out=None):
     rows = "\n".join(f'<tr><td class="k">{html.escape(k)}</td><td>{ital(f, terms)}</td><td>{ital(x, terms)}</td></tr>'
                      for k, f, x in A.FINDINGS)
     srcs = "\n".join(f"<li>{html.escape(s)}</li>" for s in A.SOURCES)
-    logic_js = (ENGINE / "artifact_logic.js").read_text()
-    ui_js = (ENGINE / "artifact_ui.js").read_text()
+    logic_js = (ENGINE / "artifact_logic.js").read_text(encoding='utf-8')
+    ui_js = (ENGINE / "artifact_ui.js").read_text(encoding='utf-8')
     for name, js in (("artifact_logic.js", logic_js), ("artifact_ui.js", ui_js)):
         if "</script" in js.lower():
             raise ValueError(f"{name} must not contain '</script'")
@@ -684,7 +684,7 @@ ol {{ margin: 0; padding-left: 20px; display: grid; gap: 6px; font-size: 14px; }
 </body>
 </html>
 '''
-    out.write_text(page)
+    out.write_text(page, encoding='utf-8')
     print("wrote", out, len(page), "bytes")
     return out
 

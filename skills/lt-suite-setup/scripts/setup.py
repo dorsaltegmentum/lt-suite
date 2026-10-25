@@ -119,9 +119,13 @@ def quote_command(argv):
 
 def run(argv, timeout=60, env=None, cwd=None):
     """Run a program; return (code, stdout, stderr). A missing program gives code 127."""
+    # Python probes print executable paths through a pipe. Match Node's UTF-8
+    # output even when the caller's Windows code page cannot encode that path.
+    child_env = dict(os.environ if env is None else env)
+    child_env["PYTHONIOENCODING"] = "utf-8"
     try:
-        p = subprocess.run([str(a) for a in argv], stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                           universal_newlines=True, timeout=timeout, env=env, cwd=cwd)
+        p = subprocess.run([str(a) for a in argv], encoding='utf-8', stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                           universal_newlines=True, timeout=timeout, env=child_env, cwd=cwd)
         return p.returncode, p.stdout, p.stderr
     except FileNotFoundError:
         return 127, "", "not found: " + str(argv[0])

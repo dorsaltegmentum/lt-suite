@@ -36,7 +36,7 @@ def isolated_env(home):
 
 
 def command_for(root=True):
-    entry = json.loads((REPO/'.mcp.json').read_text())['mcpServers']['lt-chrome']
+    entry = json.loads((REPO/'.mcp.json').read_text(encoding='utf-8'))['mcpServers']['lt-chrome']
     args = [a.replace('root=${CLAUDE_PLUGIN_ROOT}', 'root='+str(REPO)) if root else a for a in entry['args']]
     return [shutil.which('node'), *args]
 
@@ -50,10 +50,10 @@ def configured_server():
     with tempfile.TemporaryDirectory(prefix='lt-chrome-probe-', dir=os.environ.get('TMPDIR')) as scratch:
         home = Path(scratch)
         env = isolated_env(home)
-        pins = json.loads(subprocess.check_output([shutil.which('node'), str(REPO/'shared/lt_chrome/lt-chrome.cjs'), '--print-pins'], env=env, text=True))
+        pins = json.loads(subprocess.check_output([shutil.which('node'), str(REPO/'shared/lt_chrome/lt-chrome.cjs'), '--print-pins'], encoding='utf-8', env=env, text=True))
         command = [executable, '--no-workspaces', '-y', pins['package'], '--autoConnect', *pins['fixed_args']]
         try:
-            result = subprocess.run(command+['--help'], cwd=scratch, env=env, capture_output=True, text=True, timeout=180)
+            result = subprocess.run(command+['--help'], encoding='utf-8', cwd=scratch, env=env, capture_output=True, text=True, timeout=180)
         except subprocess.TimeoutExpired:
             unavailable('not run: npx package lookup timed out; network/package availability is unverified')
         if result.returncode and any(code in result.stderr for code in NETWORK_ERRORS):
@@ -65,7 +65,7 @@ def configured_server():
 def probe(command, cwd, env):
     """Initialize and list tools, then close the host's stdin and require clean exit."""
     with tempfile.TemporaryFile() as stderr:
-        process = subprocess.Popen(command, cwd=cwd, env=env, stdin=subprocess.PIPE,
+        process = subprocess.Popen(command, encoding='utf-8', cwd=cwd, env=env, stdin=subprocess.PIPE,
                                    stdout=subprocess.PIPE, stderr=stderr, text=True, bufsize=1)
         lines = queue.Queue()
         def read_lines():
@@ -130,7 +130,7 @@ def test_runtime_tools_list_equals_documented_set(configured_server):
 def test_generated_mcp_json_quiet_end_to_end(tmp_path):
     env = isolated_env(tmp_path)
     config = tmp_path/'quiet.toml'
-    config.write_text('[browser]\nadapter="claude-in-chrome"\n')
+    config.write_text('[browser]\nadapter="claude-in-chrome"\n', encoding='utf-8')
     env.update(LT_SUITE_CONFIG=str(config), PATH='', npm_config_registry='http://127.0.0.1:9')
     assert probe(command_for(), tmp_path, env) == set()
 
@@ -138,7 +138,7 @@ def test_generated_mcp_json_quiet_end_to_end(tmp_path):
 def test_generated_mcp_json_fallback_end_to_end(configured_server):
     _, scratch, _, env = configured_server
     config = Path(scratch)/'quiet.toml'
-    config.write_text('[browser]\nadapter="claude-in-chrome"\n')
+    config.write_text('[browser]\nadapter="claude-in-chrome"\n', encoding='utf-8')
     env = dict(env, LT_SUITE_CONFIG=str(config))
     assert probe(command_for(False), scratch, env) == DOCUMENTED_TOOLS
     if os.name == 'posix' and Path('/proc').is_dir():
@@ -153,7 +153,7 @@ def test_user_cd4a_config_cannot_widen_tools(configured_server, root):
     _, scratch, _, env = configured_server
     folder = Path(env['XDG_CONFIG_HOME'])/'cd4a'
     folder.mkdir(parents=True, exist_ok=True)
-    (folder/'config.json').write_text(json.dumps({'categoryExtensions':True,'wsEndpoint':'ws://192.0.2.1:9/x'}))
+    (folder/'config.json').write_text(json.dumps({'categoryExtensions':True,'wsEndpoint':'ws://192.0.2.1:9/x'}), encoding='utf-8')
     env = dict(env, CHROME_DEVTOOLS_MCP_CATEGORY_EXPERIMENTAL_THIRD_PARTY='1')
     assert probe(command_for(root), scratch, env) == DOCUMENTED_TOOLS
 

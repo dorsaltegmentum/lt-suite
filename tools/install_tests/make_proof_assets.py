@@ -459,7 +459,7 @@ class Ctx:
         probe_env = dict(os.environ, UV_PROJECT_ENVIRONMENT=str(self.python_work / "venv"))
         for cand in cands:
             try:
-                p = subprocess.run([*cand, "-c", probe], cwd=self.repo, env=probe_env,
+                p = subprocess.run([*cand, "-c", probe], encoding='utf-8', cwd=self.repo, env=probe_env,
                                    capture_output=True, text=True, timeout=600)
             except (OSError, subprocess.SubprocessError) as ex:
                 tried.append(f"{' '.join(cand)}: {ex}")
@@ -503,7 +503,7 @@ class Ctx:
     def run(self, argv, name, *, timeout=1200, ok=(0,), cwd=None):
         argv = [str(x) for x in argv]
         try:
-            p = subprocess.run(argv, cwd=str(cwd or self.repo), env=self.env, capture_output=True,
+            p = subprocess.run(argv, encoding='utf-8', cwd=str(cwd or self.repo), env=self.env, capture_output=True,
                                text=True, errors="replace", timeout=timeout)
         except FileNotFoundError:
             raise Fail(3, f"{name}: program not found: {argv[0]}")
@@ -966,14 +966,14 @@ def tool_versions(c: Ctx) -> dict:
     out = {}
     for label, argv in (("pdftoppm", ["pdftoppm", "-v"]), ("rsvg-convert", ["rsvg-convert", "--version"])):
         try:
-            p = subprocess.run(argv, capture_output=True, text=True, timeout=30)
+            p = subprocess.run(argv, encoding='utf-8', capture_output=True, text=True, timeout=30)
             first = (p.stdout + p.stderr).strip().splitlines()
             out[label] = re.sub(r"\s+", " ", first[0]) if first else ""
         except (OSError, subprocess.SubprocessError):
             out[label] = ""
     try:
         p = subprocess.run([*c.py, "-c", "import sys, PIL, reportlab; print(sys.version.split()[0], PIL.__version__, reportlab.Version)"],
-                           cwd=c.repo, capture_output=True, text=True, timeout=120)
+                           encoding='utf-8', cwd=c.repo, capture_output=True, text=True, timeout=120)
         v = p.stdout.split()
         out.update(zip(("python", "pillow", "reportlab"), v))
     except (OSError, subprocess.SubprocessError):
@@ -1040,7 +1040,7 @@ def snippet(manifest: dict) -> str:
 def git_status(repo: Path) -> set[str] | None:
     if shutil.which("git") is None or not (repo / ".git").exists():
         return None
-    p = subprocess.run(["git", "-C", str(repo), "status", "--porcelain"], capture_output=True, text=True)
+    p = subprocess.run(["git", "-C", str(repo), "status", "--porcelain"], encoding='utf-8', capture_output=True, text=True)
     return set(p.stdout.splitlines()) if p.returncode == 0 else None
 
 
@@ -1051,7 +1051,7 @@ def run_gate(c: Ctx) -> None:
     say("privacy gate over docs/assets")
     rel = os.path.relpath(c.out, c.repo)
     p = subprocess.run([sys.executable, "tools/privacy_gate.py", "--paths", rel, *shlex.split(c.a.gate_args or "")],
-                       cwd=c.repo, capture_output=True, text=True)
+                       encoding='utf-8', cwd=c.repo, capture_output=True, text=True)
     if p.returncode != 0:
         raise Fail(1, f"privacy gate exit {p.returncode}:\n{tail(p.stdout + p.stderr, 30)}")
 
