@@ -58,8 +58,15 @@ A provenance tag becomes a reader-facing citation, never raw `[T1:...]` text:
 1. the module itself: plain text `this module`;
 2. a PubMed id or a DOI: a link built from the identifier;
 3. `export.citations.url_aliases`: a link;
-4. `export.citations.page_aliases`, then `export.citations.kind_pages`: a `[[page]]` link;
-5. anything else: the source id in bold, with no invented page.
+4. `export.citations.page_aliases`: a `[[page]]` link;
+5. `export.citations.kind_pages`: a `[[page]]` link;
+6. `export.citations.transcript_page_from_filename`, when true: a transcript path's filename stem as a `[[page]]` link;
+7. anything else: the source id in bold, with no invented page.
+
+`export.citations.transcript_page_from_filename` defaults to false. Both path separators
+work, and only the final suffix is removed. Missing paths and empty or whitespace
+stems fall through to the source id. Notes formats and PDFs render these links like
+page aliases.
 
 `export.citations.hidden_skip_reasons` lists skip reasons whose items are left off the
 page (for example `course-feedback`). They stay in `answers.json`.

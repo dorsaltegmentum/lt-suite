@@ -514,6 +514,12 @@ def source_display(source_id: str, corpus: dict, self_ids: set, cfg):
     by_kind = (kind_pages or {}).get(entry.get("kind"))
     if by_kind:
         return "ref", by_kind
+    from_filename = cfg.get("export.citations.transcript_page_from_filename") if cfg is not None else False
+    if from_filename and entry.get("kind") == "transcript" and entry.get("path"):
+        filename = str(entry["path"]).replace("\\", "/").rsplit("/", 1)[-1]
+        stem = filename.rsplit(".", 1)[0]
+        if stem.strip():
+            return "ref", stem
     return "plain", source_id
 
 
@@ -574,9 +580,7 @@ def render_table_cells(ans, item, tags=None) -> list[str]:
         for cell in sorted(by_row[row], key=lambda value: value["col"]):
             # Flatten label line breaks so bold delimiters remain valid during rendering.
             label = " ".join(f"{row_name(row)} · {col_name(cell['col'])}".split())
-            refs = cell.get("provenance_refs")
-            if refs is None:
-                refs = list(tags or {})
+            refs = cell.get("provenance_refs") or []
             citations = " ".join((tags or {}).get(ref, f"(unresolved source {ref})") for ref in refs)
             out.append(f"**{label}** — {cell['text']} {citations}".rstrip())
     return out

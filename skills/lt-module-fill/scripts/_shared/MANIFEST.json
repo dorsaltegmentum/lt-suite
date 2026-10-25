@@ -35,7 +35,7 @@
   {
    "path": "scripts/_shared/config.defaults.toml",
    "source": "shared/config.defaults.toml",
-   "sha256": "8f8401cbe157af6757ca2de5bc116678293b51e03b0ff8a033184b03b3ff72b5"
+   "sha256": "bf83b3a8ad1d78f7caebad76d7a676558868535604cc47706934875eb98cf0c1"
   },
   {
    "path": "scripts/_shared/fonts/catalog.json",
@@ -65,7 +65,7 @@
   {
    "path": "scripts/_shared/ltcore/__init__.py",
    "source": "shared/ltcore/__init__.py",
-   "sha256": "90b4302e13767984afc622d2a663b8eb3094a6f2ff13b73f24830869e32ac093"
+   "sha256": "5adc246ac465764df0bbab6204193df06ee46fa50bfba6cf1a39de2891105dcb"
   },
   {
    "path": "scripts/_shared/ltcore/approvals.py",
@@ -195,7 +195,7 @@
   {
    "path": "scripts/_shared/schemas/config.schema.json",
    "source": "shared/schemas/config.schema.json",
-   "sha256": "665acf2ca793d7f2862ffc27d8940242c455384a195b0d49a14699600f004333"
+   "sha256": "26bc618259bda7ac48ffbb01bbedcd22c5fe83d6d2c335dc259d75b2ea075ce9"
   },
   {
    "path": "scripts/_shared/schemas/fill-report.schema.json",

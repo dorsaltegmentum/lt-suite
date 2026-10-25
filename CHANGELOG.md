@@ -8,6 +8,16 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 lt-suite records notable changes using [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/).
 Versions follow [Semantic Versioning 2.0.0](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.1] - 2026-10-26
+
+### Added
+
+- Opt-in `export.citations.transcript_page_from_filename` links recording citations to notes pages named after recording files.
+
+### Fixed
+
+- Table cells no longer repeat the answer's citations when cell provenance references are absent.
+
 ## [0.2.0] - 2026-10-25
 
 ### Added

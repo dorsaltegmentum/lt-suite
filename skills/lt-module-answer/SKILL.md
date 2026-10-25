@@ -6,7 +6,7 @@ description: Draft researched answers.json for a captured Lt module, practical o
 license: AGPL-3.0-or-later
 compatibility: "Python 3.11+, shell and local files. Requires a captured module.json. External source research needs web access and any configured licensed references."
 metadata:
-  version: 0.2.0
+  version: 0.2.1
 ---
 
 <!-- Draft source-grounded answers and a review packet from a captured Lt module. -->

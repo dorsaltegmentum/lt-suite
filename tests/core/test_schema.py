@@ -37,6 +37,7 @@ tiers.framing export.outputs.module_page export.outputs.pdf export.outputs.notes
 export.outputs.whiteboard export.outputs.ilo_map export.outputs.flashcard_source
 export.outputs.tracker_handoff export.flashcard_source.file export.flashcard_source.tag_prefix
 export.citations.page_aliases export.citations.url_aliases export.citations.kind_pages
+export.citations.transcript_page_from_filename
 export.citations.hidden_skip_reasons pdf.author pdf.strip_metadata style.palettes
 style.print_palette style.custom_palettes_file fonts.sans fonts.mono fonts.sans_path
 fonts.system_fallback fonts.pdf.sans fonts.pdf.mono fonts.diagram.sans fonts.diagram.mono

@@ -6,7 +6,7 @@ description: Write drafted answers into a captured Lt run in the user's signed-i
 license: AGPL-3.0-or-later
 compatibility: "A Chromium browser signed in to Lt, and an agent browser tool that runs a JavaScript file in that tab (or the user pastes it into DevTools). Python 3.11+ with jsonschema; Pillow, numpy and scipy for micrograph labels. Node 18+ only for the repository tests."
 metadata:
-  version: 0.2.0
+  version: 0.2.1
 ---
 
 <!-- Fill a captured Lt run from answers.json up to the first one-way door, verify from a fresh load, and hand the run back for the user to submit. -->

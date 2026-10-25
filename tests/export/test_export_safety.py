@@ -187,7 +187,7 @@ def test_pdf_images_resolve_only_inside_approved_assets(tmp_path, monkeypatch, n
         module_pdf.image_parts(f"![caption]({ref})", page, flavour)
 
 
-def test_flashcard_handoff_includes_labelled_table_cells_and_provenance(
+def test_flashcard_handoff_keeps_table_cells_and_segment_provenance(
         run, export_args, make_config, tmp_path):
     # A handoff that only renders segments loses the actual drafted grid responses.
     cfg = make_config(export__outputs={"flashcard_source": True})
@@ -196,7 +196,8 @@ def test_flashcard_handoff_includes_labelled_table_cells_and_provenance(
     cards = (tmp_path / "out/flashcard-source.md").read_text(encoding="utf-8")
     assert "**Minute 0 · Goal**" in cards
     cell_line = next(line for line in cards.splitlines() if "hold at minute 0" in line)
-    assert "10.5555/fixture.0001" in cell_line and "table 3" in cell_line
+    assert "10.5555/fixture.0001" not in cell_line
+    assert "([10.5555/fixture.0001](https://doi.org/10.5555/fixture.0001), table 3)" in cards
     assert "hold at minute 75" in cards
 
 

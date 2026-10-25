@@ -6,7 +6,7 @@ description: Read one Lt run from the user's signed-in browser tab into module.j
 license: AGPL-3.0-or-later
 compatibility: "A Chromium browser signed in to Lt, and an agent browser tool that runs a JavaScript file in that tab (or the user pastes it into DevTools). Python 3.11+ with jsonschema. Node 18+ only for the repository tests."
 metadata:
-  version: 0.2.0
+  version: 0.2.1
 ---
 
 <!-- Capture one Lt run into module.json and a quarantined reference.json without writing to Lt. -->

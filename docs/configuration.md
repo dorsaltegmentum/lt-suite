@@ -288,6 +288,7 @@ What the export skill writes.
 | `export.citations.page_aliases` | table | `{}` | Source id to notes page name. |
 | `export.citations.url_aliases` | table | `{}` | Source id to URL. |
 | `export.citations.kind_pages` | table | `{}` | Source kind to notes page name. |
+| `export.citations.transcript_page_from_filename` | bool | `false` | Link transcript sources to notes pages named after recording file stems. |
 | `export.citations.hidden_skip_reasons` | list[str] | `[]` | Skip reasons whose items are left off the page. |
 
 ### `pdf`

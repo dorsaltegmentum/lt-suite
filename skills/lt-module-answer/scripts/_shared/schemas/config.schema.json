@@ -562,6 +562,11 @@
               "default": {},
               "description": "Source kind to notes page name."
             },
+            "transcript_page_from_filename": {
+              "type": "boolean",
+              "default": false,
+              "description": "Link transcript sources to notes pages named after recording file stems."
+            },
             "hidden_skip_reasons": {
               "type": "array",
               "items": {

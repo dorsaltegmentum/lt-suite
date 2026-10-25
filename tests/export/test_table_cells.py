@@ -52,6 +52,20 @@ def test_no_cells_render_nothing(export_module):
     assert export_module.render_table_cells({"table_cells": []}, {}) == []
 
 
+@pytest.mark.parametrize("refs,expected", [
+    ({}, "value"),
+    ({"provenance_refs": None}, "value"),
+    ({"provenance_refs": []}, "value"),
+    ({"provenance_refs": ["p1"]}, "value (Source one)"),
+    ({"provenance_refs": ["missing"]}, "value (unresolved source missing)"),
+])
+def test_table_cells_cite_only_explicit_refs(export_module, refs, expected):
+    cell = {"row": 0, "col": 0, "text": "value", **refs}
+    rendered = export_module.render_table_cells(
+        {"table_cells": [cell]}, {}, {"p1": "(Source one)", "p2": "(Source two)"})
+    assert rendered[1] == f"**row 1 · column 0** — {expected}"
+
+
 @pytest.mark.parametrize("item_id, rows", [("p2-11", 17), ("p2-12", 6)])
 def test_fixture_tables_name_every_body_row(export_module, fixtures, item_id, rows):
     module = json.loads((fixtures / "modules" / "module-c1-r106.json").read_text(encoding="utf-8"))

@@ -129,6 +129,7 @@ tag_prefix = "Lt::"
 page_aliases = {}
 url_aliases = {}
 kind_pages = {}
+transcript_page_from_filename = false
 hidden_skip_reasons = []
 
 [pdf]
