@@ -660,6 +660,9 @@ def _fmt(v: Any) -> str:
 
 
 def main(argv: list[str] | None = None) -> int:
+    from ltcore.streams import configure_utf8
+    configure_utf8()
+
     common = argparse.ArgumentParser(add_help=False)
     common.add_argument("--config", help="config file (else LT_SUITE_CONFIG, ./lt-suite.toml, "
                         "the platform file)")

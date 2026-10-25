@@ -63,7 +63,7 @@ def source(tmp_path):
         put(root, f"tools/{tool}.py", (
             "import sys\nfrom pathlib import Path\n"
             f"assert sys.argv[1:] == {['--check', '--strict'] if tool == 'sync_shared' else ['--check']!r}\n"
-            f"Path('{tool}.checked').write_text('checked')\n"
+            f"Path('{tool}.checked').write_text('checked', encoding='utf-8', newline='\\n')\n"
         ))
     put(root, "shared/fonts/catalog.json", json.dumps({"fonts": [{"bundled": {"files": [
         {"file": "example/font.ttf", "sha256": hashlib.sha256(b"example font").hexdigest()}]}}]}))
@@ -273,7 +273,7 @@ def test_real_answer_skill_archive_runs_digest_help(source, tmp_path):
     dest = source / "skills/lt-module-answer"
     shutil.copytree(real, dest, ignore=shutil.ignore_patterns("__pycache__", "*.pyc"))
     path = source / "packaging/plugin.toml"
-    path.write_text(path.read_text(encoding='utf-8').replace('["sample"]', '["sample", "lt-module-answer"]'), encoding='utf-8')
+    path.write_text(path.read_text(encoding='utf-8').replace('["sample"]', '["sample", "lt-module-answer"]'), encoding='utf-8', newline="\n")
     approve_files(source)
     out = tmp_path / "dist"
     result = run(source, out)
@@ -440,7 +440,7 @@ def test_archives_keep_launcher_without_bootstrap(source, tmp_path):
 def test_check_and_reconcile_standalone_assets(source,tmp_path,skill,script):
     shutil.copytree(REPO/'skills'/skill,source/'skills'/skill,ignore=shutil.ignore_patterns('__pycache__','*.pyc'))
     include_runtime_font_pins(source)
-    p=source/'packaging/plugin.toml';p.write_text(p.read_text(encoding='utf-8').replace('["sample"]',json.dumps(['sample',skill])), encoding='utf-8')
+    p=source/'packaging/plugin.toml';p.write_text(p.read_text(encoding='utf-8').replace('["sample"]',json.dumps(['sample',skill])), encoding='utf-8', newline="\n")
     approve_files(source);out=tmp_path/'dist';result=run(source,out)
     assert result.returncode==0,result.stderr
     with zipfile.ZipFile(out/f'claude-ai/{skill}-claude-ai-0.1.0.zip') as archive:
@@ -456,9 +456,9 @@ def test_check_and_reconcile_standalone_assets(source,tmp_path,skill,script):
 def test_unallowlisted_check_asset_blocks_build(source,tmp_path,skill,member):
     shutil.copytree(REPO/'skills'/skill,source/'skills'/skill,ignore=shutil.ignore_patterns('__pycache__','*.pyc'))
     include_runtime_font_pins(source)
-    p=source/'packaging/plugin.toml';p.write_text(p.read_text(encoding='utf-8').replace('["sample"]',json.dumps(['sample',skill])), encoding='utf-8')
+    p=source/'packaging/plugin.toml';p.write_text(p.read_text(encoding='utf-8').replace('["sample"]',json.dumps(['sample',skill])), encoding='utf-8', newline="\n")
     approve_files(source);manifest=source/'packaging/runtime-files.json'
-    files=json.loads(manifest.read_text(encoding='utf-8'));files.remove('skills/'+skill+'/'+member);manifest.write_text(json.dumps(files), encoding='utf-8')
+    files=json.loads(manifest.read_text(encoding='utf-8'));files.remove('skills/'+skill+'/'+member);manifest.write_text(json.dumps(files), encoding='utf-8', newline="\n")
     result=run(source,tmp_path/'dist');assert result.returncode==1
     assert 'unapproved distribution file: skills/'+skill+'/'+member in result.stderr
 
@@ -486,4 +486,4 @@ def include_runtime_font_pins(source):
     catalog = json.loads(path.read_text(encoding='utf-8'))
     runtime = json.loads((REPO/'shared/fonts/catalog.json').read_text(encoding='utf-8'))
     catalog['fonts'].extend(entry for entry in runtime['fonts'] if entry.get('bundled'))
-    path.write_text(json.dumps(catalog), encoding='utf-8')
+    path.write_text(json.dumps(catalog), encoding='utf-8', newline="\n")

@@ -230,18 +230,26 @@ function hardenedEnv(env, platform) {
     if (key === 'PLUGIN_DATA' || key.indexOf('CHROME_DEVTOOLS_MCP_') === 0 || (forwarded.indexOf(key) !== -1 && !usable(env[k]))) removed.push(k);
     else child[platform === 'win32' ? key : k] = env[k];
   });
+  // npm's Windows command shims must find the pinned node.exe before node.cmd.
+  if (platform === 'win32') set.PATHEXT = '.EXE;.CMD;.BAT';
   return {env: Object.assign(child, set), removed: removed, set: set};
 }
 function neutralFolder(cache, cwd) {
-  const folder = path.join(cache, 'lt-chrome', 'run');
+  let folder;
   try {
+    const digest = require('crypto').createHash('sha256').update(fs.readFileSync(process.execPath)).digest('hex');
+    folder = path.join(cache, 'lt-chrome', 'run', digest);
     fs.mkdirSync(folder, {recursive: true, mode: 0o700});
     fs.writeFileSync(path.join(folder, 'package.json'), '{}');
     // npm prepends every ancestor's node_modules/.bin, even with no-workspaces.
     // Pin its shell and the server's env-node interpreter in the nearer bin.
-    if (process.platform !== 'win32') {
-      const bin = path.join(folder, 'node_modules', '.bin');
-      fs.mkdirSync(bin, {recursive: true, mode: 0o700});
+    const bin = path.join(folder, 'node_modules', '.bin');
+    fs.mkdirSync(bin, {recursive: true, mode: 0o700});
+    if (process.platform === 'win32') {
+      const pinned = path.join(bin, 'node.exe');
+      // Windows locks running executables. Reuse only an exact trusted copy.
+      if (!fs.existsSync(pinned) || !fs.readFileSync(pinned).equals(fs.readFileSync(process.execPath))) fs.copyFileSync(process.execPath, pinned);
+    } else {
       [['node', process.execPath], ['sh', '/bin/sh']].forEach(function(entry) {
         const quoted = "'" + entry[1].replace(/'/g, "'\\''") + "'";
         fs.writeFileSync(path.join(bin, entry[0]), '#!/bin/sh\nexec ' + quoted + ' "$@"\n', {mode: 0o700});
@@ -303,7 +311,8 @@ function makePlan(args) {
   function refuse(message) { result.action = 'refuse'; result.reason = message; return result; }
   function absolute(v) {
     if (v === '~') return dirs.home;
-    if (v.slice(0, 2) === '~/') v = p.join(dirs.home, v.slice(2));
+    if (platform === 'win32') v = expandUser(v, platform, env, dirs.home);
+    else if (v.slice(0, 2) === '~/') v = p.join(dirs.home, v.slice(2));
     return path.isAbsolute(v) || p.isAbsolute(v) ? v : p.join(cwd, v);
   }
   if (usable(env.LT_SUITE_CONFIG)) { result.config = absolute(env.LT_SUITE_CONFIG); result.config_source = 'env LT_SUITE_CONFIG'; }
@@ -342,7 +351,10 @@ function makePlan(args) {
       try { folder = expandUser(browser.chromium_user_data_dir, platform, env, dirs.home); }
       catch (e) { return refuse(e.message); }
       folder = p.normalize(folder);
-      if (!p.isAbsolute(folder)) folder = p.join(result.config ? p.dirname(result.config) : cwd, folder);
+      if (platform === 'win32' && /^[A-Za-z]:(?![\\/])/.test(folder)) return refuse('browser.chromium_user_data_dir: drive-relative folders are unsupported; use an absolute folder');
+      const base = result.config ? p.dirname(result.config) : cwd;
+      if (platform === 'win32') folder = p.resolve(base, folder);
+      else if (!p.isAbsolute(folder)) folder = p.join(base, folder);
       result.profile_dir = folder;
       flags.push('--userDataDir=' + folder);
     } else {

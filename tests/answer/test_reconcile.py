@@ -16,7 +16,7 @@ F=FIX/'fill-reports/fill-report-c1-r108.json'
 SCRIPT=Path(__file__).resolve().parents[2]/'skills/lt-module-answer/scripts/reconcile.py'
 
 
-def read(path):return json.loads(path.read_text())
+def read(path):return json.loads(path.read_text(encoding="utf-8"))
 def check(doc):return validate.validate_doc(doc,'reconciled',module=read(M),base_dir=R.parent)
 
 
@@ -71,7 +71,7 @@ def test_prepare_check_exits_and_answers_bytes(run_py,tmp_path):
     assert r.returncode==0,r.stderr
     r=run_py(str(SCRIPT),'check','--module',str(M),'--answers',str(A),'--fill-report',str(F),'--reconciled',str(R))
     assert r.returncode==0,r.stderr
-    d=read(R);d['items']='bad';p=tmp_path/'reconciled.json';p.write_text(json.dumps(d))
+    d=read(R);d['items']='bad';p=tmp_path/'reconciled.json';p.write_text(json.dumps(d), encoding="utf-8", newline="\n")
     r=run_py(str(SCRIPT),'check','--module',str(M),'--answers',str(A),'--fill-report',str(F),'--reconciled',str(p))
     assert r.returncode==2,r.stderr
     assert A.read_bytes()==before
@@ -100,7 +100,7 @@ def test_research_tier_two_and_rat_root_quarantine(tmp_path):
     d=read(R);d['items'][0]['provenance'][0]['tier']=2
     result=check(d)
     assert any('reconciled-provenance' in e for e in result.rail_errors)
-    root=tmp_path/'rat';root.mkdir();cfg=tmp_path/'lt-suite.toml';cfg.write_text('[rat]\nanswers_dir='+json.dumps(str(root))+'\n')
+    root=tmp_path/'rat';root.mkdir();cfg=tmp_path/'lt-suite.toml';cfg.write_text('[rat]\nanswers_dir='+json.dumps(str(root))+'\n', encoding="utf-8", newline="\n")
     d=read(R);d['items'][0]['provenance'][0]['locator']=str(root/'sheet.md')
     result=validate.validate_doc(d,'reconciled',module=read(M),base_dir=R.parent,config_path=cfg)
     assert any('reconciled-provenance' in e for e in result.rail_errors)
@@ -122,14 +122,14 @@ def test_research_rejects_check_and_reconciliation_artifacts(artifact,field):
 def test_rebind_cli_is_atomic_and_never_reads_sheets(run_py,tmp_path):
     # Keep all source pins absolute in the scratch copy.
     d=read(R);d['source_answers']['path']=str(A);d['source_fill_report']['path']=str(F)
-    rp=tmp_path/'reconciled.json';rp.write_text(json.dumps(d));before=rp.read_bytes()
+    rp=tmp_path/'reconciled.json';rp.write_text(json.dumps(d), encoding="utf-8", newline="\n");before=rp.read_bytes()
     final=read(F)
     final['source_answers']['path']=str(A)
     final['source_page_kinds']['path']=str(FIX/'page-kinds/page-kinds-c1-r108.json')
     final['source_check_answer']['path']=str(FIX/'runs/c1-r108/check-answer.json')
     # A changed ordinary entry must refuse without touching R.
     final['items'][0]['stopped_reason']='changed'
-    fp=tmp_path/'fill-report.json';fp.write_text(json.dumps(final))
+    fp=tmp_path/'fill-report.json';fp.write_text(json.dumps(final), encoding="utf-8", newline="\n")
     r=run_py(str(SCRIPT),'rebind','--module',str(M),'--answers',str(A),'--fill-report',str(fp),'--previous-fill-report',str(F),'--reconciled',str(rp))
     assert r.returncode==3,r.stdout+r.stderr
     assert rp.read_bytes()==before
@@ -159,15 +159,15 @@ def test_T87_rebind_after_synthetic_rat_fill_and_export(run_py,tmp_path,monkeypa
     all_items=[i for p in module['pages'] for i in p['items']]
     module['census'].update(pages_total=8,captured_total=len(all_items),answerable_total=len(all_items),by_type=dict(Counter(i['type'] for i in all_items)))
     module['lesson']['page_count']=8;module['commit_boundaries']['single_attempt_items']=['p1-18']
-    apath=tmp_path/'answers.json';mpath=tmp_path/'module.json';mpath.write_text(json.dumps(module))
+    apath=tmp_path/'answers.json';mpath=tmp_path/'module.json';mpath.write_text(json.dumps(module), encoding="utf-8", newline="\n")
     ans=read(A);ans.update(module_id='c1-r109',run_id=109,source_module={'path':str(mpath),'sha256':reconcile.sha(mpath)})
     ans['items']=[a for a in ans['items'] if a['item_id'].startswith('p1-')]
     for p in module['pages'][1:]:
         for it in p['items']:ans['items'].append({'item_id':it['item_id'],'status':'skipped','skip_reason':'rat-sheet' if p['page_index']==4 else 'user-excluded'})
-    apath.write_text(json.dumps(ans));root=tmp_path/'sheets';root.mkdir()
-    synthetic=(FIX/'curriculum/Block A/RATs/1.2-team.md').read_text().replace('page: 3','page: 4')
-    (root/'team.md').write_text(synthetic)
-    cp=tmp_path/'lt-suite.toml';cp.write_text('[rat]\ntrat="from_dir"\nanswers_dir='+json.dumps(str(root))+'\n[paths]\ndata_dir='+json.dumps(str(tmp_path/'data'))+'\n[export.outputs]\npdf=false\n')
+    apath.write_text(json.dumps(ans), encoding="utf-8", newline="\n");root=tmp_path/'sheets';root.mkdir()
+    synthetic=(FIX/'curriculum/Block A/RATs/1.2-team.md').read_text(encoding="utf-8").replace('page: 3','page: 4')
+    (root/'team.md').write_text(synthetic, encoding="utf-8", newline="\n")
+    cp=tmp_path/'lt-suite.toml';cp.write_text('[rat]\ntrat="from_dir"\nanswers_dir='+json.dumps(str(root))+'\n[paths]\ndata_dir='+json.dumps(str(tmp_path/'data'))+'\n[export.outputs]\npdf=false\n', encoding="utf-8", newline="\n")
     cfg=config.load(cp);policy=rat.policy_from_config(cfg)
     rec=page_kinds.classify(module,policy,answers=ans,answers_sha256=reconcile.sha(apath))
     pk=tmp_path/'page-kinds.json';page_kinds.atomic_write(pk,rec)
@@ -175,7 +175,7 @@ def test_T87_rebind_after_synthetic_rat_fill_and_export(run_py,tmp_path,monkeypa
     team=next(p for p in decisions if p['page_index']==4)
     assert team['decision']=='fill-from-sheet'
     ledger=read(FIX/'runs/c1-r108/check-answer.json');ledger['checks']=ledger['checks'][:1]
-    lp=tmp_path/'check-answer.json';lp.write_text(json.dumps(ledger))
+    lp=tmp_path/'check-answer.json';lp.write_text(json.dumps(ledger), encoding="utf-8", newline="\n")
     previous=read(F);previous.update(module_id='c1-r109',run_id=109,source_answers={'path':str(apath),'sha256':reconcile.sha(apath)},
         source_page_kinds={'path':str(pk),'sha256':reconcile.sha(pk)},source_check_answer={'path':str(lp),'sha256':reconcile.sha(lp)},pages_filled=[1],rat_pages=decisions)
     previous['rat_pages']=[{k:v for k,v in d.items() if k not in {'question','reasons','check_reason'}} for d in decisions]
@@ -183,16 +183,16 @@ def test_T87_rebind_after_synthetic_rat_fill_and_export(run_py,tmp_path,monkeypa
     for p in module['pages'][1:]:
         for it in p['items']:previous['items'].append({'item_id':it['item_id'],'item_type':it['type'],'attempts':it['attempts'],'attempted':False,'method':'not-attempted','result':'skipped','verified':False,'stopped_reason':'before RAT entry'})
     previous['check_answer']=ca.summary(previous['items']);previous.pop('save_waits',None)
-    pp=tmp_path/'fill-report-pre-rat.json';pp.write_text(json.dumps(previous))
+    pp=tmp_path/'fill-report-pre-rat.json';pp.write_text(json.dumps(previous), encoding="utf-8", newline="\n")
     rdoc=read(R);rdoc.update(module_id='c1-r109',source_answers=previous['source_answers'],source_fill_report={'path':str(pp),'sha256':reconcile.sha(pp)})
-    rp=tmp_path/'reconciled.json';rp.write_text(json.dumps(rdoc));answer_bytes=apath.read_bytes();segments=[i['segments'] for i in rdoc['items']]
+    rp=tmp_path/'reconciled.json';rp.write_text(json.dumps(rdoc), encoding="utf-8", newline="\n");answer_bytes=apath.read_bytes();segments=[i['segments'] for i in rdoc['items']]
     final=copy.deepcopy(previous);final['pages_filled']=[1,4]
     for n,it in enumerate(module['pages'][3]['items'],1):
         row=next(i for i in final['items'] if i['item_id']==it['item_id'])
         row.update(attempted=True,method='view-model',result='filled',verified=True,
             receipt={'expected_hash':'101','observed_hash':'101','observed_at':'2000-01-01T00:00:00Z'},
             answer_source={**{k:team['sheet'][k] for k in ('root','name','sha256')},'kind':'rat-sheet','question':n,'page_kind':'trat','classified_by':team['sources']})
-    fp=tmp_path/'fill-report.json';fp.write_text(json.dumps(final))
+    fp=tmp_path/'fill-report.json';fp.write_text(json.dumps(final), encoding="utf-8", newline="\n")
     spec=importlib.util.spec_from_file_location('reconcile_entry',SCRIPT);entry=importlib.util.module_from_spec(spec);spec.loader.exec_module(entry)
     reads=[]
     monkeypatch.setattr(rat,'read_sheet',lambda *a,**kw:reads.append(a) or (_ for _ in ()).throw(AssertionError('sheet read during rebind')))

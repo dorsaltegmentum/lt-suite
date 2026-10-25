@@ -87,6 +87,31 @@ jobs:
       - run: python -m compileall -q skills shared tools tests
       - run: python packaging/ci.py area-tests
 
+  py-ascii:
+    timeout-minutes: 30
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.14"
+      - name: Install rendering and metadata tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y librsvg2-bin poppler-utils libxml2-utils qpdf libimage-exiftool-perl
+      - run: python -m pip install --upgrade "pip>=25.1"
+      - run: python -m pip install uv==0.13.5
+      - run: python packaging/ci.py install-ci
+      - name: Test all Python areas with ASCII defaults
+        env:
+          LC_ALL: C
+          LANG: C
+          PYTHONUTF8: "0"
+          PYTHONCOERCECLOCALE: "0"
+        run: python packaging/ci.py area-tests
+
   py-os:
     strategy:
       fail-fast: false
@@ -106,9 +131,11 @@ jobs:
       - run: python packaging/ci.py install-ci
       - run: python -m pytest tests/core -q
       - run: python -m pytest tests/core/test_system_fonts.py -s -rA
+        if: ${{ !cancelled() }}
       - run: python -m pytest tests/packaging -q
+        if: ${{ !cancelled() }}
       - name: Bootstrap from the macOS system Python
-        if: runner.os == 'macOS'
+        if: ${{ !cancelled() && runner.os == 'macOS' }}
         shell: bash
         run: |
           /usr/bin/python3 --version

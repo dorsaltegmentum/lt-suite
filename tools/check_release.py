@@ -89,7 +89,7 @@ def check_generators(root: Path) -> list[str]:
             fails.append(f"{script}: generator missing")
             continue
         r = subprocess.run([sys.executable, str(path), *args], cwd=root,
-                           capture_output=True, text=True)
+                           capture_output=True, text=True, encoding="utf-8")
         if r.returncode != 0:
             tail = (r.stdout + r.stderr).strip().splitlines()[-8:]
             fails.append(f"{script} {' '.join(args)} exited {r.returncode}: " + " | ".join(tail))
@@ -195,6 +195,12 @@ def check_tag(root: Path, tag: str) -> list[str]:
 
 
 def main(argv: list[str] | None = None) -> int:
+    import sys
+    from pathlib import Path
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "shared"))
+    from ltcore.streams import configure_utf8
+    configure_utf8()
+
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--skip-generators", action="store_true", help="do not run the generators")

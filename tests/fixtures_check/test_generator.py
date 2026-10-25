@@ -16,7 +16,7 @@ from _support import FIX, REPO  # noqa: E402
 
 def test_check_mode_exits_zero():
     r = subprocess.run([sys.executable, str(REPO / "tools" / "gen_fixtures.py"), "--check"],
-                       capture_output=True, text=True, cwd=REPO)
+                       capture_output=True, text=True, cwd=REPO, encoding="utf-8")
     assert r.returncode == 0, r.stdout + r.stderr
     assert r.stdout.startswith("OK:")
 
@@ -57,7 +57,7 @@ def test_drift_is_reported(gen, tmp_path):
     assert gen.diff_tree(files, tmp_path) == []
     victim = "modules/module-c1-r101.json"
     (tmp_path / victim).write_bytes(files[victim] + b" ")
-    (tmp_path / "modules" / "stray.json").write_text("{}")
+    (tmp_path / "modules" / "stray.json").write_text("{}", encoding="utf-8", newline="\n")
     (tmp_path / "media" / "lt-c1-r101-31.png").unlink()
     got = gen.diff_tree(files, tmp_path)
     assert got == ["missing  media/lt-c1-r101-31.png", f"changed  {victim}",
@@ -85,9 +85,9 @@ def test_generation_preserves_unrecognised_files(gen, tmp_path, capsys):
     """Regeneration must report an orphan without deleting another contributor's file."""
     orphan = tmp_path / "modules" / "extra.json"
     orphan.parent.mkdir()
-    orphan.write_text('{"keep": true}\n')
+    orphan.write_text('{"keep": true}\n', encoding="utf-8", newline="\n")
     assert gen.main(["--out", str(tmp_path), "--no-validate"]) == 1
-    assert orphan.read_text() == '{"keep": true}\n'
+    assert orphan.read_text(encoding="utf-8") == '{"keep": true}\n'
     assert "orphan" in capsys.readouterr().out
 
 
@@ -118,9 +118,9 @@ def test_check_validates_schema_inputs_without_writing_them(gen, monkeypatch, tm
             target.parent.mkdir(parents=True, exist_ok=True)
             target.write_bytes(source.read_bytes())
     broken = inputs / "examples" / "run.example.json"
-    doc = json.loads(broken.read_text())
+    doc = json.loads(broken.read_text(encoding="utf-8"))
     doc["schema_version"] = "invalid"
-    broken.write_text(json.dumps(doc))
+    broken.write_text(json.dumps(doc), encoding="utf-8", newline="\n")
     before = {p: p.read_bytes() for p in inputs.rglob("*.json")}
     monkeypatch.setattr(gen, "FIXTURES", inputs)
     errors = gen.validate_tree(generated, info["approvals_in_file"])

@@ -274,7 +274,7 @@ def frozen_requirements(root: Path, required: set[str], pins: dict[str, str]) ->
                "--no-annotate", "--no-emit-project", "--no-emit-local"]
     for name in sorted(set(pins) - closure):
         command.extend(["--prune", name])
-    result = subprocess.run(command, cwd=root, capture_output=True, text=True)
+    result = subprocess.run(command, cwd=root, capture_output=True, text=True, encoding="utf-8")
     if result.returncode:
         raise ValueError(f"frozen uv export exited {result.returncode}: {result.stderr.strip()}")
     lines = []
@@ -537,6 +537,12 @@ def skills_in(root: Path) -> list[str]:
 
 
 def main(argv: list[str] | None = None) -> int:
+    import sys
+    from pathlib import Path
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "shared"))
+    from ltcore.streams import configure_utf8
+    configure_utf8()
+
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--skill", action="append", help="sync only this skill (repeatable); "

@@ -26,6 +26,12 @@ def blocking(value):
 
 
 def main(argv=None):
+    import sys
+    from pathlib import Path
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "shared"))
+    from ltcore.streams import configure_utf8
+    configure_utf8()
+
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('gate', choices=('install-ci', 'area-tests', 'dco', 'claude', 'checksums', 'release-tag'))
     parser.add_argument('--out', type=Path, default=Path('dist'))
@@ -85,7 +91,7 @@ def main(argv=None):
                 raise ValueError('Release asset basenames must be unique')
             lines = [hashlib.sha256(p.read_bytes()).hexdigest() + '  ' + p.name
                      for p in paths]
-            (args.out / 'SHA256SUMS').write_text('\n'.join(lines) + '\n', encoding='utf-8')
+            (args.out / 'SHA256SUMS').write_text('\n'.join(lines) + '\n', encoding='utf-8', newline="\n")
             return 0
         if args.gate == 'release-tag':
             ref = os.environ.get('GITHUB_REF_NAME', '')

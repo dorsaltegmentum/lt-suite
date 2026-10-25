@@ -952,7 +952,7 @@ def derive_theme(palette: str | Mapping, cfg: Any = None, *, cache_dir: str | os
         try:
             cpath.parent.mkdir(parents=True, exist_ok=True)
             tmp = cpath.with_suffix(".tmp")
-            tmp.write_text(json.dumps(theme, indent=1, ensure_ascii=False), encoding="utf-8")
+            tmp.write_text(json.dumps(theme, indent=1, ensure_ascii=False), encoding="utf-8", newline="\n")
             os.replace(tmp, cpath)
         except OSError:
             pass
@@ -1373,6 +1373,9 @@ def _load_cfg(path: str | None):
 
 
 def main(argv: list[str] | None = None) -> int:
+    from ltcore.streams import configure_utf8
+    configure_utf8()
+
     args = sys.argv[1:] if argv is None else argv
     if args and args[0] == "micrograph":
         parser = argparse.ArgumentParser(prog="python3 -m ltcore.palettes micrograph")
@@ -1455,10 +1458,10 @@ def main(argv: list[str] | None = None) -> int:
             text = json.dumps(res, indent=1, ensure_ascii=False) + "\n"
             if a.update_catalog:
                 doc = apply_ranking(_read_json(CATALOG_FILE), res)
-                CATALOG_FILE.write_text(json.dumps(doc, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
+                CATALOG_FILE.write_text(json.dumps(doc, indent=1, ensure_ascii=False) + "\n", encoding="utf-8", newline="\n")
                 print(f"wrote {CATALOG_FILE}")
             if a.write:
-                Path(a.write).write_text(text, encoding="utf-8")
+                Path(a.write).write_text(text, encoding="utf-8", newline="\n")
                 print(f"wrote {a.write}")
             if not (a.write or a.update_catalog):
                 for w, modes in res["order"].items():

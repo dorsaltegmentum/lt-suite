@@ -32,8 +32,8 @@ def render(run_py, cfg, out, form):
 
 def run_in_page(script, tmp_path, path):
     spec = tmp_path / "spec.json"
-    spec.write_text(json.dumps({"mode": "run", "file": str(script), "path": path}))
-    p = subprocess.run(["node", str(RUNNER), str(spec)], capture_output=True, text=True, timeout=60)
+    spec.write_text(json.dumps({"mode": "run", "file": str(script), "path": path}), encoding="utf-8", newline="\n")
+    p = subprocess.run(["node", str(RUNNER), str(spec)], capture_output=True, text=True, timeout=60, encoding="utf-8")
     assert p.returncode == 0, p.stderr
     return json.loads(p.stdout)
 
@@ -41,7 +41,7 @@ def run_in_page(script, tmp_path, path):
 @pytest.fixture
 def cfg(tmp_path):
     path = tmp_path / "config.toml"
-    path.write_text('schema_version = 1\n[lt]\norigin = "%s"\n' % ORIGIN)
+    path.write_text('schema_version = 1\n[lt]\norigin = "%s"\n' % ORIGIN, encoding="utf-8", newline="\n")
     return path
 
 
@@ -61,7 +61,7 @@ def test_rendered_ping_reply_passes_verify_and_records_directory(run_py, tmp_pat
     p = run_py(str(SCRIPTS / "setup.py"), "ping", "verify", "--config", str(cfg),
                "--record-dir", str(out), "--reply", json.dumps(reply))
     assert p.returncode == 0, p.stderr
-    assert tomllib.loads(cfg.read_text())["browser"]["js_tmp_dir"] == str(out)
+    assert tomllib.loads(cfg.read_text(encoding="utf-8"))["browser"]["js_tmp_dir"] == str(out)
 
 
 def test_rendered_ping_refuses_to_run_on_the_completion_page(run_py, tmp_path, cfg):

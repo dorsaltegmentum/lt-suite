@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 """Synthetic launcher contracts. Never open a browser or an owner's profile."""
 import importlib.util
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -105,7 +106,7 @@ def test_quiet_adapters_serve_zero_tools(sandbox, adapter):
     plan(sandbox, {'adapter': adapter})
     sandbox[1]['PATH'] = ''
     hook = sandbox[0] / 'quiet-hook.cjs'
-    hook.write_text("const fs=require('fs'),exists=fs.existsSync;fs.existsSync=function(p){return String(p).endsWith('npx-cli.js')?false:exists(p)};require('child_process').spawn=function(){throw Error('quiet adapter spawned a child')}", encoding='utf-8')
+    hook.write_text("const fs=require('fs'),exists=fs.existsSync;fs.existsSync=function(p){return String(p).endsWith('npx-cli.js')?false:exists(p)};require('child_process').spawn=function(){throw Error('quiet adapter spawned a child')}", encoding='utf-8', newline="\n")
     sandbox[1]['NODE_OPTIONS'] = '--require=' + str(hook)
     messages = [dict(jsonrpc='2.0', id=1, method='initialize', params={'protocolVersion': '2025-03-26'}),
                 dict(jsonrpc='2.0', method='notifications/initialized'),
@@ -142,15 +143,15 @@ def test_workspace_cannot_start_when_platform_quiet(sandbox):
     elif sys.platform == 'win32':
         cfg = Path(env['APPDATA']) / 'lt-suite/config.toml'
     cfg.parent.mkdir(parents=True)
-    cfg.write_text('[browser]\nadapter="claude-in-chrome"\n', encoding='utf-8')
-    (home / 'lt-suite.toml').write_text('[browser]\nadapter="auto"\n', encoding='utf-8')
+    cfg.write_text('[browser]\nadapter="claude-in-chrome"\n', encoding='utf-8', newline="\n")
+    (home / 'lt-suite.toml').write_text('[browser]\nadapter="auto"\n', encoding='utf-8', newline="\n")
     p = plan(sandbox)
     assert p['action'] == 'serve-none'
     assert 'platform config chose' in p['reason']
     assert plan(sandbox, {'adapter': 'auto'})['action'] == 'start'
-    cfg.write_text('[browser]\nadapter="auto"\n', encoding='utf-8')
+    cfg.write_text('[browser]\nadapter="auto"\n', encoding='utf-8', newline="\n")
     env.pop('LT_SUITE_CONFIG')
-    (home / 'lt-suite.toml').write_text('[browser]\nadapter="manual-paste"\n', encoding='utf-8')
+    (home / 'lt-suite.toml').write_text('[browser]\nadapter="manual-paste"\n', encoding='utf-8', newline="\n")
     assert plan(sandbox)['action'] == 'serve-none'
 
 
@@ -252,7 +253,7 @@ def test_config_lookup_matches_ltcore(sandbox):
     assert p['action'] == 'refuse' and p['config'] == str(missing)
     env.pop('LT_SUITE_CONFIG')
     ws = home / 'lt-suite.toml'
-    ws.write_text('[browser]\nadapter="auto"\n', encoding='utf-8')
+    ws.write_text('[browser]\nadapter="auto"\n', encoding='utf-8', newline="\n")
     assert plan(sandbox)['config'] == str(ws)
 
 
@@ -281,7 +282,8 @@ def test_toml_reader_refuses_only_listed_forms(sandbox, raw):
 
 def test_npx_runs_from_neutral_folder(sandbox):
     p = plan(sandbox)
-    assert Path(p['cwd']).name == 'run' and Path(p['cwd']).parent.name == 'lt-chrome'
+    assert Path(p['cwd']).name == hashlib.sha256(Path(NODE).read_bytes()).hexdigest()
+    assert Path(p['cwd']).parent.name == 'run' and Path(p['cwd']).parent.parent.name == 'lt-chrome'
     assert json.loads((Path(p['cwd']) / 'package.json').read_text(encoding='utf-8')) == {}
     if os.name != 'nt':
         assert Path(p['cwd']).stat().st_mode & 0o777 == 0o700
@@ -292,7 +294,10 @@ def test_child_env_hardening(sandbox):
     env.update(PLUGIN_DATA='ignored', CHROME_DEVTOOLS_MCP_CATEGORY_EXPERIMENTAL_THIRD_PARTY='1',
                CHROME_DEVTOOLS_MCP_NO_USAGE_STATISTICS='1', CHROME_DEVTOOLS_MCP_NO_CONFIG_DISCOVERY='')
     p = plan(sandbox)
-    assert p['env_set'] == {'CHROME_DEVTOOLS_MCP_NO_CONFIG_DISCOVERY':'1', 'CHROME_DEVTOOLS_MCP_NO_UPDATE_CHECKS':'1'}
+    expected = {'CHROME_DEVTOOLS_MCP_NO_CONFIG_DISCOVERY':'1', 'CHROME_DEVTOOLS_MCP_NO_UPDATE_CHECKS':'1'}
+    if os.name == 'nt':
+        expected['PATHEXT'] = '.EXE;.CMD;.BAT'
+    assert p['env_set'] == expected
     assert set(p['env_removed']) >= {'PLUGIN_DATA', 'CHROME_DEVTOOLS_MCP_CATEGORY_EXPERIMENTAL_THIRD_PARTY',
                                   'CHROME_DEVTOOLS_MCP_NO_USAGE_STATISTICS'}
 
@@ -319,7 +324,7 @@ cp.spawn=function(command,args,opts){
  const env=Object.fromEntries(Object.entries(opts.env).filter(([k])=>/^CHROME_DEVTOOLS_MCP_/i.test(k)||/^PLUGIN_DATA$/i.test(k)));
  process.stdout.write(JSON.stringify({command,args,cwd:opts.cwd,shell:opts.shell,env})+'\\n');
  setImmediate(function(){child.emit(process.env.STUB_EVENT, new Error('synthetic failure'));setImmediate(function(){child.emit('exit',Number(process.env.STUB_CODE))})});return child;
-};''', encoding='utf-8')
+};''', encoding='utf-8', newline="\n")
     env = dict(env, STUB_EVENT=event, STUB_CODE=str(code), STUB_WINDOWS=str(int(windows)), HIDE_NPX=str(int(hide_npx)))
     generated = json.loads((ROOT / '.mcp.json').read_text(encoding='utf-8'))['mcpServers']['lt-chrome']
     return subprocess.run([NODE, '--require', str(hook), '-e', generated['args'][1], '--', *tags],
@@ -332,7 +337,7 @@ def test_bootstrap_without_root_runs_fallback(sandbox, tags):
     root = home / 'plant'
     launcher = root / 'skills/lt-suite-setup/scripts/_shared/lt_chrome/lt-chrome.cjs'
     launcher.parent.mkdir(parents=True)
-    launcher.write_text("throw new Error('planted launcher ran')", encoding='utf-8')
+    launcher.write_text("throw new Error('planted launcher ran')", encoding='utf-8', newline="\n")
     env.update(CLAUDE_PLUGIN_ROOT=str(root), PLUGIN_ROOT=str(root),
                CHROME_DEVTOOLS_MCP_CATEGORY_EXPERIMENTAL_THIRD_PARTY='1', PLUGIN_DATA='ignored')
     r = bootstrap(sandbox, [*tags, 'via=synthetic'])
@@ -363,7 +368,7 @@ def test_bootstrap_failed_spawn_writes_no_record(sandbox):
 def test_bootstrap_fallback_unwritable_cache(sandbox):
     home, env = sandbox
     blocked = home / 'blocked'
-    blocked.write_text('file blocks folder creation', encoding='utf-8')
+    blocked.write_text('file blocks folder creation', encoding='utf-8', newline="\n")
     env.update(HOME=str(blocked), USERPROFILE=str(blocked), XDG_CACHE_HOME=str(blocked), LOCALAPPDATA=str(blocked))
     r = bootstrap(sandbox, code=7)
     assert r.returncode == 7
@@ -379,7 +384,7 @@ def test_bootstrap_root_order(sandbox):
         root = home / name
         target = root / 'skills/lt-suite-setup/scripts/_shared/lt_chrome/lt-chrome.cjs'
         target.parent.mkdir(parents=True)
-        target.write_text('exports.main=function(tags){process.stdout.write('+json.dumps(name)+')}', encoding='utf-8')
+        target.write_text('exports.main=function(tags){process.stdout.write('+json.dumps(name)+')}', encoding='utf-8', newline="\n")
         roots.append(str(root))
     generated = json.loads((ROOT / '.mcp.json').read_text(encoding='utf-8'))['mcpServers']['lt-chrome']
     r = subprocess.run([NODE, '-e', generated['args'][1], '--', 'root='+str(home/'missing'),
@@ -496,7 +501,7 @@ def test_doctor_quiet_browser_lines(sandbox, setup_module, monkeypatch, adapter)
 def test_doctor_browser_lines(sandbox, setup_module, monkeypatch, browser, content, expected):
     folder = sandbox[0] / 'profile'
     folder.mkdir()
-    if content: (folder/'DevToolsActivePort').write_text(content, encoding='utf-8')
+    if content: (folder/'DevToolsActivePort').write_text(content, encoding='utf-8', newline="\n")
     plan(sandbox, {'adapter':'auto','chromium':browser,'chromium_user_data_dir':str(folder)})
     monkeypatch.setenv('LT_SUITE_CONFIG', sandbox[1]['LT_SUITE_CONFIG'])
     results = setup_module.check_browser({'cfg':config_core().load()})
@@ -573,12 +578,12 @@ def test_bootstrap_cache_dir_matches_python(sandbox, xdg):
     env.pop('XDG_CACHE_HOME',None)
     if xdg: env['XDG_CACHE_HOME'] = str(home/'alternate') if xdg=='absolute' else xdg
     r = bootstrap(sandbox)
-    assert json.loads(r.stdout)['cwd'] == str(paths.cache_dir(environ=env)/'lt-chrome'/'run')
+    assert Path(json.loads(r.stdout)['cwd']).parent == paths.cache_dir(environ=env)/'lt-chrome'/'run'
 
 
 def test_windows_spawn_needs_npx_cli(sandbox):
     hook = sandbox[0]/'hide-npx.cjs'
-    hook.write_text("const fs=require('fs'),orig=fs.existsSync;fs.existsSync=function(p){return String(p).endsWith('npx-cli.js')?false:orig(p)}", encoding='utf-8')
+    hook.write_text("const fs=require('fs'),orig=fs.existsSync;fs.existsSync=function(p){return String(p).endsWith('npx-cli.js')?false:orig(p)}", encoding='utf-8', newline="\n")
     sandbox[1]['NODE_OPTIONS'] = '--require='+str(hook)
     p = plan(sandbox,None,'--platform','win32')
     assert p['action'] == 'refuse' and 'npx-cli.js' in p['reason']
@@ -602,10 +607,10 @@ def test_doctor_fallback_records(sandbox, setup_module, monkeypatch, adapter, re
     monkeypatch.setenv('LT_SUITE_CONFIG',p['config'])
     cache = Path(p['cache_dir'])/'lt-chrome'
     cache.mkdir(parents=True,exist_ok=True)
-    (cache/'last-fallback-test.json').write_text(json.dumps({'via':'test','time':'synthetic','action':'fallback','reason':reason}), encoding='utf-8')
+    (cache/'last-fallback-test.json').write_text(json.dumps({'via':'test','time':'synthetic','action':'fallback','reason':reason}), encoding='utf-8', newline="\n")
     stable = Path(p['chrome_stable_profile_dir'])
     stable.mkdir(parents=True)
-    (stable/'DevToolsActivePort').write_text('9222\n@example.invalid/x\n', encoding='utf-8')
+    (stable/'DevToolsActivePort').write_text('9222\n@example.invalid/x\n', encoding='utf-8', newline="\n")
     lines = setup_module.check_browser({'cfg':config_core().load()})
     assert any('started the 0.1.0 fallback' in r.text and r.status==('PASS' if adapter=='auto' else 'WARN') for r in lines)
     assert any('unexpected second line' in r.text and r.status=='FAIL' for r in lines)
@@ -617,7 +622,7 @@ def test_doctor_unused_browser_folder_is_not_read(sandbox, setup_module, monkeyp
     monkeypatch.setenv('LT_SUITE_CONFIG',p['config'])
     folder = Path(sandbox[1]['XDG_CONFIG_HOME'])/'BraveSoftware/Brave-Browser'
     folder.mkdir(parents=True)
-    (folder/'DevToolsActivePort').write_text('9222\n@example.invalid/x\n', encoding='utf-8')
+    (folder/'DevToolsActivePort').write_text('9222\n@example.invalid/x\n', encoding='utf-8', newline="\n")
     lines = setup_module.check_browser({'cfg':config_core().load()})
     assert not any('DevToolsActivePort' in r.text or r.status=='FAIL' for r in lines)
 
@@ -686,26 +691,30 @@ def workspace_isolation(configured_server, tmp_path, root, layout, *, interprete
         from ltcore import paths
         ancestor = Path(str(paths.cache_dir(environ=env)))/'lt-chrome'
         ancestor.mkdir(parents=True)
-        (ancestor/'package.json').write_text('{"workspaces":["run"]}', encoding='utf-8')
+        (ancestor/'package.json').write_text('{"workspaces":["run"]}', encoding='utf-8', newline="\n")
     else:
         ancestor = home
     package = ancestor/'node_modules/chrome-devtools-mcp'
     package.mkdir(parents=True)
-    (package/'package.json').write_text('{"name":"chrome-devtools-mcp","version":"1.12.0","bin":"bin.cjs"}', encoding='utf-8')
+    (package/'package.json').write_text('{"name":"chrome-devtools-mcp","version":"1.12.0","bin":"bin.cjs"}', encoding='utf-8', newline="\n")
     marker = tmp_path/'marker'
-    (package/'bin.cjs').write_text("require('fs').writeFileSync("+json.dumps(str(marker))+",'planted')", encoding='utf-8')
-    (home/'.npmrc').write_text('registry=http://127.0.0.1:9\n', encoding='utf-8')
+    (package/'bin.cjs').write_text("require('fs').writeFileSync("+json.dumps(str(marker))+",'planted')", encoding='utf-8', newline="\n")
+    (home/'.npmrc').write_text('registry=http://127.0.0.1:9\n', encoding='utf-8', newline="\n")
     # HOME-as-workspace also makes .npmrc the trusted user config. Separate that
     # npm authority so this test measures project discovery, not user settings.
     userconfig = tmp_path/'user-npmrc'
-    userconfig.write_text('', encoding='utf-8')
+    userconfig.write_text('', encoding='utf-8', newline="\n")
     env['npm_config_userconfig'] = str(userconfig)
     env['npm_config_fetch_retries'] = '0'
-    if os.name!='nt':
+    if os.name == 'nt':
+        folder = ancestor/'node_modules/.bin'; folder.mkdir()
+        (folder/'node.cmd').write_bytes(
+            ('@echo off\r\n>"' + str(marker) + '" echo planted-node\r\nexit /b 7\r\n').encode('utf-8'))
+    else:
         folder = ancestor/'node_modules/.bin'; folder.mkdir()
         for name in interpreters:
             f = folder/name
-            f.write_text('#!/bin/sh\necho planted-'+name+' > '+shlex.quote(str(marker))+'\nexit 7\n', encoding='utf-8')
+            f.write_text('#!/bin/sh\necho planted-'+name+' > '+shlex.quote(str(marker))+'\nexit 7\n', encoding='utf-8', newline="\n")
             f.chmod(0o755)
     try:
         assert probe(command if command is not None else command_for(root),home,env) == DOCUMENTED_TOOLS
@@ -724,11 +733,11 @@ def test_npx_macos_cache_ancestor_interpreters(configured_server, tmp_path, monk
     # A Node installation path may itself contain spaces and shell quotes.
     node = tmp_path / "node's bin/node"
     node.parent.mkdir()
-    node.write_text('#!/bin/sh\nexec ' + shlex.quote(NODE) + ' "$@"\n', encoding='utf-8')
+    node.write_text('#!/bin/sh\nexec ' + shlex.quote(NODE) + ' "$@"\n', encoding='utf-8', newline="\n")
     node.chmod(0o700)
     hook.write_text("if(process.argv.includes('via=j6')){"
                     "Object.defineProperty(process,'platform',{value:'darwin'});"
-                    "Object.defineProperty(process,'execPath',{value:" + json.dumps(str(node)) + "});}", encoding='utf-8')
+                    "Object.defineProperty(process,'execPath',{value:" + json.dumps(str(node)) + "});}", encoding='utf-8', newline="\n")
     monkeypatch.setenv('NODE_OPTIONS', '--require=' + str(hook))
     physical = tmp_path / 'private/var'
     physical.mkdir(parents=True)
@@ -748,7 +757,10 @@ def test_npx_argv_roundtrip(configured_server, sandbox, monkeypatch):
     argv = p['argv']
     index = argv.index('-y')+1
     argv[index] = 'file:'+str(ROOT/'tests/packaging/fixtures/npx_echo')
-    r = subprocess.run(argv, encoding='utf-8', env=env, cwd=p['cwd'],capture_output=True,text=True,timeout=60)
+    # Node uses UTF-8 argv bytes on POSIX; Python's filesystem codec may be ASCII.
+    # Windows uses its Unicode process API and must keep string arguments.
+    command = [arg.encode('utf-8') for arg in argv] if os.name != 'nt' else argv
+    r = subprocess.run(command, encoding='utf-8', env=env, cwd=p['cwd'],capture_output=True,text=True,timeout=60)
     assert r.returncode == 0, r.stderr
     assert json.loads(r.stdout) == argv[index+1:]
 
@@ -811,9 +823,9 @@ def test_doctor_reports_version_config_mismatch_and_old_stable_launcher(sandbox,
         return result
     monkeypatch.setattr(setup_module,'chrome_plan',node21)
     folder=Path(p['cache_dir'])/'lt-chrome'; folder.mkdir(parents=True)
-    (folder/'last-start-test.json').write_text(json.dumps({'config':str(sandbox[0]/'different.toml'),'action':'serve-none','via':'test','time':'synthetic'}), encoding='utf-8')
+    (folder/'last-start-test.json').write_text(json.dumps({'config':str(sandbox[0]/'different.toml'),'action':'serve-none','via':'test','time':'synthetic'}), encoding='utf-8', newline="\n")
     stable=Path(p['config_dir'])/'lt-chrome.cjs'; stable.parent.mkdir(parents=True)
-    stable.write_text("process.stdout.write(JSON.stringify({lt_suite_version:'0.0.0'}))", encoding='utf-8')
+    stable.write_text("process.stdout.write(JSON.stringify({lt_suite_version:'0.0.0'}))", encoding='utf-8', newline="\n")
     results = setup_module.check_browser({'cfg':config_core().load()})
     assert any(r.status=='WARN' and 'node 21.7.3' in r.text for r in results)
     assert any(r.status=='WARN' and 'another folder' in r.text for r in results)
@@ -838,9 +850,9 @@ def test_bootstrap_record_is_absent_before_spawn(sandbox):
     hook=home/'event-hook.cjs'
     hook.write_text('''const fs=require('fs'),cp=require('child_process'),E=require('events'),path=require('path');
 cp.spawn=function(command,args,opts){const child=new E();child.kill=function(){};
-setImmediate(function(){const file=path.join(path.dirname(opts.cwd),'last-fallback-event.json');
+setImmediate(function(){const file=path.join(path.dirname(path.dirname(opts.cwd)),'last-fallback-event.json');
 process.stdout.write(JSON.stringify({before:fs.existsSync(file)})+'\\n');child.emit('spawn');
-process.stdout.write(JSON.stringify({after:fs.existsSync(file)})+'\\n');child.emit('exit',0)});return child};''', encoding='utf-8')
+process.stdout.write(JSON.stringify({after:fs.existsSync(file)})+'\\n');child.emit('exit',0)});return child};''', encoding='utf-8', newline="\n")
     boot=json.loads((ROOT/'.mcp.json').read_text(encoding='utf-8'))['mcpServers']['lt-chrome']['args'][1]
     result=subprocess.run([NODE,'--require',str(hook),'-e',boot,'--','via=event'],encoding='utf-8', cwd=home,env=env,capture_output=True,text=True)
     assert result.returncode==0
@@ -858,14 +870,14 @@ def test_bootstrap_home_cache_precedence(sandbox, layout):
     if layout == 'localappdata': env['LOCALAPPDATA'] = str(home/'local-data')
     r=bootstrap(sandbox)
     assert r.returncode == 0
-    assert json.loads(r.stdout)['cwd'] == str(paths.cache_dir(environ=env)/'lt-chrome'/'run')
+    assert Path(json.loads(r.stdout)['cwd']).parent == paths.cache_dir(environ=env)/'lt-chrome'/'run'
 
 
 def test_doctor_warns_when_cache_is_unwritable(sandbox, setup_module, monkeypatch):
     p=plan(sandbox, {'adapter':'auto'})
     monkeypatch.setenv('LT_SUITE_CONFIG',p['config'])
     blocked=sandbox[0]/'blocked-cache'
-    blocked.write_text('file', encoding='utf-8')
+    blocked.write_text('file', encoding='utf-8', newline="\n")
     monkeypatch.setenv('XDG_CACHE_HOME',str(blocked))
     monkeypatch.setenv('LOCALAPPDATA',str(blocked))
     if sys.platform=='darwin':
@@ -894,7 +906,7 @@ def test_doctor_detects_stale_node_gate_in_stable_launcher(sandbox, setup_module
     pins=json.loads(subprocess.check_output([NODE,str(LAUNCHER),'--print-pins'],encoding='utf-8', text=True))
     pins['node_gate']={'min_major':18}
     stable=Path(p['config_dir'])/'lt-chrome.cjs'; stable.parent.mkdir(parents=True)
-    stable.write_text('process.stdout.write('+json.dumps(json.dumps(pins))+')', encoding='utf-8')
+    stable.write_text('process.stdout.write('+json.dumps(json.dumps(pins))+')', encoding='utf-8', newline="\n")
     results=setup_module.check_browser({'cfg':config_core().load()})
     assert any(r.status=='WARN' and 'lt-chrome install' in r.text for r in results)
 
@@ -971,9 +983,9 @@ def test_doctor_preserves_workspace_quiet_rule(sandbox, setup_module, monkeypatc
     from ltcore import paths
     platform_config = paths.config_dir(environ=env) / 'config.toml'
     platform_config.parent.mkdir(parents=True)
-    platform_config.write_text('[browser]\nadapter="manual-paste"\n', encoding='utf-8')
+    platform_config.write_text('[browser]\nadapter="manual-paste"\n', encoding='utf-8', newline="\n")
     workspace = home / 'lt-suite.toml'
-    workspace.write_text('[browser]\nadapter="auto"\n', encoding='utf-8')
+    workspace.write_text('[browser]\nadapter="auto"\n', encoding='utf-8', newline="\n")
     monkeypatch.delenv('LT_SUITE_CONFIG', raising=False)
     if override == 'env':
         monkeypatch.setenv('LT_SUITE_CONFIG', str(workspace))
@@ -1006,16 +1018,16 @@ def test_doctor_relative_chrome_profile_uses_child_cwd(sandbox, setup_module, mo
     monkeypatch.setenv(variable, 'relative-chrome')
     if not cache_writable:
         blocked = home / 'blocked-cache'
-        blocked.write_text('file', encoding='utf-8')
+        blocked.write_text('file', encoding='utf-8', newline="\n")
         monkeypatch.setenv('XDG_CACHE_HOME', str(blocked))
     effective_plan = setup_module.chrome_plan()
     child_profile = Path(effective_plan['cwd']) / 'relative-chrome/google-chrome'
     child_profile.mkdir(parents=True)
-    (child_profile / 'DevToolsActivePort').write_text('9222\n@example.invalid/x\n', encoding='utf-8')
+    (child_profile / 'DevToolsActivePort').write_text('9222\n@example.invalid/x\n', encoding='utf-8', newline="\n")
     if cache_writable:
         decoy = home / 'relative-chrome/google-chrome'
         decoy.mkdir(parents=True)
-        (decoy / 'DevToolsActivePort').write_text('9333\n/devtools/browser/decoy\n', encoding='utf-8')
+        (decoy / 'DevToolsActivePort').write_text('9333\n/devtools/browser/decoy\n', encoding='utf-8', newline="\n")
     results = setup_module.check_browser({'cfg': config_core().load()})
     assert any(r.status == 'FAIL' and 'unexpected second line' in r.text for r in results)
     assert not any(r.status == 'PASS' and 'port 9333' in r.text for r in results)
@@ -1027,12 +1039,12 @@ def test_doctor_relative_fallback_profile_uses_child_cwd(sandbox, setup_module, 
     p = plan(sandbox, {'adapter': 'manual-paste'})
     monkeypatch.setenv('LT_SUITE_CONFIG', p['config'])
     monkeypatch.setenv('CHROME_CONFIG_HOME', 'relative-chrome')
-    run_folder = Path(p['cache_dir']) / 'lt-chrome/run'
+    run_folder = Path(plan(sandbox, {'adapter': 'auto'})['cwd'])
     profile = run_folder / 'relative-chrome/google-chrome'
     profile.mkdir(parents=True)
-    (profile / 'DevToolsActivePort').write_text('9222\n@example.invalid/x\n', encoding='utf-8')
-    (run_folder.parent / 'last-fallback-test.json').write_text(json.dumps(
-        {'action': 'fallback', 'via': 'test', 'time': 'synthetic'}), encoding='utf-8')
+    (profile / 'DevToolsActivePort').write_text('9222\n@example.invalid/x\n', encoding='utf-8', newline="\n")
+    (Path(p['cache_dir']) / 'lt-chrome/last-fallback-test.json').write_text(json.dumps(
+        {'action': 'fallback', 'via': 'test', 'time': 'synthetic'}), encoding='utf-8', newline="\n")
     results = setup_module.check_browser({'cfg': config_core().load()})
     assert any(r.status == 'FAIL' and 'unexpected second line' in r.text for r in results)
 
@@ -1053,7 +1065,7 @@ cp.execFileSync=function(command,args){
  if(command==='dscacheutil' && args.join(' ')==='-q user -a name ltchrome-fixture-user')
    return 'dir: '+process.env.FIXTURE_ACCOUNT_HOME+'\\n';
  throw Error('unexpected account lookup');
-};''', encoding='utf-8')
+};''', encoding='utf-8', newline="\n")
     env.update(NODE_OPTIONS='--require=' + str(hook), FIXTURE_ACCOUNT_HOME=str(account_home))
     monkeypatch.setenv('NODE_OPTIONS', env['NODE_OPTIONS'])
     monkeypatch.setenv('FIXTURE_ACCOUNT_HOME', str(account_home))
@@ -1073,7 +1085,7 @@ def test_named_user_lookup_failure_is_safe(sandbox, unknown):
     home, env = sandbox
     hook = home / 'missing-account-hook.cjs'
     hook.write_text("require('child_process').execFileSync=function(){const e=Error('private lookup error');"
-                    + ("e.status=2;" if unknown else "e.code='ENOENT';") + "throw e};", encoding='utf-8')
+                    + ("e.status=2;" if unknown else "e.code='ENOENT';") + "throw e};", encoding='utf-8', newline="\n")
     env['NODE_OPTIONS'] = '--require=' + str(hook)
     p = plan(sandbox, {'chromium_user_data_dir': '~ltchrome-fixture-user/profile'},
              '--platform', 'linux')
@@ -1144,7 +1156,7 @@ def test_unknown_browser_keys_refuse_without_spawning(sandbox, raw):
     assert p['action'] == 'refuse', p
     assert not p['argv']
     hook = sandbox[0] / 'no-spawn.cjs'
-    hook.write_text("require('child_process').spawn=function(){throw Error('unexpected server startup')}", encoding='utf-8')
+    hook.write_text("require('child_process').spawn=function(){throw Error('unexpected server startup')}", encoding='utf-8', newline="\n")
     sandbox[1]['NODE_OPTIONS'] = '--require=' + str(hook)
     result = invoke(sandbox, text='')
     assert result.returncode == 0, result.stderr
@@ -1157,3 +1169,114 @@ def test_known_browser_keys_and_other_profile_remain_supported(sandbox):
              'transport="download"\nsink_port=8731\nlib_mode="inline"\nlib_port=8733\njs_tmp_dir=""\n')
     assert p['action'] == 'start', p['reason']
     assert '--userDataDir=' + str(sandbox[0] / 'custom') in p['argv']
+
+
+@pytest.mark.parametrize('value,config,profile,action', [
+    (r'~\lt-suite\config.toml', r'C:\synthetic\Synthetic\lt-suite\config.toml', '', 'serve-none'),
+    (r'D:\configuration\config.toml', r'D:\configuration\config.toml', r'\profile', 'start'),
+    (r'D:\configuration\config.toml', r'D:\configuration\config.toml', r'D:profile', 'refuse'),
+    (r'D:\configuration\config.toml', r'D:\configuration\config.toml', r'C:profile', 'refuse'),
+])
+def test_windows_config_and_profile_path_resolution(sandbox, value, config, profile, action):
+    home, env = sandbox
+    hook = home / 'windows-files.cjs'
+    raw = '[browser]\n' + ('chromium_user_data_dir=' + json.dumps(profile) if profile else 'adapter="manual-paste"')
+    # Only fake the Windows filesystem boundary. The real launcher resolves paths.
+    hook.write_text("const fs=require('fs'),read=fs.readFileSync;"
+        "fs.readFileSync=function(p,...a){if(String(p).endsWith('.toml')){"
+        "if(p===" + json.dumps(config) + ")return " + json.dumps(raw) + ";"
+        "throw Object.assign(Error('missing synthetic config'),{code:'ENOENT'})}return read(p,...a)};"
+        "fs.mkdirSync=()=>{};fs.writeFileSync=()=>{};fs.copyFileSync=()=>{};",
+        encoding='utf-8', newline='\n')
+    env['NODE_OPTIONS'] = '--require=' + str(hook)
+    plan_env = dict(USERPROFILE=r'C:\synthetic\Synthetic', APPDATA=r'C:\Roaming',
+                    LOCALAPPDATA=r'C:\Local', LT_SUITE_CONFIG=value)
+    result = invoke(sandbox, '--plan', '--platform', 'win32', '--env-json', json.dumps(plan_env),
+                    '--cwd', r'C:\agent')
+    assert result.returncode == 0, result.stderr
+    p = json.loads(result.stdout)
+    assert p['action'] == action, p['reason']
+    assert p['config'] == config
+    if profile == r'\profile':
+        assert p['profile_dir'] == r'D:\profile'
+        assert '--userDataDir=D:\\profile' in p['argv']
+    if action == 'refuse':
+        assert 'drive-relative' in p['reason']
+
+
+@pytest.mark.skipif(os.name != 'nt', reason='Windows executable sharing rules')
+@pytest.mark.parametrize('root', [True, False])
+def test_windows_interpreter_pin_reuses_running_binary(sandbox, root):
+    initial = plan(sandbox)
+    node = Path(initial['cwd']) / 'node_modules/.bin/node.exe'
+    process = subprocess.Popen([str(node), '-e', "process.stdout.write('ready\\n');setInterval(()=>{},1000)"],
+                               stdout=subprocess.PIPE)
+    try:
+        assert process.stdout.readline() == b'ready\n'
+        if root:
+            current = plan(sandbox)
+            assert current['cwd'] == initial['cwd'], current['reason']
+        else:
+            result = bootstrap(sandbox)
+            assert result.returncode == 0, result.stderr
+            assert json.loads(result.stdout)['cwd'] == initial['cwd']
+    finally:
+        process.terminate()
+        process.wait(timeout=15)
+        process.stdout.close()
+
+
+@pytest.mark.parametrize('root', [True, False])
+def test_interpreter_upgrade_keeps_neutral_cwd(sandbox, root):
+    home, env = sandbox
+    first = plan(sandbox)
+    old = Path(first['cwd']) / ('node_modules/.bin/node.exe' if os.name == 'nt' else 'node_modules/.bin/node')
+    old.write_bytes(b'old running binary')
+    source = home / 'new-node.exe'
+    source.write_bytes(b'new trusted binary')
+    hook = home / 'upgrade.cjs'
+    hook.write_text("const fs=require('fs'),copy=fs.copyFileSync,write=fs.writeFileSync;"
+                    "Object.defineProperty(process,'execPath',{value:" + json.dumps(str(source)) + "});"
+                    "fs.copyFileSync=function(a,b){if(fs.existsSync(b))throw Error('locked executable');return copy(a,b)};"
+                    "fs.writeFileSync=function(p,...a){if(p===" + json.dumps(str(old)) + ")throw Error('locked executable');return write(p,...a)};"
+                    "const exists=fs.existsSync;fs.existsSync=function(p){return String(p).endsWith('npx-cli.js')||exists(p)};",
+                    encoding='utf-8', newline='\n')
+    env['NODE_OPTIONS'] = '--require=' + str(hook)
+    if root:
+        current = plan(sandbox)
+        cwd = current['cwd']
+        assert current['action'] == 'start', current['reason']
+    else:
+        result = bootstrap(sandbox)
+        assert result.returncode == 0, result.stderr
+        cwd = json.loads(result.stdout)['cwd']
+    assert Path(cwd) != home
+    assert old.read_bytes() == b'old running binary'
+    pin = Path(cwd) / 'node_modules/.bin'
+    if os.name == 'nt':
+        assert (pin / 'node.exe').read_bytes() == source.read_bytes()
+    else:
+        assert str(source) in (pin / 'node').read_text(encoding='utf-8')
+
+
+@pytest.mark.skipif(os.name != 'nt', reason='Windows PATHEXT lookup')
+@pytest.mark.parametrize('root', [True, False])
+def test_windows_node_lookup_ignores_cmd_extension(sandbox, root):
+    home, env = sandbox
+    initial = plan(sandbox)
+    folder = Path(initial['cwd'])
+    marker = home / 'untrusted-node'
+    (folder / 'node_modules/.bin/NoDe.CMD').write_bytes(
+        ('@echo off\r\n>"' + str(marker) + '" echo planted\r\nexit /b 7\r\n').encode('utf-8'))
+    env['PATHEXT'] = '.CMD;.EXE'
+    # Run npm's actual node lookup through the production child environment.
+    hook = home / 'lookup.cjs'
+    hook.write_text("const cp=require('child_process'),spawn=cp.spawn;"
+        "cp.spawn=function(command,args,options){if(args[0]&&args[0].endsWith('npx-cli.js'))return spawn(command,[args[0],'--offline','--no-workspaces','-c','node -p process.execPath'],options);return spawn(command,args,options)};",
+        encoding='utf-8', newline='\n')
+    env['NODE_OPTIONS'] = '--require=' + str(hook)
+    command = command_for(root)
+    result = subprocess.run(command, cwd=home, env=env, capture_output=True, encoding='utf-8', timeout=30)
+    assert not marker.exists(), 'untrusted NoDe.CMD executed'
+    assert result.returncode == 0, result.stderr
+    assert Path(result.stdout.strip()).name.lower() == 'node.exe'

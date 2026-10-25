@@ -130,7 +130,7 @@ def test_runtime_tools_list_equals_documented_set(configured_server):
 def test_generated_mcp_json_quiet_end_to_end(tmp_path):
     env = isolated_env(tmp_path)
     config = tmp_path/'quiet.toml'
-    config.write_text('[browser]\nadapter="claude-in-chrome"\n', encoding='utf-8')
+    config.write_text('[browser]\nadapter="claude-in-chrome"\n', encoding='utf-8', newline="\n")
     env.update(LT_SUITE_CONFIG=str(config), PATH='', npm_config_registry='http://127.0.0.1:9')
     assert probe(command_for(), tmp_path, env) == set()
 
@@ -138,7 +138,7 @@ def test_generated_mcp_json_quiet_end_to_end(tmp_path):
 def test_generated_mcp_json_fallback_end_to_end(configured_server):
     _, scratch, _, env = configured_server
     config = Path(scratch)/'quiet.toml'
-    config.write_text('[browser]\nadapter="claude-in-chrome"\n', encoding='utf-8')
+    config.write_text('[browser]\nadapter="claude-in-chrome"\n', encoding='utf-8', newline="\n")
     env = dict(env, LT_SUITE_CONFIG=str(config))
     assert probe(command_for(False), scratch, env) == DOCUMENTED_TOOLS
     if os.name == 'posix' and Path('/proc').is_dir():
@@ -153,7 +153,7 @@ def test_user_cd4a_config_cannot_widen_tools(configured_server, root):
     _, scratch, _, env = configured_server
     folder = Path(env['XDG_CONFIG_HOME'])/'cd4a'
     folder.mkdir(parents=True, exist_ok=True)
-    (folder/'config.json').write_text(json.dumps({'categoryExtensions':True,'wsEndpoint':'ws://192.0.2.1:9/x'}), encoding='utf-8')
+    (folder/'config.json').write_text(json.dumps({'categoryExtensions':True,'wsEndpoint':'ws://192.0.2.1:9/x'}), encoding='utf-8', newline="\n")
     env = dict(env, CHROME_DEVTOOLS_MCP_CATEGORY_EXPERIMENTAL_THIRD_PARTY='1')
     assert probe(command_for(root), scratch, env) == DOCUMENTED_TOOLS
 

@@ -53,7 +53,7 @@ json.dump(doc, open(dst, "w", encoding="utf-8"))
 
 def config(kit, *entries) -> None:
     script = kit.tmp / "cleaner.py"
-    script.write_text(CLEANER)
+    script.write_text(CLEANER, encoding="utf-8", newline="\n")
     text = f'schema_version = 1\n[lt]\norigin = "{ORIGIN}"\n'
     for name, stage, mode, extra, timeout in entries:
         places = ["{pdf}", "{pdf}"] if stage == "pdf" else ["{in}", "{out}"]
@@ -79,7 +79,7 @@ def test_cleaners_run_in_config_order_and_hash_the_cleaned_text(kit, emit_mod):
     # The scripts hash the text that is written, after the cleaners.
     r = kit.emit("scripts", "--out", "out", "--no-render")
     assert r.returncode == 0
-    body = (kit.tmp / "out" / "_fill-c1-r101-p1.js").read_text()
+    body = (kit.tmp / "out" / "_fill-c1-r101-p1.js").read_text(encoding="utf-8")
     assert f'"h": {emit_mod.djb2("Draft p1-10 A B")}' in body
 
 

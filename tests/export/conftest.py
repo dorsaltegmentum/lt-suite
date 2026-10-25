@@ -69,7 +69,7 @@ def make_config(tmp_path, font_cache):
             lines += [f"{k} = {toml_value(v)}" for k, v in values.items()]
             lines.append("")
         path = tmp_path / "lt-suite.toml"
-        path.write_text("\n".join(lines), encoding="utf-8")
+        path.write_text("\n".join(lines), encoding="utf-8", newline="\n")
         return path
     return build
 

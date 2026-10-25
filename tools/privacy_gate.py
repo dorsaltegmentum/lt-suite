@@ -422,7 +422,7 @@ def text_windows(text: str, salt: bytes):
 def read_salt(private_dir: Path) -> bytes:
     f = private_dir / SALT_FILE
     try:
-        salt = bytes.fromhex(f.read_text(encoding="ascii").strip())
+        salt = bytes.fromhex(f.read_text(encoding="utf-8").strip())
     except (OSError, ValueError):
         raise GateError(f"cannot read the shingle salt ({SALT_FILE} beside the index)") from None
     if not 16 <= len(salt) <= 64:
@@ -1435,7 +1435,8 @@ def git(repo: Path, *args: str, binary: bool = False, check: bool = True,
     if not shutil.which("git"):
         raise GateError("git is not on PATH")
     r = subprocess.run(["git", "-C", str(repo), *args], capture_output=True, input=stdin,
-                       text=not binary and stdin is None)
+                       text=not binary and stdin is None,
+                       encoding="utf-8" if not binary and stdin is None else None)
     if check and r.returncode != 0:
         err = r.stderr if isinstance(r.stderr, str) else r.stderr.decode("utf-8", "replace")
         raise GateError(f"git {args[0]} failed: {err.strip()[:200]}")
@@ -1775,7 +1776,7 @@ def build_shingles(src_root: Path, out_dir: Path, sources: Path, patterns: Path 
     salt_file = out_dir / SALT_FILE
     if not salt_file.exists():
         fd = os.open(salt_file, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
-        with os.fdopen(fd, "w", encoding="ascii") as f:
+        with os.fdopen(fd, "w", encoding="utf-8", newline="\n") as f:
             f.write(os.urandom(32).hex() + "\n")
     salt = read_salt(out_dir)
     private, _ = load_private(out_dir)
@@ -1945,6 +1946,12 @@ def run_scan(args: argparse.Namespace) -> int:
 
 
 def main(argv: list[str] | None = None) -> int:
+    import sys
+    from pathlib import Path
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "shared"))
+    from ltcore.streams import configure_utf8
+    configure_utf8()
+
     argv = list(sys.argv[1:] if argv is None else argv)
     try:
         if argv[:1] == ["build-shingles"]:

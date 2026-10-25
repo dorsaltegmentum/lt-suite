@@ -23,9 +23,9 @@ def run_harness(script, tmp_path, *args):
         [sys.executable, str(HARNESS / script), "--repo", str(ROOT),
          "--json-out", str(report), *args],
         cwd=ROOT, capture_output=True, text=True, timeout=900,
-    )
+    encoding="utf-8")
     assert result.returncode == 0, result.stdout + result.stderr
-    data = json.loads(report.read_text())
+    data = json.loads(report.read_text(encoding="utf-8"))
     assert data["counts"]["FAIL"] == 0, data
     return data
 

@@ -38,9 +38,9 @@ def run(tmp: Path, *args: str) -> subprocess.CompletedProcess:
     env["LT_SUITE_DATA"] = str(tmp / "data")
     cfg = tmp / "lt-suite.toml"
     if not cfg.exists():
-        cfg.write_text("schema_version = 1\n", encoding="utf-8")
+        cfg.write_text("schema_version = 1\n", encoding="utf-8", newline="\n")
     return subprocess.run([sys.executable, str(STAMP), "--config", str(cfg), *args],
-                          capture_output=True, text=True, env=env, cwd=tmp, timeout=120)
+                          capture_output=True, text=True, env=env, cwd=tmp, timeout=120, encoding="utf-8")
 
 
 def layout(tmp: Path) -> tuple[Path, Path]:
@@ -51,7 +51,7 @@ def layout(tmp: Path) -> tuple[Path, Path]:
 
 def put(path: Path, doc) -> Path:
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(doc, indent=1), encoding="utf-8")
+    path.write_text(json.dumps(doc, indent=1), encoding="utf-8", newline="\n")
     return path
 
 
@@ -72,7 +72,7 @@ def test_a_valid_incoming_module_moves_to_captures(tmp_path):
     assert not (inc / f"module-{mid}.json").exists()
     assert "question digest:" in r.stdout
     assert "OK: " in r.stdout
-    out = json.loads((cap / f"module-{mid}.json").read_text())
+    out = json.loads((cap / f"module-{mid}.json").read_text(encoding="utf-8"))
     assert "question_digest" not in json.dumps(out), "the digest is printed, never stored"
 
 
@@ -85,7 +85,7 @@ def test_legacy_permission_field_is_dropped_with_a_note(tmp_path):
     r = run(tmp_path, mid)
     assert r.returncode == 0, r.stdout + r.stderr
     assert "dropped legacy field(s) permission" in r.stdout
-    assert "permission" not in json.loads((cap / f"module-{mid}.json").read_text())
+    assert "permission" not in json.loads((cap / f"module-{mid}.json").read_text(encoding="utf-8"))
 
 
 def test_a_schema_failure_exits_2_and_nothing_moves(tmp_path):
@@ -131,7 +131,7 @@ def test_media_move_and_local_paths_are_relative_to_the_capture(tmp_path):
     assert r.returncode == 0, r.stdout + r.stderr
     assert (cap / "media" / f"lt-{mid}-slide-grid-01.png").read_bytes() == PNG
     assert not (inc / "media" / f"lt-{mid}-slide-grid-01.png").exists()
-    doc = json.loads((cap / f"module-{mid}.json").read_text())
+    doc = json.loads((cap / f"module-{mid}.json").read_text(encoding="utf-8"))
     paths = [m.get("local_path") for p in doc["pages"] for c in p.get("content", []) for m in c.get("media") or []]
     assert f"media/lt-{mid}-slide-grid-01.png" in paths
     assert "1 of 1 keyed media entries resolved" in r.stdout
@@ -164,7 +164,7 @@ def test_the_newest_numbered_copy_wins_and_older_ones_are_set_aside(tmp_path):
     put(inc / f"module-{mid}.2.json", new)
     r = run(tmp_path, mid)
     assert r.returncode == 0, r.stdout + r.stderr
-    assert json.loads((cap / f"module-{mid}.json").read_text())["lesson"]["title"] == "newer"
+    assert json.loads((cap / f"module-{mid}.json").read_text(encoding="utf-8"))["lesson"]["title"] == "newer"
     assert not list(inc.glob(f"module-{mid}*.json"))
     assert sorted(p.name for p in (inc / "superseded").iterdir()) == [f"module-{mid}.1.json", f"module-{mid}.json"]
 
@@ -174,7 +174,7 @@ def test_reference_moves_once_and_a_different_one_is_refused(tmp_path):
         pytest.skip("not run: WP02 reference example missing")
     inc, cap = layout(tmp_path)
     mid = example()["module_id"]
-    ref = json.loads(REF_EXAMPLE.read_text())
+    ref = json.loads(REF_EXAMPLE.read_text(encoding="utf-8"))
     ref["module_id"] = mid
     put(inc / f"module-{mid}.json", example())
     put(inc / f"reference-{mid}.json", ref)
@@ -221,7 +221,7 @@ def test_media_dir_flag_checks_another_folder_and_moves_nothing(tmp_path):
     (other / f"lt-{mid}-slide-grid-01.jpg").write_bytes(b"\xff\xd8\xff\xe0")
     r = run(tmp_path, mid, "--media-dir", str(other))
     assert r.returncode == 0, r.stdout + r.stderr
-    doc = json.loads((cap / f"module-{mid}.json").read_text())
+    doc = json.loads((cap / f"module-{mid}.json").read_text(encoding="utf-8"))
     paths = [m.get("local_path") for p in doc["pages"] for c in p.get("content", []) for m in c.get("media") or []]
     assert any(p and p.endswith(f"elsewhere/lt-{mid}-slide-grid-01.jpg") for p in paths)
     assert not (cap / "media").exists()
@@ -270,7 +270,7 @@ def test_backfill_rules_for_uploads_author_keys_and_empty_slots(tmp_path):
 
 def test_help_runs_without_a_config_or_data(tmp_path):
     env = dict(os.environ, PYTHONPATH=str(SHARED))
-    r = subprocess.run([sys.executable, str(STAMP), "--help"], capture_output=True, text=True, env=env, cwd=tmp_path)
+    r = subprocess.run([sys.executable, str(STAMP), "--help"], capture_output=True, text=True, env=env, cwd=tmp_path, encoding="utf-8")
     assert r.returncode == 0
     assert "Exit codes" in r.stdout
 
@@ -304,7 +304,7 @@ def test_superseded_copies_never_overwrite_each_other(tmp_path):
     put(inc / f"module-{mid}.1.json", example())
     r = run(tmp_path, mid)
     assert r.returncode == 0, r.stdout + r.stderr
-    assert json.loads((inc / "superseded" / f"module-{mid}.json").read_text()) == {"keep": True}
+    assert json.loads((inc / "superseded" / f"module-{mid}.json").read_text(encoding="utf-8")) == {"keep": True}
     assert (inc / "superseded" / f"module-{mid}.1.json").is_file()
 
 
@@ -320,7 +320,7 @@ def test_invalid_reference_leaves_every_incoming_file_untouched(tmp_path, refere
     image.write_bytes(PNG)
     ref = inc / f'reference-{mid}.json'
     if reference == '{broken':
-        ref.write_text(reference)
+        ref.write_text(reference, encoding="utf-8", newline="\n")
     else:
         put(ref, reference)
     before = {p.relative_to(inc): p.read_bytes() for p in inc.rglob('*') if p.is_file()}
@@ -335,7 +335,7 @@ def test_reference_identity_must_match_module_before_publication(tmp_path):
     # A schema-valid reference for another module must never be filed with this capture.
     inc, cap = layout(tmp_path)
     mid = example()['module_id']
-    ref = json.loads(REF_EXAMPLE.read_text())
+    ref = json.loads(REF_EXAMPLE.read_text(encoding="utf-8"))
     ref['module_id'] = 'c2-r102'
     ref['run_id'] = 102
     put(inc / f'module-{mid}.json', example())
@@ -352,7 +352,7 @@ def test_stamped_folders_and_files_are_private_under_an_open_umask(tmp_path):
     # Captures hold the student's answers; other accounts must not list or read them.
     inc, cap = layout(tmp_path)
     mid = example()['module_id']
-    ref = json.loads(REF_EXAMPLE.read_text())
+    ref = json.loads(REF_EXAMPLE.read_text(encoding="utf-8"))
     ref['module_id'] = mid
     put(inc / f'module-{mid}.json', example())
     put(inc / f'module-{mid}.1.json', example())

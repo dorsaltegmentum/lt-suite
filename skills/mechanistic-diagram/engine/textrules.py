@@ -38,6 +38,7 @@ widows(geometry)
 
 Tests: tests/diagram/test_textrules.py in the lt-suite repository.
 """
+from _legacy import read_legacy_text
 import json
 import pathlib
 import re
@@ -208,7 +209,7 @@ def _measure(geo):
 
 def widows(geometry):
     """[(node id, last line, why)] for boxes of two or more lines; geometry is a dict or a path."""
-    geo = geometry if isinstance(geometry, dict) else json.loads(pathlib.Path(geometry).read_text())
+    geo = geometry if isinstance(geometry, dict) else json.loads(read_legacy_text(pathlib.Path(geometry)))
     width = _measure(geo)
     out = []
     for nid, b in geo["nodes"].items():
@@ -278,6 +279,9 @@ def report(case_dir, trust=False):
 
 
 def main(argv):
+    from ltcore.streams import configure_utf8
+    configure_utf8()
+
     import argparse
     ap = argparse.ArgumentParser(description="Report what auto_italic, unit_rules, range_rules and widows find in a case.")
     ap.add_argument("case_dir")

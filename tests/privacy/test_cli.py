@@ -8,7 +8,7 @@ import zipfile
 
 def w(path, text: str):
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(text, encoding="utf-8")
+    path.write_text(text, encoding="utf-8", newline="\n")
     return path
 
 
@@ -143,7 +143,7 @@ def test_git_listing_modes(run_gate, tmp_path):
     w(repo / "untracked.txt", "someone@mail.test\n")
     for name in ("tracked.txt", ".gitignore"):
         oid = subprocess.run(["git", "-C", str(repo), "hash-object", "-w", name],
-                             check=True, capture_output=True, text=True).stdout.strip()
+                             check=True, capture_output=True, text=True, encoding="utf-8").stdout.strip()
         subprocess.run(["git", "-C", str(repo), "update-index", "--add", "--cacheinfo",
                         "100644", oid, name], check=True)
     r = run_gate("--repo", str(repo))
@@ -153,7 +153,7 @@ def test_git_listing_modes(run_gate, tmp_path):
     # Deleted in the working tree but still staged: the staged copy is what commits.
     w(repo / "tracked.txt", "/home/someone/x\n")
     oid = subprocess.run(["git", "-C", str(repo), "hash-object", "-w", "tracked.txt"],
-                         check=True, capture_output=True, text=True).stdout.strip()
+                         check=True, capture_output=True, text=True, encoding="utf-8").stdout.strip()
     subprocess.run(["git", "-C", str(repo), "update-index", "--cacheinfo",
                     "100644", oid, "tracked.txt"], check=True)
     (repo / "tracked.txt").unlink()

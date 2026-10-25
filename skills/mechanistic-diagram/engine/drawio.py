@@ -38,6 +38,7 @@ its end point; its T-bar sits on it.
 import base64, html, json, pathlib, re, sys, urllib.parse
 
 import _bootstrap  # noqa: F401  (engine and shared core on sys.path)
+from _legacy import read_legacy_text
 import core as E
 import decor, themes
 from render import KEY_ROLES, KEY_ARROWS, TITLE_FS, SUB_FS, GROUP_FS, NAMES_FS, KEY_FS, used_layers
@@ -379,7 +380,7 @@ def write(case, theme=None):
     use_theme(theme)
     identifier(case.slug)
     out_path = case.dir / out_name(case.slug, theme)
-    g = json.loads((case.dir / "geometry.json").read_text())
+    g = json.loads(read_legacy_text(case.dir / "geometry.json"))
     E.fonts_for_geometry(g)
     roles, arrows, ROLE_NAME = case.key_roles(KEY_ROLES), case.key_arrows(KEY_ARROWS), case.role_name
     CLUSTERS = case.content.CLUSTERS
@@ -520,12 +521,15 @@ def write(case, theme=None):
              f'math="0" shadow="0"><root>' + "".join(d.cells) + '</root></mxGraphModel>')
     xml = (f'<mxfile host="{attr(HOST)}" agent="{attr(AGENT)}" version="24.7.17">'
            f'<diagram id="{identifier(case.slug)}" name="{attr(case.diagram_name)}">{model}</diagram></mxfile>\n')
-    out_path.write_text(xml)
+    out_path.write_text(xml, encoding="utf-8", newline="\n")
     print(f"wrote {out_path.name}: {len(d.cells)} cells, {len(xml)} bytes")
     return out_path
 
 
 def main(argv):
+    from ltcore.streams import configure_utf8
+    configure_utf8()
+
     import argparse
     import style
     from case import Case, CaseError

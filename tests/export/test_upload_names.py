@@ -69,11 +69,11 @@ def run_case(tmp_path, make_config, export_module, run, monkeypatch):
         module = {"module_id": MID, "run_id": 1, "source_url": "https://lt.example.invalid/m",
                   "captured_at": "2000-01-01T00:00:00Z", "lesson": {"title": "1.1: Test"},
                   "census": {"by_type": {}}, "pages": pages}
-        (work / "module.json").write_text(json.dumps(module), encoding="utf-8")
+        (work / "module.json").write_text(json.dumps(module), encoding="utf-8", newline="\n")
         argv = ["--config", make_config(), "--module", work / "module.json",
                 "--media-dir", media, "--out-dir", work / "out", "--json"]
         if answers is not None:
-            (work / "answers.json").write_text(json.dumps(answers), encoding="utf-8")
+            (work / "answers.json").write_text(json.dumps(answers), encoding="utf-8", newline="\n")
             argv += ["--answers", work / "answers.json"]
         if diagrams:
             (work / "diag").mkdir()

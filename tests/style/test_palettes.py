@@ -176,7 +176,7 @@ accent_3 = "#bb5566"
 accent_4 = "#117733"
 accent_5 = "#44aa99"
 accent_6 = "#882255"
-''', encoding="utf-8")
+''', encoding="utf-8", newline="\n")
 
     class Cfg(dict):
         def get(self, key, default=None):
@@ -192,10 +192,10 @@ accent_6 = "#882255"
 
 def test_custom_palette_errors_are_clear(tmp_path):
     f = tmp_path / "bad.toml"
-    f.write_text('[[palette]]\nid = "Bad Id"\n[palette.roles]\nbackground = "#fff"\ntext = "#000"\n')
+    f.write_text('[[palette]]\nid = "Bad Id"\n[palette.roles]\nbackground = "#fff"\ntext = "#000"\n', encoding="utf-8", newline="\n")
     with pytest.raises(P.PaletteError, match="must match"):
         P.load_custom(f)
-    f.write_text('[[palette]]\nid = "x"\n[palette.roles]\nbackground = "white"\ntext = "#000"\n')
+    f.write_text('[[palette]]\nid = "x"\n[palette.roles]\nbackground = "white"\ntext = "#000"\n', encoding="utf-8", newline="\n")
     with pytest.raises(P.PaletteError, match="not a colour"):
         P.load_custom(f)
 
@@ -207,7 +207,7 @@ def test_theme_cache_round_trip(tmp_path):
     b = P.derive_theme("tol-muted", cache_dir=tmp_path)
     assert a == b
     assert isinstance(b["roles"]["risk"], tuple)
-    files[0].write_text("{broken", encoding="utf-8")
+    files[0].write_text("{broken", encoding="utf-8", newline="\n")
     assert P.derive_theme("tol-muted", cache_dir=tmp_path) == a
     cached = json.loads(files[0].read_text(encoding="utf-8"))
     assert cached["checks"]["strokes"]
@@ -269,7 +269,7 @@ def test_fills_reach_7_to_1_or_keep_apart_at_4_5():
 def test_load_catalog_adds_custom_palettes(tmp_path):
     f = tmp_path / "mine.toml"
     f.write_text('[[palette]]\nid = "mine"\nname = "Mine"\nmode = "light"\n[palette.roles]\n'
-                 'background = "#ffffff"\ntext = "#000000"\n', encoding="utf-8")
+                 'background = "#ffffff"\ntext = "#000000"\n', encoding="utf-8", newline="\n")
 
     class Cfg(dict):
         def get(self, key, default=None):

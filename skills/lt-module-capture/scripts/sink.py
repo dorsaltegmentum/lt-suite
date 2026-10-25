@@ -451,11 +451,14 @@ def write_token(path: Path, token: str) -> None:
         pass
     flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_NOFOLLOW", 0)
     fd = os.open(path, flags, 0o600)
-    with os.fdopen(fd, "w", encoding="utf-8") as fh:
+    with os.fdopen(fd, "w", encoding="utf-8", newline="\n") as fh:
         fh.write(token + "\n")
 
 
 def main(argv: list[str] | None = None) -> int:
+    from ltcore.streams import configure_utf8
+    configure_utf8()
+
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--config", help="config file (default: the normal lookup)")
     ap.add_argument("--data-dir", help="data folder (overrides LT_SUITE_DATA and the config)")

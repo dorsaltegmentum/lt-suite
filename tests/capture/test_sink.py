@@ -53,7 +53,7 @@ def env_for(tmp: Path) -> dict:
 
 def write_config(tmp: Path, origin: str = ORIGIN) -> Path:
     cfg = tmp / "lt-suite.toml"
-    cfg.write_text(f'schema_version = 1\n[lt]\norigin = "{origin}"\n', encoding="utf-8")
+    cfg.write_text(f'schema_version = 1\n[lt]\norigin = "{origin}"\n', encoding="utf-8", newline="\n")
     return cfg
 
 
@@ -69,11 +69,11 @@ class Sink:
         self.proc = subprocess.Popen(
             [sys.executable, str(SINK), "--config", str(self.cfg), "--port", str(self.port),
              "--token-file", str(self.token_file), "--max-bytes", str(MAX), *extra],
-            stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, env=env_for(tmp), cwd=tmp)
+            stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, env=env_for(tmp), cwd=tmp, encoding="utf-8")
         for _ in range(200):
             if self.proc.poll() is not None:
                 raise AssertionError(f"sink exited early: {self.proc.stdout.read()}")
-            if self.token_file.exists() and self.token_file.read_text().strip():
+            if self.token_file.exists() and self.token_file.read_text(encoding="utf-8").strip():
                 try:
                     if self.request("GET", "/health", origin=None)[0] == 200:
                         break
@@ -82,7 +82,7 @@ class Sink:
             time.sleep(0.05)
         else:
             raise AssertionError("sink never came up")
-        self.token = self.token_file.read_text().strip()
+        self.token = self.token_file.read_text(encoding="utf-8").strip()
 
     def request(self, method, path, body=b"", *, origin=ORIGIN, token=None, ctype="application/json",
                 host=None, headers=None):
@@ -141,7 +141,7 @@ def test_allowed_origin_and_token_write_a_module(sink):
     assert json.loads(text) == {"ok": True, "file": f"module-{MID}.json"}
     assert h["access-control-allow-origin"] == ORIGIN
     assert h["access-control-allow-private-network"] == "true"
-    assert json.loads((sink.incoming / f"module-{MID}.json").read_text())["module_id"] == MID
+    assert json.loads((sink.incoming / f"module-{MID}.json").read_text(encoding="utf-8"))["module_id"] == MID
 
 
 def test_foreign_origin_is_403_with_no_cors_headers(sink):
@@ -230,8 +230,8 @@ def test_an_existing_module_is_kept_and_new_copies_are_numbered(sink):
         assert status == 200
     names = sorted(p.name for p in sink.incoming.glob("module-*"))
     assert names == [f"module-{MID}.1.json", f"module-{MID}.2.json", f"module-{MID}.json"]
-    assert json.loads((sink.incoming / f"module-{MID}.json").read_text())["v"] == 1
-    assert json.loads((sink.incoming / f"module-{MID}.2.json").read_text())["v"] == 3
+    assert json.loads((sink.incoming / f"module-{MID}.json").read_text(encoding="utf-8"))["v"] == 1
+    assert json.loads((sink.incoming / f"module-{MID}.2.json").read_text(encoding="utf-8"))["v"] == 3
 
 
 def test_a_reference_is_written_once(sink):
@@ -247,7 +247,7 @@ def test_a_reference_is_written_once(sink):
 
 def test_a_reference_already_in_captures_is_refused(sink):
     sink.captures.mkdir(parents=True)
-    (sink.captures / f"reference-{MID}.json").write_text(doc(v=0))
+    (sink.captures / f"reference-{MID}.json").write_text(doc(v=0), encoding="utf-8", newline="\n")
     assert sink.post(f"/reference-{MID}", doc(v=1))[0] == 409
     assert not (sink.incoming / f"reference-{MID}.json").exists()
 
@@ -317,7 +317,7 @@ def test_print_args_reads_the_running_token(tmp_path):
     try:
         r = subprocess.run([sys.executable, str(SINK), "--config", str(s.cfg), "--port", str(s.port),
                             "--token-file", str(s.token_file), "--print-args", "--module-only"],
-                           capture_output=True, text=True, env=env_for(tmp_path), cwd=tmp_path)
+                           capture_output=True, text=True, env=env_for(tmp_path), cwd=tmp_path, encoding="utf-8")
         assert r.returncode == 0, r.stderr
         assert r.stdout.split() == ["--arg", "transport=sink", "--arg", f"sink=http://127.0.0.1:{s.port}",
                                     "--arg", f"token={s.token}", "--arg", "module_only=true"]
@@ -329,12 +329,12 @@ def test_print_args_carries_capture_config_that_differs_from_the_defaults(tmp_pa
     cfg = tmp_path / "custom.toml"
     cfg.write_text(f'schema_version = 1\n[lt]\norigin = "{ORIGIN}"\n'
                    "[capture]\ndrop_text_patterns = ['^Copyright', '^All rights reserved']\n"
-                   "[capture.timeouts]\npost_ms = 45000\n", encoding="utf-8")
+                   "[capture.timeouts]\npost_ms = 45000\n", encoding="utf-8", newline="\n")
     token_file = tmp_path / "token"
-    token_file.write_text("t0ken\n", encoding="utf-8")
+    token_file.write_text("t0ken\n", encoding="utf-8", newline="\n")
     r = subprocess.run([sys.executable, str(SINK), "--config", str(cfg), "--port", "8731",
                         "--token-file", str(token_file), "--print-args"],
-                       capture_output=True, text=True, env=env_for(tmp_path), cwd=tmp_path, timeout=30)
+                       capture_output=True, text=True, env=env_for(tmp_path), cwd=tmp_path, timeout=30, encoding="utf-8")
     assert r.returncode == 0, r.stderr
     import shlex
     argv = shlex.split(r.stdout)
@@ -347,9 +347,9 @@ def test_print_args_carries_capture_config_that_differs_from_the_defaults(tmp_pa
 
 def test_no_origin_configured_exits_3_with_the_setup_hint(tmp_path):
     cfg = tmp_path / "lt-suite.toml"
-    cfg.write_text("schema_version = 1\n", encoding="utf-8")
+    cfg.write_text("schema_version = 1\n", encoding="utf-8", newline="\n")
     r = subprocess.run([sys.executable, str(SINK), "--config", str(cfg), "--port", str(free_port())],
-                       capture_output=True, text=True, env=env_for(tmp_path), cwd=tmp_path, timeout=30)
+                       capture_output=True, text=True, env=env_for(tmp_path), cwd=tmp_path, timeout=30, encoding="utf-8")
     assert r.returncode == 3
     assert "lt.origin is not set" in r.stderr
 
@@ -371,7 +371,7 @@ def test_a_busy_port_exits_3(tmp_path):
         cfg = write_config(tmp_path)
         r = subprocess.run([sys.executable, str(SINK), "--config", str(cfg), "--port", str(port),
                             "--token-file", str(tmp_path / "t")],
-                           capture_output=True, text=True, env=env_for(tmp_path), cwd=tmp_path, timeout=30)
+                           capture_output=True, text=True, env=env_for(tmp_path), cwd=tmp_path, timeout=30, encoding="utf-8")
     assert r.returncode == 3
     assert "cannot listen" in r.stderr
 
@@ -390,7 +390,7 @@ def test_an_origin_with_a_bad_port_is_403(sink):
 
 def test_an_existing_token_file_or_link_is_replaced_not_followed(tmp_path):
     victim = tmp_path / "victim.txt"
-    victim.write_text("keep me")
+    victim.write_text("keep me", encoding="utf-8", newline="\n")
     link = tmp_path / "token"
     try:
         link.symlink_to(victim)
@@ -398,7 +398,7 @@ def test_an_existing_token_file_or_link_is_replaced_not_followed(tmp_path):
         pytest.skip("symlinks unavailable")
     s = Sink(tmp_path)
     try:
-        assert victim.read_text() == "keep me"
+        assert victim.read_text(encoding="utf-8") == "keep me"
         assert not s.token_file.is_symlink()
     finally:
         s.stop()

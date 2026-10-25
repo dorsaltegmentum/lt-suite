@@ -196,7 +196,7 @@ def atomic_json(path, doc):
     path=Path(path);path.parent.mkdir(parents=True,exist_ok=True)
     fd,scratch=tempfile.mkstemp(prefix='.reconcile-',dir=path.parent)
     try:
-        with os.fdopen(fd,'w',encoding='utf-8') as f:
+        with os.fdopen(fd,'w',encoding='utf-8', newline="\n") as f:
             json.dump(doc,f,indent=1,ensure_ascii=False);f.write('\n');f.flush();os.fsync(f.fileno())
         os.replace(scratch,path)
     finally:

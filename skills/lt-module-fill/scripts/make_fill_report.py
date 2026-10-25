@@ -532,6 +532,9 @@ def _read(path: Path, what: str, default=None):
 
 
 def main(argv=None) -> int:
+    from ltcore.streams import configure_utf8
+    configure_utf8()
+
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--module", required=True, type=Path)
@@ -571,7 +574,7 @@ def main(argv=None) -> int:
         rep['source_check_answer']={'path':str(ledger_path.resolve()),'sha256':hashlib.sha256(ledger_path.read_bytes()).hexdigest()}
     out = args.out or st.fill_report_path(mid)
     out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_text(json.dumps(rep, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
+    out.write_text(json.dumps(rep, indent=1, ensure_ascii=False) + "\n", encoding="utf-8", newline="\n")
     n = {r: sum(i["result"] == r for i in rep["items"])
          for r in ("filled", "failed", "filled-unverified", "todo", "skipped")}
     print(f"wrote {out} | " + ", ".join(f"{v} {k}" for k, v in n.items()), flush=True)

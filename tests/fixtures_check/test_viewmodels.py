@@ -119,9 +119,9 @@ def test_capture_js_over_every_view_model_gives_the_fixture_module(tmp_path):
         if not need.is_file():
             pytest.skip(f"not run: {need.relative_to(REPO).as_posix()} missing")
     js = tmp_path / "roundtrip.js"
-    js.write_text(SCRIPT, encoding="utf-8")
+    js.write_text(SCRIPT, encoding="utf-8", newline="\n")
     r = subprocess.run(["node", str(js), str(HARNESS)], capture_output=True, text=True, cwd=REPO,
-                       timeout=120)
+                       timeout=120, encoding="utf-8")
     assert r.returncode == 0, r.stderr
     got = json.loads(r.stdout)
     assert set(got) == set(STEMS)

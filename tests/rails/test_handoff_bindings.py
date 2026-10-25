@@ -22,7 +22,7 @@ def handoff(tmp_path):
     for source in EXAMPLES.glob("*.json"):
         shutil.copyfile(source, tmp_path / source.name)
     def read(name):
-        return json.loads((tmp_path / f"{name}.example.json").read_text())
+        return json.loads((tmp_path / f"{name}.example.json").read_text(encoding="utf-8"))
     return tmp_path, read
 
 
@@ -125,7 +125,7 @@ def test_validator_rejects_approval_replay_after_questions_change(handoff, schem
         row["approval_id"] = rec["approval_id"]
     cap["prompt_text"] = "A question the user never approved."
     module_path = base / "module.example.json"
-    module_path.write_text(json.dumps(module))
+    module_path.write_text(json.dumps(module), encoding="utf-8", newline="\n")
     if schema == "answers":
         doc["source_module"].update(question_digest=question_digest(module),
             sha256=hashlib.sha256(module_path.read_bytes()).hexdigest())

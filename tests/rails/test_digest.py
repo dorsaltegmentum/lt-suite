@@ -62,7 +62,7 @@ def test_diff_names_the_item():
 
 def test_examples_are_pinned():
     assert digest.plan_pins(EX)[0] == {}
-    ans = json.loads((EX / "answers.example.json").read_text())
+    ans = json.loads((EX / "answers.example.json").read_text(encoding="utf-8"))
     assert ans["source_module"]["question_digest"] == digest.digest_of_file(EX / "module.example.json")
 
 
@@ -70,10 +70,10 @@ def test_fix_pins_rewrites_a_stale_copy(tmp_path):
     d = tmp_path / "ex"
     shutil.copytree(EX, d)
     ans_path = d / "answers.example.json"
-    ans = json.loads(ans_path.read_text())
+    ans = json.loads(ans_path.read_text(encoding="utf-8"))
     ans["source_module"]["sha256"] = "0" * 64
     ans["source_module"]["question_digest"] = "1" * 64
-    ans_path.write_text(json.dumps(ans, indent=1) + "\n")
+    ans_path.write_text(json.dumps(ans, indent=1) + "\n", encoding="utf-8", newline="\n")
     assert digest.fix_pins(d, check=True) == 1
     assert digest.fix_pins(d) == 0
     assert digest.fix_pins(d, check=True) == 0
@@ -96,7 +96,7 @@ def test_cli(run_py, tmp_path):
     new = module()
     item(new, "i-text-1")["prompt_text"] = "A different question."
     np = tmp_path / "new.json"
-    np.write_text(json.dumps(new))
+    np.write_text(json.dumps(new), encoding="utf-8", newline="\n")
     r = run_py("-m", "ltcore.digest", str(EX / "module.example.json"), "--diff", str(np))
     assert r.returncode == 1 and "i-text-1: prompt_text" in r.stdout
     r = run_py("-m", "ltcore.digest", str(EX / "module.example.json"), "--view")

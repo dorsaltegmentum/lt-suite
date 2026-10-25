@@ -15,7 +15,7 @@ def settings(tmp_path, extra=""):
     root = tmp_path / "curriculum"
     root.mkdir(exist_ok=True)
     cfg = tmp_path / "config.toml"
-    cfg.write_text('[curriculum]\nroot = "curriculum"\n' + extra, encoding="utf-8")
+    cfg.write_text('[curriculum]\nroot = "curriculum"\n' + extra, encoding="utf-8", newline="\n")
     return root, cfg
 
 
@@ -29,7 +29,7 @@ def test_one_match_both_folder_conventions(tmp_path, run_py, folder):
     week = root / "Block" / folder
     subject = week / "Topic"
     subject.mkdir(parents=True)
-    (subject / "lecture.txt").write_text("Synthetic lecture material.")
+    (subject / "lecture.txt").write_text("Synthetic lecture material.", encoding="utf-8", newline="\n")
     (week / "figure.png").write_bytes(b"synthetic")
     result = resolve(run_py, cfg)
     assert result.returncode == 0, result.stderr
@@ -68,7 +68,7 @@ def test_missing_module_is_exit_three(tmp_path, run_py):
 def test_invalid_module_is_exit_three(tmp_path, run_py, payload):
     _, cfg = settings(tmp_path)
     module = tmp_path / "module.json"
-    module.write_text(payload)
+    module.write_text(payload, encoding="utf-8", newline="\n")
     result = run_py(str(SCRIPT), "--config", str(cfg), "--module", str(module))
     assert result.returncode == 3 and "Traceback" not in result.stderr
 
@@ -80,7 +80,7 @@ def test_usage_is_three_help_is_zero(run_py):
 
 def test_disabled_root_is_not_current_directory(tmp_path, run_py):
     cfg = tmp_path / "config.toml"
-    cfg.write_text("")
+    cfg.write_text("", encoding="utf-8", newline="\n")
     (tmp_path / "1 Demo").mkdir()
     result = resolve(run_py, cfg)
     assert result.returncode == 1
@@ -117,11 +117,11 @@ def test_skip_dirs_hidden_files_and_custom_extensions(tmp_path, run_py):
     for name in ("Archive", ".hidden", "Current"):
         (root / name / "Week 1 Demo").mkdir(parents=True)
     week = root / "Current" / "Week 1 Demo"
-    (week / ".hidden.txt").write_text("hidden")
+    (week / ".hidden.txt").write_text("hidden", encoding="utf-8", newline="\n")
     (week / "Archive").mkdir()
-    (week / "Archive" / "old.txt").write_text("ignored")
+    (week / "Archive" / "old.txt").write_text("ignored", encoding="utf-8", newline="\n")
     (week / "Topic").mkdir()
-    (week / "Topic" / "notes.RST").write_text("synthetic source")
+    (week / "Topic" / "notes.RST").write_text("synthetic source", encoding="utf-8", newline="\n")
     result = resolve(run_py, cfg)
     assert result.returncode == 0
     match = json.loads(result.stdout)["matches"][0]
@@ -137,7 +137,7 @@ def test_does_not_treat_nested_topics_as_more_weeks(tmp_path, run_py):
 def test_learning_outcome_ranking_and_stopwords(tmp_path, run_py):
     root, cfg = settings(tmp_path, 'learning_outcomes_file = "outcomes.md"\ntitle_stopwords = ["Week"]\n')
     (root / "Block" / "1 Demo").mkdir(parents=True)
-    (root / "outcomes.md").write_text("Week 1 Other\nWeek 1 Demo\nWeek 10 Demo\nWeek 1.2 Demo\n")
+    (root / "outcomes.md").write_text("Week 1 Other\nWeek 1 Demo\nWeek 10 Demo\nWeek 1.2 Demo\n", encoding="utf-8", newline="\n")
     result = resolve(run_py, cfg)
     assert result.returncode == 0
     doc = json.loads(result.stdout)
@@ -158,7 +158,7 @@ def test_config_or_outcome_error_is_three(tmp_path, run_py, extra):
 
 def test_missing_configured_root_is_three(tmp_path, run_py):
     cfg = tmp_path / "config.toml"
-    cfg.write_text('[curriculum]\nroot = "missing"\n')
+    cfg.write_text('[curriculum]\nroot = "missing"\n', encoding="utf-8", newline="\n")
     assert resolve(run_py, cfg).returncode == 3
 
 
@@ -166,7 +166,7 @@ def test_module_title_and_relative_paths_work_from_other_cwd(tmp_path, run_py):
     root, cfg = settings(tmp_path)
     (root / "Week 1 Demo").mkdir()
     module = tmp_path / "module.json"
-    module.write_text(json.dumps({"lesson": {"title": "Week 1 Demo", "course_title": "Synthetic course"}}))
+    module.write_text(json.dumps({"lesson": {"title": "Week 1 Demo", "course_title": "Synthetic course"}}), encoding="utf-8", newline="\n")
     elsewhere = tmp_path / "elsewhere"
     elsewhere.mkdir()
     result = run_py(str(SCRIPT), "--module", str(module), "--config", str(cfg), "--json", cwd=elsewhere)
@@ -181,13 +181,13 @@ def test_rat_learning_outcome_path_refused_before_read(tmp_path, run_py, alias):
     sheets = root / 'sheets'
     sheets.mkdir()
     sheet = sheets / 'answers.md'
-    sheet.write_text('Week 1 invented-secret-selection\n')
+    sheet.write_text('Week 1 invented-secret-selection\n', encoding="utf-8", newline="\n")
     outcome = sheet
     if alias:
         outcome = root / 'outcomes.md'
         outcome.symlink_to(sheet)
-    cfg.write_text(cfg.read_text() + f'learning_outcomes_file = {json.dumps(str(outcome))}\n'
-                   f'[rat]\nanswers_dir = {json.dumps(str(sheets))}\nirat = "skip"\ntrat = "skip"\n')
+    cfg.write_text(cfg.read_text(encoding="utf-8") + f'learning_outcomes_file = {json.dumps(str(outcome))}\n'
+                   f'[rat]\nanswers_dir = {json.dumps(str(sheets))}\nirat = "skip"\ntrat = "skip"\n', encoding="utf-8", newline="\n")
     result = resolve(run_py, cfg)
     assert result.returncode == 3
     assert 'RAT root' in result.stderr
@@ -202,7 +202,7 @@ def test_rat_outcome_refusal_opens_no_sheet(tmp_path, monkeypatch):
     sheets = tmp_path/'sheets'
     sheets.mkdir()
     sheet = sheets/'answers.md'
-    sheet.write_text('Week 1 invented selection')
+    sheet.write_text('Week 1 invented selection', encoding="utf-8", newline="\n")
     alias = tmp_path/'alias.md'
     alias.symlink_to(sheet)
     opened = []

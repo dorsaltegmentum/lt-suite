@@ -53,9 +53,9 @@ def test_fixture_page_smoke_cleans_metadata_and_preserves_render(
     cfg = config.load(make_config())
     out = tmp_path / "pdf"
     assert render.build_pdfs(page_dir / "page.md", out, cfg) == 0
-    built = json.loads((out / ".build.json").read_text())
+    built = json.loads((out / ".build.json").read_text(encoding="utf-8"))
     assert built
-    qc = json.loads((out / ".qc.json").read_text())
+    qc = json.loads((out / ".qc.json").read_text(encoding="utf-8"))
     for name, row in built.items():
         path = Path(row["path"])
         assert row["pages"] == qc[name]["pages"] == 1
@@ -64,14 +64,14 @@ def test_fixture_page_smoke_cleans_metadata_and_preserves_render(
         assert metadata(path).get("Subject", "") == ""
         assert b"/Metadata" not in path.read_bytes()
     assert all(row["status"] in {"cleaned", "unchanged"}
-               for row in json.loads((out / ".final.json").read_text()))
+               for row in json.loads((out / ".final.json").read_text(encoding="utf-8")))
 
 
 def test_custom_namespace_and_stamp_reach_qc(pdf_modules, page_dir, make_config, tmp_path):
     from ltcore import config
     render, _ = pdf_modules
     page = page_dir / "page.md"
-    page.write_text(page.read_text().replace("Lt/", "Study/").replace("lt-module::", "worked-module::"))
+    page.write_text(page.read_text(encoding="utf-8").replace("Lt/", "Study/").replace("lt-module::", "worked-module::"), encoding="utf-8", newline="\n")
     cfg = config.load(make_config(notes={"page_namespace": "Study", "stamp_property": "worked-module"},
                                   pdf={"author": "Synthetic author"}))
     out = tmp_path / "draft"
@@ -132,7 +132,7 @@ def test_final_pass_rejects_changed_pdf(pdf_modules, make_config, tmp_path, monk
     monkeypatch.setattr(cleaners, "finalize", changed)
     cfg = config.load(make_config())
     assert not render.finalise({"demo": {"path": str(path)}}, tmp_path, cfg)
-    assert any(row["step"] == "verify" for row in json.loads((tmp_path / ".final.json").read_text()))
+    assert any(row["step"] == "verify" for row in json.loads((tmp_path / ".final.json").read_text(encoding="utf-8")))
 
 
 def test_pdf_output_cannot_write_into_course_or_graph(pdf_modules, page_dir, make_config, tmp_path):
@@ -149,7 +149,7 @@ def test_tables_provenance_and_todos_survive_pdf_qc(pdf_modules, page_dir, make_
     from ltcore import config
     render, _ = pdf_modules
     page = page_dir / "page.md"
-    page.write_text((Path(__file__).parent / "data" / "page.md").read_text())
+    page.write_text((Path(__file__).parent / "data" / "page.md").read_text(encoding="utf-8"), encoding="utf-8", newline="\n")
     cfg = config.load(make_config())
     assert render.build_pdfs(page, tmp_path / "tables", cfg, final=False) == 0
 
@@ -165,10 +165,10 @@ def test_pdf_hooks_run_in_order_and_other_stages_are_ignored(pdf_modules, make_c
     canvas.save()
     marker = tmp_path / "order.txt"
     cfg_path = make_config()
-    with cfg_path.open("a") as stream:
+    with cfg_path.open("a", encoding="utf-8", newline="\n") as stream:
         for name, stage in (("first", "pdf"), ("ignored", "diagram"), ("last", "pdf")):
             code = ("from pathlib import Path; import sys; "
-                    "p=Path(sys.argv[2]); p.write_text((p.read_text() if p.exists() else '')+sys.argv[3])")
+                    "p=Path(sys.argv[2]); p.write_text((p.read_text(encoding='utf-8') if p.exists() else '')+sys.argv[3], encoding='utf-8', newline='\\n')")
             argv = [sys.executable, "-c", code, "{pdf}" if stage == "pdf" else "{in}", str(marker), name]
             if stage == "diagram":
                 argv.append("{out}")
@@ -177,8 +177,8 @@ def test_pdf_hooks_run_in_order_and_other_stages_are_ignored(pdf_modules, make_c
                          + "\nargv = " + json.dumps(argv) + "\ntimeout_s = 20\n")
     cfg = config.load(cfg_path)
     assert render.finalise({"demo": {"path": str(path)}}, tmp_path, cfg)
-    assert marker.read_text() == "firstlast"
-    rows = json.loads((tmp_path / ".final.json").read_text())
+    assert marker.read_text(encoding="utf-8") == "firstlast"
+    rows = json.loads((tmp_path / ".final.json").read_text(encoding="utf-8"))
     assert [row["step"] for row in rows][:2] == ["first", "last"]
 
 

@@ -40,7 +40,7 @@ class Colour(unittest.TestCase):
 class Scan(unittest.TestCase):
     def svg(self, body):
         p = pathlib.Path(tempfile.mkdtemp()) / "t.svg"
-        p.write_text(f'<svg {NS} width="400" height="200"><rect width="400" height="200" fill="#ffffff"/>{body}</svg>')
+        p.write_text(f'<svg {NS} width="400" height="200"><rect width="400" height="200" fill="#ffffff"/>{body}</svg>', encoding="utf-8", newline="\n")
         return p
 
     def test_text_on_box(self):
@@ -123,7 +123,7 @@ class Ledger(unittest.TestCase):
         (d / G.LEDGER).write_text(json.dumps({"verdicts": {"consistent": "", "partly": ""}, "entries": [
             {"node": "tx_a", "text": "Give X", "text_sha1": G.text_sha1("Give X"), "verdict": "consistent"},
             {"node": "tx_b", "text": "Give W", "text_sha1": G.text_sha1("Give W"), "verdict": "partly", "notes": "n"},
-            {"node": "tx_c", "text": "", "text_sha1": "0", "verdict": "consistent"}]}))
+            {"node": "tx_c", "text": "", "text_sha1": "0", "verdict": "consistent"}]}), encoding="utf-8", newline="\n")
         lines, counts = G.check(d, nodes)
         self.assertEqual(counts["ok"], 1)
         self.assertEqual(counts["stale"], 1)

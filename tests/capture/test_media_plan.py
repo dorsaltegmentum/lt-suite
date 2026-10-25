@@ -70,12 +70,12 @@ def test_check_url_follows_the_written_plan(tmp_path):
     m = module([page(1, 1, media=True), page(2, 2), page(3, None, kind="checkpoint"), page(4, 3),
                 page(5, None, kind="report")])
     src = tmp_path / "module-c1-r101.json"
-    src.write_text(json.dumps(m))
+    src.write_text(json.dumps(m), encoding="utf-8", newline="\n")
     env = dict(os.environ, PYTHONPATH=str(SHARED), LT_SUITE_DATA=str(tmp_path / "data"))
     cfg = tmp_path / "lt-suite.toml"
-    cfg.write_text('schema_version = 1\n[lt]\norigin = "https://lt.example.invalid"\n')
+    cfg.write_text('schema_version = 1\n[lt]\norigin = "https://lt.example.invalid"\n', encoding="utf-8", newline="\n")
     r = subprocess.run([sys.executable, str(SCRIPT), str(src), "--config", str(cfg)],
-                       capture_output=True, text=True, env=env, cwd=tmp_path, timeout=60)
+                       capture_output=True, text=True, env=env, cwd=tmp_path, timeout=60, encoding="utf-8")
     assert r.returncode == 0, r.stderr
     plan = tmp_path / "data" / "runs" / "c1-r101" / "media-plan.json"
     assert plan.is_file()
@@ -83,7 +83,7 @@ def test_check_url_follows_the_written_plan(tmp_path):
 
     def check(url):
         return subprocess.run([sys.executable, str(LTJS), "check-url", "--config", str(cfg), "--plan", str(plan), url],
-                              capture_output=True, text=True, env=env, cwd=tmp_path, timeout=60).returncode
+                              capture_output=True, text=True, env=env, cwd=tmp_path, timeout=60, encoding="utf-8").returncode
 
     assert check(f"{BASE}/page/1") == 0
     assert check(f"{BASE}/page/2") == 0
@@ -96,7 +96,7 @@ def test_check_url_follows_the_written_plan(tmp_path):
 def test_unsafe_target_exits_3(tmp_path):
     env = dict(os.environ, PYTHONPATH=str(SHARED), LT_SUITE_DATA=str(tmp_path / "data"))
     cfg = tmp_path / "lt-suite.toml"
-    cfg.write_text("schema_version = 1\n")
+    cfg.write_text("schema_version = 1\n", encoding="utf-8", newline="\n")
     r = subprocess.run([sys.executable, str(SCRIPT), "..x", "--config", str(cfg)],
-                       capture_output=True, text=True, env=env, cwd=tmp_path, timeout=60)
+                       capture_output=True, text=True, env=env, cwd=tmp_path, timeout=60, encoding="utf-8")
     assert r.returncode == 3

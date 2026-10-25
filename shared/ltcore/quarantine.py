@@ -107,6 +107,9 @@ class Parser(argparse.ArgumentParser):
 
 
 def main(argv=None) -> int:
+    from ltcore.streams import configure_utf8
+    configure_utf8()
+
     ap = Parser(description=__doc__)
     ap.add_argument("--config", type=Path)
     ap.add_argument("--graph", type=Path, help="override notes.graph_path; scan recursively")

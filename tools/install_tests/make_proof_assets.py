@@ -488,7 +488,7 @@ class Ctx:
         if self.python_work is not None:
             env["UV_PROJECT_ENVIRONMENT"] = str(self.python_work / "venv")
         self.env = env
-        (self.work / "tmp" / "helper.py").write_text(HELPER, encoding="utf-8")
+        (self.work / "tmp" / "helper.py").write_text(HELPER, encoding="utf-8", newline="\n")
 
     def write_config(self) -> None:
         lines = ["# Scratch config for the proof assets. Synthetic values only.", "schema_version = 1", "",
@@ -497,7 +497,7 @@ class Ctx:
                  "[pdf]", 'author = ""', "strip_metadata = true"]
         if self.light and self.dark:
             lines += ["", "[style]", f'palettes = ["{self.light}", "{self.dark}"]', f'print_palette = "{self.light}"']
-        self.cfgfile.write_text("\n".join(lines) + "\n", encoding="utf-8")
+        self.cfgfile.write_text("\n".join(lines) + "\n", encoding="utf-8", newline="\n")
 
     # -- running things ----------------------------------------------------------------------
     def run(self, argv, name, *, timeout=1200, ok=(0,), cwd=None):
@@ -510,7 +510,7 @@ class Ctx:
         except subprocess.TimeoutExpired:
             raise Fail(1, f"{name}: no result after {timeout} s: {' '.join(argv)}")
         log = self.logs / f"{name}.log"
-        log.write_text(f"$ {' '.join(argv)}\n{p.stdout}\n--- stderr ---\n{p.stderr}", encoding="utf-8")
+        log.write_text(f"$ {' '.join(argv)}\n{p.stdout}\n--- stderr ---\n{p.stderr}", encoding="utf-8", newline="\n")
         if p.returncode not in ok:
             raise Fail(1, f"{name}: exit {p.returncode}: {' '.join(argv)}\n{tail(p.stderr or p.stdout)}\nlog: {log}")
         return p
@@ -518,7 +518,7 @@ class Ctx:
     def helper(self, mode, **kw):
         req = {"mode": mode, "repo": str(self.repo), "config": str(self.cfgfile), **kw}
         f = self.work / "tmp" / f"helper-{mode}.json"
-        f.write_text(json.dumps(req), encoding="utf-8")
+        f.write_text(json.dumps(req), encoding="utf-8", newline="\n")
         p = self.run([*self.py, self.work / "tmp" / "helper.py", f], f"helper-{mode}")
         lines = [ln for ln in p.stdout.splitlines() if ln.startswith("{")]
         if not lines:
@@ -579,7 +579,7 @@ class Ctx:
         head = ("SPDX-FileCopyrightText: 2026 dorsaltegmentum\n"
                 "SPDX-" "License-Identifier: AGPL-3.0-or-later\n\nSynthetic data. Output of the command below, with paths shortened to $WORK and $REPO.\n\n"
                 f"$ {command}\n\n")
-        (self.stage / name).write_text(head + text.strip() + "\n", encoding="utf-8")
+        (self.stage / name).write_text(head + text.strip() + "\n", encoding="utf-8", newline="\n")
 
 
 def find_repo(arg) -> Path:
@@ -777,12 +777,12 @@ def step_fill(c: Ctx) -> None:
     c.module, c.answers, c.fill_report = (excerpt / "module.example.json",
                                         excerpt / "answers.example.json",
                                         excerpt / "fill-report.example.json")
-    c.module.write_text(json.dumps(module, indent=1) + "\n", encoding="utf-8")
+    c.module.write_text(json.dumps(module, indent=1) + "\n", encoding="utf-8", newline="\n")
     answers["source_module"].update(path=c.module.name, sha256=sha256(c.module),
                                     question_digest=question_digest(module))
-    c.answers.write_text(json.dumps(answers, indent=1) + "\n", encoding="utf-8")
+    c.answers.write_text(json.dumps(answers, indent=1) + "\n", encoding="utf-8", newline="\n")
     report["source_answers"].update(path=c.answers.name, sha256=sha256(c.answers))
-    c.fill_report.write_text(json.dumps(report, indent=1) + "\n", encoding="utf-8")
+    c.fill_report.write_text(json.dumps(report, indent=1) + "\n", encoding="utf-8", newline="\n")
     pdf, pid, p, cmd = run_export(c, "fill", fill=True)
     report = load_json(c.fill_report)
     items = report.get("items", [])
@@ -1069,7 +1069,7 @@ def publish(c: Ctx, manifest: dict) -> None:
             (c.out / f).unlink()
         for f in sorted(c.stage.iterdir()):
             shutil.copyfile(f, c.out / f.name)
-        (c.out / "MANIFEST.json").write_text(json.dumps(manifest, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
+        (c.out / "MANIFEST.json").write_text(json.dumps(manifest, indent=1, ensure_ascii=False) + "\n", encoding="utf-8", newline="\n")
         run_gate(c)
     except BaseException:
         shutil.rmtree(c.out)
@@ -1235,7 +1235,7 @@ def build(a: argparse.Namespace) -> int:
         c.warnings += ww
         if pw:
             c.warnings += [f"README/docs: {x}" for x in pw]
-        (c.work / "README-proof-snippet.md").write_text(snippet(manifest) + "\n", encoding="utf-8")
+        (c.work / "README-proof-snippet.md").write_text(snippet(manifest) + "\n", encoding="utf-8", newline="\n")
         for w in c.warnings:
             say(f"WARN {w}")
         say("")
@@ -1304,6 +1304,12 @@ def plan(a: argparse.Namespace) -> int:
 
 
 def main(argv=None) -> int:
+    import sys
+    from pathlib import Path
+    sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "shared"))
+    from ltcore.streams import configure_utf8
+    configure_utf8()
+
     ap = argparse.ArgumentParser(description="Build and verify the README proof assets (synthetic data only).",
                                  formatter_class=argparse.RawDescriptionHelpFormatter,
                                  epilog="Exit codes: 0 done; 1 step or check failed; 2 bad usage; 3 tool, file or interpreter missing.")

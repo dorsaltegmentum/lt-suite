@@ -80,6 +80,12 @@ def check_route(report, route, cmd, cwd, env, args, tree, prefix="") -> None:
 
 
 def main() -> int:
+    import sys
+    from pathlib import Path
+    sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "shared"))
+    from ltcore.streams import configure_utf8
+    configure_utf8()
+
     ap = c.base_parser(__doc__.split("\n")[0])
     ap.add_argument("--codex", default=None,
                     help="codex binary (default: $CODEX_BIN, codex on PATH, ~/.local/bin/codex)")

@@ -23,12 +23,12 @@ def tool(name: str, *args: str, cwd: Path | None = None, env: dict | None = None
          timeout: int = 300) -> subprocess.CompletedProcess:
     e = {**os.environ, **(env or {})}
     return subprocess.run([sys.executable, str(TOOLS / name), *args], capture_output=True,
-                          text=True, cwd=cwd or REPO, env=e, timeout=timeout)
+                          text=True, cwd=cwd or REPO, env=e, timeout=timeout, encoding="utf-8")
 
 
 def w(p: Path, text: str) -> Path:
     p.parent.mkdir(parents=True, exist_ok=True)
-    p.write_text(text, encoding="utf-8")
+    p.write_text(text, encoding="utf-8", newline="\n")
     return p
 
 
@@ -55,7 +55,7 @@ def test_config_docs_check_detects_drift(tmp_path):
     assert tool("gen_config_docs.py", "--root", str(root)).returncode == 0
     assert tool("gen_config_docs.py", "--root", str(root), "--check").returncode == 0
     doc = root / "docs" / "configuration.md"
-    doc.write_text(doc.read_text() + "hand edit\n")
+    doc.write_text(doc.read_text(encoding="utf-8") + "hand edit\n", encoding="utf-8", newline="\n")
     r = tool("gen_config_docs.py", "--root", str(root), "--check")
     assert r.returncode == 1 and "out of date" in r.stdout
 
@@ -309,7 +309,7 @@ def commit(cwd: Path, msg: str, *, name=ID_NAME, email=ID_EMAIL, date="2000-01-0
 
     tree = object_id("mktree", data="")
     parent = subprocess.run(["git", "-C", str(cwd), "rev-parse", "--verify", "HEAD"],
-                            capture_output=True, text=True)
+                            capture_output=True, text=True, encoding="utf-8")
 
     def identity(who):
         date_value = env[f"GIT_{who}_DATE"]
@@ -456,7 +456,7 @@ def test_release_tag_requires_date_and_workflow_gates(tmp_path):
     r = tool("check_release.py", *args)
     assert r.returncode == 0, r.stdout + r.stderr
     path = tmp_path / ".github" / "workflows" / "release.yml"
-    path.write_text(path.read_text().replace("attest-build-provenance@", "other-action@"))
+    path.write_text(path.read_text(encoding="utf-8").replace("attest-build-provenance@", "other-action@"), encoding="utf-8", newline="\n")
     r = tool("check_release.py", *args)
     assert r.returncode == 1 and "provenance" in r.stdout, r.stdout + r.stderr
 

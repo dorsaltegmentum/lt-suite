@@ -214,7 +214,7 @@ def _write_atomic(path: Path, doc: dict) -> None:
     text = json.dumps(doc, indent=1, ensure_ascii=False) + "\n"
     fd, tmp = tempfile.mkstemp(prefix=".approvals-", suffix=".json", dir=str(path.parent))
     try:
-        with os.fdopen(fd, "w", encoding="utf-8") as fh:
+        with os.fdopen(fd, "w", encoding="utf-8", newline="\n") as fh:
             fh.write(text)
         os.replace(tmp, path)
     except BaseException:
@@ -376,6 +376,9 @@ def _read_json(path: str) -> dict:
 
 
 def main(argv: list[str] | None = None) -> int:
+    from ltcore.streams import configure_utf8
+    configure_utf8()
+
     ap = argparse.ArgumentParser(prog="python3 -m ltcore.approvals", description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = ap.add_subparsers(dest="cmd", required=True)

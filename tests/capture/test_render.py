@@ -34,14 +34,14 @@ def render(tmp: Path, name: str, *args: str) -> dict:
     env = dict(os.environ)
     env.pop("PYTHONPATH", None)
     r = subprocess.run([sys.executable, str(LTJS), "render", name, "--out-dir", str(tmp / "js"), *args],
-                       capture_output=True, text=True, cwd=tmp, env=env, timeout=60)
+                       capture_output=True, text=True, cwd=tmp, env=env, timeout=60, encoding="utf-8")
     assert r.returncode == 0, r.stderr
     return json.loads(r.stdout)
 
 
 def run(path: str, form: str, scenario: str = "plain") -> dict:
     r = subprocess.run([shutil.which("node") or "node", str(RUNNER), path, form, scenario],
-                       capture_output=True, text=True, cwd=REPO, timeout=120)
+                       capture_output=True, text=True, cwd=REPO, timeout=120, encoding="utf-8")
     assert r.returncode == 0, r.stderr
     return json.loads(r.stdout)
 
@@ -77,7 +77,7 @@ def test_a_copying_slip_stops_the_stub(tmp_path):
     i = text.index('const B64 = "') + len('const B64 = "') + 40
     flipped = text[:i] + ("A" if text[i] != "A" else "B") + text[i + 1:]
     bad = tmp_path / "bad.js"
-    bad.write_text(flipped, encoding="utf-8")
+    bad.write_text(flipped, encoding="utf-8", newline="\n")
     res = run(str(bad), "function")
     assert res["receipt"]["ok"] is False
     assert res["receipt"]["fatal"] == "stub-hash-mismatch"

@@ -26,7 +26,7 @@ def fixture_doc():
 
 def module(module_id="c1-r104", single=("p3-12",), multi=("p3-11",)):
     if module_id == "c1-r104" and single == ("p3-12",) and multi == ("p3-11",):
-        return json.loads((REPO / "tests/fixtures/modules/module-c1-r104.json").read_text())
+        return json.loads((REPO / "tests/fixtures/modules/module-c1-r104.json").read_text(encoding="utf-8"))
     items = [{"item_id": i, "type": "text-response", "attempts": "single"} for i in single]
     items += [{"item_id": i, "type": "text-response", "attempts": "multi"} for i in multi]
     return {"module_id": module_id, "pages": [{"page_index": 3, "items": items}]}
@@ -65,9 +65,9 @@ def test_append_creates_the_file_and_is_idempotent(tmp_path):
     r2 = approvals.append(p, "c1-r104", "p3-12", "Yes, write p3-12 as drafted.", recorded_at=T0,
                           question_digest=QDIGEST)
     assert r1 == r2 and r1["approval_id"] == FIX_ID
-    doc = json.loads(p.read_text())
+    doc = json.loads(p.read_text(encoding="utf-8"))
     assert len(doc["approvals"]) == 1 and approvals.problems(doc) == []
-    assert json.loads(p.read_text()) == fixture_doc()
+    assert json.loads(p.read_text(encoding="utf-8")) == fixture_doc()
 
 
 def test_append_defaults_to_now_and_keeps_earlier_records(tmp_path):
@@ -76,7 +76,7 @@ def test_append_defaults_to_now_and_keeps_earlier_records(tmp_path):
     rec = approvals.append(p, "c1-r104", None, "Run it on auto.", kind="waiver",
                            rail="approval-manual-at-boundary", question_digest=QDIGEST)
     assert rec["recorded_at"].endswith("Z") and rec["kind"] == "waiver" and "item_id" not in rec
-    assert len(json.loads(p.read_text())["approvals"]) == 2
+    assert len(json.loads(p.read_text(encoding="utf-8"))["approvals"]) == 2
 
 
 @pytest.mark.parametrize("kwargs,want", [
@@ -95,7 +95,7 @@ def test_append_refuses_bad_records(tmp_path, kwargs, want):
 
 def test_append_refuses_a_file_for_another_module(tmp_path):
     p = tmp_path / "approvals.json"
-    p.write_text(FIXTURE.read_text())
+    p.write_text(FIXTURE.read_text(encoding="utf-8"), encoding="utf-8", newline="\n")
     with pytest.raises(approvals.ApprovalError, match="not 'c1-r101'"):
         approvals.append(p, "c1-r101", "p3-12", "Yes.", question_digest=QDIGEST)
 
@@ -173,12 +173,12 @@ def test_cli_add_check_show(run_py, tmp_path):
                "--question-digest", QDIGEST)
     assert r.returncode == 0 and r.stdout.strip() == FIX_ID, r.stderr
     mp, an = tmp_path / "module.json", tmp_path / "answers.json"
-    mp.write_text(json.dumps(module()))
-    an.write_text(json.dumps(answers(("p3-12", FIX_ID))))
+    mp.write_text(json.dumps(module()), encoding="utf-8", newline="\n")
+    an.write_text(json.dumps(answers(("p3-12", FIX_ID))), encoding="utf-8", newline="\n")
     r = run_py("-m", "ltcore.approvals", "check", "--module", str(mp), "--answers", str(an),
                "--approvals", str(ap))
     assert r.returncode == 0 and "1 single-attempt approval(s)" in r.stdout, r.stderr
-    an.write_text(json.dumps(answers(("p3-12", "A-00000000"))))
+    an.write_text(json.dumps(answers(("p3-12", "A-00000000"))), encoding="utf-8", newline="\n")
     r = run_py("-m", "ltcore.approvals", "check", "--module", str(mp), "--answers", str(an),
                "--approvals", str(ap))
     assert r.returncode == 3 and "REFUSED" in r.stderr

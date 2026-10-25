@@ -782,7 +782,7 @@ def fontconfig_file(font_dirs: Iterable[str | os.PathLike], cache_dir: str | os.
     text = "\n".join(body)
     if not conf.is_file() or conf.read_text(encoding="utf-8") != text:
         cdir.mkdir(parents=True, exist_ok=True)
-        conf.write_text(text, encoding="utf-8")
+        conf.write_text(text, encoding="utf-8", newline="\n")
     return conf
 
 
@@ -1007,6 +1007,9 @@ def state(entry: Mapping, cfg: Any = None, data_dir: str | os.PathLike | None = 
 
 # =========================================================================== CLI
 def main(argv: list[str] | None = None) -> int:
+    from ltcore.streams import configure_utf8
+    configure_utf8()
+
     ap = argparse.ArgumentParser(prog="python3 -m ltcore.fonts", description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = ap.add_subparsers(dest="cmd", required=True)

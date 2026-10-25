@@ -77,13 +77,13 @@ def test_approvals_loader_refuses_invalid_record_fields(tmp_path, field, value):
     p = tmp_path / "approvals.json"
     approvals.append(p, "c1-r101", "p3-12", "Yes.", recorded_at=T0,
                      question_digest=question_digest(example("module")))
-    doc = json.loads(p.read_text())
+    doc = json.loads(p.read_text(encoding="utf-8"))
     rec = doc["approvals"][0]
     rec[field] = value
     rec["approval_id"] = approvals.approval_id(
         doc["module_id"], rec.get("item_id"), rec["quote"], rec["recorded_at"],
         question_digest=rec["question_digest"], item_ids=rec.get("item_ids"), note=rec.get("note"))
-    p.write_text(json.dumps(doc))
+    p.write_text(json.dumps(doc), encoding="utf-8", newline="\n")
     with pytest.raises(approvals.ApprovalError):
         approvals.load(p)
 

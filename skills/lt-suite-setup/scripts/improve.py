@@ -228,7 +228,7 @@ def validate(path):
     root = str(Path(ltcore.__file__).resolve().parent.parent)
     env["PYTHONPATH"] = root + (os.pathsep + env["PYTHONPATH"] if env.get("PYTHONPATH") else "")
     p = subprocess.run([sys.executable, "-m", "ltcore.validate", str(path), "--schema", "run", "--quiet"],
-                       stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True, env=env)
+                       stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True, env=env, encoding="utf-8")
     if p.returncode == 3:
         print("note: the schema check was skipped (%s)" % (p.stderr.strip().splitlines() or ["validator unavailable"])[-1])
         return 0
@@ -294,7 +294,7 @@ def ingest(a, st, cfg):
         print(json.dumps(entry, indent=1))
         print("\ndry run: %s not written" % rec_path)
         return 0
-    rec_path.write_text(json.dumps(rec, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
+    rec_path.write_text(json.dumps(rec, indent=1, ensure_ascii=False) + "\n", encoding="utf-8", newline="\n")
     rc = validate(rec_path)
     print("%s: %d classified change(s); schema %s"
           % (rec_path, len(rec["diff_classification"]), "ok" if rc == 0 else "FAILED"))
@@ -390,7 +390,7 @@ def cmd_applied(a, st):
     entries.append(rec)
     fp.parent.mkdir(parents=True, exist_ok=True)
     fp.write_text(json.dumps({"schema_version": 1, "applied": entries}, indent=1,
-                             ensure_ascii=False) + "\n", encoding="utf-8")
+                             ensure_ascii=False) + "\n", encoding="utf-8", newline="\n")
     print("recorded %s / %s as applied (%d items) -> %s" % (rec["skill"], rec["class"],
                                                            len(rec["items"]), fp))
     return 0
@@ -497,7 +497,7 @@ def propose(a, st, cfg):
         if not a.dry_run:
             out_dir.mkdir(parents=True, exist_ok=True)
             target = out_dir / ("%s--%s.md" % (p["skill"], p["class"]))
-            target.write_text(proposal_markdown(p), encoding="utf-8")
+            target.write_text(proposal_markdown(p), encoding="utf-8", newline="\n")
             written.append(target)
             print("  file         : %s" % target)
         print()
@@ -551,6 +551,9 @@ def build_parser():
 
 
 def main(argv=None):
+    from ltcore.streams import configure_utf8
+    configure_utf8()
+
     a = build_parser().parse_args(argv)
     try:
         cfg = config.load(a.config, validate=False)

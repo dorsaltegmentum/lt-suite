@@ -246,9 +246,9 @@ def cmd_palettes(a):
             item["grey_dl"] = chk["strokes"]["grey"]["dl"]
         summary.append(item)
     (out / "palettes.json").write_text(json.dumps({"palettes": summary}, indent=1, ensure_ascii=False) + "\n",
-                                       encoding="utf-8")
+                                       encoding="utf-8", newline="\n")
     table = render_palette_table(summary)
-    (out / "palettes.md").write_text(table, encoding="utf-8")
+    (out / "palettes.md").write_text(table, encoding="utf-8", newline="\n")
     if a.json:
         print(json.dumps({"out": str(out), "palettes": summary}, indent=1, ensure_ascii=False))
     else:
@@ -321,7 +321,7 @@ def cmd_fonts(a):
                 item["note"] = "sample not drawn: %s" % exc
         result.append(item)
     (out / "fonts.json").write_text(json.dumps({"fonts": result}, indent=1, ensure_ascii=False) + "\n",
-                                    encoding="utf-8")
+                                    encoding="utf-8", newline="\n")
     if a.json:
         print(json.dumps({"out": str(out), "fonts": result}, indent=1, ensure_ascii=False))
         return 0
@@ -357,6 +357,9 @@ def build_parser():
 
 
 def main(argv=None):
+    from ltcore.streams import configure_utf8
+    configure_utf8()
+
     a = build_parser().parse_args(argv)
     try:
         return {"palettes": cmd_palettes, "fonts": cmd_fonts}[a.cmd](a)

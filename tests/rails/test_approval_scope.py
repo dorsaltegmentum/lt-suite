@@ -26,9 +26,9 @@ def test_editing_approval_scope_invalidates_its_id(tmp_path, field, value):
     approvals.append(path, "demo", "item-one", "Yes, for this item.", kind="waiver",
                      rail="write-past-first-door", item_ids=["item-one"],
                      recorded_at="2000-01-01T00:00:00Z", question_digest="a" * 64)
-    doc = json.loads(path.read_text())
+    doc = json.loads(path.read_text(encoding="utf-8"))
     doc["approvals"][0][field] = value
-    path.write_text(json.dumps(doc))
+    path.write_text(json.dumps(doc), encoding="utf-8", newline="\n")
     with pytest.raises(approvals.ApprovalError, match="does not match its record"):
         approvals.load(path)
 
@@ -89,12 +89,12 @@ def test_recording_an_approval_requires_a_capture_digest(tmp_path):
 
 def test_unbound_legacy_approval_fails_closed(tmp_path):
     module, answers, path = bound_approval(tmp_path)
-    doc = json.loads(path.read_text())
+    doc = json.loads(path.read_text(encoding="utf-8"))
     rec = doc["approvals"][0]
     rec.pop("question_digest")
     rec["approval_id"] = approvals.approval_id("demo", "one", rec["quote"], rec["recorded_at"])
     answers["items"][0]["single_attempt_approval"]["approval_id"] = rec["approval_id"]
-    path.write_text(json.dumps(doc))
+    path.write_text(json.dumps(doc), encoding="utf-8", newline="\n")
     with pytest.raises(approvals.ApprovalError, match="question_digest"):
         approvals.check(module, answers, path)
 
@@ -103,9 +103,9 @@ def test_removing_the_waiver_item_scope_invalidates_its_id(tmp_path):
     path = tmp_path / "approvals.json"
     approvals.append(path, "demo", None, "Yes, for one item.", kind="waiver",
                      rail="write-past-first-door", item_ids=["one"], question_digest="a" * 64)
-    doc = json.loads(path.read_text())
+    doc = json.loads(path.read_text(encoding="utf-8"))
     doc["approvals"][0].pop("item_ids")
-    path.write_text(json.dumps(doc))
+    path.write_text(json.dumps(doc), encoding="utf-8", newline="\n")
     with pytest.raises(approvals.ApprovalError, match="does not match its record"):
         approvals.load(path)
 

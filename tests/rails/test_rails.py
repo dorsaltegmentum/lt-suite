@@ -79,7 +79,7 @@ W_DOOR = _rec("c1-r101", "waiver", "Yes, the write past the checkpoint is fine."
 S_TEXT1 = _rec("c1-r101", "single-attempt", "Yes, write i-text-1 as drafted.", item_id="i-text-1")
 WAIVER_APPROVALS = {"schema_version": 1, "module_id": "c1-r101",
                     "approvals": [W_MANUAL, W_DOOR, S_TEXT1]}
-FIXTURE_APPROVAL_ID = json.loads(APPROVALS_FIXTURE.read_text())["approvals"][0]["approval_id"]
+FIXTURE_APPROVAL_ID = json.loads(APPROVALS_FIXTURE.read_text(encoding="utf-8"))["approvals"][0]["approval_id"]
 
 
 # --- module.json mutations -------------------------------------------------------------
@@ -1077,14 +1077,14 @@ def run_validator(tmp_path: Path, base: str, doc: dict, opts: dict, quiet: bool 
     # The answers example pins module.example.json next to itself.
     (tmp_path / "module.example.json").write_bytes((EX / "module.example.json").read_bytes())
     (tmp_path / "answers.example.json").write_bytes((EX / "answers.example.json").read_bytes())
-    (tmp_path / "README.txt").write_text("Not a capture.\n", encoding="utf-8")
+    (tmp_path / "README.txt").write_text("Not a capture.\n", encoding="utf-8", newline="\n")
     argv = [str(fp), "--schemas-dir", str(SCHEMAS)]
     if quiet:
         argv.append("--quiet")
     if base in ("fill-report", "answers") and not opts.get("no_module"):
         mod = opts.get("module", ident)(load("module"))
         mp = tmp_path / "cross-module.json"
-        mp.write_text(json.dumps(mod, indent=1), encoding="utf-8")
+        mp.write_text(json.dumps(mod, indent=1), encoding="utf-8", newline="\n")
         argv += ["--module", str(mp)]
         if base == "answers" and doc["source_module"]["path"] == "cross-module.json":
             doc["source_module"].update(sha256=hashlib.sha256(mp.read_bytes()).hexdigest(),
@@ -1093,14 +1093,14 @@ def run_validator(tmp_path: Path, base: str, doc: dict, opts: dict, quiet: bool 
         argv += ["--approvals", str(APPROVALS_FIXTURE)]
     elif opts.get("approvals") == "waivers":
         ap = tmp_path / "approvals.json"
-        ap.write_text(json.dumps(WAIVER_APPROVALS, indent=1), encoding="utf-8")
+        ap.write_text(json.dumps(WAIVER_APPROVALS, indent=1), encoding="utf-8", newline="\n")
         argv += ["--approvals", str(ap)]
     elif opts.get("approvals") == "variant":
         rec = _rec(mod["module_id"], "single-attempt", "Yes, write this variant.",
                    item_id="p3-12", qdigest=question_digest(mod))
         ap = tmp_path / "approvals.json"
         ap.write_text(json.dumps({"schema_version": 1, "module_id": mod["module_id"],
-                                  "approvals": [rec]}), encoding="utf-8")
+                                  "approvals": [rec]}), encoding="utf-8", newline="\n")
         row = next(row for row in doc["items"] if row["item_id"] == "p3-12")
         if base == "answers":
             row["single_attempt_approval"]["approval_id"] = rec["approval_id"]
@@ -1111,9 +1111,9 @@ def run_validator(tmp_path: Path, base: str, doc: dict, opts: dict, quiet: bool 
         argv += ["--model-answer-read", "true" if opts["read"] else "false"]
     if "config" in opts:
         cp = tmp_path / "lt-suite.toml"
-        cp.write_text(opts["config"], encoding="utf-8")
+        cp.write_text(opts["config"], encoding="utf-8", newline="\n")
         argv += ["--config", str(cp)]
-    fp.write_text(json.dumps(doc, indent=1), encoding="utf-8")
+    fp.write_text(json.dumps(doc, indent=1), encoding="utf-8", newline="\n")
     out, err = io.StringIO(), io.StringIO()
     with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
         rc = validate.main(argv)
@@ -1223,9 +1223,9 @@ def test_T27_rat_root_quarantine(tmp_path, field, value):
 def test_T32_rat_report_negative_rails(tmp_path, mutation, rail):
     from ltcore import page_kinds
     fixtures = REPO / 'tests/fixtures'
-    mod = json.loads((fixtures / 'modules/module-c1-r109.json').read_text())
-    rep = json.loads((fixtures / 'fill-reports/fill-report-c1-r109.json').read_text())
-    record = json.loads((fixtures / 'page-kinds/page-kinds-c1-r109.json').read_text())
+    mod = json.loads((fixtures / 'modules/module-c1-r109.json').read_text(encoding="utf-8"))
+    rep = json.loads((fixtures / 'fill-reports/fill-report-c1-r109.json').read_text(encoding="utf-8"))
+    record = json.loads((fixtures / 'page-kinds/page-kinds-c1-r109.json').read_text(encoding="utf-8"))
     ctx = validate._Ctx(base_dir=tmp_path, module=mod, page_kinds=record)
     assert validate.rails_rat_fill(rep, ctx) == []
     if mutation == 'decision':
@@ -1240,8 +1240,8 @@ def test_T32_rat_report_negative_rails(tmp_path, mutation, rail):
 def test_T31_rat_irat_drafted_is_unwaivable(tmp_path):
     from ltcore import page_kinds, rat
     fixtures = REPO / 'tests/fixtures'
-    mod = json.loads((fixtures / 'modules/module-c1-r109.json').read_text())
-    ans = json.loads((fixtures / 'answers/answers-c1-r109.json').read_text())
+    mod = json.loads((fixtures / 'modules/module-c1-r109.json').read_text(encoding="utf-8"))
+    ans = json.loads((fixtures / 'answers/answers-c1-r109.json').read_text(encoding="utf-8"))
     item = next(a for a in ans['items'] if a['item_id'] == 'p2-81')
     item.pop('skip_reason')
     item.update(status='drafted', confidence='high', segments=[{'kind': 'claim', 'text': 'Invented claim', 'provenance_refs': ['p1']}], provenance=[{'ref': 'p1', 'tier': 4, 'source_id': '10.1000/demo', 'locator': 'section 1', 'tag': '[T4:10.1000/demo]'}])
@@ -1254,7 +1254,7 @@ def test_T31_rat_irat_drafted_is_unwaivable(tmp_path):
 def test_T27_reconciled_dispatches_the_quarantine_rail(tmp_path):
     # J4 supplies its full schema; a minimal schema exercises the shared dispatcher now.
     schema = tmp_path / 'reconciled.schema.json'
-    schema.write_text(json.dumps({'type': 'object', 'properties': {'entries': {'type': 'array'}}}))
+    schema.write_text(json.dumps({'type': 'object', 'properties': {'entries': {'type': 'array'}}}), encoding="utf-8", newline="\n")
     doc = {'entries': [{'provenance': [{'source_id': 'fill-report-pre-rat.json'}]}]}
     result = validate.validate_doc(doc, 'reconciled', schemas_dir=tmp_path, base_dir=tmp_path)
     assert result.exit_code == 1
@@ -1264,8 +1264,8 @@ def test_T27_reconciled_dispatches_the_quarantine_rail(tmp_path):
 def test_T20_informed_ordinary_mark_allows_an_ordinary_draft(tmp_path):
     from ltcore import page_kinds
     fixtures = REPO / 'tests/fixtures'
-    mod = json.loads((fixtures / 'modules/module-c1-r109.json').read_text())
-    ans = json.loads((fixtures / 'answers/answers-c1-r109.json').read_text())
+    mod = json.loads((fixtures / 'modules/module-c1-r109.json').read_text(encoding="utf-8"))
+    ans = json.loads((fixtures / 'answers/answers-c1-r109.json').read_text(encoding="utf-8"))
     ans['items'][0].update(status='drafted', segments=[], provenance=[])
     record = page_kinds.classify(mod, answers=ans)
     record = page_kinds.mark(mod, record, 2, 'not-rat', 'Ordinary page despite the marker')
@@ -1277,7 +1277,7 @@ def test_T20_informed_ordinary_mark_allows_an_ordinary_draft(tmp_path):
 def test_T31_custom_individual_marker_also_forbids_drafting(tmp_path):
     from ltcore import rat
     fixtures = REPO / 'tests/fixtures'
-    mod = json.loads((fixtures / 'modules/module-c1-r109.json').read_text())
+    mod = json.loads((fixtures / 'modules/module-c1-r109.json').read_text(encoding="utf-8"))
     mod['pages'][1]['content'] = [{'text': 'Solo examination'}]
     ans = {'items': [{'item_id': 'p2-81', 'status': 'drafted'}]}
     ctx = validate._Ctx(base_dir=tmp_path, module=mod,

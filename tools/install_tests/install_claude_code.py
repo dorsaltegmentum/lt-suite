@@ -107,7 +107,7 @@ def init_message(cmd, cwd, env, timeout) -> tuple[dict | None, str]:
     try:
         p = subprocess.Popen([str(x) for x in cmd], cwd=str(cwd), env=env, text=True,
                              stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
-                             stderr=subprocess.PIPE, errors="replace")
+                             stderr=subprocess.PIPE, errors="replace", encoding="utf-8")
     except FileNotFoundError as e:
         return None, str(e)
     q: queue.Queue = queue.Queue()
@@ -147,6 +147,12 @@ def init_message(cmd, cwd, env, timeout) -> tuple[dict | None, str]:
 
 
 def main() -> int:
+    import sys
+    from pathlib import Path
+    sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "shared"))
+    from ltcore.streams import configure_utf8
+    configure_utf8()
+
     ap = c.base_parser(__doc__.split("\n")[0])
     ap.add_argument("--claude", default=None,
                     help="claude command (default: $CLAUDE_BIN or claude on PATH); may be an npx line")

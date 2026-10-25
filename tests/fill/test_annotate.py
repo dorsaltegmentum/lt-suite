@@ -53,7 +53,7 @@ def config_path(tmp_path):
             for key, value in values.items():
                 lines.append(f"{key} = {json.dumps(value)}")
             lines.append("")
-        path.write_text("\n".join(lines), encoding="utf-8")
+        path.write_text("\n".join(lines), encoding="utf-8", newline="\n")
         return path
 
     return write
@@ -78,7 +78,7 @@ def run_script(repo_root):
             text=True,
             timeout=60,
             check=False,
-        )
+        encoding="utf-8")
 
     return run
 
@@ -314,7 +314,7 @@ def test_lt_upload_pixels_match_v010(tmp_path, synthetic_image, config_path, run
     cases = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(cases)
     CASES = cases.CASES
-    fixture = json.loads((Path(__file__).parent/'fixtures/annotate-v010-digests.json').read_text())
+    fixture = json.loads((Path(__file__).parent/'fixtures/annotate-v010-digests.json').read_text(encoding="utf-8"))
     for index, marks in enumerate(CASES):
         outputs = []
         for name, settings, flags in [('copies', {}, []), ('single', {'palette_copies':False}, []), ('lt', {}, ['--palette','lt'])]:
@@ -336,7 +336,7 @@ def test_one_copy_per_pdf_palette(tmp_path, synthetic_image, run_script):
     from PIL import Image
     from ltcore import palettes as P
     cfg = tmp_path/'palettes.toml'
-    cfg.write_text('[style]\npalettes = ["catppuccin-frappe", "everforest-dark-medium"]\nprint_palette = "catppuccin-latte"\n')
+    cfg.write_text('[style]\npalettes = ["catppuccin-frappe", "everforest-dark-medium"]\nprint_palette = "catppuccin-latte"\n', encoding="utf-8", newline="\n")
     target = tmp_path/'out.png'
     assert_success(run_script('annotate_micrograph.py',cfg,synthetic_image,target,'--point','alpha:240,220'))
     for pid in ['catppuccin-latte','catppuccin-frappe','everforest-dark-medium']:
@@ -346,7 +346,7 @@ def test_one_copy_per_pdf_palette(tmp_path, synthetic_image, run_script):
         assert copy.getpixel((0,0)) == expected
         import numpy as np
         assert np.any(np.all(np.asarray(copy) == tuple(bytes.fromhex(colours['point'][1:])), axis=-1))
-    cfg.write_text(cfg.read_text()+'[annotate]\npalette_copies = false\n')
+    cfg.write_text(cfg.read_text(encoding="utf-8")+'[annotate]\npalette_copies = false\n', encoding="utf-8", newline="\n")
     result = run_script('annotate_micrograph.py',cfg,synthetic_image,target,'--point','alpha:240,220')
     assert_success(result)
     assert not P.read_copies(target)['copies']
@@ -355,7 +355,7 @@ def test_one_copy_per_pdf_palette(tmp_path, synthetic_image, run_script):
     result = run_script('annotate_micrograph.py',cfg,synthetic_image,target,'--point','alpha:240,220')
     assert_success(result)
     assert all(f'out-{pid}.png' in result.stderr for pid in ['catppuccin-latte','catppuccin-frappe','everforest-dark-medium'])
-    cfg.write_text('[style]\npalettes = ["primer-light-colorblind"]\nprint_palette = "primer-light-colorblind"\n')
+    cfg.write_text('[style]\npalettes = ["primer-light-colorblind"]\nprint_palette = "primer-light-colorblind"\n', encoding="utf-8", newline="\n")
     result = run_script('annotate_micrograph.py',cfg,synthetic_image,target,'--point','alpha:240,220')
     assert_success(result)
     assert 'WARNING: palette primer-light-colorblind' in result.stderr
@@ -436,10 +436,10 @@ accent_3 = "#bb5566"
 accent_4 = "#117733"
 accent_5 = "#44aa99"
 accent_6 = "#882255"
-''')
+''', encoding="utf-8", newline="\n")
     cfg = tmp_path / 'config.toml'
     cfg.write_text(f'[style]\npalettes = ["{pid}"]\nprint_palette = "{pid}"\n'
-                   f'custom_palettes_file = {json.dumps(str(custom))}\n')
+                   f'custom_palettes_file = {json.dumps(str(custom))}\n', encoding="utf-8", newline="\n")
     source, media = tmp_path / 'rendered.png', tmp_path / 'lt-test.png'
     assert_success(run_script('annotate_micrograph.py', cfg, synthetic_image, source,
                               '--point', 'alpha:240,220'))
@@ -471,7 +471,7 @@ def test_render_owns_its_copies(tmp_path, synthetic_image, config_path, run_scri
 
 def test_missing_labels_path_warns(tmp_path, synthetic_image, run_script):
     cfg = tmp_path/'labels.toml'
-    cfg.write_text('[fonts.labels]\nsans = "missing.ttf"\n')
+    cfg.write_text('[fonts.labels]\nsans = "missing.ttf"\n', encoding="utf-8", newline="\n")
     result = run_script('annotate_micrograph.py',cfg,synthetic_image,tmp_path/'out.png','--point','alpha:240,220')
     assert_success(result)
     assert 'WARNING: using pillow-default' in result.stderr

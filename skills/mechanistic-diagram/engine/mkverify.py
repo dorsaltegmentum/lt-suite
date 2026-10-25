@@ -15,17 +15,18 @@ weight and size are reported (default: the first box that is not bold).
 import json, zlib, base64, urllib.parse, pathlib, os, sys
 
 import _bootstrap  # noqa: E402,F401  (engine and shared core on sys.path)
+from _legacy import read_legacy_text
 
 ENGINE = pathlib.Path(__file__).resolve().parent
 
 
 def write(case, dest=None):
     """Write verify.js; returns its path."""
-    xml = (case.dir / f"{case.slug}.drawio").read_text()
+    xml = read_legacy_text(case.dir / f"{case.slug}.drawio")
     enc = urllib.parse.quote(xml, safe="!*'()")
     co = zlib.compressobj(9, zlib.DEFLATED, -15)
     b64 = base64.b64encode(co.compress(enc.encode("ascii")) + co.flush()).decode()
-    g = json.loads((case.dir / "geometry.json").read_text())
+    g = json.loads(read_legacy_text(case.dir / "geometry.json"))
     exp = {}
     import math, drawio, style, themes
     import core as E
@@ -100,12 +101,15 @@ return {fontOk, family: cs.fontFamily, weight: cs.fontWeight, size: cs.fontSize,
 })()""" % (json.dumps(b64), json.dumps(exp, separators=(",", ":")), json.dumps(lines, separators=(",", ":")), json.dumps(LH),
            json.dumps(case.verify_probe), json.dumps(href), json.dumps(faces))
     dest = pathlib.Path(dest) if dest else pathlib.Path(os.environ.get("TMPDIR") or case.dir) / "verify.js"
-    dest.write_text(js)
+    dest.write_text(js, encoding="utf-8", newline="\n")
     print(f"{dest}: {len(js)} chars")
     return dest
 
 
 def main(argv):
+    from ltcore.streams import configure_utf8
+    configure_utf8()
+
     import argparse
     import style
     from case import Case, CaseError

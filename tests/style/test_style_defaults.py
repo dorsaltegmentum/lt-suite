@@ -50,7 +50,7 @@ def test_no_placeholder_in_shipped_style_files():
 def test_user_config_overrides_style_defaults(tmp_path):
     f = tmp_path / "lt-suite.toml"
     f.write_text('[style]\npalettes = ["catppuccin-latte"]\n[fonts]\nsans = "Atkinson Hyperlegible Next"\n',
-                 encoding="utf-8")
+                 encoding="utf-8", newline="\n")
     cfg = config.load(f)
     assert cfg.get("style.palettes") == ["catppuccin-latte"]
     assert cfg.get("style.print_palette") == palettes.default_print_palette()

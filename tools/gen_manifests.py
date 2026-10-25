@@ -237,6 +237,12 @@ def write_files(destination: Path, output: dict[str, bytes]) -> None:
 
 
 def main(argv: list[str] | None = None) -> int:
+    import sys
+    from pathlib import Path
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "shared"))
+    from ltcore.streams import configure_utf8
+    configure_utf8()
+
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--check", action="store_true", help="Report drift without changing files")
     parser.add_argument("--root", type=Path, default=Path(__file__).resolve().parents[1],

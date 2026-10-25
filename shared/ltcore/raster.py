@@ -226,7 +226,7 @@ def convert(svg: str | os.PathLike, out: str | os.PathLike, *, fmt: str | None =
             else:
                 tmp_svg = Path(name)
                 stack.callback(tmp_svg.unlink, missing_ok=True)
-                with os.fdopen(fd, "w", encoding="utf-8") as prepared:
+                with os.fdopen(fd, "w", encoding="utf-8", newline="\n") as prepared:
                     prepared.write(prep.svg)
         tmp_out = Path(td) / f"out.{fmt}"
         try:
@@ -268,6 +268,9 @@ def render(svg: str | os.PathLike, out_dir: str | os.PathLike | None = None, ste
 
 
 def main(argv: list[str] | None = None) -> int:
+    from ltcore.streams import configure_utf8
+    configure_utf8()
+
     ap = argparse.ArgumentParser(prog="python3 -m ltcore.raster", description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("svg")

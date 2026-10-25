@@ -54,7 +54,7 @@ def test_check_python_message():
 
 def test_import_on_fake_310_prints_the_message():
     code = _fake_version(f"sys.path.insert(0, {str(SHARED)!r})\nimport ltcore\nprint('imported')")
-    r = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True)
+    r = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True, encoding="utf-8")
     assert r.returncode == 1
     assert MESSAGE in r.stderr and "imported" not in r.stdout
 
@@ -62,13 +62,13 @@ def test_import_on_fake_310_prints_the_message():
 def test_entry_gate_on_fake_310(tmp_path):
     script = tmp_path / "scripts" / "entry.py"
     script.parent.mkdir()
-    script.write_text(ENTRY_GATE, encoding="utf-8")
+    script.write_text(ENTRY_GATE, encoding="utf-8", newline="\n")
     shutil.copytree(SHARED / "ltcore", tmp_path / "scripts" / "_shared" / "ltcore")
     runner = _fake_version(f"__file__ = {str(script)!r}\nexec(open(__file__).read())")
-    r = subprocess.run([sys.executable, "-c", runner], capture_output=True, text=True)
+    r = subprocess.run([sys.executable, "-c", runner], capture_output=True, text=True, encoding="utf-8")
     assert r.returncode == 1 and MESSAGE in r.stderr
     r = subprocess.run([sys.executable, str(script)], capture_output=True, text=True,
-                       env={**os.environ, "LT_SUITE_DATA": str(tmp_path / "data")})
+                       env={**os.environ, "LT_SUITE_DATA": str(tmp_path / "data")}, encoding="utf-8")
     assert r.returncode == 0 and "past the gate" in r.stdout, r.stderr
 
 
@@ -91,19 +91,19 @@ def test_bootstrap_reexecs_inside_data_venv(tmp_path):
     py = data / "venv" / "bin" / "python"
     py.parent.mkdir(parents=True)
     marker = tmp_path / "marker.txt"
-    py.write_text(f'#!/bin/sh\necho "$@ guard=$LT_SUITE_BOOTSTRAPPED" > "{marker}"\nexit 7\n')
+    py.write_text(f'#!/bin/sh\necho "$@ guard=$LT_SUITE_BOOTSTRAPPED" > "{marker}"\nexit 7\n', encoding="utf-8", newline="\n")
     py.chmod(py.stat().st_mode | stat.S_IXUSR)
     code = (f"import sys; sys.path.insert(0, {str(SHARED)!r})\nimport ltcore\n"
             "ltcore.bootstrap(['lt_surely_absent_xyz'], argv=['script.py', '--flag'])\n"
             "print('not re-executed')")
     env = {**os.environ, "LT_SUITE_DATA": str(data)}
     env.pop("LT_SUITE_BOOTSTRAPPED", None)
-    r = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True, env=env)
+    r = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True, env=env, encoding="utf-8")
     assert r.returncode == 7, r.stdout + r.stderr
-    assert marker.read_text().strip() == "script.py --flag guard=1"
+    assert marker.read_text(encoding="utf-8").strip() == "script.py --flag guard=1"
     # the guard stops a loop: with LT_SUITE_BOOTSTRAPPED=1 nothing is re-executed
     r = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True,
-                       env={**env, "LT_SUITE_BOOTSTRAPPED": "1"})
+                       env={**env, "LT_SUITE_BOOTSTRAPPED": "1"}, encoding="utf-8")
     assert r.returncode == 0 and "not re-executed" in r.stdout
 
 
@@ -112,10 +112,10 @@ def test_requirements_read_from_skill_layout(tmp_path):
     shutil.copytree(SHARED / "ltcore", skill / "scripts" / "_shared" / "ltcore")
     (skill / "requirements.txt").write_text(
         "# generated\nlt-surely-absent-dist>=1.0\njson5 ; python_version >= '3.11'\n"
-        "# Optional: imported only when installed.\n# pikepdf>=9\n", encoding="utf-8")
+        "# Optional: imported only when installed.\n# pikepdf>=9\n", encoding="utf-8", newline="\n")
     code = (f"import sys; sys.path.insert(0, {str(skill / 'scripts' / '_shared')!r})\n"
             "import ltcore; print(ltcore._skill_requirements()); print(ltcore.missing_modules())")
-    r = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True)
+    r = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True, encoding="utf-8")
     assert r.returncode == 0, r.stderr
     lines = r.stdout.strip().splitlines()
     assert lines[0] == "['lt-surely-absent-dist', 'json5']"
@@ -128,9 +128,9 @@ def test_generated_requirement_guards_select_running_python(tmp_path):
     (skill / "requirements.txt").write_text(
         "future-only==1 ; python_full_version >= '99' --hash=sha256:abc\n"
         "old-only==1 ; python_full_version < '3.11' --hash=sha256:def\n"
-        "current-only==1 ; python_full_version >= '3.11' --hash=sha256:ghi\n")
+        "current-only==1 ; python_full_version >= '3.11' --hash=sha256:ghi\n", encoding="utf-8", newline="\n")
     code = (f"import sys; sys.path.insert(0, {str(skill / 'scripts' / '_shared')!r})\n"
             "import ltcore; print(ltcore._skill_requirements())")
-    r = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True)
+    r = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True, encoding="utf-8")
     assert r.returncode == 0, r.stderr
     assert r.stdout.strip() == "['current-only']"

@@ -11,7 +11,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 def workflow(name):
-    return yaml.safe_load((ROOT / '.github/workflows' / name).read_text())
+    return yaml.safe_load((ROOT / '.github/workflows' / name).read_text(encoding="utf-8"))
 
 
 def runs(job):
@@ -39,9 +39,9 @@ def test_actions_are_pinned_and_permissions_default_to_read():
 def test_ci_has_all_jobs_and_installs_before_python_checks():
     # Bare Python cannot run schema generators or parse workflow YAML.
     jobs = workflow('ci.yml')['jobs']
-    assert set(jobs) == {'privacy', 'drift', 'py', 'py-os', 'node', 'isolation', 'reuse',
+    assert set(jobs) == {'privacy', 'drift', 'py', 'py-ascii', 'py-os', 'node', 'isolation', 'reuse',
                          'skills', 'validators', 'lexicon', 'dist', 'release-check', 'dco'}
-    for name in ('drift', 'release-check', 'py', 'py-os'):
+    for name in ('drift', 'release-check', 'py', 'py-ascii', 'py-os'):
         steps = runs(jobs[name])
         install = next(i for i, cmd in steps if 'packaging/ci.py install-ci' in cmd)
         check = next(i for i, cmd in steps if any(s in cmd for s in ('--check', 'pytest', 'check_release.py', 'area-tests')))
@@ -53,6 +53,12 @@ def test_ci_has_all_jobs_and_installs_before_python_checks():
     assert 'tools/build_dist.py --out dist --check' in '\n'.join(c for _, c in runs(jobs['dist']))
     assert 'area-tests' in '\n'.join(c for _, c in runs(jobs['py']))
     assert jobs['py']['strategy']['matrix']['python'] == ['3.11', '3.13', '3.14']
+    ascii_step = next(s for s in jobs['py-ascii']['steps'] if 'area-tests' in s.get('run', ''))
+    assert ascii_step['env'] == {'LC_ALL': 'C', 'LANG': 'C', 'PYTHONUTF8': '0',
+                                 'PYTHONCOERCECLOCALE': '0'}
+    later = jobs['py-os']['steps'][-3:]
+    assert [s['if'] for s in later] == ['${{ !cancelled() }}', '${{ !cancelled() }}',
+                                       "${{ !cancelled() && runner.os == 'macOS' }}"]
 
 
 def test_pr_jobs_run_public_mode_and_dco_only_for_pull_requests():

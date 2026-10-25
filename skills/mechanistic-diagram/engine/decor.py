@@ -25,6 +25,7 @@ Case data (all optional; with none, a case draws as before apart from the role g
 
 Every glyph is a Material Design Icons path (icons.py, from tools/extract_icons.py).
 """
+from _legacy import read_legacy_text
 import html, math, re
 
 import core as E
@@ -812,12 +813,12 @@ def inset_prepare(case, flavours=None):
     out = {}
     mode = spec.get("mode", "raster")
     if mode == "themed":
-        text = src.read_text()
+        text = read_legacy_text(src)
         for fl in flavours:
             svg, meta = themed_svg(text, themes.THEMES[fl], spec.get("bg", "key_fill"))
             dst = src.with_name(f"{src.stem}-{fl}.svg")
-            if not dst.exists() or dst.read_text() != svg:
-                dst.write_text(svg)
+            if not dst.exists() or read_legacy_text(dst) != svg:
+                dst.write_text(svg, encoding="utf-8", newline="\n")
                 print(f"inset: coloured {src.name} for {fl} -> {dst.name}")
             meta["png"] = str(dst)
             out[fl] = meta
@@ -833,7 +834,7 @@ def inset_prepare(case, flavours=None):
         meta = None
         if png.exists() and side.exists():
             try:
-                meta = _json.loads(side.read_text())
+                meta = _json.loads(read_legacy_text(side))
             except ValueError:
                 meta = None
         if not meta or meta.get("key") != key:
@@ -844,12 +845,12 @@ def inset_prepare(case, flavours=None):
                 cmd += ["--anchor", h]
             if params["crop"]:
                 cmd += ["--crop", ",".join(str(int(v)) for v in params["crop"])]
-            r = _sp.run(cmd, capture_output=True, text=True)
+            r = _sp.run(cmd, capture_output=True, text=True, encoding="utf-8")
             if r.returncode:
                 raise ValueError(f"recolour.py failed on {src.name} ({fl}): {r.stderr.strip()[-400:]}")
-            meta = _json.loads(side.read_text())
+            meta = _json.loads(read_legacy_text(side))
             meta["key"] = key
-            side.write_text(_json.dumps(meta, indent=1) + "\n")
+            side.write_text(_json.dumps(meta, indent=1) + "\n", encoding="utf-8", newline="\n")
             print(f"inset: recoloured {src.name} into {fl} -> {png.name}")
         meta["png"] = str(png)
         out[fl] = meta

@@ -42,7 +42,7 @@ CAPTURE_S = 30
 ])
 def test_browser_inert_parser_discards_head_scripts_and_hidden_subtrees(
         tmp_path, html, expected_text, hidden_count, flags):
-    source = SOURCE.read_text()
+    source = SOURCE.read_text(encoding="utf-8")
     loaded = threading.Event()
     done = threading.Event()
     docs = {}
@@ -124,7 +124,7 @@ await fetch('/done', {{method:'POST', body:JSON.stringify({{receipt, executed:gl
     def browser_state():
         code = proc.poll()
         status = 'still running' if code is None else f'exited with status {code}'
-        return f'; browser {status}, output:\n' + log.read_text(errors='replace')[-2000:]
+        return f'; browser {status}, output:\n' + log.read_text(errors='replace', encoding="utf-8")[-2000:]
 
     try:
         assert wait(loaded, STARTUP_S), 'headless browser did not load the page' + browser_state()

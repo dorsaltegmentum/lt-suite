@@ -71,7 +71,7 @@ scripts = ["fonts/", "style.defaults.toml"]
 
 def run(root: Path, *args: str) -> subprocess.CompletedProcess:
     return subprocess.run([sys.executable, str(TOOL), "--root", str(root), *args],
-                          capture_output=True, text=True)
+                          capture_output=True, text=True, encoding="utf-8")
 
 
 def files(d: Path) -> dict[str, bytes]:
@@ -137,9 +137,9 @@ def test_check_passes_then_detects_drift_and_orphans(fake):
     r = run(fake, "--check", "--skill", "demo")
     assert r.returncode == 0 and "ok skills/demo" in r.stdout
     copy = fake / "skills" / "demo" / "scripts" / "_shared" / "ltcore" / "gamma.py"
-    copy.write_text(copy.read_text() + "# hand edit\n")
+    copy.write_text(copy.read_text(encoding="utf-8") + "# hand edit\n", encoding="utf-8", newline="\n")
     orphan = fake / "skills" / "demo" / "references" / "_shared" / "stale.md"
-    orphan.write_text("old\n")
+    orphan.write_text("old\n", encoding="utf-8", newline="\n")
     cache = fake / "skills" / "demo" / "scripts" / "_shared" / "ltcore" / "__pycache__" / "x.pyc"
     cache.parent.mkdir()
     cache.write_bytes(b"\0")
@@ -149,7 +149,7 @@ def test_check_passes_then_detects_drift_and_orphans(fake):
     assert "DRIFT skills/demo/references/_shared/stale.md (orphan: no source)" in r.stdout
     assert "__pycache__" not in r.stdout
     # a source change is drift too
-    (fake / "shared" / "schemas" / "a.json").write_text('{"a": 2}\n')
+    (fake / "shared" / "schemas" / "a.json").write_text('{"a": 2}\n', encoding="utf-8", newline="\n")
     assert "scripts/_shared/schemas/a.json (differs" in run(fake, "--check", "--skill", "demo").stdout
     # sync repairs everything and removes the orphan
     assert run(fake, "--skill", "demo").returncode == 0
@@ -160,7 +160,7 @@ def test_check_passes_then_detects_drift_and_orphans(fake):
 def test_strict_turns_skip_into_failure(fake):
     r = run(fake, "--skill", "demo", "--strict")
     assert r.returncode == 1 and "SKIP shared/references/missing.md" in r.stdout
-    (fake / "shared" / "references" / "missing.md").write_text("now here\n")
+    (fake / "shared" / "references" / "missing.md").write_text("now here\n", encoding="utf-8", newline="\n")
     assert run(fake, "--skill", "demo", "--strict").returncode == 0
     assert run(fake, "--check", "--strict", "--skill", "demo").returncode == 0
 
@@ -199,7 +199,7 @@ def test_all_skills_and_unknown_skill(fake):
     r = run(fake)
     assert r.returncode == 0
     assert (fake / "skills" / "other" / "scripts" / "_shared" / "ltcore" / "gamma.py").is_file()
-    assert "numpy==2.1.0 --hash=sha256:" in (fake / "skills" / "other" / "requirements.txt").read_text()
+    assert "numpy==2.1.0 --hash=sha256:" in (fake / "skills" / "other" / "requirements.txt").read_text(encoding="utf-8")
     assert run(fake, "--skill", "nope").returncode == 2
 
 
@@ -215,7 +215,7 @@ def test_sync_is_idempotent(fake):
 def test_real_repo_capture_sync_is_clean(repo_root):
     """The acceptance pair on the real repository: sync then check exit 0."""
     r = subprocess.run([sys.executable, str(TOOL), "--check", "--skill", "lt-module-capture"],
-                       capture_output=True, text=True, cwd=repo_root)
+                       capture_output=True, text=True, cwd=repo_root, encoding="utf-8")
     assert r.returncode == 0, r.stdout + r.stderr
     assert "ok skills/lt-module-capture" in r.stdout
 
@@ -249,7 +249,7 @@ def test_requirements_are_frozen_hashed_and_keep_only_skill_closure(fake):
     before = (fake / "uv.lock").read_bytes()
     r = run(fake, "--skill", "demo")
     assert r.returncode == 0, r.stdout + r.stderr
-    req = (fake / "skills" / "demo" / "requirements.txt").read_text()
+    req = (fake / "skills" / "demo" / "requirements.txt").read_text(encoding="utf-8")
     assert 'attrs==24.0.0 --hash=sha256:' in req, req
     assert 'jsonschema==4.23.0 --hash=sha256:' in req
     assert 'pillow==11.0.0 --hash=sha256:' in req

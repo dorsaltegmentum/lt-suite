@@ -36,7 +36,7 @@ def fake_case(tmp):
 
 
 def check_rows(path, slug):
-    lines = path.read_text().splitlines()
+    lines = path.read_text(encoding="utf-8").splitlines()
     assert lines[:4] == ["#separator:tab", "#html:true", "#columns:Front\tBack\tTags", "#tags column:3"], lines[:4]
     fronts = set()
     for ln in lines[4:]:
@@ -89,11 +89,11 @@ def test_worked_example_cards():
 def test_tag_prefix_from_the_config(tmp_path):
     import style
     cfg = tmp_path / "lt-suite.toml"
-    cfg.write_text('[diagram.anki]\ntag_prefix = "Mine::"\n')
+    cfg.write_text('[diagram.anki]\ntag_prefix = "Mine::"\n', encoding="utf-8", newline="\n")
     try:
         style.configure(str(cfg))
         case = fake_case(tmp_path)
         path = anki_cards.write(case, tmp_path / "c.tsv")
-        assert all(line.split("\t")[2].startswith("Mine::case-0-test ") for line in path.read_text().splitlines()[4:])
+        assert all(line.split("\t")[2].startswith("Mine::case-0-test ") for line in path.read_text(encoding="utf-8").splitlines()[4:])
     finally:
         style.configure(None)

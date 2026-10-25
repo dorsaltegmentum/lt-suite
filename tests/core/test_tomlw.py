@@ -108,6 +108,6 @@ def test_defaults_roundtrip():
 
 def test_dump_to_file(tmp_path):
     p = tmp_path / "x.toml"
-    with open(p, "w", encoding="utf-8") as fh:
+    with open(p, "w", encoding="utf-8", newline="\n") as fh:
         tomlw.dump({"a": {"b": [1]}}, fh)
     assert tomllib.loads(p.read_text(encoding="utf-8")) == {"a": {"b": [1]}}

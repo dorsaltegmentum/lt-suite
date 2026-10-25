@@ -280,12 +280,15 @@ def check(page, out, report, render=None, namespace="Lt", stamp_property="lt-mod
         print(f"    the flavours carry {len(shas)} different texts; they must carry one")
     (out / ".qc.json").write_text(json.dumps(
         {fl: {x: r[x] for x in ("pages", "text_sha", "missing", "bad", "thin", "breaks")}
-         for fl, r in results.items()}, ensure_ascii=False, indent=1), encoding="utf-8")
+         for fl, r in results.items()}, ensure_ascii=False, indent=1), encoding="utf-8", newline="\n")
     print("QC  PASS" if ok else "QC  FAIL")
     return ok
 
 
 def main() -> int:
+    from ltcore.streams import configure_utf8
+    configure_utf8()
+
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("page", type=Path)

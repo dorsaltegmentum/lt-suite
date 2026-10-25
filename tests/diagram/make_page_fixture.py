@@ -43,7 +43,7 @@ def main(argv):
     out = pathlib.Path(argv[1]) if len(argv) > 1 else DEFAULT_OUT
     text = strip(src.read_text(encoding="utf-8"))
     out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_text(text, encoding="utf-8")
+    out.write_text(text, encoding="utf-8", newline="\n")
     print(f"wrote {out}: {len(text)} bytes")
     return 0
 

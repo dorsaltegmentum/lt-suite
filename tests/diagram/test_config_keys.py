@@ -19,7 +19,7 @@ def configured(tmp_path):
 
     def use(text):
         cfg = tmp_path / "lt-suite.toml"
-        cfg.write_text(text)
+        cfg.write_text(text, encoding="utf-8", newline="\n")
         style.configure(str(cfg))
         return cfg
     yield use
@@ -28,9 +28,9 @@ def configured(tmp_path):
 
 def test_illustration_credit_from_the_config(tmp_path, configured, monkeypatch):
     case_dir = copy_case(tmp_path / "toy-case")
-    meta = json.loads((case_dir / "case.json").read_text())
+    meta = json.loads((case_dir / "case.json").read_text(encoding="utf-8"))
     del meta["inset"]["credit"]
-    (case_dir / "case.json").write_text(json.dumps(meta))
+    (case_dir / "case.json").write_text(json.dumps(meta), encoding="utf-8", newline="\n")
     monkeypatch.chdir(tmp_path)
     configured('[diagram.illustration]\ncredit = "Drawing: the course team"\n')
     assert decor.inset_spec(C.Case(case_dir, trust=True))["credit"] == "Drawing: the course team"
@@ -52,13 +52,13 @@ def test_header_fields_and_member_order(tmp_path, configured, monkeypatch):
     case_dir = copy_case(tmp_path / "toy-case")
     monkeypatch.chdir(tmp_path)
     configured('[diagram.header]\nrequired_fields = ["title", "group", "members"]\nmembers_order = "surname"\n')
-    meta = json.loads((case_dir / "case.json").read_text())
+    meta = json.loads((case_dir / "case.json").read_text(encoding="utf-8"))
     meta["members"] = ["Amy Zulu", "Zed Able"]          # Zulu before Able: not in surname order
-    (case_dir / "case.json").write_text(json.dumps(meta))
+    (case_dir / "case.json").write_text(json.dumps(meta), encoding="utf-8", newline="\n")
     pre = C.Case(case_dir, trust=True).preflight()
     assert any("surname order" in p for p in pre), pre
     meta.pop("group")
-    (case_dir / "case.json").write_text(json.dumps(meta))
+    (case_dir / "case.json").write_text(json.dumps(meta), encoding="utf-8", newline="\n")
     assert any("group" in p for p in C.Case(case_dir, trust=True).preflight())
 
 
@@ -73,12 +73,12 @@ def test_ledger_name_from_the_config(tmp_path, configured):
 
 def test_new_case_naming(tmp_path, engine_env):
     cfg = tmp_path / "lt-suite.toml"
-    cfg.write_text('[diagram.naming]\ncase_slug_pattern = "unit-{n}"\neyebrow_template = "Session {n}"\n')
+    cfg.write_text('[diagram.naming]\ncase_slug_pattern = "unit-{n}"\neyebrow_template = "Session {n}"\n', encoding="utf-8", newline="\n")
     r = run_engine("new_case.py", tmp_path / "week-7", "--config", cfg, cwd=tmp_path, env=engine_env, timeout=120)
     assert r.returncode == 0, r.stderr
-    meta = json.loads((tmp_path / "week-7" / "case.json").read_text())
+    meta = json.loads((tmp_path / "week-7" / "case.json").read_text(encoding="utf-8"))
     assert meta["slug"] == "unit-7"
-    assert 'EYEBROW = "Session 7"' in (tmp_path / "week-7" / "artifact_content.py").read_text()
+    assert 'EYEBROW = "Session 7"' in (tmp_path / "week-7" / "artifact_content.py").read_text(encoding="utf-8")
     again = run_engine("new_case.py", tmp_path / "week-7", cwd=tmp_path, env=engine_env, timeout=120)
     assert again.returncode != 0 and "not overwriting" in (again.stdout + again.stderr)
     assert ENGINE.is_dir()

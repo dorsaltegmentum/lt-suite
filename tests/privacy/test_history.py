@@ -66,7 +66,7 @@ def test_clean_history_and_private_commit_message(run_gate, scratch_repo, tmp_pa
     git(scratch_repo, "update-ref", "refs/heads/main", last)
     private = tmp_path / "private"
     private.mkdir()
-    (private / "private-patterns.txt").write_text("synthetic-owner-91\n")
+    (private / "private-patterns.txt").write_text("synthetic-owner-91\n", encoding="utf-8", newline="\n")
     r = run_gate("--repo", str(scratch_repo), "--history", "--require-private",
                  env={"LT_PRIVACY_DIR": str(private)})
     assert r.returncode == 1 and r.stdout.startswith("private-")
@@ -141,7 +141,7 @@ def test_public_history_never_reads_private_inputs(run_gate, scratch_repo, tmp_p
     git(scratch_repo, 'update-ref', 'refs/heads/main', first)
     private = tmp_path / 'private'
     private.mkdir()
-    (private / 'private-patterns.txt').write_text('[invalid regex\n')
+    (private / 'private-patterns.txt').write_text('[invalid regex\n', encoding="utf-8", newline="\n")
     r = run_gate('--repo', str(scratch_repo), '--public-history',
                  env={'LT_PRIVACY_DIR': str(private), 'PRIVACY_PATTERNS_B64': 'invalid secret'})
     assert r.returncode == 0, r.stdout + r.stderr

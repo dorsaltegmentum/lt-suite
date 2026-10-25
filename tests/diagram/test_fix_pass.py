@@ -26,8 +26,8 @@ def test_cwd_code_requires_trust_and_records_all_hashes(tmp_path, monkeypatch):
     marker = case / "ran"
     code = case / "content.py"
     # A shared folder beneath cwd must not execute before consent.
-    code.write_text(f"from pathlib import Path\nPath({str(marker)!r}).touch()\n" + code.read_text())
-    (case / "helper.py").write_text('"""A case helper."""\n')
+    code.write_text(f"from pathlib import Path\nPath({str(marker)!r}).touch()\n" + code.read_text(encoding="utf-8"), encoding="utf-8", newline="\n")
+    (case / "helper.py").write_text('"""A case helper."""\n', encoding="utf-8", newline="\n")
     monkeypatch.chdir(tmp_path)
     monkeypatch.setenv("LT_SUITE_DATA", str(tmp_path / "data"))
     style.configure(None)
@@ -36,12 +36,12 @@ def test_cwd_code_requires_trust_and_records_all_hashes(tmp_path, monkeypatch):
     assert not marker.exists()
     C.Case(case, trust=True)
     assert marker.exists()
-    record = json.loads((tmp_path / "data/state/trusted-cases.json").read_text())
+    record = json.loads((tmp_path / "data/state/trusted-cases.json").read_text(encoding="utf-8"))
     expected = {p.relative_to(case).as_posix(): hashlib.sha256(p.read_bytes()).hexdigest()
                 for p in case.rglob("*.py")}
     assert record[str(case.resolve())] == expected
     C.Case(case)  # Identical code retains its explicit approval.
-    (case / "helper.py").write_text('"""Changed helper."""\n')
+    (case / "helper.py").write_text('"""Changed helper."""\n', encoding="utf-8", newline="\n")
     with pytest.raises(C.CaseError, match="--trust-case"):
         C.Case(case)
 
@@ -78,18 +78,18 @@ def test_inset_active_content_removed_from_every_export(tmp_path, engine_env):
               '<a href="java&#x73;cript:alert(1)"><rect onload="alert(1)" width="2" height="2"/></a>'
               '<path style="fill:url(https://example.invalid/a.svg#p)"/>'
               '<style>@import "https://example.invalid/a.css";</style>')
-    src.write_text(src.read_text().replace('</svg>', attack + '</svg>'))
+    src.write_text(src.read_text(encoding="utf-8").replace('</svg>', attack + '</svg>'), encoding="utf-8", newline="\n")
     r = run_engine("build.py", case, "--trust-case", cwd=ENGINE, env=engine_env)
     assert r.returncode == 0, r.stdout[-1500:] + r.stderr[-1500:]
     for path in list(case.glob('final-*.svg')) + list(case.glob('*.drawio')) + list(case.glob('*.html')):
-        text = path.read_text()
+        text = path.read_text(encoding="utf-8")
         # Embedded SVGs in masters must be inspected after decoding too.
         for data in re.findall(r'data:image/svg\+xml,(?:base64,)?([A-Za-z0-9+/=]+)', html.unescape(text)):
             text += base64.b64decode(data).decode()
         for forbidden in ('inset_attack', 'foreignObject', 'onload=', 'javascript:', 'example.invalid'):
             assert forbidden not in text, (path.name, forbidden)
     for path in case.glob('final-*.svg'):
-        assert '<script' not in path.read_text()
+        assert '<script' not in path.read_text(encoding="utf-8")
 
 
 @pytest.mark.parametrize('escape', ['../outside.svg', 'symlink'])
@@ -141,10 +141,10 @@ def test_floor_requires_labels_for_geometry_nodes(toy_copy, mutation):
 def test_floor_checks_dark_palette_overlaps(toy_copy):
     b = floor.Build(toy_copy)
     path = b.svg(b.palettes()[-1])
-    text = path.read_text()
+    text = path.read_text(encoding="utf-8")
     runs = re.findall(r'<text x="([\d.]+)" y="([\d.]+)"', text)
     (x0, y0), (x1, y1) = runs[:2]
-    path.write_text(text.replace(f'<text x="{x1}" y="{y1}"', f'<text x="{x0}" y="{y0}"', 1))
+    path.write_text(text.replace(f'<text x="{x1}" y="{y1}"', f'<text x="{x0}" y="{y0}"', 1), encoding="utf-8", newline="\n")
     rows, ok = floor.check(toy_copy, quiet=True)
     assert not ok
     assert any(r[0].startswith('label overlaps') and r[3] == 'FAIL' and b.palettes()[-1] in r[0] for r in rows)
@@ -152,7 +152,7 @@ def test_floor_checks_dark_palette_overlaps(toy_copy):
 
 def variant_case(tmp_path):
     case = copy_case(tmp_path / 'case')
-    (case / 'variants.py').write_text('CORE = set(N for N in ' + repr(list(C.Case(TOY).content.NODES)) + ')\n')
+    (case / 'variants.py').write_text('CORE = set(N for N in ' + repr(list(C.Case(TOY).content.NODES)) + ')\n', encoding="utf-8", newline="\n")
     (case / 'layout_core.py').write_bytes((case / 'layout.py').read_bytes())
     return case
 
@@ -160,7 +160,7 @@ def variant_case(tmp_path):
 def test_variant_must_pass_page_floor_before_delivery(tmp_path, engine_env):
     case = variant_case(tmp_path)
     cfg = tmp_path / 'small.toml'
-    cfg.write_text('[diagram.page]\nmax_w=1000\n')
+    cfg.write_text('[diagram.page]\nmax_w=1000\n', encoding="utf-8", newline="\n")
     r = run_engine('variant_build.py', case, '--variant', 'core', '--trust-case', '--config', cfg,
                    cwd=ENGINE, env=engine_env)
     assert r.returncode != 0
@@ -172,10 +172,10 @@ def test_variant_must_pass_page_floor_before_delivery(tmp_path, engine_env):
 def test_variant_must_pass_accessibility_before_delivery(tmp_path, engine_env):
     case = variant_case(tmp_path)
     # A real render with white node labels on pale fills violates WCAG.
-    (case / 'content.py').write_text((case / 'content.py').read_text() +
+    (case / 'content.py').write_text((case / 'content.py').read_text(encoding="utf-8") +
         '\nimport themes\nfor palette in themes.final_palettes():\n'
         '    theme = themes.THEMES[palette]\n'
-        '    theme["roles"] = {k: (f, s, "#ffffff") for k, (f,s,t) in theme["roles"].items()}\n')
+        '    theme["roles"] = {k: (f, s, "#ffffff") for k, (f,s,t) in theme["roles"].items()}\n', encoding="utf-8", newline="\n")
     r = run_engine('variant_build.py', case, '--variant', 'core', '--trust-case', cwd=ENGINE, env=engine_env)
     assert r.returncode != 0
     assert 'contrast' in r.stdout + r.stderr
@@ -229,7 +229,7 @@ def test_drawio_metadata_is_plain_text(toy_copy):
 def test_drawio_carries_resolved_fonts_without_system_copies(toy_copy, tmp_path, monkeypatch):
     # Empty fontconfig excludes installed copies. Every used face needs a loadable embedded file.
     conf = tmp_path / 'empty-fonts.conf'
-    conf.write_text('<fontconfig></fontconfig>')
+    conf.write_text('<fontconfig></fontconfig>', encoding="utf-8", newline="\n")
     monkeypatch.setenv('FONTCONFIG_FILE', str(conf))
     loaded = C.Case(toy_copy, trust=True)
     path = drawio.write(loaded)
@@ -245,7 +245,7 @@ def test_drawio_carries_resolved_fonts_without_system_copies(toy_copy, tmp_path,
         font = TTFont(io.BytesIO(data))
         assert 'X' in ''.join(chr(cp) for cp in font.getBestCmap())
         fonts[family] = font
-    families = set(re.findall(r'fontFamily=([^;]+);', path.read_text()))
+    families = set(re.findall(r'fontFamily=([^;]+);', path.read_text(encoding="utf-8")))
     assert families <= set(fonts)
     assert len(families) >= 3  # sans medium, sans bold and mono bold
 
@@ -253,7 +253,7 @@ def test_drawio_carries_resolved_fonts_without_system_copies(toy_copy, tmp_path,
 def test_scaffold_refuses_any_nonempty_folder(tmp_path, engine_env):
     dest = tmp_path / 'case'
     dest.mkdir()
-    (dest / 'keep.txt').write_text('keep')
+    (dest / 'keep.txt').write_text('keep', encoding="utf-8", newline="\n")
     r = run_engine('new_case.py', dest, cwd=tmp_path, env=engine_env)
     assert r.returncode != 0
     assert sorted(p.name for p in dest.iterdir()) == ['keep.txt']
@@ -288,7 +288,7 @@ def test_embedded_drawio_faces_render_without_installed_fonts(toy_copy, tmp_path
         expected = font['hmtx'].metrics[glyph][0] * 5 * 14 / font['head'].unitsPerEm
         faces.append({'family': family, 'uri': uri, 'expected': expected})
     data = tmp_path / 'faces.json'
-    data.write_text(json.dumps(faces))
+    data.write_text(json.dumps(faces), encoding="utf-8", newline="\n")
     runner = tmp_path / 'fonts.cjs'
     runner.write_text('''// SPDX-FileCopyrightText: 2026 dorsaltegmentum
 // SPDX-License-Identifier: AGPL-3.0-or-later
@@ -316,19 +316,19 @@ app.whenReady().then(async () => {
   process.stdout.write('FONT_RESULT=' + JSON.stringify(result) + '\\n');
   app.quit();
 }).catch(e => { console.error(e); app.exit(1); });
-''')
+''', encoding="utf-8", newline="\n")
     conf = tmp_path / 'empty-fonts.conf'
     conf.write_text('<fontconfig><match target="font">'
                     '<edit name="hinting" mode="assign"><bool>false</bool></edit>'
                     '<edit name="hintstyle" mode="assign"><const>hintnone</const></edit>'
                     '<edit name="antialias" mode="assign"><bool>true</bool></edit>'
-                    '</match></fontconfig>')
+                    '</match></fontconfig>', encoding="utf-8", newline="\n")
     env = dict(os.environ, FONTCONFIG_FILE=str(conf))
     env.pop('ELECTRON_RUN_AS_NODE', None)
     cmd = [browser, '--no-sandbox', '--disable-gpu', '--ozone-platform=x11', str(runner), str(data)]
     if shutil.which('xvfb-run'):
         cmd = ['xvfb-run', '-a', *cmd]
-    r = subprocess.run(cmd, env=env, capture_output=True, text=True, timeout=90)
+    r = subprocess.run(cmd, env=env, capture_output=True, text=True, timeout=90, encoding="utf-8")
     assert r.returncode == 0, r.stderr[-1500:]
     match = re.search(r'FONT_RESULT=(.*)', r.stdout)
     assert match, r.stdout[-1500:] + r.stderr[-1500:]
@@ -367,11 +367,11 @@ sys.path.insert(0, str(pathlib.Path(sys.argv[0]).parent))
 runpy.run_path(sys.argv[0], run_name='__main__')
 '''
     r = subprocess.run([sys.executable, '-c', code, str(ENGINE / 'recolour.py'), '--help'],
-                       env=engine_env, capture_output=True, text=True)
+                       env=engine_env, capture_output=True, text=True, encoding="utf-8")
     assert r.returncode == 0, r.stderr
     assert '--palette' in r.stdout
     r = subprocess.run([sys.executable, '-c', code, str(ENGINE / 'recolour.py'), 'missing.png', '--palette', 'tol-bright'],
-                       env=engine_env, capture_output=True, text=True)
+                       env=engine_env, capture_output=True, text=True, encoding="utf-8")
     assert r.returncode != 0
     assert 'optional dependency group' in r.stderr
 

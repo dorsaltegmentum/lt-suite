@@ -39,7 +39,7 @@ def sink_class():
 def capture(s, *extra: str) -> dict:
     r = subprocess.run([shutil.which("node") or "node", str(DUMP), "demo", "--sink", f"http://127.0.0.1:{s.port}",
                         "--token", s.token, "--origin", "https://lt.example.invalid", *extra],
-                       capture_output=True, text=True, cwd=REPO, timeout=120)
+                       capture_output=True, text=True, cwd=REPO, timeout=120, encoding="utf-8")
     assert r.returncode == 0, r.stderr
     return json.loads(r.stdout)["receipt"]
 
@@ -47,7 +47,7 @@ def capture(s, *extra: str) -> dict:
 def stamp(tmp: Path, cfg: Path) -> subprocess.CompletedProcess:
     env = dict(os.environ, PYTHONPATH=str(SHARED), LT_SUITE_DATA=str(tmp / "data"))
     return subprocess.run([sys.executable, str(STAMP), "--config", str(cfg), MID],
-                          capture_output=True, text=True, env=env, cwd=tmp, timeout=120)
+                          capture_output=True, text=True, env=env, cwd=tmp, timeout=120, encoding="utf-8")
 
 
 def sha(p: Path) -> str:

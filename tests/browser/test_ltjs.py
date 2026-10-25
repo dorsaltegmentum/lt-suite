@@ -45,9 +45,9 @@ def cli(run_py, *args, cwd=None, env=None):
 
 def node(spec: dict, tmp_path: Path) -> dict:
     f = tmp_path / f"spec-{len(list(tmp_path.glob('spec-*')))}.json"
-    f.write_text(json.dumps(spec), encoding="utf-8")
+    f.write_text(json.dumps(spec), encoding="utf-8", newline="\n")
     p = subprocess.run(["node", str(HERE / "run_rendered.js"), str(f)], capture_output=True,
-                       text=True, timeout=60, cwd=REPO)
+                       text=True, timeout=60, cwd=REPO, encoding="utf-8")
     assert p.returncode == 0, p.stderr
     return json.loads(p.stdout)
 
@@ -122,7 +122,7 @@ def test_check_url_without_plan_forbids_every_page(run_py):
 def test_check_url_bad_plan_is_exit_2(run_py, tmp_path, content, needle):
     p = tmp_path / "plan.json"
     if content is not None:
-        p.write_text(content, encoding="utf-8")
+        p.write_text(content, encoding="utf-8", newline="\n")
     r = cli(run_py, "check-url", "--plan", str(p), f"{RUN}/page/1")
     assert r.returncode == 2, r.stdout + r.stderr
     assert needle in (r.stdout + r.stderr)
@@ -131,11 +131,11 @@ def test_check_url_bad_plan_is_exit_2(run_py, tmp_path, content, needle):
 def test_check_url_plan_without_origin_needs_config(run_py, tmp_path):
     p = tmp_path / "plan.json"
     p.write_text(json.dumps({"stop_before_page": 4, "pages": [
-        {"page_index": i, "page_no": i} for i in (1, 2, 3, 4)]}), encoding="utf-8")
+        {"page_index": i, "page_no": i} for i in (1, 2, 3, 4)]}), encoding="utf-8", newline="\n")
     r = cli(run_py, "check-url", "--plan", str(p), f"{RUN}/page/1")
     assert r.returncode == 2 and "lt.origin" in r.stderr
     cfg = tmp_path / "c.toml"
-    cfg.write_text(f'[lt]\norigin = "{ORIGIN}"\n', encoding="utf-8")
+    cfg.write_text(f'[lt]\norigin = "{ORIGIN}"\n', encoding="utf-8", newline="\n")
     r = cli(run_py, "check-url", "--config", str(cfg), "--plan", str(p), f"{RUN}/page/1")
     assert r.returncode == 0, r.stdout + r.stderr
     r = cli(run_py, "check-url", "--config", str(cfg), "--plan", str(p), f"{RUN}/page/4")
@@ -144,7 +144,7 @@ def test_check_url_plan_without_origin_needs_config(run_py, tmp_path):
 
 def test_check_url_config_origin_conflict_forbids(run_py, tmp_path):
     cfg = tmp_path / "c.toml"
-    cfg.write_text('[lt]\norigin = "https://example.lt.app"\n', encoding="utf-8")
+    cfg.write_text('[lt]\norigin = "https://example.lt.app"\n', encoding="utf-8", newline="\n")
     r = cli(run_py, "check-url", "--config", str(cfg), "--plan", str(PLAN), f"{RUN}/page/1")
     assert r.returncode == 1
     assert json.loads(r.stdout)["reason"] == "origin-conflict"
@@ -201,7 +201,7 @@ CROSS_PLAN = {"origin": ORIGIN, "instance": "inst0001", "course_id": 1, "run_id"
 ])
 def test_check_url_from_refuses_moves_past_a_checkpoint(run_py, tmp_path, frm, to, code, reason):
     plan = tmp_path / "plan.json"
-    plan.write_text(json.dumps(CROSS_PLAN), encoding="utf-8")
+    plan.write_text(json.dumps(CROSS_PLAN), encoding="utf-8", newline="\n")
     src = {"OUTSIDE": f"{ORIGIN}/i/inst0001/student/courses/1",
            "OTHER-RUN": f"{ORIGIN}/i/inst0001/student/courses/1/runs/102/run/page/9"}.get(frm, f"{RUN}/{frm}")
     r = cli(run_py, "check-url", "--plan", str(plan), "--from", src, f"{RUN}/{to}")
@@ -215,13 +215,13 @@ def test_check_url_from_stop_and_bad_input(run_py, tmp_path):
     assert ltjs.check_url(f"{RUN}/page/2", plan, from_url=f"{RUN}/page/1")[1]["crossing"] == "checked"
     assert ltjs.check_url(f"{RUN}/page/2", plan)[1]["crossing"] == "not-checked"
     p = tmp_path / "plan.json"
-    p.write_text(json.dumps(plan), encoding="utf-8")
+    p.write_text(json.dumps(plan), encoding="utf-8", newline="\n")
     r = cli(run_py, "check-url", "--plan", str(p), "--from", "not a url", f"{RUN}/page/1")
     assert r.returncode == 2 and json.loads(r.stdout)["reason"] == "bad-from-url"
 
 
 def test_policy_normalizes_plan_fields():
-    pol = ltjs.policy_from_plan(json.loads(PLAN.read_text()))
+    pol = ltjs.policy_from_plan(json.loads(PLAN.read_text(encoding="utf-8")))
     assert pol["mode"] == "plan" and pol["origin"] == ORIGIN and pol["mapped"] is True
     assert pol["page_map"] == {"1": 1, "2": 2, "3": 3, "4": 4, "5": 6, "6": 7}
     assert pol["report_indexes"] == [7] and pol["never_indexes"] == [3]
@@ -240,7 +240,7 @@ URL_TABLE = [u for u, _ in FORBIDDEN if "\\" not in u and " " not in u and ".." 
 
 @needs_node
 def test_python_and_guard_classify_agree(tmp_path):
-    plans = [json.loads(PLAN.read_text()), {"origin": ORIGIN, "stop_before_page": 3, "report_pages": [2]},
+    plans = [json.loads(PLAN.read_text(encoding="utf-8")), {"origin": ORIGIN, "stop_before_page": 3, "report_pages": [2]},
              {"origin": ORIGIN}, None, CROSS_PLAN]
     for plan in plans:
         pol = ltjs.policy_from_plan(plan)
@@ -282,8 +282,8 @@ def make_skill(tmp_path: Path, name: str = "demo-skill") -> Path:
     b = skill / "scripts" / "browser"
     b.mkdir()
     (b / "ping.js").write_text(
-        "globalThis.__ran = true;\nreturn { ok: true, who: 'skill-ping', x: __LT_ARGS__.x };\n", encoding="utf-8")
-    (b / "model_answer.js").write_text("return { ok: true, keys: 0 };\n", encoding="utf-8")
+        "globalThis.__ran = true;\nreturn { ok: true, who: 'skill-ping', x: __LT_ARGS__.x };\n", encoding="utf-8", newline="\n")
+    (b / "model_answer.js").write_text("return { ok: true, keys: 0 };\n", encoding="utf-8", newline="\n")
     return skill
 
 
@@ -297,13 +297,13 @@ def test_render_resolves_names_in_the_skill_from_another_cwd(run_py, tmp_path):
     skill = make_skill(tmp_path)
     elsewhere = tmp_path / "elsewhere"
     (elsewhere / "scripts" / "browser").mkdir(parents=True)
-    (elsewhere / "scripts" / "browser" / "ping.js").write_text("return 'decoy';\n")
-    (elsewhere / "ping.js").write_text("return 'decoy';\n")
+    (elsewhere / "scripts" / "browser" / "ping.js").write_text("return 'decoy';\n", encoding="utf-8", newline="\n")
+    (elsewhere / "ping.js").write_text("return 'decoy';\n", encoding="utf-8", newline="\n")
     out = tmp_path / "out"
     r = render_in(skill, run_py, "ping", "--form", "function", "--arg", "x=7", "--out-dir", str(out), cwd=elsewhere)
     assert r.returncode == 0, r.stderr
     info = json.loads(r.stdout)
-    text = Path(info["path"]).read_text()
+    text = Path(info["path"]).read_text(encoding="utf-8")
     assert "skill-ping" in text and "decoy" not in text
     assert Path(info["source"]) == skill / "scripts" / "browser" / "ping.js"
     assert Path(info["path"]).parent == out
@@ -321,44 +321,44 @@ def test_render_resolves_names_in_the_skill_from_another_cwd(run_py, tmp_path):
 def test_render_refuses_model_answer_when_reading_is_off(run_py, tmp_path):
     skill = make_skill(tmp_path)
     cfg = tmp_path / "c.toml"
-    cfg.write_text("[model_answer]\nread = false\n", encoding="utf-8")
+    cfg.write_text("[model_answer]\nread = false\n", encoding="utf-8", newline="\n")
     r = render_in(skill, run_py, "model_answer", "--config", str(cfg), "--out-dir", str(tmp_path / "o"), cwd=tmp_path)
     assert r.returncode == 4 and "model_answer.read is false" in r.stderr
     assert not (tmp_path / "o").exists()
-    cfg.write_text("[model_answer]\nread = true\n", encoding="utf-8")
+    cfg.write_text("[model_answer]\nread = true\n", encoding="utf-8", newline="\n")
     r = render_in(skill, run_py, "model_answer", "--config", str(cfg), "--out-dir", str(tmp_path / "o"), cwd=tmp_path)
     assert r.returncode == 0, r.stderr
 
 
 def test_render_prepends_guard_always_and_net_for_fill(tmp_path):
     body = tmp_path / "x.js"
-    body.write_text("return { ok: true };\n")
+    body.write_text("return { ok: true };\n", encoding="utf-8", newline="\n")
     plain = ltjs.render(str(body), form="function", out_dir=tmp_path / "o")
-    text = Path(plain["path"]).read_text()
+    text = Path(plain["path"]).read_text(encoding="utf-8")
     assert "LtGuard" in text and "globalThis.LtNet" not in text and plain["net"] is False
     fill = tmp_path / "_fill-demo-p1.js"
-    fill.write_text("return { ok: true };\n")
+    fill.write_text("return { ok: true };\n", encoding="utf-8", newline="\n")
     info = ltjs.render(str(fill), form="function", out_dir=tmp_path / "o")
-    assert info["net"] is True and "LtNet" in Path(info["path"]).read_text()
+    assert info["net"] is True and "LtNet" in Path(info["path"]).read_text(encoding="utf-8")
     assert ltjs.render(str(fill), form="function", net=False, out_dir=tmp_path / "o")["net"] is False
     assert ltjs.render(str(body), form="function", net=True, out_dir=tmp_path / "o")["net"] is True
     fill_dir = tmp_path / "skills" / "lt-module-fill" / "scripts" / "browser"
     fill_dir.mkdir(parents=True)
-    (fill_dir / "probe.js").write_text("return 1;\n")
+    (fill_dir / "probe.js").write_text("return 1;\n", encoding="utf-8", newline="\n")
     assert ltjs.render(str(fill_dir / "probe.js"), out_dir=tmp_path / "o")["net"] is True
 
 
 def test_render_forms_and_adapter_defaults(tmp_path, run_py):
     body = tmp_path / "x.js"
-    body.write_text("return { ok: true };\n")
-    e = Path(ltjs.render(str(body), form="expression", out_dir=tmp_path / "o")["path"]).read_text()
-    f = Path(ltjs.render(str(body), form="function", out_dir=tmp_path / "o")["path"]).read_text()
+    body.write_text("return { ok: true };\n", encoding="utf-8", newline="\n")
+    e = Path(ltjs.render(str(body), form="expression", out_dir=tmp_path / "o")["path"]).read_text(encoding="utf-8")
+    f = Path(ltjs.render(str(body), form="function", out_dir=tmp_path / "o")["path"]).read_text(encoding="utf-8")
     assert e.startswith("await (async () => {") and e.rstrip().endswith(")();")
     assert f.startswith("async () => {") and f.rstrip().endswith("}")
     cfg = tmp_path / "c.toml"
     for adapter, form, stub in [("claude-in-chrome", "expression", True), ("chrome-devtools-mcp", "function", False),
                                 ("playwright-mcp", "function", False), ("manual-paste", "expression", False)]:
-        cfg.write_text(f'[browser]\nadapter = "{adapter}"\n', encoding="utf-8")
+        cfg.write_text(f'[browser]\nadapter = "{adapter}"\n', encoding="utf-8", newline="\n")
         r = cli(run_py, "render", str(body), "--config", str(cfg), "--out-dir", str(tmp_path / "o"))
         info = json.loads(r.stdout)
         assert (info["form"], info["stub"]) == (form, stub), adapter
@@ -366,7 +366,7 @@ def test_render_forms_and_adapter_defaults(tmp_path, run_py):
 
 def test_render_out_dir_defaults(run_py, tmp_path):
     body = tmp_path / "x.js"
-    body.write_text("return 1;\n")
+    body.write_text("return 1;\n", encoding="utf-8", newline="\n")
     t = tmp_path / "tmp"
     t.mkdir()
     r = cli(run_py, "render", str(body), env={"TMPDIR": str(t)})
@@ -374,23 +374,24 @@ def test_render_out_dir_defaults(run_py, tmp_path):
     p = Path(json.loads(r.stdout)["path"])
     want = "lt-suite-js" if not hasattr(os, "getuid") else f"lt-suite-js-{os.getuid()}"
     assert p.parent == t / want
-    assert (p.parent.stat().st_mode & 0o777) == 0o700
+    if os.name == "posix":
+        assert (p.parent.stat().st_mode & 0o777) == 0o700
     cfg = tmp_path / "c.toml"
-    cfg.write_text('[browser]\njs_tmp_dir = "js-here"\n', encoding="utf-8")
+    cfg.write_text('[browser]\njs_tmp_dir = "js-here"\n', encoding="utf-8", newline="\n")
     r = cli(run_py, "render", str(body), "--config", str(cfg))
     assert Path(json.loads(r.stdout)["path"]).parent == tmp_path / "js-here"
 
 
 def test_render_argument_errors(run_py, tmp_path):
     body = tmp_path / "x.js"
-    body.write_text("return 1;\n")
+    body.write_text("return 1;\n", encoding="utf-8", newline="\n")
     o = str(tmp_path / "o")
     assert cli(run_py, "render", str(body), "--arg", "novalue", "--out-dir", o).returncode == 2
     assert cli(run_py, "render", str(body), "--arg-json", "k={bad", "--out-dir", o).returncode == 2
     assert cli(run_py, "render", str(body), "--arg", "bad-key=1", "--out-dir", o).returncode == 2
-    (tmp_path / "a.json").write_text("[1]")
+    (tmp_path / "a.json").write_text("[1]", encoding="utf-8", newline="\n")
     assert cli(run_py, "render", str(body), "--args-file", str(tmp_path / "a.json"), "--out-dir", o).returncode == 2
-    (tmp_path / "p.json").write_text('{"stop_before_page": "x"}')
+    (tmp_path / "p.json").write_text('{"stop_before_page": "x"}', encoding="utf-8", newline="\n")
     r = cli(run_py, "render", str(body), "--plan", str(tmp_path / "p.json"), "--out-dir", o)
     assert r.returncode == 2 and "bad plan" in r.stderr
     assert cli(run_py, "render", str(tmp_path / "missing.js"), "--out-dir", o).returncode == 2
@@ -400,7 +401,7 @@ def test_render_argument_errors(run_py, tmp_path):
 @pytest.mark.parametrize("form", ["expression", "function"])
 def test_rendered_script_runs_and_carries_guard_trips(tmp_path, form):
     body = tmp_path / "x.js"
-    body.write_text("globalThis.__ran = true;\nreturn { ok: true, n: __LT_ARGS__.n, s: __LT_ARGS__.s };\n")
+    body.write_text("globalThis.__ran = true;\nreturn { ok: true, n: __LT_ARGS__.n, s: __LT_ARGS__.s };\n", encoding="utf-8", newline="\n")
     info = ltjs.render(str(body), form=form, args={"n": 3, "s": "</script> \"'"}, out_dir=tmp_path / "o")
     out = node({"mode": "run", "file": info["path"], "raw_commit": True}, tmp_path)
     assert out["ran"] is True
@@ -416,10 +417,10 @@ def test_arguments_are_frozen_and_proto_safe(tmp_path):
         "try { __LT_ARGS__.a.b = 2; } catch (e) { threw = true; }\n"
         "return { frozen: Object.isFrozen(__LT_ARGS__) && Object.isFrozen(__LT_ARGS__.a), threw,\n"
         "  b: __LT_ARGS__.a.b, own: Object.prototype.hasOwnProperty.call(__LT_ARGS__, '__proto__'),\n"
-        "  polluted: ({}).polluted === true || __LT_ARGS__.polluted === true };\n")
+        "  polluted: ({}).polluted === true || __LT_ARGS__.polluted === true };\n", encoding="utf-8", newline="\n")
     args_file = tmp_path / "args.json"
-    args_file.write_text('{"__proto__": {"polluted": true}, "a": {"b": 1}}')
-    info = ltjs.render(str(body), form="function", args=json.loads(args_file.read_text()), out_dir=tmp_path / "o")
+    args_file.write_text('{"__proto__": {"polluted": true}, "a": {"b": 1}}', encoding="utf-8", newline="\n")
+    info = ltjs.render(str(body), form="function", args=json.loads(args_file.read_text(encoding="utf-8")), out_dir=tmp_path / "o")
     out = node({"mode": "run", "file": info["path"]}, tmp_path)
     # Page scripts run in sloppy mode, so the write fails silently; the value stays.
     assert out["result"]["frozen"] is True
@@ -429,9 +430,9 @@ def test_arguments_are_frozen_and_proto_safe(tmp_path):
 @needs_node
 def test_stub_runs_when_intact_and_refuses_a_changed_byte(tmp_path):
     body = tmp_path / "x.js"
-    body.write_text("globalThis.__ran = true;\nreturn { ok: true, who: 'stubbed' };\n")
+    body.write_text("globalThis.__ran = true;\nreturn { ok: true, who: 'stubbed' };\n", encoding="utf-8", newline="\n")
     info = ltjs.render(str(body), form="expression", stub=True, out_dir=tmp_path / "o")
-    text = Path(info["path"]).read_text()
+    text = Path(info["path"]).read_text(encoding="utf-8")
     assert info["stub"] is True and "crypto.subtle.digest" in text and "new Function" in text
     out = node({"mode": "run", "file": info["path"]}, tmp_path)
     assert out["ran"] is True and out["result"]["who"] == "stubbed" and out["result"]["guard_trips"] == 0
@@ -440,13 +441,13 @@ def test_stub_runs_when_intact_and_refuses_a_changed_byte(tmp_path):
     i = start + 40
     swapped = "A" if text[i] != "A" else "B"
     bad = tmp_path / "bad.js"
-    bad.write_text(text[:i] + swapped + text[i + 1:])
+    bad.write_text(text[:i] + swapped + text[i + 1:], encoding="utf-8", newline="\n")
     out = node({"mode": "run", "file": str(bad)}, tmp_path)
     assert out["ran"] is False
     assert out["result"]["ok"] is False and out["result"]["fatal"] == "stub-hash-mismatch"
 
     broken = tmp_path / "broken.js"
-    broken.write_text(text[:start] + "!!" + text[start + 2:])
+    broken.write_text(text[:start] + "!!" + text[start + 2:], encoding="utf-8", newline="\n")
     out = node({"mode": "run", "file": str(broken)}, tmp_path)
     assert out["ran"] is False and out["result"]["fatal"] == "stub-hash-mismatch"
 
@@ -465,7 +466,7 @@ def test_rendered_guard_with_plan_cancels_boundary_navigation(tmp_path):
 @needs_node
 def test_rendered_script_refuses_forbidden_route(tmp_path):
     body = tmp_path / "x.js"
-    body.write_text("globalThis.__ran = true;\nreturn { ok: true };\n")
+    body.write_text("globalThis.__ran = true;\nreturn { ok: true };\n", encoding="utf-8", newline="\n")
     info = ltjs.render(str(body), form="function", out_dir=tmp_path / "o")
     out = node({"mode": "run", "file": info["path"], "path": "/i/inst0001/student/courses/1/runs/101/run/complete"}, tmp_path)
     assert out["ran"] is False
@@ -475,7 +476,7 @@ def test_rendered_script_refuses_forbidden_route(tmp_path):
 @needs_node
 def test_fill_render_installs_lt_net(tmp_path):
     body = tmp_path / "_fill-demo-p1.js"
-    body.write_text("return { ok: true, net: typeof LtNet.expect };\n")
+    body.write_text("return { ok: true, net: typeof LtNet.expect };\n", encoding="utf-8", newline="\n")
     info = ltjs.render(str(body), form="function", out_dir=tmp_path / "o")
     out = node({"mode": "run", "file": info["path"]}, tmp_path)
     assert out["result"]["net"] == "function" and out["net_installed"] is True
@@ -536,14 +537,14 @@ def test_render_upload_embeds_checked_bytes(run_py, tmp_path, data_dir):
     import hashlib
     skill = make_skill(tmp_path)
     (skill / "scripts" / "browser" / "upload.js").write_text(
-        "return { ok: true, sha: __LT_ARGS__.file.sha256, panel: __LT_ARGS__.panel };\n")
+        "return { ok: true, sha: __LT_ARGS__.file.sha256, panel: __LT_ARGS__.panel };\n", encoding="utf-8", newline="\n")
     f = data_dir / "runs" / "m1" / "label.png"
     f.write_bytes(PNG)
     r = render_in(skill, run_py, "upload", "--form", "function", "--arg", "panel=p7", "--file", str(f),
                   "--data-dir", str(data_dir), "--out-dir", str(tmp_path / "o"), cwd=tmp_path)
     assert r.returncode == 0, r.stderr
     info = json.loads(r.stdout)
-    text = Path(info["path"]).read_text()
+    text = Path(info["path"]).read_text(encoding="utf-8")
     assert info["net"] is True
     assert base64.b64encode(PNG).decode() in text.replace("\\", "")
     assert hashlib.sha256(PNG).hexdigest() in text
@@ -561,14 +562,14 @@ def test_module_declares_its_shared_files():
 
 def test_render_sanitizes_names_and_refuses_non_json_args(tmp_path, run_py):
     odd = tmp_path / "x`-alert(1)-`.js"
-    odd.write_text("return 1;\n")
+    odd.write_text("return 1;\n", encoding="utf-8", newline="\n")
     info = ltjs.render(str(odd), form="function", out_dir=tmp_path / "o")
-    text = Path(info["path"]).read_text()
+    text = Path(info["path"]).read_text(encoding="utf-8")
     assert "x`-alert" not in text.split("\n", 2)[1]
     assert ltjs._safe_name("x*-alert(1)-*") == ltjs._safe_name(odd.stem)
     assert "*/" not in Path(info["path"]).name
     body = tmp_path / "y.js"
-    body.write_text("return 1;\n")
+    body.write_text("return 1;\n", encoding="utf-8", newline="\n")
     with pytest.raises(ltjs.RenderRefused) as e:
         ltjs.render(str(body), args={"v": float("nan")}, out_dir=tmp_path / "o")
     assert e.value.code == 2
@@ -579,7 +580,7 @@ def test_render_sanitizes_names_and_refuses_non_json_args(tmp_path, run_py):
 @pytest.mark.skipif(not hasattr(os, "getuid"), reason="POSIX permissions")
 def test_render_refuses_a_shared_or_symlinked_folder(run_py, tmp_path):
     body = tmp_path / "x.js"
-    body.write_text("return 1;\n")
+    body.write_text("return 1;\n", encoding="utf-8", newline="\n")
     shared = tmp_path / "shared"
     shared.mkdir()
     shared.chmod(0o777)
@@ -600,7 +601,7 @@ def test_render_refuses_a_shared_or_symlinked_folder(run_py, tmp_path):
     r = cli(run_py, "render", str(body), env={"TMPDIR": str(t)})
     assert r.returncode == 2 and "0755" in r.stderr
     cfg = tmp_path / "c.toml"
-    cfg.write_text(f'[browser]\njs_tmp_dir = "{shared}"\n', encoding="utf-8")
+    cfg.write_text(f'[browser]\njs_tmp_dir = "{shared}"\n', encoding="utf-8", newline="\n")
     r = cli(run_py, "render", str(body), "--config", str(cfg))
     assert r.returncode == 2 and "unsafe js_tmp_dir" in r.stderr
 
@@ -608,7 +609,7 @@ def test_render_refuses_a_shared_or_symlinked_folder(run_py, tmp_path):
 @pytest.mark.skipif(not hasattr(os, "getuid"), reason="POSIX permissions")
 def test_rendered_files_are_new_private_files(tmp_path):
     body = tmp_path / "x.js"
-    body.write_text("return 1;\n")
+    body.write_text("return 1;\n", encoding="utf-8", newline="\n")
     out = tmp_path / "o"
     a = ltjs.render(str(body), form="function", out_dir=out)
     b = ltjs.render(str(body), form="function", out_dir=out)
@@ -625,7 +626,7 @@ def test_check_url_checks_second_checkpoint_after_first_is_behind(run_py, tmp_pa
     plan = {"origin": ORIGIN, "checkpoint_pages": [3, 7], "flow_pages": [
         {"page_index": i, "page_no": n} for i, n in ((1, 1), (4, 3), (5, 4), (8, 6))]}
     path = tmp_path / "two-checkpoints.json"
-    path.write_text(json.dumps(plan), encoding="utf-8")
+    path.write_text(json.dumps(plan), encoding="utf-8", newline="\n")
     result = cli(run_py, "check-url", "--plan", str(path), "--from", f"{RUN}/page/3", f"{RUN}/page/6")
     assert result.returncode == 1, result.stdout + result.stderr
     assert json.loads(result.stdout)["reason"] == "crosses-checkpoint"
@@ -638,14 +639,14 @@ def test_check_url_checks_second_checkpoint_after_first_is_behind(run_py, tmp_pa
 @pytest.mark.parametrize('name',['check_answer','_check-demo'])
 def test_check_render_opt_in_exit_five_and_net(tmp_path,name):
     from ltcore import config
-    source=tmp_path/(name+'.js');source.write_text('return {ok:true};')
+    source=tmp_path/(name+'.js');source.write_text('return {ok:true};', encoding="utf-8", newline="\n")
     with pytest.raises(ltjs.RenderRefused) as exc:
         ltjs.render(str(source),cfg=config.load(),out_dir=tmp_path/'off')
     assert exc.value.code==5
-    p=tmp_path/'yes.toml';p.write_text('[fill.check_answer]\nenabled=true\n')
+    p=tmp_path/'yes.toml';p.write_text('[fill.check_answer]\nenabled=true\n', encoding="utf-8", newline="\n")
     rendered=ltjs.render(str(source),cfg=config.load(p),out_dir=tmp_path/'on',stub=False)
     assert ltjs.wants_net(source,name)
-    assert 'lt_net.js' in Path(rendered['path']).read_text()
+    assert 'lt_net.js' in Path(rendered['path']).read_text(encoding="utf-8")
 
 
 def test_check_grants_depend_on_setting():

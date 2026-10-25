@@ -162,7 +162,7 @@ def write_json_atomic(path: Path, doc: dict) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     fd, tmp = tempfile.mkstemp(prefix=f".{path.name}.", suffix=".tmp", dir=path.parent)
     try:
-        with os.fdopen(fd, "w", encoding="utf-8") as fh:
+        with os.fdopen(fd, "w", encoding="utf-8", newline="\n") as fh:
             fh.write(json.dumps(doc, indent=1, ensure_ascii=False) + "\n")
         os.replace(tmp, path)
     except BaseException:
@@ -250,6 +250,9 @@ def print_result(res, name: str) -> None:
 
 
 def main(argv: list[str] | None = None) -> int:
+    from ltcore.streams import configure_utf8
+    configure_utf8()
+
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("target", help="module id, or the path of a module-<id>.json")
     ap.add_argument("--media-dir", type=Path,

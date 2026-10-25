@@ -21,6 +21,9 @@ class InputParser(argparse.ArgumentParser):
 
 
 def main(argv=None):
+    from ltcore.streams import configure_utf8
+    configure_utf8()
+
     ap=InputParser(description=__doc__)
     subs=ap.add_subparsers(dest='command',required=True)
     for name in ('prepare','check','rebind'):

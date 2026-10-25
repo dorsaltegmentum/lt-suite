@@ -144,6 +144,9 @@ def settings():
 
 
 def main(argv):
+    from ltcore.streams import configure_utf8
+    configure_utf8()
+
     ap = argparse.ArgumentParser(description="Start a new case: writes content.py, layout.py, case.json and "
                                              "artifact_content.py with TODO markers.")
     ap.add_argument("case_dir")
@@ -177,10 +180,10 @@ def main(argv):
         meta["members"] = ["TODO: each member to credit (ask; in the order the config sets)"]
     fill = dict(name=slug, example=example, engine=ENGINE, slug=slug, eyebrow=eyebrow.replace('"', "'"))
     d.mkdir(parents=True, exist_ok=True)
-    (d / "case.json").write_text(json.dumps(meta, indent=2, ensure_ascii=False) + "\n")
-    (d / "content.py").write_text(CONTENT.format(**fill))
-    (d / "layout.py").write_text(LAYOUT.format(**fill))
-    (d / "artifact_content.py").write_text(ARTIFACT.format(**fill))
+    (d / "case.json").write_text(json.dumps(meta, indent=2, ensure_ascii=False) + "\n", encoding="utf-8", newline="\n")
+    (d / "content.py").write_text(CONTENT.format(**fill), encoding="utf-8", newline="\n")
+    (d / "layout.py").write_text(LAYOUT.format(**fill), encoding="utf-8", newline="\n")
+    (d / "artifact_content.py").write_text(ARTIFACT.format(**fill), encoding="utf-8", newline="\n")
     print(f"new case in {d}: case.json, content.py, layout.py, artifact_content.py")
     print(f"worked example: {example}")
     if {"group", "members"} & set(required):

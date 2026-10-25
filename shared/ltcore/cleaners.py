@@ -193,7 +193,7 @@ def _page_count(data: bytes) -> int | None:
             path = Path(directory) / "document.pdf"
             path.write_bytes(data)
             completed = subprocess.run([executable, "--show-npages", str(path)],
-                                       capture_output=True, text=True, timeout=60)
+                                       capture_output=True, text=True, timeout=60, encoding="utf-8")
     except (OSError, subprocess.TimeoutExpired) as exc:
         raise CleanerError(f"could not validate PDF page counts: {exc}") from exc
     count = completed.stdout.strip()
@@ -232,7 +232,8 @@ def run_cleaner(entry: dict, path: str | os.PathLike, *, timeout_s: int | None =
             src.write_bytes(original)
             result.argv = build_argv(entry, src=str(src), dst=str(dst), pdf=str(src))
             try:
-                completed = runner(result.argv, capture_output=True, text=True, timeout=timeout)
+                completed = runner(result.argv, capture_output=True, text=True, timeout=timeout,
+                                   encoding="utf-8", errors="replace")
             except FileNotFoundError:
                 result.detail = f"executable not found: {result.argv[0]}"
                 return result
@@ -277,7 +278,8 @@ def run_one(entry: dict, placeholders: dict, timeout_s: int | None = None, *,
     used = {m for a in entry["argv"] for m in re.findall(r"\{(in|out|pdf)\}", a)}
     result = Result(name, entry.get("stage", ""), values["pdf"] or values["in"] or "", "ran", argv=argv)
     try:
-        completed = runner(argv, capture_output=True, text=True, timeout=timeout)
+        completed = runner(argv, capture_output=True, text=True, timeout=timeout,
+                           encoding="utf-8", errors="replace")
     except FileNotFoundError:
         raise CleanerError(f"cleaner {name!r}: executable not found: {argv[0]}") from None
     except subprocess.TimeoutExpired:
@@ -449,11 +451,11 @@ def _qpdf_rewrite(executable: str, data: bytes) -> bytes:
         elif xmp is not None:
             changes[f"obj:{root}"] = {"value": {key: item for key, item in catalog.items()
                                                 if key != "/Metadata"}}
-        update.write_text(_json_text({"qpdf": [header, changes]}), encoding="utf-8")
+        update.write_text(_json_text({"qpdf": [header, changes]}), encoding="utf-8", newline="\n")
         completed = subprocess.run(
             [executable, str(src), f"--update-from-json={update}", "--linearize",
              "--deterministic-id", str(dst)],
-            capture_output=True, text=True, timeout=60)
+            capture_output=True, text=True, timeout=60, encoding="utf-8")
         if completed.returncode not in (0, 3):
             raise CleanerError(f"qpdf failed: {completed.stderr.strip()}")
         return dst.read_bytes()
@@ -542,7 +544,7 @@ def residual_metadata(path) -> list[str] | None:
     try:
         completed = subprocess.run(
             [executable, "-j", "-a", "-G1", "-n", str(path)],
-            capture_output=True, text=True, timeout=60)
+            capture_output=True, text=True, timeout=60, encoding="utf-8")
         tags = json.loads(completed.stdout)[0]
         if completed.returncode != 0 or not isinstance(tags, dict):
             return None
@@ -630,7 +632,7 @@ def strip_pdf_metadata(path) -> Result:
                 temporary.write_bytes(cleaned)
                 completed = subprocess.run(
                     [exiftool, "-all=", "-overwrite_original", str(temporary)],
-                    capture_output=True, text=True, timeout=60)
+                    capture_output=True, text=True, timeout=60, encoding="utf-8")
                 if completed.returncode != 0:
                     raise CleanerError(f"exiftool failed: {completed.stderr.strip()}")
                 cleaned = temporary.read_bytes()
@@ -698,6 +700,9 @@ def finalize(paths, *, stage: str, cfg=None, entries=None, runner=subprocess.run
 
 
 def main(argv=None) -> int:
+    from ltcore.streams import configure_utf8
+    configure_utf8()
+
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     commands = parser.add_subparsers(dest="command", required=True)
     run = commands.add_parser("run")

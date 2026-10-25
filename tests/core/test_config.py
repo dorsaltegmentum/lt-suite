@@ -32,7 +32,7 @@ def test_check_answer_rejects_non_boolean_and_removed_keys(tmp_path, entry):
 
 def write(p: Path, text: str) -> Path:
     p.parent.mkdir(parents=True, exist_ok=True)
-    p.write_text(text, encoding="utf-8")
+    p.write_text(text, encoding="utf-8", newline="\n")
     return p
 
 
@@ -253,7 +253,7 @@ def test_locate_report_all_probes_pass(tmp_path):
 
 def test_locate_report_failed_probe_proposes_workspace(tmp_path, monkeypatch):
     blocker = tmp_path / "file-not-dir"
-    blocker.write_text("x", encoding="utf-8")
+    blocker.write_text("x", encoding="utf-8", newline="\n")
     # Put the platform config folder under a file on every OS: Linux reads XDG_CONFIG_HOME,
     # Windows reads APPDATA, macOS builds ~/Library/Application Support from HOME.
     for name in ("XDG_CONFIG_HOME", "APPDATA", "HOME"):
@@ -288,7 +288,7 @@ def test_probe_dir(tmp_path):
     assert ok and not (tmp_path / "a").exists()          # probing creates nothing
     assert not list(tmp_path.iterdir())
     f = tmp_path / "f"
-    f.write_text("x")
+    f.write_text("x", encoding="utf-8", newline="\n")
     assert config.probe_dir(f / "sub")[0] is False
 
 

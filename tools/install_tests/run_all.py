@@ -35,6 +35,12 @@ COMMON_FLAGS = ("keep", "present_only")
 
 
 def main() -> int:
+    import sys
+    from pathlib import Path
+    sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "shared"))
+    from ltcore.streams import configure_utf8
+    configure_utf8()
+
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("--repo")
     ap.add_argument("--work")
@@ -96,7 +102,7 @@ def main() -> int:
         print(f"| {d['platform']} | {k.get('PASS', 0)} | {k.get('FAIL', 0)} | {k.get('WARN', 0)} | "
               f"{k.get('SKIP', 0)} | {k.get('MANUAL', 0)} | {'crashed' if d.get('crashed') else d['exit']} |")
     if args.json_out:
-        Path(args.json_out).write_text(json.dumps(summary, indent=1) + "\n", encoding="utf-8")
+        Path(args.json_out).write_text(json.dumps(summary, indent=1) + "\n", encoding="utf-8", newline="\n")
     if crashed:
         return 2
     return 1 if any(d.get("counts", {}).get("FAIL") for d in summary) else 0

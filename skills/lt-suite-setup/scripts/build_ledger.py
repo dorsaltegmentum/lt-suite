@@ -188,6 +188,9 @@ def build(st, extra_reports):
 
 
 def main(argv=None):
+    from ltcore.streams import configure_utf8
+    configure_utf8()
+
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--config", help="config file (else LT_SUITE_CONFIG, ./lt-suite.toml, the platform file)")
     ap.add_argument("--data-dir", help="data folder")
@@ -225,7 +228,7 @@ def main(argv=None):
     if not a.dry_run:
         p = st.ledger_path
         p.parent.mkdir(parents=True, exist_ok=True)
-        p.write_text(json.dumps(led, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
+        p.write_text(json.dumps(led, indent=1, ensure_ascii=False) + "\n", encoding="utf-8", newline="\n")
         print("\nledger      %s" % p)
     return 0
 

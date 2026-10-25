@@ -20,6 +20,7 @@ final-*.png get transparent rounded corners (PNG_CORNER canvas px); the PDF and 
 import argparse, json, os, pathlib, subprocess, sys
 
 import _bootstrap  # noqa: F401  (engine and shared core on sys.path)
+from _legacy import read_legacy_text
 import core as E
 import decor, themes
 from themes import THEMES
@@ -42,12 +43,12 @@ def rasterise(svg_path, stem, W, sans=None):
     env, src = dict(os.environ), svg_path
     conf, rename = fontset.static_set()
     env["FONTCONFIG_FILE"] = str(conf)
+    svg = read_legacy_text(svg_path)
     if rename:
-        svg = svg_path.read_text()
         for fam, sfam in rename.items():
             svg = svg.replace(f'font-family="{fam}"', f'font-family="{sfam}"')
         src = svg_path.with_suffix(".static.svg")
-        src.write_text(svg)
+        src.write_text(svg, encoding="utf-8", newline="\n")
     try:
         subprocess.run(["rsvg-convert", "-f", "png", "-w", str(int(W * 1.5)), "-o", str(out_dir / f"{stem}.png"), str(src)],
                        check=True, env=env)
@@ -143,7 +144,7 @@ def render(case, theme=None, stem="final", geo_file="geometry.json"):
     """Write <case_dir>/<stem>.svg, .pdf and .png in a palette (default: the print palette). Returns (W, H)."""
     theme = theme or themes.print_palette()
     T = THEMES[theme]
-    g = json.loads((case.dir / geo_file).read_text())
+    g = json.loads(read_legacy_text(case.dir / geo_file))
     E.fonts_for_geometry(g)
     if E.FONT != T["sans"]:
         raise ValueError(f"geometry was measured in {E.FONT}, theme sets text in {T['sans']}")
@@ -228,13 +229,16 @@ def render(case, theme=None, stem="final", geo_file="geometry.json"):
     out.append("</svg>")
     svg = "\n".join(out)
     svg_path = case.dir / f"{stem}.svg"
-    svg_path.write_text(svg)
+    svg_path.write_text(svg, encoding="utf-8", newline="\n")
     rasterise(svg_path, stem, W, T["sans"])
     print(f"{stem}.svg {W:.0f}x{H:.0f}")
     return W, H
 
 
 def main(argv):
+    from ltcore.streams import configure_utf8
+    configure_utf8()
+
     import style
     from case import Case, CaseError
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])

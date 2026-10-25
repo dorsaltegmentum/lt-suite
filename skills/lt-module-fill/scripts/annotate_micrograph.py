@@ -630,7 +630,7 @@ def write_manifest(path, value):
     import tempfile
     manifest = palettes.copies_manifest(path)
     with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8", dir=manifest.parent,
-                                     prefix=".lt-copies-", suffix=".tmp", delete=False) as stream:
+                                     prefix=".lt-copies-", suffix=".tmp", delete=False, newline="\n") as stream:
         temporary = Path(stream.name)
         stream.write(json.dumps(value, indent=2) + "\n")
     try:
@@ -667,6 +667,9 @@ def file_copies(source, destination, overwrite=False):
 
 
 def main() -> int:
+    from ltcore.streams import configure_utf8
+    configure_utf8()
+
     global Image, ImageDraw, ImageFont, np, ndimage, CASING, INK, MARGIN_FILL
 
     ap = argparse.ArgumentParser(description=__doc__)

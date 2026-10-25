@@ -50,13 +50,13 @@ def test_default_export_writes_the_page_assets_and_run_record(run, args, tmp_pat
     rc, out, err = run(*args(), "--json")
     assert rc == 0, err
     report = json.loads(out)
-    page = (tmp_path / "out" / "module-page.md").read_text("utf-8")
+    page = (tmp_path / "out" / "module-page.md").read_text(encoding="utf-8")
     assert page.startswith("title:: Lt/1.1 Demo: Vorlase deficiency\ntype:: **Lt Module Output**\n")
     assert "\nlt-module:: c1-r101\n" in page
     assert (tmp_path / "out" / "assets" / "lt-c1-r101-31.png").is_file()
     for name in ("ilo-map.md", "tracker-handoff.md", "flashcard-source.md"):
         assert not (tmp_path / "out" / name).exists(), f"{name} is off by default"
-    record = json.loads(Path(report["run_record"]).read_text("utf-8"))
+    record = json.loads(Path(report["run_record"]).read_text(encoding="utf-8"))
     assert record["module_id"] == "c1-r101"
     assert record["tool_version"] and len(record["config_digest"]) == 64
     assert "permission_check" not in record
@@ -70,13 +70,13 @@ def test_each_extra_output_follows_its_switch(run, args, tmp_path, make_config):
     rc, out, err = run(*args(config=cfg))
     assert rc == 0, err
     d = tmp_path / "out"
-    ilo = (d / "ilo-map.md").read_text("utf-8")
+    ilo = (d / "ilo-map.md").read_text(encoding="utf-8")
     assert ilo.startswith("# 1.1 Demo: Vorlase deficiency: learning outcome map")
     assert "1. Describe how vorlase turns tessin into quillic acid." in ilo
     assert "⚠ No item in this module cites this outcome" in ilo or "p2-1" in ilo
-    tracker = (d / "tracker-handoff.md").read_text("utf-8")
+    tracker = (d / "tracker-handoff.md").read_text(encoding="utf-8")
     assert "- TODO Describe how vorlase" in tracker and tracker.startswith("title:: ")
-    cards = (d / "cards-source.md").read_text("utf-8")
+    cards = (d / "cards-source.md").read_text(encoding="utf-8")
     assert cards.startswith("<!-- lt-module: c1-r101 -->\n# 1.1 Demo: Vorlase deficiency")
     assert "\nTag: T::1.1\n" in cards
 
@@ -98,7 +98,7 @@ def test_week_override_and_missing_week(run, args, tmp_path):
     assert rc == 1 and "pass --week" in err
     rc, out, err = run(*args("demo", extra=["--week", "9.9"]))
     assert rc == 0, err
-    assert (tmp_path / "out" / "module-page.md").read_text("utf-8").startswith(
+    assert (tmp_path / "out" / "module-page.md").read_text(encoding="utf-8").startswith(
         "title:: Lt/9.9 Demo: Quick tour\n")
 
 
@@ -109,11 +109,11 @@ def test_json_stdout_is_only_the_report(run, args):
 
 
 def test_legacy_permission_field_is_dropped_with_one_note(run, args, fixtures, tmp_path):
-    module = json.loads((fixtures / "modules" / "module-c1-r102.json").read_text("utf-8"))
+    module = json.loads((fixtures / "modules" / "module-c1-r102.json").read_text(encoding="utf-8"))
     module["permission"] = {"unit_code": "X101", "exit_code": 0, "checked_at": "2000-01-01"}
     path = tmp_path / "legacy" / "module-c1-r102.json"
     path.parent.mkdir()
-    path.write_text(json.dumps(module), encoding="utf-8")
+    path.write_text(json.dumps(module), encoding="utf-8", newline="\n")
     argv = args("c1-r102", answers=False, fill=False)
     argv[argv.index("--module") + 1] = path
     rc, out, err = run(*argv)
@@ -124,11 +124,11 @@ def test_legacy_permission_field_is_dropped_with_one_note(run, args, fixtures, t
 # ------------------------------------------------------------------ rails on inputs
 
 def test_invalid_module_exits_2_and_writes_nothing(run, args, fixtures, tmp_path):
-    module = json.loads((fixtures / "modules" / "module-c1-r102.json").read_text("utf-8"))
+    module = json.loads((fixtures / "modules" / "module-c1-r102.json").read_text(encoding="utf-8"))
     del module["census"]
     path = tmp_path / "bad" / "module-c1-r102.json"
     path.parent.mkdir()
-    path.write_text(json.dumps(module), encoding="utf-8")
+    path.write_text(json.dumps(module), encoding="utf-8", newline="\n")
     argv = args("c1-r102", answers=False, fill=False)
     argv[argv.index("--module") + 1] = path
     rc, out, err = run(*argv)
@@ -146,13 +146,13 @@ def test_missing_validator_exits_3_and_exports_nothing(run, args, tmp_path, monk
 
 
 def test_answers_for_changed_questions_exit_1(run, args, fixtures, tmp_path):
-    answers = json.loads((fixtures / "answers" / "answers-c1-r101.json").read_text("utf-8"))
+    answers = json.loads((fixtures / "answers" / "answers-c1-r101.json").read_text(encoding="utf-8"))
     answers["source_module"]["question_digest"] = "0" * 64
     path = tmp_path / "answers" / "answers-c1-r101.json"
     path.parent.mkdir()
     # the pinned path is relative to the answers file, so point it at the fixture capture
     answers["source_module"]["path"] = str(fixtures / "modules" / "module-c1-r101.json")
-    path.write_text(json.dumps(answers), encoding="utf-8")
+    path.write_text(json.dumps(answers), encoding="utf-8", newline="\n")
     argv = args(answers=False, fill=False) + ["--answers", path]
     rc, out, err = run(*argv)
     assert rc in (1, 2), err
@@ -163,10 +163,10 @@ def test_answers_for_changed_questions_exit_1(run, args, fixtures, tmp_path):
 def test_unsafe_module_id_exits_1(run, args, export_module, tmp_path, monkeypatch, fixtures):
     from ltcore import validate
     monkeypatch.setattr(validate, "validate_file", lambda *a, **k: validate.Result("stub"))
-    module = json.loads((fixtures / "modules" / "module-c1-r102.json").read_text("utf-8"))
+    module = json.loads((fixtures / "modules" / "module-c1-r102.json").read_text(encoding="utf-8"))
     module["module_id"] = "../escape"
     path = tmp_path / "unsafe.json"
-    path.write_text(json.dumps(module), encoding="utf-8")
+    path.write_text(json.dumps(module), encoding="utf-8", newline="\n")
     argv = args("c1-r102", answers=False, fill=False)
     argv[argv.index("--module") + 1] = path
     rc, out, err = run(*argv)
@@ -203,10 +203,12 @@ def test_install_writes_page_and_assets_into_the_graph_only(run, args, make_conf
     assert written <= {"graph", "out", "data", "lt-suite.toml"}
 
 
-def test_reinstall_of_unchanged_output_is_identical_and_silent(run, args, make_config, tmp_path):
+@pytest.mark.parametrize('line_ending', [b'\n', b'\r\n'])
+def test_reinstall_of_unchanged_output_is_identical_and_silent(run, args, make_config, tmp_path, line_ending):
     cfg, graph = graph_config(make_config, tmp_path)
     assert run(*args(config=cfg), "--install")[0] == 0
     page = next((graph / "pages").iterdir())
+    page.write_bytes(page.read_bytes().replace(b'\r\n', b'\n').replace(b'\n', line_ending))
     before = page.stat().st_mtime_ns
     rc, out, err = run(*args(config=cfg), "--install", "--overwrite")
     assert rc == 0, err
@@ -217,43 +219,43 @@ def test_hand_edited_page_blocks_then_replace_keeps_the_diff(run, args, make_con
     cfg, graph = graph_config(make_config, tmp_path)
     assert run(*args(config=cfg), "--install")[0] == 0
     page = next((graph / "pages").iterdir())
-    page.write_text(page.read_text("utf-8") + "- my own note\n", encoding="utf-8")
-    edited = page.read_text("utf-8")
+    page.write_text(page.read_text(encoding="utf-8") + "- my own note\n", encoding="utf-8", newline="\n")
+    edited = page.read_text(encoding="utf-8")
     rc, out, err = run(*args(config=cfg), "--install", "--overwrite")
     assert rc == 4 and "carries this module's stamp" in err
-    assert page.read_text("utf-8") == edited
+    assert page.read_text(encoding="utf-8") == edited
     diff = tmp_path / "out" / (page.name + ".diff")
-    assert "my own note" in diff.read_text("utf-8")
+    assert "my own note" in diff.read_text(encoding="utf-8")
     rc, out, err = run(*args(config=cfg), "--install", "--replace", "--overwrite")
     assert rc == 0, err
-    assert "my own note" not in page.read_text("utf-8")
-    assert "my own note" in diff.read_text("utf-8"), "the diff of the hand edit is kept"
+    assert "my own note" not in page.read_text(encoding="utf-8")
+    assert "my own note" in diff.read_text(encoding="utf-8"), "the diff of the hand edit is kept"
 
 
 def test_foreign_file_is_never_overwritten_even_with_replace(run, args, make_config, tmp_path):
     cfg, graph = graph_config(make_config, tmp_path)
     target = graph / "pages" / "Study___1.1 Demo%3A Vorlase deficiency.md"
-    target.write_text("# somebody else's page\n", encoding="utf-8")
+    target.write_text("# somebody else's page\n", encoding="utf-8", newline="\n")
     for extra in ([], ["--replace"]):
         rc, out, err = run(*args(config=cfg), "--install", "--overwrite", *extra)
         assert rc == 4 and "cannot be overwritten" in err
-        assert target.read_text("utf-8") == "# somebody else's page\n"
+        assert target.read_text(encoding="utf-8") == "# somebody else's page\n"
     assert not (graph / "assets").exists(), "nothing else was installed either"
 
 
 def test_page_stamped_for_another_module_is_foreign(run, args, make_config, tmp_path):
     cfg, graph = graph_config(make_config, tmp_path)
     target = graph / "pages" / "Study___1.1 Demo%3A Vorlase deficiency.md"
-    target.write_text("title:: x\nlt-module:: c9-r999\n\n- other module\n", encoding="utf-8")
+    target.write_text("title:: x\nlt-module:: c9-r999\n\n- other module\n", encoding="utf-8", newline="\n")
     rc, out, err = run(*args(config=cfg), "--install", "--replace")
     assert rc == 4
-    assert "c9-r999" in target.read_text("utf-8")
+    assert "c9-r999" in target.read_text(encoding="utf-8")
 
 
 def test_owned_page_symlink_cannot_write_outside_graph(run, args, make_config, tmp_path):
     cfg, graph = graph_config(make_config, tmp_path)
     outside = tmp_path / "outside.md"
-    outside.write_text("title:: External\nlt-module:: c1-r101\n\n- keep this\n")
+    outside.write_text("title:: External\nlt-module:: c1-r101\n\n- keep this\n", encoding="utf-8", newline="\n")
     before = outside.read_bytes()
     target = graph / "pages" / "Study___1.1 Demo%3A Vorlase deficiency.md"
     target.symlink_to(outside)
@@ -267,7 +269,7 @@ def test_whiteboard_only_for_logseq(run, args, make_config, tmp_path):
     cfg, graph = graph_config(make_config, tmp_path, whiteboard=True)
     assert run(*args(config=cfg), "--install")[0] == 0
     board = graph / "whiteboards" / "Study-c1-r101.edn"
-    assert ':block/original-name "Study-c1-r101"' in board.read_text("utf-8")
+    assert ':block/original-name "Study-c1-r101"' in board.read_text(encoding="utf-8")
     cfg2, graph2 = graph_config(make_config, tmp_path / "second", fmt="obsidian", whiteboard=True)
     rc, out, err = run(*args(config=cfg2), "--json", "--overwrite")
     assert rc == 0
@@ -278,12 +280,12 @@ def test_whiteboard_only_for_logseq(run, args, make_config, tmp_path):
 
 def test_links_point_only_at_existing_pages_once(run, args, make_config, tmp_path):
     cfg, graph = graph_config(make_config, tmp_path)
-    (graph / "pages" / "Tessin.md").write_text("title:: Tessin\n\n- a page\n", encoding="utf-8")
+    (graph / "pages" / "Tessin.md").write_text("title:: Tessin\n\n- a page\n", encoding="utf-8", newline="\n")
     rc, out, err = run(*args(config=cfg), "--json")
     assert rc == 0, err
     report = json.loads(out)
     assert report["links"] == ["Tessin"]
-    page = (tmp_path / "out" / "module-page.md").read_text("utf-8")
+    page = (tmp_path / "out" / "module-page.md").read_text(encoding="utf-8")
     assert page.count("[[Tessin]]") == 1, "first occurrence only"
     assert "[[Quillic" not in page, "no link is invented for a page that does not exist"
     # the question text is reproduced as captured and never linked
@@ -296,18 +298,18 @@ def test_citations_follow_the_aliases(run, args, make_config, tmp_path):
         "url_aliases": {"DEMO-1-1-TRANSCRIPT": "https://lt.example.invalid/transcript"}})
     rc, out, err = run(*args(config=cfg))
     assert rc == 0, err
-    page = (tmp_path / "out" / "module-page.md").read_text("utf-8")
+    page = (tmp_path / "out" / "module-page.md").read_text(encoding="utf-8")
     assert "([[Demo slides]], slide 4)" in page
     assert "([DEMO-1-1-TRANSCRIPT](https://lt.example.invalid/transcript), 00:05:40)" in page
 
 
 def test_hidden_skip_reasons_leave_items_off_the_page(run, args, make_config, tmp_path):
     rc, out, err = run(*args())
-    assert "p2-13 — already-answered" in (tmp_path / "out" / "module-page.md").read_text("utf-8")
+    assert "p2-13 — already-answered" in (tmp_path / "out" / "module-page.md").read_text(encoding="utf-8")
     cfg = make_config(export__citations={"hidden_skip_reasons": ["already-answered"]})
     rc, out, err = run(*args(config=cfg), "--overwrite")
     assert rc == 0, err
-    assert "already-answered" not in (tmp_path / "out" / "module-page.md").read_text("utf-8")
+    assert "already-answered" not in (tmp_path / "out" / "module-page.md").read_text(encoding="utf-8")
 
 
 # ------------------------------------------------------------------ notes formats
@@ -318,7 +320,7 @@ def test_obsidian_page_has_front_matter_stamp_and_relative_assets(
     rc, out, err = run(*args(config=cfg), "--install")
     assert rc == 0, err
     page = graph / "pages" / "Study" / "1.1 Demo- Vorlase deficiency.md"
-    text = page.read_text("utf-8")
+    text = page.read_text(encoding="utf-8")
     assert text.startswith('---\ntitle: "Study/1.1 Demo: Vorlase deficiency"\n')
     assert 'tags: ["Study", "module output"]' in text
     assert "\nlt-module:: c1-r101\n" in text, "the stamp line the quarantine scan reads"
@@ -329,10 +331,10 @@ def test_obsidian_page_has_front_matter_stamp_and_relative_assets(
 
 def test_markdown_format_has_no_wiki_links(run, args, make_config, tmp_path):
     cfg, graph = graph_config(make_config, tmp_path, fmt="markdown")
-    (graph / "pages" / "Tessin.md").write_text("# Tessin\n", encoding="utf-8")
+    (graph / "pages" / "Tessin.md").write_text("# Tessin\n", encoding="utf-8", newline="\n")
     rc, out, err = run(*args(config=cfg), "--install")
     assert rc == 0, err
-    text = (graph / "pages" / "Study" / "1.1 Demo- Vorlase deficiency.md").read_text("utf-8")
+    text = (graph / "pages" / "Study" / "1.1 Demo- Vorlase deficiency.md").read_text(encoding="utf-8")
     assert "[[" not in text
 
 
@@ -367,7 +369,7 @@ def test_configured_stamp_property_is_written_and_probed(run, args, make_config,
     cfg = make_config(notes={"stamp_property": "mod-out"})
     rc, out, err = run(*args(config=cfg))
     assert rc == 0, err
-    page = (tmp_path / "out" / "module-page.md").read_text("utf-8")
+    page = (tmp_path / "out" / "module-page.md").read_text(encoding="utf-8")
     assert "\nmod-out:: c1-r101\n" in page and "\nlt-module::" not in page
 
 
@@ -411,7 +413,7 @@ def test_ambiguous_learning_outcome_sections_match_nothing(export_module, make_c
     from ltcore import config
     cfg = config.load(make_config())
     ilo = tmp_path / "ILO.md"
-    ilo.write_text("## 6.4 Alpha beta\n- one\n\n## 6.4 Gamma delta\n- two\n", encoding="utf-8")
+    ilo.write_text("## 6.4 Alpha beta\n- one\n\n## 6.4 Gamma delta\n- two\n", encoding="utf-8", newline="\n")
     assert export_module.parse_ilo_section(ilo, "6.4", "Epsilon zeta", cfg) is None
     assert export_module.parse_ilo_section(ilo, "6.4", "Gamma delta", cfg)["outcomes"] == ["two"]
 
@@ -433,7 +435,7 @@ def test_list_stamped_and_check_page(run, args, make_config, tmp_path, capsys):
     cfg, graph = graph_config(make_config, tmp_path)
     assert run(*args(config=cfg), "--install")[0] == 0
     ordinary = graph / "pages" / "Notes.md"
-    ordinary.write_text("title:: Notes\n\n- plain\n", encoding="utf-8")
+    ordinary.write_text("title:: Notes\n\n- plain\n", encoding="utf-8", newline="\n")
     page = next(p for p in (graph / "pages").iterdir() if p.name.startswith("Study___"))
     rc, out, err = run("--config", cfg, "--list-stamped")
     assert rc == 0 and "c1-r101" in out and "Notes" not in out
@@ -527,11 +529,11 @@ def test_svg_assets_carry_the_chain(run,args,tmp_path):
     directory.mkdir()
     source=directory/'test.svg'
     original='<svg xmlns="http://www.w3.org/2000/svg"><text font-family="Noto Sans">Test</text></svg>'
-    source.write_text(original)
+    source.write_text(original, encoding="utf-8", newline="\n")
     rc,_,err=run(*args(extra=['--diagram-dir',directory]))
     assert rc==0,err
     copy=tmp_path/'out/assets/lt-c1-r101-test.svg'
-    assert 'Segoe UI' in copy.read_text() and source.read_text()==original
+    assert 'Segoe UI' in copy.read_text(encoding="utf-8") and source.read_text(encoding="utf-8")==original
 
 
 def _bound_images(directory):
@@ -546,7 +548,7 @@ def _bound_images(directory):
         Image.new('RGB',(80,60),colour).save(sibling)
         copies[pid]={'file':sibling.name,'sha256':P.file_sha256(sibling),'print':printed}
     manifest={'upload':{'file':linked.name,'sha256':P.file_sha256(linked)},'media_sha256':None,'copies':copies}
-    P.copies_manifest(linked).write_text(json.dumps(manifest))
+    P.copies_manifest(linked).write_text(json.dumps(manifest), encoding="utf-8", newline="\n")
     return linked,manifest
 
 
@@ -557,7 +559,7 @@ def _image_pdf_colours(tmp_path, linked, cfg):
     import pypdfium2 as pdfium
     B.register_fonts(cfg=cfg)
     page=tmp_path/'page.md'
-    page.write_text('title:: Image test\ntype:: **Lt Module Output**\n\n- # Page\n\t- ![Test](assets/'+linked.name+')\n')
+    page.write_text('title:: Image test\ntype:: **Lt Module Output**\n\n- # Page\n\t- ![Test](assets/'+linked.name+')\n', encoding="utf-8", newline="\n")
     reports=M.render_page(page,tmp_path/'pdfs',cfg)
     out={}
     for pid,report in reports.items():
@@ -593,7 +595,7 @@ def test_stale_copies_never_reach_a_pdf(tmp_path,make_config,change,capsys):
         Image.new('RGB',(90,70),'red').save(linked)
     elif change=='disable':
         manifest['copies']={}
-        P.copies_manifest(linked).write_text(json.dumps(manifest))
+        P.copies_manifest(linked).write_text(json.dumps(manifest), encoding="utf-8", newline="\n")
     else:
         for record in manifest['copies'].values():
             (linked.parent/record['file']).write_bytes(b'edited')
@@ -617,7 +619,7 @@ def test_palette_copies_reach_assets(run,args,tmp_path,fixtures):
     shutil.copyfile(source,extra)
     manifest={'upload':{'file':source.name,'sha256':P.file_sha256(source)},'media_sha256':None,
               'copies':{pid:{'file':sibling.name,'sha256':P.file_sha256(sibling),'print':True}}}
-    P.copies_manifest(source).write_text(json.dumps(manifest))
+    P.copies_manifest(source).write_text(json.dumps(manifest), encoding="utf-8", newline="\n")
     argv=args()
     argv[argv.index('--media-dir')+1]=directory
     rc,_,err=run(*argv)
@@ -645,7 +647,7 @@ def test_malformed_copy_manifest_is_rejected(tmp_path, field, value):
         manifest['upload'][field.split('.')[1]] = value
     else:
         manifest[field] = value
-    P.copies_manifest(linked).write_text(json.dumps(manifest))
+    P.copies_manifest(linked).write_text(json.dumps(manifest), encoding="utf-8", newline="\n")
     try:
         selected = P.bound_copy(linked, 'tol-bright')
     except (AttributeError, TypeError, KeyError) as exc:
@@ -660,7 +662,7 @@ def test_malformed_copy_manifest_keeps_linked_image_in_pdf(tmp_path, make_config
     cfg = config.load(make_config(style={'palettes': ['catppuccin-frappe'], 'print_palette': 'tol-bright'}))
     linked, manifest = _bound_images(tmp_path / 'assets')
     manifest['upload'] = 'invalid'
-    P.copies_manifest(linked).write_text(json.dumps(manifest))
+    P.copies_manifest(linked).write_text(json.dumps(manifest), encoding="utf-8", newline="\n")
     colours = _image_pdf_colours(tmp_path, linked, cfg)
     assert all((255, 0, 0) in values and (0, 128, 0) not in values and (0, 0, 255) not in values
                for values in colours.values())
@@ -671,7 +673,7 @@ def test_reconciled_check_export_tags_and_dispute(run,args,fixtures,tmp_path):
     rec=fixtures/'runs/c1-r108/reconciled.json'
     rc,out,err=run(*args('c1-r108',extra=['--reconciled',rec]))
     assert rc==0,err+out
-    page=(tmp_path/'out/module-page.md').read_text()
+    page=(tmp_path/'out/module-page.md').read_text(encoding="utf-8")
     assert "accepted by Lt's Check Answer after 2 presses" in page
     assert "Lt's key contradicts the cited sources" in page
     assert 'Cited draft:' in page and 'Dropped draft segment:' in page
@@ -681,7 +683,7 @@ def test_reconciled_check_export_tags_and_dispute(run,args,fixtures,tmp_path):
 def test_unreconciled_unsuccessful_restore_is_never_called_accepted(run,args,tmp_path):
     rc,out,err=run(*args('c1-r108'))
     assert rc==0,err+out
-    page=(tmp_path/'out/module-page.md').read_text()
+    page=(tmp_path/'out/module-page.md').read_text(encoding="utf-8")
     section=page.split('p1-14')[1].split('p1-15')[0]
     assert 'Lt did not mark this correct' in section
     assert 'accepted' not in section
@@ -689,7 +691,7 @@ def test_unreconciled_unsuccessful_restore_is_never_called_accepted(run,args,tmp
 
 @pytest.mark.parametrize('pin',['source_answers','source_fill_report'])
 def test_reconciled_stale_pin_is_fatal(run,args,fixtures,tmp_path,pin):
-    doc=json.loads((fixtures/'runs/c1-r108/reconciled.json').read_text());doc[pin]['sha256']='0'*64
-    p=tmp_path/'reconciled.json';p.write_text(json.dumps(doc))
+    doc=json.loads((fixtures/'runs/c1-r108/reconciled.json').read_text(encoding="utf-8"));doc[pin]['sha256']='0'*64
+    p=tmp_path/'reconciled.json';p.write_text(json.dumps(doc), encoding="utf-8", newline="\n")
     rc,out,err=run(*args('c1-r108',extra=['--reconciled',p]))
     assert rc==1 and pin in err and 're-run reconcile' in err

@@ -13,6 +13,7 @@ as they are. Instances are cut once per set of source files and reused, so their
 page_css() returns @font-face rules with the font data inline, so the interactive page shows the
 diagram in its own faces without a network request (fonts.page_fonts = "local").
 """
+from _legacy import read_legacy_text
 import base64
 import hashlib
 import io
@@ -124,8 +125,8 @@ def static_set():
     text = ('<?xml version="1.0"?>\n<!DOCTYPE fontconfig SYSTEM "urn:fontconfig:fonts.dtd">\n<fontconfig>\n'
             '  <include ignore_missing="yes">/etc/fonts/fonts.conf</include>\n'
             f"{body}  <cachedir>{escape(str(dest / 'cache'))}</cachedir>\n</fontconfig>\n")
-    if not conf.exists() or conf.read_text(encoding='utf-8') != text:
-        conf.write_text(text, encoding='utf-8')
+    if not conf.exists() or read_legacy_text(conf) != text:
+        conf.write_text(text, encoding='utf-8', newline="\n")
     return conf, rename
 
 

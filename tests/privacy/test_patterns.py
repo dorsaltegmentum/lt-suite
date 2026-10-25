@@ -85,7 +85,7 @@ def test_public_file_carries_no_owner_literal(gate):
 ])
 def test_review_strings_pass(run_gate, tmp_path, line):
     f = tmp_path / "ok.txt"
-    f.write_text(line + "\n", encoding="utf-8")
+    f.write_text(line + "\n", encoding="utf-8", newline="\n")
     r = run_gate("--paths", str(f))
     assert r.returncode == 0, r.stdout + r.stderr
 

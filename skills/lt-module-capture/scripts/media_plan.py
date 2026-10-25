@@ -82,6 +82,9 @@ def build_plan(module: dict) -> dict:
 
 
 def main(argv: list[str] | None = None) -> int:
+    from ltcore.streams import configure_utf8
+    configure_utf8()
+
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("target", help="module id, or the path of a module-<id>.json")
     ap.add_argument("--out", help="plan file (default: <data>/runs/<module_id>/media-plan.json)")
@@ -112,7 +115,7 @@ def main(argv: list[str] | None = None) -> int:
     plan = build_plan(module)
     out = Path(a.out).expanduser() if a.out else st.run_dir(mid) / "media-plan.json"
     out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_text(json.dumps(plan, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
+    out.write_text(json.dumps(plan, indent=1, ensure_ascii=False) + "\n", encoding="utf-8", newline="\n")
     print(f"plan: {out}")
     if plan["stop_before_page"] is not None:
         print(f"stop before page_index {plan['stop_before_page']} (a live Checkpoint)")

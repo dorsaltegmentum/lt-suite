@@ -26,6 +26,7 @@ Versions follow [Semantic Versioning 2.0.0](https://semver.org/spec/v2.0.0.html)
 
 ### Fixed
 
+- Windows text encoding, line endings, interpreter pinning and path handling.
 - Check Answer refuses changed live classification inputs and requires recapture and reclassification.
 - lt-chrome rejects unknown browser keys and nested paths before selecting startup defaults.
 - Font discovery handles system filenames and checks every rendered face before font modification.

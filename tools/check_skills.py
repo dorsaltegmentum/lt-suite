@@ -202,6 +202,12 @@ def check_skill(skill_dir: Path, block: str) -> tuple[list[str], list[str]]:
 
 
 def main(argv: list[str] | None = None) -> int:
+    import sys
+    from pathlib import Path
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "shared"))
+    from ltcore.streams import configure_utf8
+    configure_utf8()
+
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("skills", nargs="*", type=Path, help="skill folders (default: skills/*)")

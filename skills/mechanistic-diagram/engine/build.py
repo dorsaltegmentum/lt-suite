@@ -46,6 +46,7 @@ import argparse, io, json, os, pathlib, re, shutil, subprocess, sys
 
 sys.dont_write_bytecode = True       # keep case folders free of __pycache__
 import _bootstrap  # noqa: E402,F401  (engine and shared core on sys.path)
+from _legacy import read_legacy_text
 
 ENGINE = pathlib.Path(__file__).resolve().parent
 
@@ -85,7 +86,7 @@ def source_files(case_dir, variant=None):
             if p.is_file() and d in p.parents:
                 files.append(p)
     try:
-        walk(json.loads((d / "case.json").read_text()))
+        walk(json.loads(read_legacy_text(d / "case.json")))
     except (OSError, ValueError):
         pass
     return [p for p in files if p.exists()]
@@ -126,7 +127,7 @@ def build(case_dir, final=False, trust=False):
             render.render(case, flavour, f"final-{flavour}")
         except (ValueError, style.StyleError) as ex:
             fail(f"render {flavour}: {ex}")
-        info = subprocess.run(["pdfinfo", str(case.dir / f"final-{flavour}.pdf")], capture_output=True, text=True).stdout
+        info = subprocess.run(["pdfinfo", str(case.dir / f"final-{flavour}.pdf")], capture_output=True, text=True, encoding="utf-8").stdout
         if re.search(r"^Pages:\s+1$", info, re.M) is None:
             fail(f"final-{flavour}.pdf is not a single page")
     masters = []
@@ -186,7 +187,7 @@ def checks(case, res):
     for f in acc["fails"]:
         print(f"    FAIL: {f}")
     print(f"    full report: python3 {ENGINE / 'access.py'} {case.dir}  (images in checks/cvd/)")
-    F = json.loads(floor.floor_path().read_text())
+    F = json.loads(floor.floor_path().read_text(encoding="utf-8"))
     rows, floor_ok = floor.check(case.dir, layout=res, access_result=acc, floor=F, quiet=True)
     print("  " + floor.table(rows, F, floor.Build(case.dir)).replace("\n", "\n  "))
     w = textrules.widows(case.dir / "geometry.json")
@@ -217,7 +218,7 @@ def checks(case, res):
 def _pdf_pages_and_render(data, tag, tmp):
     p = pathlib.Path(tmp) / f"{tag}.pdf"
     p.write_bytes(data)
-    info = subprocess.run(["pdfinfo", str(p)], capture_output=True, text=True).stdout
+    info = subprocess.run(["pdfinfo", str(p)], capture_output=True, text=True, encoding="utf-8").stdout
     m = re.search(r"^Pages:\s+(\d+)", info, re.M)
     subprocess.run(["pdftoppm", "-r", "30", "-png", "-singlefile", str(p), str(pathlib.Path(tmp) / tag)], check=True)
     return (int(m.group(1)) if m else 0), (pathlib.Path(tmp) / f"{tag}.png").read_bytes()
@@ -266,7 +267,7 @@ def finalise(case, page, make_artifact):
             if not ok:
                 bad.append({"file": str(p), "status": "verify", "detail": "cleaning changed what the file shows"})
     (case.dir / "checks").mkdir(exist_ok=True)
-    (case.dir / "checks" / "final-report.json").write_text(json.dumps(results, indent=1, default=str) + "\n")
+    (case.dir / "checks" / "final-report.json").write_text(json.dumps(results, indent=1, default=str) + "\n", encoding="utf-8", newline="\n")
     if bad:
         fail("--final: " + "; ".join(f"{pathlib.Path(r['file']).name} {r['status']}" for r in bad)
              + " (deliver/ may now mix cleaned and draft files: rebuild before handing anything over)")
@@ -276,6 +277,9 @@ def finalise(case, page, make_artifact):
 
 
 def main(argv=None):
+    from ltcore.streams import configure_utf8
+    configure_utf8()
+
     ap = argparse.ArgumentParser(description="Build every output of a case folder, then check it.",
                                  epilog=f"start a new case with: python3 {ENGINE / 'new_case.py'} <case_dir>")
     ap.add_argument("case_dir")

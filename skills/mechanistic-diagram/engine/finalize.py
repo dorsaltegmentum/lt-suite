@@ -208,6 +208,9 @@ def describe(r):
 
 
 def main(argv=None):
+    from ltcore.streams import configure_utf8
+    configure_utf8()
+
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     ap.add_argument("paths", nargs="+", type=Path)
     ap.add_argument("--report", type=Path)
@@ -223,7 +226,7 @@ def main(argv=None):
     for r in results:
         print(describe(r))
     if a.report:
-        a.report.write_text(json.dumps(results, indent=1, default=str))
+        a.report.write_text(json.dumps(results, indent=1, default=str), encoding="utf-8", newline="\n")
     return 1 if any(r["status"] in ("error", "kept-original") or r.get("residual") for r in results) else 0
 
 

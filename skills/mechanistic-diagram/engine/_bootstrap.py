@@ -36,12 +36,16 @@ if "ltcore" not in sys.modules and SHARED is not None and str(SHARED) not in sys
 if str(ENGINE) not in sys.path:
     sys.path.insert(0, str(ENGINE))
 
+from ltcore.streams import configure_utf8  # noqa: E402
+
+
 
 def entry():
     """Run the shared bootstrap: re-run inside <data>/venv when a dependency is missing."""
     if SHARED is None and "ltcore" not in sys.modules:
         sys.exit("lt-suite: the shared core is missing (scripts/_shared/ltcore). "
                  "Reinstall the skill, or run tools/sync_shared.py in the repository.")
+    configure_utf8()
     import ltcore
     missing = ltcore.bootstrap()
     if missing:

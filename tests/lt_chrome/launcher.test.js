@@ -36,8 +36,8 @@ test('lt-chrome URL: only literal HTTP loopback with a valid raw port', () => {
   for (const url of ['http://2130706433:9222','http://127.0.0.1:0','http://127.0.0.1:9222\n','http://localhost:9222','http://127.0.0.1:99999']) assert.equal(chrome.validUrl(url),false);
 });
 test('lt-chrome env: Windows casing cannot turn third-party tools on', () => {
-  assert.deepEqual(chrome.hardenedEnv({chrome_devtools_mcp_category_experimental_third_party:'1',Plugin_Data:'ignored',PATH:'retained'},'win32').env, {
-    PATH:'retained',CHROME_DEVTOOLS_MCP_NO_CONFIG_DISCOVERY:'1',CHROME_DEVTOOLS_MCP_NO_UPDATE_CHECKS:'1'});
+  assert.deepEqual(chrome.hardenedEnv({chrome_devtools_mcp_category_experimental_third_party:'1',Plugin_Data:'ignored',PathExt:'.CMD;.EXE',PATH:'retained'},'win32').env, {
+    PATH:'retained',PATHEXT:'.EXE;.CMD;.BAT',CHROME_DEVTOOLS_MCP_NO_CONFIG_DISCOVERY:'1',CHROME_DEVTOOLS_MCP_NO_UPDATE_CHECKS:'1'});
 });
 test('lt-chrome dirs: unexpanded host variables are ignored', () => {
   assert.equal(chrome.directories('win32',{HOME:'C:\\Synthetic',APPDATA:'${APPDATA}',LOCALAPPDATA:'${LOCALAPPDATA}'}).config_dir,'C:\\Synthetic\\AppData\\Roaming\\lt-suite');

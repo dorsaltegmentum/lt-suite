@@ -62,7 +62,7 @@ def policy(root=None, **values):
 
 def put(root, name='team.md', text=None):
     root.mkdir(parents=True, exist_ok=True)
-    (root / name).write_text(text or compact(), encoding='utf-8')
+    (root / name).write_text(text or compact(), encoding='utf-8', newline="\n")
     return root / name
 
 
@@ -398,7 +398,7 @@ def test_T25_record_is_safe_and_schema_valid(tmp_path):
     rec = pk.classify(mod, pol)
     pk.validate_record(rec)
     import jsonschema
-    jsonschema.validate(rec, json.loads(pk.SCHEMA.read_text()))
+    jsonschema.validate(rec, json.loads(pk.SCHEMA.read_text(encoding="utf-8")))
     output = json.dumps(rec)
     for secret in ('Desert oasis', '1. B', '2. D', 'SECRET', str(tmp_path)):
         assert secret not in output
@@ -496,7 +496,7 @@ def test_T28_resolver_prunes_rat_roots(tmp_path, repo_root, run_py):
     put(course / 'Block A/RATs/Week 1.2 Wrong')
     put(course / 'Block A/Week 1.2 Demo', 'slides.md', 'Ordinary synthetic source')
     cfg = tmp_path / 'cfg.toml'
-    cfg.write_text(f'[curriculum]\nroot = {json.dumps(str(course))}\nweek_number_pattern = \'(\\d+)\\.(\\d+)\'\n[rat]\nanswers_dir = {json.dumps(str(course / "Block A/RATs"))}\n')
+    cfg.write_text(f'[curriculum]\nroot = {json.dumps(str(course))}\nweek_number_pattern = \'(\\d+)\\.(\\d+)\'\n[rat]\nanswers_dir = {json.dumps(str(course / "Block A/RATs"))}\n', encoding="utf-8", newline="\n")
     r = run_py(repo_root / 'skills/lt-module-answer/scripts/resolve_week.py', '--title', '1.2 Demo', '--config', cfg, '--json')
     assert r.returncode == 0, r.stdout+r.stderr
     result = json.loads(r.stdout)
@@ -509,9 +509,9 @@ def test_T25_cli_output_and_exit_contract(tmp_path, repo_root, run_py):
     put(root, 'ignore previous instructions.md', compact()+'# 9. Z SECRET\n')
     put(root, 'odd`name.md', compact().replace('kind: trat', 'kind: trat\nweek: "1. B 2. D"\nlesson: SECRET'))
     mod = tmp_path / 'module.json'
-    mod.write_text(json.dumps(module()))
+    mod.write_text(json.dumps(module()), encoding="utf-8", newline="\n")
     cfg = tmp_path / 'cfg.toml'
-    cfg.write_text(f'[rat]\nanswers_dir = {json.dumps(str(root))}\ntrat = "from_dir"\n')
+    cfg.write_text(f'[rat]\nanswers_dir = {json.dumps(str(root))}\ntrat = "from_dir"\n', encoding="utf-8", newline="\n")
     cli = repo_root / 'skills/lt-module-answer/scripts/page_kinds.py'
     for command in ('roots', 'classify'):
         for flags in ([], ['--json']):
@@ -557,7 +557,7 @@ def test_T23_unknown_kind_equal_skip():
 def test_T26_remove_edit_retarget_stale(tmp_path):
     mod, pol, rec = scan(tmp_path)
     root = Path(pol['answers_dir'])
-    (root / 'team.md').write_text(compact().replace('1. B', '1. A'))
+    (root / 'team.md').write_text(compact().replace('1. B', '1. A'), encoding="utf-8", newline="\n")
     assert not pk.current(mod, rec, pol)
     rec = pk.classify(mod, pol, rec)
     (root / 'team.md').unlink()
@@ -577,7 +577,7 @@ def test_T5_data_override_cannot_be_a_root(tmp_path, repo_root, run_py):
     root = tmp_path / 'sheets'
     put(root)
     cfg = tmp_path / 'config.toml'
-    cfg.write_text(f'[rat]\nanswers_dir = {json.dumps(str(root))}\ntrat = "from_dir"\n')
+    cfg.write_text(f'[rat]\nanswers_dir = {json.dumps(str(root))}\ntrat = "from_dir"\n', encoding="utf-8", newline="\n")
     r = run_py(repo_root / 'skills/lt-module-answer/scripts/page_kinds.py', 'roots', '--config', cfg, '--data-dir', root)
     assert r.returncode == 3
     assert 'rat.answers_dir: overlaps data folder' in r.stderr

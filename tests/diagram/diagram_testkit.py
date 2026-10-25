@@ -60,7 +60,7 @@ def copy_case(dst: Path, src: Path = TOY) -> Path:
 
 def run_engine(script: str, *args, cwd: Path, env: dict, timeout: int = 600) -> subprocess.CompletedProcess:
     return subprocess.run([sys.executable, str(ENGINE / script), *map(str, args)], cwd=cwd, env=env,
-                          capture_output=True, text=True, timeout=timeout)
+                          capture_output=True, text=True, timeout=timeout, encoding="utf-8")
 
 
 def missing_bins() -> list[str]:

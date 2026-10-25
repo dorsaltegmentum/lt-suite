@@ -88,7 +88,7 @@ def test_monkeypatched_sys_platform(monkeypatch, plat):
 def test_linux_downloads_from_user_dirs(tmp_path):
     cfg = tmp_path / "cfg"
     cfg.mkdir()
-    (cfg / "user-dirs.dirs").write_text('XDG_DOWNLOAD_DIR="$HOME/Incoming"\n', encoding="utf-8")
+    (cfg / "user-dirs.dirs").write_text('XDG_DOWNLOAD_DIR="$HOME/Incoming"\n', encoding="utf-8", newline="\n")
     env = {"HOME": HOME_POSIX, "XDG_CONFIG_HOME": str(cfg)}
     assert str(paths.downloads_dir("linux", env)) == f"{HOME_POSIX}/Incoming"
     env2 = {"HOME": HOME_POSIX, "XDG_CONFIG_HOME": str(tmp_path / "none")}

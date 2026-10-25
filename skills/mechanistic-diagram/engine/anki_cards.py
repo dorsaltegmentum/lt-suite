@@ -142,7 +142,7 @@ def write(case, out=None, verbose=False):
             if "\t" in field or "\n" in field:
                 raise ValueError("a card field holds a tab or a line break")
         lines.append(f"{front}\t{back}\t{prefix}{slug} {prefix}{slug}::{typ}")
-    path.write_text("\n".join(lines) + "\n")
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8", newline="\n")
     counts = {t: sum(1 for r in rows if r[0] == t) for t in TYPES}
     print(f"wrote {path}: {len(rows)} cards ({', '.join(f'{n} {t}' for t, n in counts.items())}); "
           f"{len(skipped)} trivial arrows skipped")
@@ -150,6 +150,9 @@ def write(case, out=None, verbose=False):
 
 
 def main(argv):
+    from ltcore.streams import configure_utf8
+    configure_utf8()
+
     from case import Case, CaseError
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("case_dir")

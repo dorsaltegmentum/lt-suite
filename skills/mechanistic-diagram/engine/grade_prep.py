@@ -23,6 +23,7 @@ import sys
 from pathlib import Path
 
 import _bootstrap  # noqa: F401  (engine and shared core on sys.path)
+from _legacy import read_legacy_text
 from PIL import Image
 
 ROWS, COLS, OVERLAP = 3, 4, 0.12
@@ -39,11 +40,11 @@ def find_png(case, flavour):
 
 
 def dump(case, out):
-    g = json.loads((case / "geometry.json").read_text())
+    g = json.loads(read_legacy_text(case / "geometry.json"))
     titles = {}
     cj = case / "case.json"
     if cj.exists():
-        titles = json.loads(cj.read_text()).get("stage_titles", {})
+        titles = json.loads(read_legacy_text(cj)).get("stage_titles", {})
     lines = ["# Diagram dump", "", f"{len(g['nodes'])} boxes, {len(g['edges'])} arrows, "
              f"{len(g['clusters'])} stages. Coordinates are the box centre in canvas px; the PNGs are 1.5x.", ""]
     by_cluster = {}
@@ -63,7 +64,7 @@ def dump(case, out):
         lab = f' "{e["label"]}"' if e.get("label") else ""
         flag = "" if e.get("ok", True) else "  (ROUTING PROBLEM)"
         lines.append(f"- `{e['a']}` -> `{e['b']}` [{e['kind']}]{lab}{flag}")
-    (out / "diagram-dump.md").write_text("\n".join(lines) + "\n")
+    (out / "diagram-dump.md").write_text("\n".join(lines) + "\n", encoding="utf-8", newline="\n")
 
 
 def tiles(png, out):
@@ -78,6 +79,9 @@ def tiles(png, out):
 
 
 def main(argv=None):
+    from ltcore.streams import configure_utf8
+    configure_utf8()
+
     ap = argparse.ArgumentParser(description="Prepare a built diagram for the rubric grade-through.")
     ap.add_argument("case_dir")
     ap.add_argument("out_dir")

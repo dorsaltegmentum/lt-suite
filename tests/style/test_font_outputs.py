@@ -42,7 +42,7 @@ def test_output_family_shadows_base_path(font_file):
 def test_output_path_value_is_relative_to_the_config(tmp_path, font_file):
     path = font_file(filename='f/x.ttf')
     source = tmp_path / 'config.toml'
-    source.write_text('[fonts.pdf]\nsans = "f/x.ttf"\n')
+    source.write_text('[fonts.pdf]\nsans = "f/x.ttf"\n', encoding="utf-8", newline="\n")
     cfg = config.load(source)
     assert F.resolve('sans', cfg, output='pdf') == path
 
@@ -63,7 +63,7 @@ def test_unknown_output_is_refused():
 def test_schema_rejects_unknown_output_keys(tmp_path, key, hint):
     source = tmp_path / 'config.toml'
     output = 'labels' if key == 'mono' else 'diagram'
-    source.write_text(f'[fonts.{output}]\n{key} = "x"\n')
+    source.write_text(f'[fonts.{output}]\n{key} = "x"\n', encoding="utf-8", newline="\n")
     with pytest.raises(config.ConfigError, match=hint):
         config.load(source)
 

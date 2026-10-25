@@ -1405,6 +1405,9 @@ def _bool_arg(v: str) -> bool:
 
 
 def main(argv: list[str] | None = None) -> int:
+    from ltcore.streams import configure_utf8
+    configure_utf8()
+
     ap = argparse.ArgumentParser(prog="python3 -m ltcore.validate", description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("instance")

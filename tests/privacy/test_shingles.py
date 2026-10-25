@@ -21,23 +21,23 @@ def corpus(tmp_path, files: dict[str, str], sources: str):
     for rel, text in files.items():
         f = src / rel
         f.parent.mkdir(parents=True, exist_ok=True)
-        f.write_text(text, encoding="utf-8")
+        f.write_text(text, encoding="utf-8", newline="\n")
     priv = tmp_path / "private"
     priv.mkdir(exist_ok=True)
-    (priv / "shingle-sources.txt").write_text(sources, encoding="utf-8")
+    (priv / "shingle-sources.txt").write_text(sources, encoding="utf-8", newline="\n")
     return src, priv
 
 
 def target(tmp_path, text: str, name: str = "target.txt"):
     f = tmp_path / "release" / name
     f.parent.mkdir(parents=True, exist_ok=True)
-    f.write_text(text, encoding="utf-8")
+    f.write_text(text, encoding="utf-8", newline="\n")
     return f
 
 
 def test_eight_word_repeat_is_detected(gate, tmp_path):
     salt = b"s" * 32
-    (tmp_path / "shingle-salt").write_text(salt.hex())
+    (tmp_path / "shingle-salt").write_text(salt.hex(), encoding="utf-8", newline="\n")
     hashes = {h for _, h in gate.text_windows(PHRASE, salt)}
     gate.write_index(tmp_path / "shingles.bin", hashes)
     index = gate.Shingles(tmp_path / "shingles.bin")
@@ -46,7 +46,7 @@ def test_eight_word_repeat_is_detected(gate, tmp_path):
     assert not index.scan("seven harmless words appear alone in this sentence", "a.txt", "a.txt")
     first = f"{next(iter(hashes)):016x}"
     (tmp_path / "shingle-allowlist.toml").write_text(
-        f'[[allow]]\nhash = "{first}"\npath = "docs/**"\nreason = "Synthetic overlap"\n')
+        f'[[allow]]\nhash = "{first}"\npath = "docs/**"\nreason = "Synthetic overlap"\n', encoding="utf-8", newline="\n")
     index = gate.Shingles(tmp_path / "shingles.bin")
     assert index.allowed(int(first, 16), "docs/guide.md")
     assert not index.allowed(int(first, 16), "answers.json")
@@ -83,9 +83,9 @@ def test_eight_word_course_sentence_still_blocks(run_gate, tmp_path):
 ])
 def test_shingle_allowlist_needs_hash_path_and_reason(gate, tmp_path, entry):
     salt = b"s" * 32
-    (tmp_path / "shingle-salt").write_text(salt.hex())
+    (tmp_path / "shingle-salt").write_text(salt.hex(), encoding="utf-8", newline="\n")
     gate.write_index(tmp_path / "shingles.bin", set())
-    (tmp_path / "shingle-allowlist.toml").write_text("[[allow]]\n" + entry)
+    (tmp_path / "shingle-allowlist.toml").write_text("[[allow]]\n" + entry, encoding="utf-8", newline="\n")
     with pytest.raises(gate.GateError, match="needs hash"):
         gate.Shingles(tmp_path / "shingles.bin")
 
@@ -124,7 +124,7 @@ def test_prose_span_with_a_public_pattern_blocks(run_gate, tmp_path):
 def test_prose_span_with_a_private_pattern_blocks(run_gate, tmp_path):
     src, priv = corpus(tmp_path, {"notes/log.md": "met synthetic-owner-91 near the eastern pier at dawn again\n"},
                        "[course]\nnone/*.json\n[prose]\nnotes/**\n")
-    (priv / "private-patterns.txt").write_text(r"\bsynthetic-owner-91\b" + "\n")
+    (priv / "private-patterns.txt").write_text(r"\bsynthetic-owner-91\b" + "\n", encoding="utf-8", newline="\n")
     assert run_gate("build-shingles", "--from", str(src), "--out", str(priv)).returncode == 0
     copy = "met synthetic owner 91 near the eastern pier at dawn again"
     r = run_gate("--paths", str(target(tmp_path, copy + "\n")), "--shingles", str(priv / "shingles.bin"))
@@ -163,7 +163,7 @@ def test_course_ranges_need_phrase_exceptions(run_gate, gate, tmp_path):
     hashes = [h for _, h in gate.text_windows(generic, salt)]
     (priv / 'shingle-allowlist.toml').write_text(''.join(
         f'[[allow]]\nhash = "{h:016x}"\npath = "g.txt"\nreason = "Reviewed synthetic phrase"\n'
-        for h in hashes))
+        for h in hashes), encoding="utf-8", newline="\n")
     assert run_gate("--paths", str(target(tmp_path, generic, "g.txt")), "--shingles", index).returncode == 0
     assert run_gate("--paths", str(target(tmp_path, generic, "other.txt")), "--shingles", index).returncode == 1
 
@@ -186,7 +186,7 @@ def test_builder_accepts_index_file_output(run_gate, tmp_path):
     """The documented --out INDEX spelling must produce an index, rather than a folder."""
     src, _ = corpus(tmp_path, {"a.json": json.dumps({"prompt": PHRASE})}, "")
     sources = tmp_path / "sources.txt"
-    sources.write_text("*.json\n")
+    sources.write_text("*.json\n", encoding="utf-8", newline="\n")
     output = tmp_path / "private2" / "shingles.bin"
     r = run_gate("build-shingles", "--from", str(src), "--out", str(output), "--sources", str(sources))
     assert r.returncode == 0, r.stderr
@@ -217,7 +217,7 @@ def test_source_code_tokens_do_not_enter_corpus(gate, tmp_path):
 
 def test_index_versions_and_corruption(gate, tmp_path):
     p = tmp_path / "shingles.bin"
-    (tmp_path / "shingle-salt").write_text((b"s" * 32).hex())
+    (tmp_path / "shingle-salt").write_text((b"s" * 32).hex(), encoding="utf-8", newline="\n")
     p.write_bytes(b"not an index")
     with pytest.raises(gate.GateError, match="bad header"):
         gate.Shingles(p)
@@ -234,7 +234,7 @@ def test_index_versions_and_corruption(gate, tmp_path):
 def test_encoded_text_and_names_use_shingle_layer(gate, tmp_path):
     """URL escaping and an archive filename cannot hide a known course phrase."""
     salt = b"s" * 32
-    (tmp_path / "shingle-salt").write_text(salt.hex())
+    (tmp_path / "shingle-salt").write_text(salt.hex(), encoding="utf-8", newline="\n")
     gate.write_index(tmp_path / "shingles.bin", {h for _, h in gate.text_windows(PHRASE, salt)})
     rules = gate.load_rules(gate.PATTERNS_FILE)
     scanner = gate.Gate(rules, [], [], gate.Shingles(tmp_path / "shingles.bin"))

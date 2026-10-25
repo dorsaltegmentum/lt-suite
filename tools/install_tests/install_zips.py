@@ -97,6 +97,12 @@ def run_entry(py, script: Path, skill: Path, ws, env) -> tuple[bool, str, str]:
 
 
 def main() -> int:
+    import sys
+    from pathlib import Path
+    sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "shared"))
+    from ltcore.streams import configure_utf8
+    configure_utf8()
+
     ap = c.base_parser(__doc__.split("\n")[0])
     ap.add_argument("--dist", default=None, help="folder of zips already built (skips building)")
     ap.add_argument("--builder", choices=("auto", "dist", "harness"), default="auto",

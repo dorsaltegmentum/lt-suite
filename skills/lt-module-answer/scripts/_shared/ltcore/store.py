@@ -111,7 +111,9 @@ def _try_config(env: Mapping[str, str], here: Path,
 
 def check_id(module_id: str) -> str:
     """A module id is used as a folder name; refuse anything that could escape it."""
-    if not isinstance(module_id, str) or not _ID_RE.match(module_id) or ".." in module_id:
+    if (not isinstance(module_id, str) or not _ID_RE.fullmatch(module_id)
+            or ".." in module_id or module_id.endswith(".")
+            or re.fullmatch(r"(?i:CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])(?:\..*)?", module_id)):
         raise ValueError(f"not a safe module id: {module_id!r}")
     return module_id
 
@@ -285,6 +287,9 @@ class Store:
 
 
 def main(argv: list[str] | None = None) -> int:
+    from ltcore.streams import configure_utf8
+    configure_utf8()
+
     ap = argparse.ArgumentParser(prog="python3 -m ltcore.store", description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--json", action="store_true", help="machine-readable output")

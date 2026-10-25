@@ -40,7 +40,7 @@ def cfg(kit, extra: str = "") -> None:
 
 def calibration(kit) -> dict:
     p = kit.calibration_path
-    return json.loads(p.read_text()).get(ORIGIN, {}) if p.exists() else {}
+    return json.loads(p.read_text(encoding="utf-8")).get(ORIGIN, {}) if p.exists() else {}
 
 
 def scripts(kit, *extra: str) -> dict:
@@ -134,7 +134,7 @@ def test_single_attempt_with_a_recorded_approval(kit):
     aid = r.stdout.strip().splitlines()[0]
     assert aid.startswith("A-") and len(aid) == 10
     from ltcore.digest import question_digest
-    record = json.loads((kit.data / "runs/c1-r101/approvals.json").read_text())["approvals"][0]
+    record = json.loads((kit.data / "runs/c1-r101/approvals.json").read_text(encoding="utf-8"))["approvals"][0]
     assert record["question_digest"] == question_digest(single_mod())
     ok = {"approved_by": "user", "approval_id": aid}
     rc, pay, out = kit.payload(single_mod(), answers([drafted("p4-10", single_attempt_approval=ok),
@@ -302,13 +302,13 @@ def test_labels_and_categories(kit):
 @pytest.mark.requires_bin("node")
 def test_comment_stripping_keeps_code_and_parses(emit_mod, tmp_path):
     for name in ("fill_lib.js", "probe_panels.js"):
-        src = (SCRIPTS / "browser" / name).read_text()
+        src = (SCRIPTS / "browser" / name).read_text(encoding="utf-8")
         stripped = emit_mod.strip_comments(src)
         code = [ln for ln in src.splitlines() if ln.strip() and not ln.strip().startswith(("//", "/*", "*"))]
         assert [ln for ln in code if ln not in stripped.splitlines()] == []
         f = tmp_path / name
         body = stripped if name == "fill_lib.js" else "(async () => {\n" + stripped + "\n});\n"
-        f.write_text(body)
+        f.write_text(body, encoding="utf-8", newline="\n")
         assert subprocess.run(["node", "--check", str(f)], capture_output=True).returncode == 0, name
 
 
@@ -316,9 +316,9 @@ def test_inline_build_is_the_default_and_renders_with_the_guard(eight):
     r = eight.emit("scripts", "--out", "out", "--form", "function")
     assert r.returncode == 0, r.stdout + r.stderr
     man = eight.read("out/scripts.json")
-    body = (eight.tmp / "out" / man["calls"][0]["name"]).read_text()
+    body = (eight.tmp / "out" / man["calls"][0]["name"]).read_text(encoding="utf-8")
     assert "fetch(BASE" not in body and "LtFillLib.fillPage(" in body
-    rendered = Path(man["calls"][0]["rendered"]).read_text()
+    rendered = Path(man["calls"][0]["rendered"]).read_text(encoding="utf-8")
     assert "LtGuard" in rendered and "LtNet" in rendered
     assert Path(man["calls"][0]["rendered"]).parent == eight.tmp / "js"
 
@@ -332,15 +332,15 @@ def test_uncalibrated_origin_one_page_per_call_with_a_save_ticket(eight):
     assert (t["pages"], man["calibrated"]) == ([1], False)
     pend = calibration(eight)["pending"]
     assert [(p["ticket"], p["kind"], p["items"]) for p in pend] == [(t["ticket"], "save", ["p1-10"])]
-    body = (eight.tmp / "out" / "_fill-c1-r101-p1.js").read_text()
+    body = (eight.tmp / "out" / "_fill-c1-r101-p1.js").read_text(encoding="utf-8")
     assert f'"ticket": "{t["ticket"]}"' in body
-    assert '"ticket"' not in (eight.tmp / "out" / "_fill-c1-r101-p2.js").read_text()
+    assert '"ticket"' not in (eight.tmp / "out" / "_fill-c1-r101-p2.js").read_text(encoding="utf-8")
 
 
 def set_calibration(kit, **records) -> None:
     doc = {ORIGIN: {k: dict(v, version=1) for k, v in records.items()}}
     kit.calibration_path.parent.mkdir(parents=True, exist_ok=True)
-    kit.calibration_path.write_text(json.dumps(doc))
+    kit.calibration_path.write_text(json.dumps(doc), encoding="utf-8", newline="\n")
 
 
 def test_pages_per_call_gate_with_a_cross_page_record(eight):
@@ -349,7 +349,7 @@ def test_pages_per_call_gate_with_a_cross_page_record(eight):
     man = scripts(eight, "--pages-per-call", "3")
     assert fills(man) == [[str(p) for p in g] for g in (range(1, 4), range(4, 7), range(7, 9))]
     assert man["calibrated"] is True and man["tickets"] == []
-    body = (eight.tmp / "out" / "_fill-c1-r101-b1.js").read_text()
+    body = (eight.tmp / "out" / "_fill-c1-r101-b1.js").read_text(encoding="utf-8")
     assert "LtFillLib.fillPages(" in body and '"batch_pages": [1, 2, 3]' in body
     assert '"client_sig": "c1-2-0badf00d"' in body and '"version": 1' in body
     # No flag: fill.max_pages_per_call, 5 by default.
@@ -360,7 +360,7 @@ def test_a_record_of_another_format_version_counts_as_absent(eight):
     eight.calibration_path.parent.mkdir(parents=True, exist_ok=True)
     eight.calibration_path.write_text(json.dumps({ORIGIN: {
         "save": {"version": 0, "source": "net", "method": "PUT", "path_template": TPL},
-        "cross_page": {"version": 1, "ok": True}}}))
+        "cross_page": {"version": 1, "ok": True}}}), encoding="utf-8", newline="\n")
     man = scripts(eight)
     assert man["calibrated"] is False and fills(man)[0] == ["1"]
     assert "format version 0" in " ".join(man["notes"])
@@ -388,7 +388,7 @@ def test_auto_calibration_success(eight):
     assert st["pending"] == []
     assert "save wait calibrated" in out["run"].stdout
     assert [h["event"] for h in st["history"]] == ["save-calibrated"]
-    assert json.loads((eight.run_dir() / "save-waits.json").read_text())["save_waits"][0]["save_signal"] == "fallback"
+    assert json.loads((eight.run_dir() / "save-waits.json").read_text(encoding="utf-8"))["save_waits"][0]["save_signal"] == "fallback"
     # The next scripts: calibrated, one 2-page trial batch with a cross_page ticket.
     man = scripts(eight, "--pages", "2-8")
     assert man["calibrated"] is True
@@ -455,7 +455,7 @@ def test_auto_calibration_records_the_identified_model_transport(eight):
     # The next scripts carry the endpoint into the calibrated wait of the trial batch.
     man = scripts(eight, "--pages", "2-8")
     assert man["calibrated"] is True and ticket_of(man, "cross_page")["pages"] == [2, 3]
-    body = (eight.tmp / "out" / "_fill-c1-r101-b1.js").read_text()
+    body = (eight.tmp / "out" / "_fill-c1-r101-b1.js").read_text(encoding="utf-8")
     assert '"source": "model"' in body and '"method": "PUT"' in body and f'"path_template": "{TPL}"' in body
 
 
@@ -518,7 +518,7 @@ def test_a_calibrated_unconfirmed_call_records_the_unidentified_saves(eight):
 def test_a_ticket_is_used_once(eight):
     calibrate_save(eight)
     before = calibration(eight)["save"]
-    eight.calibration_path.write_text(json.dumps({ORIGIN: {"history": []}}))
+    eight.calibration_path.write_text(json.dumps({ORIGIN: {"history": []}}), encoding="utf-8", newline="\n")
     f = eight.tmp / "r/fill-p1.json"
     v = eight.tmp / "r/verify-p1.json"
     r = record(eight, [f], v)
@@ -708,13 +708,13 @@ def test_served_build_checks_the_library_hash(eight, tamper, fatal, loaded):
     r = eight.emit("scripts", "--out", "out", "--no-render", "--lib-mode", "served",
                    "--lib-url", "http://127.0.0.1:8799")
     assert r.returncode == 0, r.stderr
-    body = (eight.tmp / "out" / "_fill-c1-r101-p1.js").read_text()
+    body = (eight.tmp / "out" / "_fill-c1-r101-p1.js").read_text(encoding="utf-8")
     assert "lib-integrity" in body and "fill_lib.js" in body
     runner = eight.tmp / "served.js"
-    runner.write_text(SERVED_RUNNER)
+    runner.write_text(SERVED_RUNNER, encoding="utf-8", newline="\n")
     p = subprocess.run(["node", str(runner), str(eight.tmp / "out" / "_fill-c1-r101-p1.js"),
                         str(SCRIPTS / "browser" / "fill_lib.js"), str(SCRIPTS / "browser" / "probe_panels.js"),
-                        tamper], capture_output=True, text=True, timeout=60)
+                        tamper], capture_output=True, text=True, timeout=60, encoding="utf-8")
     out = json.loads(p.stdout.strip().splitlines()[-1])
     assert out["loaded"] is loaded, p.stdout + p.stderr
     if fatal:
@@ -759,7 +759,7 @@ def test_serve_allow_list(emit_mod):
 
 
 def test_serve_binds_loopback_only():
-    src = (SCRIPTS / "emit_fill.py").read_text()
+    src = (SCRIPTS / "emit_fill.py").read_text(encoding="utf-8")
     assert 'ThreadingHTTPServer(("127.0.0.1",' in src
     assert "0.0.0.0" not in src
 
@@ -775,7 +775,7 @@ def test_save_model_answer_and_the_config_switch(eight):
                                                          ["20", 2, "select", "none"]]})
     r = eight.emit("save-model-answer", "--module", "module.json", "--from", str(res))
     assert r.returncode == 0, r.stderr
-    doc = json.loads((eight.run_dir() / "model-answer.json").read_text())
+    doc = json.loads((eight.run_dir() / "model-answer.json").read_text(encoding="utf-8"))
     assert doc["answers"]["10"] == {"page": 1, "kind": "text", "status": "ok", "values": ["alpha beta"]}
     assert doc["source"] == "lt-model-answer"
     cfg(eight, "[model_answer]\nread = false\n")
@@ -878,7 +878,7 @@ def test_a_new_save_record_needs_a_new_cross_page_proof(eight):
     eight.calibration_path.parent.mkdir(parents=True, exist_ok=True)
     eight.calibration_path.write_text(json.dumps({ORIGIN: {
         "save": {"version": 0, "source": "net", "method": "PUT", "path_template": TPL},
-        "cross_page": {"version": 1, "ok": True, "pages": [1, 2]}}}))
+        "cross_page": {"version": 1, "ok": True, "pages": [1, 2]}}}), encoding="utf-8", newline="\n")
     calibrate_save(eight)
     st = calibration(eight)
     assert st["save"]["version"] == 1 and "cross_page" not in st

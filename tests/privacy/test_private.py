@@ -13,11 +13,11 @@ def test_private_layer_redacts_even_with_excerpt(run_gate, tmp_path, source):
     patterns = r"\bsynthetic-owner-91\b" + "\n"
     env = {"LT_PRIVACY_DIR": str(private)}
     if source == "file":
-        (private / "private-patterns.txt").write_text(patterns)
+        (private / "private-patterns.txt").write_text(patterns, encoding="utf-8", newline="\n")
     else:
         env["PRIVACY_PATTERNS_B64"] = base64.b64encode(patterns.encode()).decode()
     target = tmp_path / "a.txt"
-    target.write_text("synthetic-owner-91\n")
+    target.write_text("synthetic-owner-91\n", encoding="utf-8", newline="\n")
     r = run_gate("--paths", str(target), "--require-private", "--excerpt", env=env)
     assert r.returncode == 1 and r.stdout.startswith("private-")
     assert "synthetic-owner" not in r.stdout + r.stderr
@@ -26,7 +26,7 @@ def test_private_layer_redacts_even_with_excerpt(run_gate, tmp_path, source):
 @pytest.mark.parametrize("value", ["%%%", base64.b64encode(b"[broken").decode()])
 def test_invalid_private_secret_fails_closed(run_gate, tmp_path, value):
     p = tmp_path / "a.txt"
-    p.write_text("clean")
+    p.write_text("clean", encoding="utf-8", newline="\n")
     r = run_gate("--paths", str(p), env={"PRIVACY_PATTERNS_B64": value})
     assert r.returncode == 2
     assert value not in r.stderr

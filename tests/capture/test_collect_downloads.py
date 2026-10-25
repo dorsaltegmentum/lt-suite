@@ -27,15 +27,15 @@ PNG = bytes.fromhex("89504e470d0a1a0a") + b"\x00" * 8
 def run(tmp: Path, *args: str, cfg_text: str = "schema_version = 1\n") -> subprocess.CompletedProcess:
     env = dict(os.environ, PYTHONPATH=str(SHARED), LT_SUITE_DATA=str(tmp / "data"))
     cfg = tmp / "lt-suite.toml"
-    cfg.write_text(cfg_text, encoding="utf-8")
+    cfg.write_text(cfg_text, encoding="utf-8", newline="\n")
     return subprocess.run([sys.executable, str(SCRIPT), "--config", str(cfg), *args],
-                          capture_output=True, text=True, env=env, cwd=tmp, timeout=60)
+                          capture_output=True, text=True, env=env, cwd=tmp, timeout=60, encoding="utf-8")
 
 
 def put(path: Path, data, age: float = 0.0) -> Path:
     path.parent.mkdir(parents=True, exist_ok=True)
     if isinstance(data, (dict, list)):
-        path.write_text(json.dumps(data), encoding="utf-8")
+        path.write_text(json.dumps(data), encoding="utf-8", newline="\n")
     else:
         path.write_bytes(data)
     if age:
@@ -77,7 +77,7 @@ def test_the_newest_browser_variant_wins_and_older_ones_stay(tmp_path, dl):
     put(dl / f"lt-{MID}-30 (2).png", PNG)
     r = run(tmp_path, MID, "--downloads-dir", str(dl))
     assert r.returncode == 0, r.stdout + r.stderr
-    assert json.loads((incoming(tmp_path) / f"module-{MID}.json").read_text())["v"] == "fresh"
+    assert json.loads((incoming(tmp_path) / f"module-{MID}.json").read_text(encoding="utf-8"))["v"] == "fresh"
     assert (dl / f"module-{MID}.json").is_file(), "the older variant is left alone"
     assert "older copies" in r.stdout
     assert (incoming(tmp_path) / "media" / f"lt-{MID}-30.png").is_file(), "the (n) suffix is dropped"
@@ -88,8 +88,8 @@ def test_an_existing_incoming_module_is_kept_and_the_new_one_numbered(tmp_path, 
     put(dl / f"module-{MID}.json", {"module_id": MID, "v": "second"})
     r = run(tmp_path, MID, "--downloads-dir", str(dl))
     assert r.returncode == 0, r.stdout + r.stderr
-    assert json.loads((incoming(tmp_path) / f"module-{MID}.json").read_text())["v"] == "first"
-    assert json.loads((incoming(tmp_path) / f"module-{MID}.1.json").read_text())["v"] == "second"
+    assert json.loads((incoming(tmp_path) / f"module-{MID}.json").read_text(encoding="utf-8"))["v"] == "first"
+    assert json.loads((incoming(tmp_path) / f"module-{MID}.1.json").read_text(encoding="utf-8"))["v"] == "second"
 
 
 def test_a_reference_is_written_once(tmp_path, dl):
@@ -102,7 +102,7 @@ def test_a_reference_is_written_once(tmp_path, dl):
     assert "REFUSED" in r.stdout and "written once" in r.stdout
     assert (dl / f"reference-{MID}.json").is_file(), "the refused download stays where it is"
     assert not (incoming(tmp_path) / f"reference-{MID}.json").exists()
-    assert json.loads((cap / f"reference-{MID}.json").read_text())["v"] == "original"
+    assert json.loads((cap / f"reference-{MID}.json").read_text(encoding="utf-8"))["v"] == "original"
 
 
 def test_copy_mode_from_the_config_leaves_downloads_in_place(tmp_path, dl):
@@ -163,7 +163,7 @@ def test_platform_downloads_reads_xdg_user_dirs(tmp_path):
     spec.loader.exec_module(mod)
     home = tmp_path / "home"
     (home / ".config").mkdir(parents=True)
-    (home / ".config" / "user-dirs.dirs").write_text('XDG_DOWNLOAD_DIR="$HOME/Fetched"\n')
+    (home / ".config" / "user-dirs.dirs").write_text('XDG_DOWNLOAD_DIR="$HOME/Fetched"\n', encoding="utf-8", newline="\n")
     got = mod.platform_downloads(environ={}, home=home)
     if sys.platform.startswith("linux"):
         assert got == home / "Fetched"

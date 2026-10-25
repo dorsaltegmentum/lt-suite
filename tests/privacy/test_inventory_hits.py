@@ -21,7 +21,7 @@ def test_inventory_hits_absent(gate):
         if os.environ.get("LT_REQUIRE_PRIVATE") == "1":
             pytest.fail("LT_REQUIRE_PRIVATE=1 requires the local inventory-hits.txt", pytrace=False)
         pytest.skip("local inventory-hits.txt is absent")
-    needles = [(n, normalize(line)) for n, line in enumerate(inventory.read_text().splitlines(), 1)
+    needles = [(n, normalize(line)) for n, line in enumerate(inventory.read_text(encoding="utf-8").splitlines(), 1)
                if line.strip() and not line.lstrip().startswith("#")]
     assert needles, "inventory-hits.txt contains no inventory strings"
     rules = gate.load_rules(gate.PATTERNS_FILE)

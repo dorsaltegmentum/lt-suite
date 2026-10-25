@@ -33,11 +33,11 @@ def repo(tmp_path) -> Path:
     (r / "docs").mkdir()
     (r / "docs" / "notes.md").write_text(
         "# Notes\n\n## Rule one\n\ntext\n\n### Second rule {#custom-id}\n\n<a id=\"plain-anchor\"></a>\n"
-        "```\n## not a heading\n```\n", encoding="utf-8")
+        "```\n## not a heading\n```\n", encoding="utf-8", newline="\n")
     (r / "tests").mkdir()
-    (r / "tests" / "test_x.py").write_text("def test_something():\n    pass\n", encoding="utf-8")
-    (r / "tests" / "y.test.js").write_text("test('js case', () => {});\n", encoding="utf-8")
-    (lex / "README.md").write_text("# Lexicon\n", encoding="utf-8")
+    (r / "tests" / "test_x.py").write_text("def test_something():\n    pass\n", encoding="utf-8", newline="\n")
+    (r / "tests" / "y.test.js").write_text("test('js case', () => {});\n", encoding="utf-8", newline="\n")
+    (lex / "README.md").write_text("# Lexicon\n", encoding="utf-8", newline="\n")
     return r
 
 
@@ -46,7 +46,7 @@ def check(repo: Path, *args: str) -> int:
 
 
 def put(repo: Path, name: str, text: str) -> None:
-    (repo / "shared" / "lexicon" / f"{name}.md").write_text(text, encoding="utf-8")
+    (repo / "shared" / "lexicon" / f"{name}.md").write_text(text, encoding="utf-8", newline="\n")
 
 
 def test_shipped_lexicon_passes_with_anchor_warnings(capsys):
@@ -146,7 +146,7 @@ def test_slugify_and_anchors(tmp_path):
     assert lexicon.slugify("Model-answer policy!") == "model-answer-policy"
     assert lexicon.slugify("Why draw.io?") == "why-drawio"
     doc = tmp_path / "d.md"
-    doc.write_text("## Save wait\n## Two numbering schemes\n", encoding="utf-8")
+    doc.write_text("## Save wait\n## Two numbering schemes\n", encoding="utf-8", newline="\n")
     assert {"save-wait", "two-numbering-schemes"} <= lexicon.doc_anchors(doc)
 
 

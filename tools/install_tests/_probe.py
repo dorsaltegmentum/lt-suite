@@ -36,6 +36,14 @@ def _hook(event, args):
 
 
 def main():
+    import importlib.util
+    from pathlib import Path
+    spec = importlib.util.spec_from_file_location("lt_probe_streams",
+        Path(__file__).resolve().parents[2] / "shared/ltcore/streams.py")
+    streams = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(streams)
+    streams.configure_utf8()
+
     if len(sys.argv) < 2:
         sys.exit("usage: _probe.py SCRIPT [ARGS...]")
     script = os.path.abspath(sys.argv[1])

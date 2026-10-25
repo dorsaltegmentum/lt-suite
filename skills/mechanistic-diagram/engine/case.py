@@ -36,6 +36,7 @@ unless META says otherwise. variant_build.py builds a variant's outputs under th
 import hashlib, importlib.util, json, pathlib, re, sys, tempfile, types
 
 import _bootstrap  # noqa: F401  (engine and shared core on sys.path)
+from _legacy import read_legacy_text
 import core as E
 import themes
 
@@ -85,7 +86,7 @@ def check_trust(d, trust=False):
               for p in sorted(d.rglob("*.py"))}
     state = style.data_dir() / "state" / "trusted-cases.json"
     try:
-        records = json.loads(state.read_text())
+        records = json.loads(state.read_text(encoding="utf-8"))
         if not isinstance(records, dict):
             records = {}
     except (OSError, ValueError):
@@ -96,7 +97,7 @@ def check_trust(d, trust=False):
             print(f"  sha256 {digest}  {name}", file=sys.stderr)
         records[str(d)] = hashes
         state.parent.mkdir(parents=True, exist_ok=True)
-        with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8", dir=state.parent, delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8", dir=state.parent, delete=False, newline="\n") as f:
             tmp = pathlib.Path(f.name)
             json.dump(records, f, sort_keys=True, indent=2)
             f.write("\n")
@@ -164,9 +165,16 @@ class Case:
         if not d.is_dir():
             raise CaseError(f"{d} is not a folder")
         check_trust(d, trust)
+        changed = False
+        for source in sorted(d.rglob("*.py")):
+            before = source.read_bytes()
+            read_legacy_text(source)
+            changed = changed or source.read_bytes() != before
+        if changed:
+            check_trust(d, trust=True)
         if (d / "case.json").exists():
             try:
-                self.meta = json.loads((d / "case.json").read_text())
+                self.meta = json.loads(read_legacy_text(d / "case.json"))
             except json.JSONDecodeError as ex:
                 raise CaseError(f"{d / 'case.json'} is not valid JSON: {ex}")
         elif need_meta:

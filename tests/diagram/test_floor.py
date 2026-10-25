@@ -114,7 +114,7 @@ class DrawioImages(unittest.TestCase):
                f'{cells}</root></mxGraphModel></diagram></mxfile>')
         d = pathlib.Path(tempfile.mkdtemp(dir=self.tmp))
         p = d / "t.drawio"
-        p.write_text(xml)
+        p.write_text(xml, encoding="utf-8", newline="\n")
         return p
 
     def setUp(self):
@@ -127,7 +127,7 @@ class DrawioImages(unittest.TestCase):
                  f'<mxGeometry x="0" y="0" width="17" height="17" as="geometry"/></mxCell>')
         d = pathlib.Path(tempfile.mkdtemp(dir=self.tmp))
         (d / "g.drawio").write_text(f'<mxfile><diagram id="d" name="p"><mxGraphModel><root><mxCell id="0"/>'
-                                    f'<mxCell id="1" parent="0"/>{cells}</root></mxGraphModel></diagram></mxfile>')
+                                    f'<mxCell id="1" parent="0"/>{cells}</root></mxGraphModel></diagram></mxfile>', encoding="utf-8", newline="\n")
         got = F.drawio_images(d / "g.drawio")
         self.assertTrue(got[0]["ok"])
         self.assertEqual(got[0]["how"], "glyph (no square corners)")
@@ -153,7 +153,7 @@ class HtmlImages(unittest.TestCase):
         p = d / "a.html"
         p.write_text('<style>.x img { border-radius: 12px; }</style><figure><svg viewBox="0 0 10 10">'
                      '<image width="10" height="10" href="q.png"/></svg></figure><img src="a.png">'
-                     '<img src="b.png" style="border-radius: 7px">')
+                     '<img src="b.png" style="border-radius: 7px">', encoding="utf-8", newline="\n")
         got = F.html_images(p)
         self.assertEqual(len(got), 3)
         self.assertFalse(got[0]["ok"])                 # the SVG image has no rounding
@@ -185,7 +185,7 @@ class Verify(unittest.TestCase):
     def run_with(self, obj):
         d = pathlib.Path(tempfile.mkdtemp())
         if obj is not None:
-            (d / "verify-result.json").write_text(json.dumps(obj))
+            (d / "verify-result.json").write_text(json.dumps(obj), encoding="utf-8", newline="\n")
         return F.verify_result(self.B(d))
 
     def test_states(self):
@@ -201,7 +201,7 @@ class FloorFile(unittest.TestCase):
     """floor.json holds scale-free minimums set from the grammar, never numbers measured from a diagram."""
 
     def setUp(self):
-        self.floor = json.loads(F.FLOOR_JSON.read_text())
+        self.floor = json.loads(F.FLOOR_JSON.read_text(encoding="utf-8"))
 
     def test_source_is_the_grammar(self):
         self.assertEqual(self.floor["source"], "grammar")
@@ -257,12 +257,12 @@ def test_toy_case_holds_the_floor(toy_copy):
 
 def test_text_shrunk_below_the_minimum_fails(toy_copy):
     svg = print_svg(toy_copy)
-    text = svg.read_text()
-    floor = json.loads(F.FLOOR_JSON.read_text())
+    text = svg.read_text(encoding="utf-8")
+    floor = json.loads(F.FLOOR_JSON.read_text(encoding="utf-8"))
     small = floor["text_px_min"] - 2
     new, n = re.subn(r'(<text [^>]*font-size=")14(")', rf"\g<1>{small}\g<2>", text, count=1)
     assert n == 1
-    svg.write_text(new)
+    svg.write_text(new, encoding="utf-8", newline="\n")
     rows, ok = check(toy_copy)
     assert not ok
     assert status(rows, "smallest text") == "FAIL"
@@ -270,14 +270,14 @@ def test_text_shrunk_below_the_minimum_fails(toy_copy):
 
 def test_two_labels_overlapped_fail(toy_copy):
     svg = print_svg(toy_copy)
-    text = svg.read_text()
+    text = svg.read_text(encoding="utf-8")
     runs = re.findall(r'<text x="([\d.]+)" y="([\d.]+)"', text)
     assert len(runs) > 2
     (x0, y0), (x1, y1) = runs[0], runs[1]
     # move the second text run onto the first one
     new = text.replace(f'<text x="{x1}" y="{y1}"', f'<text x="{x0}" y="{y0}"', 1)
     assert new != text
-    svg.write_text(new)
+    svg.write_text(new, encoding="utf-8", newline="\n")
     rows, ok = check(toy_copy)
     assert not ok
     assert status(rows, "label overlaps") == "FAIL"
@@ -285,11 +285,11 @@ def test_two_labels_overlapped_fail(toy_copy):
 
 def test_a_closed_gap_fails(toy_copy):
     geo_path = toy_copy / "geometry.json"
-    geo = json.loads(geo_path.read_text())
+    geo = json.loads(geo_path.read_text(encoding="utf-8"))
     a, b = geo["nodes"]["m_low"], geo["nodes"]["m_build"]
     # slide m_build left until only 2 px separate it from m_low
     b["x"] = a["x"] + a["w"] / 2 + 2 + b["w"] / 2
-    geo_path.write_text(json.dumps(geo))
+    geo_path.write_text(json.dumps(geo), encoding="utf-8", newline="\n")
     rows, ok = check(toy_copy)
     assert not ok
     assert status(rows, "box gap") == "FAIL"
@@ -297,10 +297,10 @@ def test_a_closed_gap_fails(toy_copy):
 
 def test_a_box_past_the_page_width_limit_fails(toy_copy):
     geo_path = toy_copy / "geometry.json"
-    geo = json.loads(geo_path.read_text())
+    geo = json.loads(geo_path.read_text(encoding="utf-8"))
     max_w, _ = F.page_limits()
     geo["nodes"]["s_tired"]["x"] = max_w + 100
-    geo_path.write_text(json.dumps(geo))
+    geo_path.write_text(json.dumps(geo), encoding="utf-8", newline="\n")
     rows, ok = check(toy_copy)
     assert not ok
     assert status(rows, "page size") == "FAIL"
@@ -309,7 +309,7 @@ def test_a_box_past_the_page_width_limit_fails(toy_copy):
 def test_page_limits_come_from_the_config(tmp_path, monkeypatch):
     import style
     cfg = tmp_path / "lt-suite.toml"
-    cfg.write_text("[diagram.page]\nmax_w = 1200\nmax_h = 900\n")
+    cfg.write_text("[diagram.page]\nmax_w = 1200\nmax_h = 900\n", encoding="utf-8", newline="\n")
     try:
         style.configure(str(cfg))
         assert F.page_limits() == (1200, 900)

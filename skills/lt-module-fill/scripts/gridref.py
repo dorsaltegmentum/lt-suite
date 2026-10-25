@@ -30,6 +30,9 @@ def resolve_font(cfg, size, weight):
 
 
 def main() -> int:
+    from ltcore.streams import configure_utf8
+    configure_utf8()
+
     global Image, ImageDraw, ImageFont
 
     ap = argparse.ArgumentParser(description=__doc__)

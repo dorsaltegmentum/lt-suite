@@ -118,6 +118,12 @@ def extract(font, name):
 
 
 def main(argv):
+    import sys
+    from pathlib import Path
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "shared"))
+    from ltcore.streams import configure_utf8
+    configure_utf8()
+
     ap = argparse.ArgumentParser(description="Extract MDI icons from the Nerd Font into icons.py")
     ap.add_argument("names", nargs="*", help="icon names without the md- prefix (default: NAMES)")
     ap.add_argument("--font", default=os.environ.get("NERD_FONT"),
@@ -146,7 +152,7 @@ def main(argv):
             out.append(f'<text x="{x + 48}" y="{y + 76}" font-size="9" text-anchor="middle" font-family="sans-serif" '
                        f'fill="#222222">{n}</text>')
         out.append("</svg>")
-        pathlib.Path(a.preview).write_text("\n".join(out))
+        pathlib.Path(a.preview).write_text("\n".join(out), encoding="utf-8", newline="\n")
         print(f"wrote {a.preview}: {len(paths)} icons")
         return
     ver = next((r.toUnicode() for r in font["name"].names if r.nameID == 5 and r.platformID == 3), "?")
@@ -155,7 +161,7 @@ def main(argv):
     for n, (d, (w, h)) in paths.items():
         body.append(f'    "{n}": "{d}",  # {w:.1f} x {h:.1f}\n')
     body.append("}\n")
-    pathlib.Path(a.out).write_text("".join(body))
+    pathlib.Path(a.out).write_text("".join(body), encoding="utf-8", newline="\n")
     print(f"wrote {a.out}: {len(paths)} icons")
 
 

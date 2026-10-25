@@ -34,7 +34,7 @@ def test_help_starts_with_stdlib_only(run_py, tmp_path):
                shared_on_path=False)
     assert p.returncode == 0, p.stderr
     assert "bootstrap" in p.stdout
-    ast.parse((SCRIPTS / "setup.py").read_text(), feature_version=(3, 8))
+    ast.parse((SCRIPTS / "setup.py").read_text(encoding="utf-8"), feature_version=(3, 8))
 
 
 @pytest.mark.skipif(os.name == "nt", reason="POSIX exec boundary; Windows uses subprocess.call")
@@ -85,7 +85,7 @@ def test_old_python_can_plan_bootstrap(setup, monkeypatch, capsys):
 @pytest.mark.parametrize("before", [True, False])
 def test_global_config_flag_survives_subcommand(setup, tmp_path, capsys, before):
     cfg = tmp_path / "chosen.toml"
-    cfg.write_text('schema_version = 1\n')
+    cfg.write_text('schema_version = 1\n', encoding="utf-8", newline="\n")
     args = ["--config", str(cfg), "locate", "--json"] if before else [
         "locate", "--config", str(cfg), "--json"]
     assert setup.main(args) == 0
@@ -96,8 +96,9 @@ def test_global_config_flag_survives_subcommand(setup, tmp_path, capsys, before)
 @pytest.mark.parametrize("failed", ["config_dir", "data_dir", "loopback"])
 def test_locate_workspace_on_failed_probe(setup, monkeypatch, capsys, failed):
     from ltcore import config
+    config_parent = config.locate().target.parent
     monkeypatch.setattr(config, "probe_dir", lambda p: (
-        (False, "denied") if (("config" in str(p)) == (failed == "config_dir")
+        (False, "denied") if ((Path(p) == config_parent) == (failed == "config_dir")
                              and failed != "loopback") else (True, "writable")))
     monkeypatch.setattr(config, "probe_loopback", lambda: (failed != "loopback", "probe"))
     assert setup.main(["locate", "--json"]) == 0
@@ -110,7 +111,7 @@ def test_locate_workspace_on_failed_probe(setup, monkeypatch, capsys, failed):
 
 def test_write_stdout_is_valid_and_writes_nothing(setup, tmp_path, capsys):
     answers = tmp_path / "answers.json"
-    answers.write_text(json.dumps({"lt": {"origin": "https://example.lt.app"}}))
+    answers.write_text(json.dumps({"lt": {"origin": "https://example.lt.app"}}), encoding="utf-8", newline="\n")
     target = tmp_path / "result.toml"
     assert setup.main(["write", "--answers", str(answers), "--config", str(target),
                        "--stdout"]) == 0
@@ -122,17 +123,17 @@ def test_write_stdout_is_valid_and_writes_nothing(setup, tmp_path, capsys):
 
 def test_write_refuses_overwrite_and_force_keeps_backup(setup, tmp_path):
     answers = tmp_path / "answers.json"
-    answers.write_text('{"institution": {"name": "Example University"}}')
+    answers.write_text('{"institution": {"name": "Example University"}}', encoding="utf-8", newline="\n")
     target = tmp_path / "config.toml"
     args = ["write", "--answers", str(answers), "--config", str(target)]
     assert setup.main(args) == 0
     original = target.read_bytes()
-    answers.write_text('{"institution": {"name": "Example College"}}')
+    answers.write_text('{"institution": {"name": "Example College"}}', encoding="utf-8", newline="\n")
     assert setup.main(args) == 1
     assert target.read_bytes() == original
     assert setup.main(args + ["--force"]) == 0
     assert target.with_suffix(".toml.bak").read_bytes() == original
-    assert tomllib.loads(target.read_text())["institution"]["name"] == "Example College"
+    assert tomllib.loads(target.read_text(encoding="utf-8"))["institution"]["name"] == "Example College"
 
 
 @pytest.mark.parametrize("doc", [{"fonts": {"text_px": "large"}},
@@ -140,7 +141,7 @@ def test_write_refuses_overwrite_and_force_keeps_backup(setup, tmp_path):
                                   {"api_token": "example"}])
 def test_write_rejects_invalid_or_credential_answers(setup, tmp_path, doc):
     answers = tmp_path / "answers.json"
-    answers.write_text(json.dumps(doc))
+    answers.write_text(json.dumps(doc), encoding="utf-8", newline="\n")
     target = tmp_path / "config.toml"
     assert setup.main(["write", "--answers", str(answers), "--config", str(target)]) == 1
     assert not target.exists()
@@ -149,9 +150,9 @@ def test_write_rejects_invalid_or_credential_answers(setup, tmp_path, doc):
 def test_write_workspace_layout(setup, tmp_path, monkeypatch):
     monkeypatch.delenv("LT_SUITE_DATA")
     answers = tmp_path / "answers.json"
-    answers.write_text("{}")
+    answers.write_text("{}", encoding="utf-8", newline="\n")
     assert setup.main(["write", "--answers", str(answers), "--workspace"]) == 0
-    doc = tomllib.loads((tmp_path / "lt-suite.toml").read_text())
+    doc = tomllib.loads((tmp_path / "lt-suite.toml").read_text(encoding="utf-8"))
     assert doc["paths"]["data_dir"] == ".lt-suite/data"
     assert doc["paths"]["downloads_mode"] == "copy"
     assert doc["browser"]["transport"] == "download"
@@ -162,15 +163,15 @@ def test_bootstrap_stub_uv_builds_and_installs_union(setup, tmp_path, monkeypatc
     root = tmp_path / "skills"
     own = root / "lt-suite-setup"
     own.mkdir(parents=True)
-    (own / "SKILL.md").write_text("example")
-    (own / "requirements.txt").write_text("jsonschema>=4.23\n")
+    (own / "SKILL.md").write_text("example", encoding="utf-8", newline="\n")
+    (own / "requirements.txt").write_text("jsonschema>=4.23\n", encoding="utf-8", newline="\n")
     monkeypatch.setattr(setup, "SKILL_DIR", own)
     for name, req in [("lt-module-answer", "jsonschema>=4.23\n"),
                       ("lt-module-export", "Pillow>=11.0\nreportlab>=4.2\n")]:
         d = root / name
         d.mkdir(parents=True)
-        (d / "SKILL.md").write_text("example")
-        (d / "requirements.txt").write_text(req)
+        (d / "SKILL.md").write_text("example", encoding="utf-8", newline="\n")
+        (d / "requirements.txt").write_text(req, encoding="utf-8", newline="\n")
     monkeypatch.setattr(setup.shutil, "which", lambda n: "stub-uv" if n == "uv" else None)
     real_py = sys.executable
     monkeypatch.setattr(setup, "python_info", lambda cmd: ((3, 11, 9), real_py))
@@ -185,7 +186,7 @@ def test_bootstrap_stub_uv_builds_and_installs_union(setup, tmp_path, monkeypatc
             py.touch()
             return 0, "", ""
         if argv[1:3] == ["pip", "install"]:
-            installed.extend(Path(argv[-1]).read_text().splitlines())
+            installed.extend(Path(argv[-1]).read_text(encoding="utf-8").splitlines())
             assert "--require-hashes" in argv
             assert "--only-binary" in argv and ":all:" in argv
             assert argv[3] == "--python"
@@ -244,7 +245,7 @@ def test_doctor_early_crash_has_exit_two(setup, monkeypatch):
 
 def test_ping_renders_guard_and_records_only_verified_directory(setup, tmp_path, capsys):
     cfg = tmp_path / "config.toml"
-    cfg.write_text('schema_version = 1\n[lt]\norigin = "https://example.lt.app"\n')
+    cfg.write_text('schema_version = 1\n[lt]\norigin = "https://example.lt.app"\n', encoding="utf-8", newline="\n")
     out = tmp_path / "js"
     assert setup.main(["ping", "render", "--config", str(cfg), "--out-dir", str(out)]) == 0
     receipt = json.loads(capsys.readouterr().out)
@@ -253,16 +254,16 @@ def test_ping_renders_guard_and_records_only_verified_directory(setup, tmp_path,
     args = ["ping", "verify", "--config", str(cfg), "--record-dir", str(out), "--reply"]
     bad = json.dumps({"ok": False, "fatal": "forbidden-route"})
     assert setup.main(args + [bad]) == 1
-    assert "js_tmp_dir" not in tomllib.loads(cfg.read_text()).get("browser", {})
+    assert "js_tmp_dir" not in tomllib.loads(cfg.read_text(encoding="utf-8")).get("browser", {})
     good = json.dumps({"ok": True, "origin": "https://example.lt.app", "lt_client": True})
     assert setup.main(args + [good]) == 0
-    assert tomllib.loads(cfg.read_text())["browser"]["js_tmp_dir"] == str(out)
+    assert tomllib.loads(cfg.read_text(encoding="utf-8"))["browser"]["js_tmp_dir"] == str(out)
 
 
 @pytest.mark.parametrize("origin", [None, "https://other.example.org"])
 def test_ping_refuses_missing_or_wrong_origin(setup, tmp_path, origin):
     cfg = tmp_path / "config.toml"
-    cfg.write_text('schema_version = 1\n[lt]\norigin = "https://example.lt.app"\n')
+    cfg.write_text('schema_version = 1\n[lt]\norigin = "https://example.lt.app"\n', encoding="utf-8", newline="\n")
     original = cfg.read_bytes()
     reply = {"ok": True, "lt_client": True}
     if origin:
@@ -301,11 +302,11 @@ def test_fetch_font_requires_confirmation_and_rejects_tampering(setup, monkeypat
 def test_set_changes_one_key_and_keeps_a_backup(setup, tmp_path):
     cfg = tmp_path / "config.toml"
     cfg.write_text('schema_version = 1\n[lt]\norigin = "https://example.lt.app"\n'
-                   '[fonts]\nsans = "Noto Sans"\n')
+                   '[fonts]\nsans = "Noto Sans"\n', encoding="utf-8", newline="\n")
     original = cfg.read_bytes()
     assert setup.main(["set", "fonts.mono", "Noto Sans Mono", "--config", str(cfg)]) == 0
     assert setup.main(["set", "style.palettes", '["tol-medium-contrast"]', "--config", str(cfg)]) == 0
-    doc = tomllib.loads(cfg.read_text())
+    doc = tomllib.loads(cfg.read_text(encoding="utf-8"))
     assert doc["fonts"] == {"sans": "Noto Sans", "mono": "Noto Sans Mono"}
     assert doc["style"]["palettes"] == ["tol-medium-contrast"]
     assert doc["lt"]["origin"] == "https://example.lt.app"
@@ -318,7 +319,7 @@ def test_set_refuses_missing_file_credentials_and_bad_keys(setup, tmp_path):
     assert setup.main(["set", "fonts.sans", "Noto Sans", "--config", str(missing)]) == 1
     assert not missing.exists()
     cfg = tmp_path / "config.toml"
-    cfg.write_text("schema_version = 1\n")
+    cfg.write_text("schema_version = 1\n", encoding="utf-8", newline="\n")
     before = cfg.read_bytes()
     assert setup.main(["set", "browser.api_token", "example", "--config", str(cfg)]) == 1
     assert setup.main(["set", "not a key", "x", "--config", str(cfg)]) == 2
@@ -336,16 +337,16 @@ def test_doctor_fails_closed_for_invalid_requirements_manifest(
     for name in ("lt-suite-setup", "lt-module-answer"):
         folder = root / name
         folder.mkdir(parents=True)
-        (folder / "SKILL.md").write_text("example")
-        (folder / "requirements.txt").write_text("jsonschema>=4.23\n")
+        (folder / "SKILL.md").write_text("example", encoding="utf-8", newline="\n")
+        (folder / "requirements.txt").write_text("jsonschema>=4.23\n", encoding="utf-8", newline="\n")
     monkeypatch.setattr(setup, "SKILL_DIR", root / "lt-suite-setup")
     manifest = root / skill / "requirements.txt"
     if state == "missing":
         manifest.unlink()
     elif state == "empty":
-        manifest.write_text("")
+        manifest.write_text("", encoding="utf-8", newline="\n")
     elif state == "comments-only":
-        manifest.write_text("# dependencies\n")
+        manifest.write_text("# dependencies\n", encoding="utf-8", newline="\n")
     else:
         read = Path.read_text
 
@@ -397,7 +398,7 @@ def test_doctor_checks_default_js_directory(setup, tmp_path, monkeypatch):
     # An unsafe default folder fails as surely as an unsafe configured folder.
     from ltcore import ltjs
     folder = tmp_path / "default-js"
-    folder.mkdir(mode=0o755)
+    folder.write_bytes(b"not a directory")
     monkeypatch.setattr(ltjs, "default_js_dir", lambda: folder)
     results = setup.check_browser({"cfg": {"browser.adapter": "manual-paste"}})
     assert any(r.status == "FAIL" for r in results)
@@ -407,7 +408,7 @@ def test_doctor_checks_default_js_directory(setup, tmp_path, monkeypatch):
 def test_ping_rejects_absent_client_without_recording_directory(setup, tmp_path, client):
     # A valid origin alone cannot authorize recording a browser directory.
     cfg = tmp_path / "config.toml"
-    cfg.write_text('schema_version = 1\n[lt]\norigin = "https://example.lt.app"\n')
+    cfg.write_text('schema_version = 1\n[lt]\norigin = "https://example.lt.app"\n', encoding="utf-8", newline="\n")
     before = cfg.read_bytes()
     reply = {"ok": True, "origin": "https://example.lt.app"}
     if client is not None:
@@ -425,7 +426,7 @@ def test_bootstrap_replaces_existing_python_below_minimum(setup, tmp_path, monke
     py.parent.mkdir(parents=True)
     py.touch()
     venv = py.parent.parent
-    (venv / "pyvenv.cfg").write_text("version = 3.9.0\n")
+    (venv / "pyvenv.cfg").write_text("version = 3.9.0\n", encoding="utf-8", newline="\n")
     monkeypatch.setattr(setup, "find_python", lambda flag: (sys.executable, (3, 11, 9), "PATH"))
     monkeypatch.setattr(setup, "python_info", lambda cmd: ((3, 9, 0), str(py)))
     monkeypatch.setattr(setup, "_modules_missing", lambda *args: [])
@@ -452,7 +453,7 @@ def test_bootstrap_plans_environment_outside_repositories(setup, tmp_path, monke
     repo = tmp_path / "project"
     repo.mkdir()
     if marker == "worktree":
-        (repo / ".git").write_text("gitdir: ../repository.git/worktrees/example\n")
+        (repo / ".git").write_text("gitdir: ../repository.git/worktrees/example\n", encoding="utf-8", newline="\n")
     else:
         (repo / ".git").mkdir()
     data = repo / "data"
@@ -466,7 +467,7 @@ def test_bootstrap_plans_environment_outside_repositories(setup, tmp_path, monke
     monkeypatch.setattr(setup, "find_python", lambda flag: (sys.executable, (3, 11, 9), "PATH"))
     assert setup.main(["bootstrap", "--data-dir", str(data), "--dry-run", "--json"]) == 0
     plan = json.loads(capsys.readouterr().out)
-    expected = Path(os.environ["XDG_DATA_HOME"]) / "lt-suite" / "venv"
+    expected = Path(str(setup.load_paths_module().data_dir())) / "venv"
     assert Path(plan["venv"]) == expected
     assert not expected.exists()
     assert not (repo / "data").exists()
@@ -479,7 +480,7 @@ def test_runtime_finds_repository_external_bootstrap_environment(setup, tmp_path
     repo.mkdir()
     (repo / ".git").mkdir()
     data = repo / ".lt-suite" / "data"
-    expected = Path(os.environ["XDG_DATA_HOME"]) / "lt-suite" / "venv"
+    expected = Path(str(setup.load_paths_module().data_dir())) / "venv"
     executable = Path("Scripts/python.exe" if os.name == "nt" else "bin/python")
     assert setup.venv_python_path(data) == expected / executable
     assert Path(ltcore.venv_python(str(data))) == expected / executable
@@ -493,7 +494,7 @@ def test_skill_bootstraps_written_custom_data_configuration(setup, tmp_path, mon
     target = tmp_path / "chosen.toml"
     data = tmp_path / "chosen-data"
     answers = tmp_path / "answers.json"
-    answers.write_text(json.dumps({"paths": {"data_dir": str(data)}}))
+    answers.write_text(json.dumps({"paths": {"data_dir": str(data)}}), encoding="utf-8", newline="\n")
     monkeypatch.setattr(setup, "find_python", lambda flag: (sys.executable, (3, 11, 9), "PATH"))
     monkeypatch.setattr(setup.shutil, "which", lambda name: "stub-uv" if name == "uv" else None)
     monkeypatch.setattr(setup, "_modules_missing", lambda *args: [])
@@ -506,16 +507,17 @@ def test_skill_bootstraps_written_custom_data_configuration(setup, tmp_path, mon
         return 0, "", ""
 
     monkeypatch.setattr(setup, "run", create)
-    instructions = (SCRIPTS.parent / "SKILL.md").read_text()
+    instructions = (SCRIPTS.parent / "SKILL.md").read_text(encoding="utf-8")
     commands = re.findall(r'`python3 "\$SKILL_DIR/scripts/setup.py" ((?:bootstrap|write)[^`]*)`', instructions)
     for command in commands:
-        args = shlex.split(command.replace("<answers.json>", str(answers)).replace("<path>", str(target)))
+        args = [arg.replace("<answers.json>", str(answers)).replace("<path>", str(target))
+                for arg in shlex.split(command)]
         if args[0] == "write" and "--config" not in args:
             args.extend(["--config", str(target)])
         assert setup.main(args) == 0
     expected = data / "venv" / "lt-suite-requirements.txt"
     assert expected.is_file(), "The written custom config needs its own bootstrap before doctor"
-    assert "pillow" in expected.read_text().lower()
+    assert "pillow" in expected.read_text(encoding="utf-8").lower()
     capsys.readouterr()
     assert setup.main(["doctor", "--config", str(target), "--require", "packages", "--json"]) == 0
     report = json.loads(capsys.readouterr().out)
@@ -531,6 +533,9 @@ def test_bootstrap_refuses_repository_platform_fallback(setup, tmp_path, monkeyp
     repo.mkdir()
     (repo / ".git").mkdir()
     monkeypatch.setenv("XDG_DATA_HOME", str(repo / "platform-data"))
+    monkeypatch.setenv("LOCALAPPDATA", str(repo / "platform-data"))
+    if sys.platform == "darwin":
+        monkeypatch.setenv("HOME", str(repo / "platform-data"))
     data = repo / "data"
     assert setup.main(["bootstrap", "--data-dir", str(data), "--dry-run", "--json"]) == 1
     assert "outside a git work tree" in capsys.readouterr().err
@@ -544,7 +549,7 @@ def test_bootstrap_creates_environment_at_external_location(setup, tmp_path, mon
     repo.mkdir()
     (repo / ".git").mkdir()
     data = repo / "data"
-    expected = Path(os.environ["XDG_DATA_HOME"]) / "lt-suite" / "venv"
+    expected = Path(str(setup.load_paths_module().data_dir())) / "venv"
     monkeypatch.setattr(setup, "find_python", lambda flag: (sys.executable, (3, 11, 9), "PATH"))
     monkeypatch.setattr(setup.shutil, "which", lambda name: "stub-uv" if name == "uv" else None)
     monkeypatch.setattr(setup, "_modules_missing", lambda *args: [])
@@ -557,8 +562,14 @@ def test_bootstrap_creates_environment_at_external_location(setup, tmp_path, mon
         return 0, "", ""
 
     monkeypatch.setattr(setup, "run", create)
+    # Python 3.8 and 3.9 lack Path.write_text's newline keyword.
+    def legacy_write_text(self, data, encoding=None, errors=None):
+        with self.open("w", encoding="utf-8", errors=errors, newline="\n") as stream:
+            return stream.write(data)
+    monkeypatch.setattr(Path, "write_text", legacy_write_text)
     assert setup.main(["bootstrap", "--data-dir", str(data), "--network", "no"]) == 0
     assert (expected / "lt-suite-requirements.txt").is_file()
+    assert b"\r\n" not in (expected / "lt-suite-requirements.txt").read_bytes()
     assert not (data / "venv").exists()
 
 
@@ -566,12 +577,12 @@ def test_bootstrap_preserves_marker_variants_and_hashes(setup, tmp_path, monkeyp
     root = tmp_path / "skills"
     own = root / "lt-suite-setup"
     own.mkdir(parents=True)
-    (own / "SKILL.md").write_text("example")
+    (own / "SKILL.md").write_text("example", encoding="utf-8", newline="\n")
     rows = [
         "numpy==2.4.0 ; python_full_version < '3.12' --hash=sha256:" + "a" * 64,
         "numpy==2.5.0 ; python_full_version >= '3.12' --hash=sha256:" + "b" * 64,
     ]
-    (own / "requirements.txt").write_text("\n".join(rows) + "\n")
+    (own / "requirements.txt").write_text("\n".join(rows) + "\n", encoding="utf-8", newline="\n")
     monkeypatch.setattr(setup, "SKILL_DIR", own)
     required, optional, skills, conflicts = setup.collect_requirements(root)
     assert required == rows
@@ -621,7 +632,7 @@ def test_doctor_warns_google_mode_for_unhosted_family(setup,font_file):
 def test_answers_with_diagram_fonts_validate(setup,tmp_path,capsys):
     from ltcore import config
     answer=tmp_path/'answers.json'
-    answer.write_text(json.dumps({'fonts':{'diagram':{'sans':'Noto Sans','mono':'Noto Sans Mono'},'labels':{'sans':'Noto Sans'}}}))
+    answer.write_text(json.dumps({'fonts':{'diagram':{'sans':'Noto Sans','mono':'Noto Sans Mono'},'labels':{'sans':'Noto Sans'}}}), encoding="utf-8", newline="\n")
     target=tmp_path/'new.toml'
     assert setup.main(['write','--answers',str(answer),'--config',str(target)]) == 0
     assert config.load(target).get('fonts.diagram.sans')=='Noto Sans'
@@ -656,9 +667,9 @@ def test_T36_rat_doctor_safe_counts_without_sheet_reads(setup, tmp_path, monkeyp
     from ltcore import rat
     root = tmp_path / 'sheets'
     root.mkdir()
-    (root / 'team.md').write_text('Synthetic sheet never opened by doctor')
+    (root / 'team.md').write_text('Synthetic sheet never opened by doctor', encoding="utf-8", newline="\n")
     cfg = tmp_path / 'config.toml'
-    cfg.write_text('[rat]\nanswers_dir = ' + json.dumps(str(root)) + '\nanswers_dirs = []\nirat = "from_dir"\ntrat = "from_dir"\n')
+    cfg.write_text('[rat]\nanswers_dir = ' + json.dumps(str(root)) + '\nanswers_dirs = []\nirat = "from_dir"\ntrat = "from_dir"\n', encoding="utf-8", newline="\n")
     def forbidden(*args):
         pytest.fail('doctor opened a sheet')
     monkeypatch.setattr(rat, 'read_sheet', forbidden)
@@ -671,7 +682,7 @@ def test_T36_rat_doctor_safe_counts_without_sheet_reads(setup, tmp_path, monkeyp
 def test_T36_write_rat_keys(setup, tmp_path, capsys):
     answers = tmp_path / 'answers.json'
     answers.write_text(json.dumps({'rat': {'answers_dirs': ['sheets'], 'irat': 'from_dir', 'trat': 'ask',
-                                          'kind_markers': {'trat': '(?i)team test', 'irat': '(?i)individual test'}}}))
+                                          'kind_markers': {'trat': '(?i)team test', 'irat': '(?i)individual test'}}}), encoding="utf-8", newline="\n")
     assert setup.main(['write', '--answers', str(answers), '--config', str(tmp_path/'config.toml'), '--stdout']) == 0
     doc = tomllib.loads(capsys.readouterr().out)
     assert doc['rat']['answers_dirs'] == ['sheets']
@@ -697,7 +708,7 @@ def test_combined_feature_config_roundtrip_and_doctor(setup, tmp_path, capsys):
                                                    'trat': '(?i)team examination'}},
         'fill': {'check_answer': {'enabled': True}},
     }
-    answers.write_text(json.dumps(values))
+    answers.write_text(json.dumps(values), encoding="utf-8", newline="\n")
     target = tmp_path / 'config.toml'
     assert setup.main(['write', '--answers', str(answers), '--config', str(target)]) == 0
     cfg = config.load(target)
@@ -722,7 +733,7 @@ def test_combined_feature_config_roundtrip_and_doctor(setup, tmp_path, capsys):
 
 def test_first_setup_feature_question_order():
     """RAT questions precede the opt-in, then the browser route and font choices."""
-    skill = (SCRIPTS.parent / 'SKILL.md').read_text()
+    skill = (SCRIPTS.parent / 'SKILL.md').read_text(encoding="utf-8")
     prompts = [
         'Do you keep RAT answer sheets',
         'Team RAT: From my sheets',
@@ -745,11 +756,11 @@ def test_first_setup_feature_question_order():
 def test_check_answer_setup_question_and_default():
     from ltcore import config
     assert config.load().get('fill.check_answer.enabled') is False
-    text=(Path(__file__).resolve().parents[2]/'skills/lt-suite-setup/SKILL.md').read_text()
+    text=(Path(__file__).resolve().parents[2]/'skills/lt-suite-setup/SKILL.md').read_text(encoding="utf-8")
     assert 'no press limit' in text and 'individual' in text and 'tests' in text
 
 
 def test_check_answer_doctor_prints_opt_in(setup,tmp_path):
-    p=tmp_path/'lt-suite.toml';p.write_text('[fill.check_answer]\nenabled=true\n')
+    p=tmp_path/'lt-suite.toml';p.write_text('[fill.check_answer]\nenabled=true\n', encoding="utf-8", newline="\n")
     rows=setup.check_config({'config':p})
     assert any('fill.check_answer.enabled = true' in row.text for row in rows)

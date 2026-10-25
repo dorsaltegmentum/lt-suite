@@ -144,6 +144,12 @@ def load_expect(paths: list[Path]) -> tuple[dict[str, int], int, int]:
 
 
 def main(argv: list[str] | None = None) -> int:
+    import sys
+    from pathlib import Path
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "shared"))
+    from ltcore.streams import configure_utf8
+    configure_utf8()
+
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("dir", type=Path, help="folder searched for *.test.js files")
@@ -189,7 +195,7 @@ def main(argv: list[str] | None = None) -> int:
         return 1
     try:
         proc = subprocess.run([node, "--test", "--test-reporter=tap", *map(str, files)],
-                              cwd=REPO, capture_output=True, text=True, timeout=a.timeout)
+                              cwd=REPO, capture_output=True, text=True, timeout=a.timeout, encoding="utf-8")
     except subprocess.TimeoutExpired:
         print(f"FAIL node --test did not finish within {a.timeout} s")
         return 1

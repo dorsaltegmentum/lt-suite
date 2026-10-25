@@ -105,6 +105,12 @@ def cli_steps(report, prefix, cmd, steps, cwd, env, timeout, expect_names) -> No
 
 
 def main() -> int:
+    import sys
+    from pathlib import Path
+    sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "shared"))
+    from ltcore.streams import configure_utf8
+    configure_utf8()
+
     ap = c.base_parser(__doc__.split("\n")[0])
     ap.add_argument("--gemini", default=None, help="gemini command (default: $GEMINI_BIN or gemini on PATH)")
     ap.add_argument("--agy", default=None, help="agy command (default: $AGY_BIN or agy on PATH)")

@@ -304,6 +304,12 @@ def render(root: Path) -> str:
 
 
 def main(argv: list[str] | None = None) -> int:
+    import sys
+    from pathlib import Path
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "shared"))
+    from ltcore.streams import configure_utf8
+    configure_utf8()
+
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--check", action="store_true", help="exit 1 when the file is out of date")
@@ -325,7 +331,7 @@ def main(argv: list[str] | None = None) -> int:
         print(f"ok {OUT} matches the generator")
         return 0
     out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_text(text, encoding="utf-8")
+    out.write_text(text, encoding="utf-8", newline="\n")
     print(f"wrote {OUT}")
     return 0
 

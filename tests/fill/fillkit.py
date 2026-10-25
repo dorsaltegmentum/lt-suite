@@ -78,13 +78,13 @@ class Kit:
 
     def config(self, text: str) -> Path:
         p = self.tmp / "lt-suite.toml"
-        p.write_text(text, encoding="utf-8")
+        p.write_text(text, encoding="utf-8", newline="\n")
         return p
 
     def write(self, name: str, doc) -> Path:
         p = self.tmp / name
         p.parent.mkdir(parents=True, exist_ok=True)
-        p.write_text(json.dumps(doc), encoding="utf-8")
+        p.write_text(json.dumps(doc), encoding="utf-8", newline="\n")
         return p
 
     def read(self, name) -> dict:
@@ -92,7 +92,7 @@ class Kit:
 
     def run(self, script: str, *args: str, timeout: int = 120) -> subprocess.CompletedProcess:
         return subprocess.run([sys.executable, str(SCRIPTS / script), *map(str, args)], cwd=self.tmp,
-                              env=self.env, capture_output=True, text=True, timeout=timeout)
+                              env=self.env, capture_output=True, text=True, timeout=timeout, encoding="utf-8")
 
     def emit(self, *args: str) -> subprocess.CompletedProcess:
         return self.run("emit_fill.py", *args)
@@ -104,7 +104,7 @@ class Kit:
                       "--force", *extra)
         name = "replace-payload.json" if "--replace" in extra else "fill-payload.json"
         p = self.tmp / out / name
-        pay = json.loads(p.read_text()) if r.returncode in (0, 2) and p.exists() else None
+        pay = json.loads(p.read_text(encoding="utf-8")) if r.returncode in (0, 2) and p.exists() else None
         return r.returncode, pay, r.stdout + r.stderr
 
     @property

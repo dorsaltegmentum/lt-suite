@@ -34,6 +34,7 @@ The test suite keeps the worked example's manifest in tests/diagram/reference/.
 import argparse, base64, io, json, os, pathlib, re, subprocess, sys, tempfile, zipfile, zlib
 
 import _bootstrap  # noqa: E402,F401  (the Python version gate; engine on sys.path)
+from _legacy import read_legacy_bytes, read_legacy_text
 
 FAILS = []
 THUMB_W = 480           # reference thumbnail width, px
@@ -93,7 +94,7 @@ def compare_svg(a, b, what):
 def pdf_render(data, tmp, name):
     p = pathlib.Path(tmp) / f"{name}.pdf"
     p.write_bytes(data)
-    pages = re.search(r"^Pages:\s+(\d+)", subprocess.run(["pdfinfo", str(p)], capture_output=True, text=True).stdout, re.M)
+    pages = re.search(r"^Pages:\s+(\d+)", subprocess.run(["pdfinfo", str(p)], capture_output=True, text=True, encoding="utf-8").stdout, re.M)
     subprocess.run(["pdftoppm", "-r", "40", "-png", str(p), str(pathlib.Path(tmp) / name)], check=True)
     pngs = sorted(pathlib.Path(tmp).glob(f"{name}-*.png"))
     return int(pages.group(1)) if pages else 0, [x.read_bytes() for x in pngs]
@@ -230,7 +231,7 @@ PAYLOAD = re.compile(r"(data:[a-z/+.-]+;base64,)([A-Za-z0-9+/=]+)")
 def compare_html(ref, new, tmp):
     """The pages with their base64 payloads (download links, embedded fonts) set aside, then each payload
     decoded and compared: PDFs as compare_pdf, the zipped .drawio files as compare_drawio."""
-    ta, tb = ref.read_text(), new.read_text()
+    ta, tb = read_legacy_text(ref), read_legacy_text(new)
     pa, pb = [m[1] for m in PAYLOAD.findall(ta)], [m[1] for m in PAYLOAD.findall(tb)]
     sa, sb = PAYLOAD.sub(r"\1<payload>", ta), PAYLOAD.sub(r"\1<payload>", tb)
     (sa, ga), (sb, gb) = without_inert_groups(sa), without_inert_groups(sb)
@@ -312,7 +313,7 @@ def write_manifest(d, out, slug):
            "png_delta": PNG_DELTA, "files": {}}
     stem = out.name[:-len(".manifest.json")] if out.name.endswith(".manifest.json") else out.stem
     for name, kind in files:
-        data = (d / name).read_bytes()
+        data = (d / name).read_bytes() if kind == "png" else read_legacy_bytes(d / name)
         if kind == "png":
             ref = f"{stem}-{name}"
             thumbnail(d / name).save(out.parent / ref, optimize=True)
@@ -323,7 +324,7 @@ def write_manifest(d, out, slug):
             man["files"][name] = {"sha256": drawio_digest(data)}
         else:
             man["files"][name] = {"sha256": sha(data)}
-    out.write_text(json.dumps(man, indent=1, sort_keys=True) + "\n")
+    out.write_text(json.dumps(man, indent=1, sort_keys=True) + "\n", encoding="utf-8", newline="\n")
     print(f"wrote {out}: {len(man['files'])} files, palettes {', '.join(pals)}")
     return 0
 
@@ -331,7 +332,7 @@ def write_manifest(d, out, slug):
 def check_manifest(d, manifest):
     import numpy as np
     manifest = pathlib.Path(manifest)
-    man = json.loads(manifest.read_text())
+    man = json.loads(read_legacy_text(manifest))
     slug = man["slug"]
     pals, files = build_files(d, slug)
     report(pals == man["palettes"], "palettes", f"{', '.join(pals)} vs manifest {', '.join(man['palettes'])}")
@@ -344,7 +345,7 @@ def check_manifest(d, manifest):
         rec = man["files"].get(name)
         if rec is None:
             continue
-        data = (d / name).read_bytes()
+        data = (d / name).read_bytes() if kind == "png" else read_legacy_bytes(d / name)
         if kind == "png":
             ref = np.asarray(__import__("PIL.Image", fromlist=["Image"]).open(manifest.parent / rec["thumbnail"]).convert("RGBA"))
             new = np.asarray(thumbnail(d / name))
@@ -363,6 +364,9 @@ def check_manifest(d, manifest):
 
 # ------------------------------------------------------------------ main
 def main(argv):
+    from ltcore.streams import configure_utf8
+    configure_utf8()
+
     ap = argparse.ArgumentParser(description="Compare a build with a reference build or a manifest (read-only "
                                              "on the build folders).")
     ap.add_argument("dirs", nargs="+", metavar="DIR", help="<ref_dir> <new_dir>, or one build folder with "
@@ -379,12 +383,12 @@ def main(argv):
             ap.error("--manifest and --write-manifest take one build folder, and only one of them")
         d = pathlib.Path(a.dirs[0])
         if a.write_manifest:
-            return write_manifest(d, a.write_manifest, a.slug or json.loads((d / "case.json").read_text())["slug"])
+            return write_manifest(d, a.write_manifest, a.slug or json.loads(read_legacy_text(d / "case.json"))["slug"])
         return check_manifest(d, a.manifest)
     if len(a.dirs) != 2:
         ap.error("give <ref_dir> <new_dir>")
     ref, new = pathlib.Path(a.dirs[0]), pathlib.Path(a.dirs[1])
-    slug = a.slug or json.loads((new / "case.json").read_text())["slug"]
+    slug = a.slug or json.loads(read_legacy_text(new / "case.json"))["slug"]
     rslug = a.ref_slug or slug
     tmp = tempfile.mkdtemp(prefix="regress-", dir=os.environ.get("TMPDIR"))
     pals = sorted(q.stem[len("final-"):] for q in new.glob("final-*.svg") if ".static" not in q.name
@@ -393,8 +397,8 @@ def main(argv):
         report(False, "palettes", "no final-<palette>.svg in both folders")
     drawios = sorted(q.name for q in new.glob(f"{slug}*.drawio"))
     for f in (f"final-{fl}.svg" for fl in pals):
-        compare_svg((ref / f).read_bytes(), (new / f).read_bytes(), f)
-    x, y = (ref / "geometry.json").read_bytes(), (new / "geometry.json").read_bytes()
+        compare_svg(read_legacy_bytes(ref / f), read_legacy_bytes(new / f), f)
+    x, y = read_legacy_bytes(ref / "geometry.json"), read_legacy_bytes(new / "geometry.json")
     if x == y:
         report(True, "geometry.json", "byte-identical")
     else:
@@ -414,7 +418,7 @@ def main(argv):
         compare_pdf((ref / fr).read_bytes(), (new / fn).read_bytes(), fn, tmp)
     pairs = [(f"{rslug}{n[len(slug):]}", n) for n in drawios] + [(f"deliver/{rslug}{n[len(slug):]}", f"deliver/{n}") for n in drawios]
     for fr, fn in pairs:
-        compare_drawio((ref / fr).read_bytes(), (new / fn).read_bytes(), fn)
+        compare_drawio(read_legacy_bytes(ref / fr), read_legacy_bytes(new / fn), fn)
     if a.ref_html and a.new_html:
         compare_html(pathlib.Path(a.ref_html), pathlib.Path(a.new_html), tmp)
     for f in pathlib.Path(tmp).glob("*"):

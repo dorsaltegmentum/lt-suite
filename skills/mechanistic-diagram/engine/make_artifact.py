@@ -37,6 +37,7 @@ import base64, html, io, json, numbers, os, pathlib, re, sys, time, zipfile
 import xml.etree.ElementTree as ET
 
 import _bootstrap  # noqa: E402,F401  (engine and shared core on sys.path)
+from _legacy import read_legacy_text
 
 ENGINE = pathlib.Path(__file__).resolve().parent
 from casekit import NBSP
@@ -78,7 +79,7 @@ def _suffix_ids(svg, suffix):
 def figure(case_dir, flavour, index=0):
     """The inline figure: final-<flavour>.svg with a class instead of its pixel size, font fallbacks, and (after
     the first copy) every id suffixed so the page has no duplicate ids. Returns (svg, width, height)."""
-    svg = (case_dir / f"final-{flavour}.svg").read_text(encoding='utf-8')
+    svg = read_legacy_text(case_dir / f"final-{flavour}.svg")
     head = re.search(r'<svg xmlns="http://www.w3.org/2000/svg"[^>]*>', svg).group(0)
     w = int(re.search(r' width="(\d+)"', head).group(1))
     h = int(re.search(r' height="(\d+)"', head).group(1))
@@ -352,9 +353,9 @@ def make(case, out=None):
     terms = getattr(case.content, "ITALIC", ())
     pp = themes.print_palette()
     pals = [pp] + [fl for fl in themes.final_palettes() if fl != pp]
-    parts = svg_parts((here / f"final-{pp}.svg").read_text(encoding='utf-8'))
+    parts = svg_parts(read_legacy_text(here / f"final-{pp}.svg"))
     for fl in pals[1:]:
-        if svg_parts((here / f"final-{fl}.svg").read_text(encoding='utf-8')) != parts:
+        if svg_parts(read_legacy_text(here / f"final-{fl}.svg")) != parts:
             raise ValueError(f"final-{pp}.svg and final-{fl}.svg differ in their boxes, arrows or stages")
     figs = [figure(here, fl, i) for i, fl in enumerate(pals)]
     FIG_W = figs[0][1]
@@ -684,12 +685,15 @@ ol {{ margin: 0; padding-left: 20px; display: grid; gap: 6px; font-size: 14px; }
 </body>
 </html>
 '''
-    out.write_text(page, encoding='utf-8')
+    out.write_text(page, encoding='utf-8', newline="\n")
     print("wrote", out, len(page), "bytes")
     return out
 
 
 def main(argv):
+    from ltcore.streams import configure_utf8
+    configure_utf8()
+
     import argparse
     import style
     from case import Case, CaseError

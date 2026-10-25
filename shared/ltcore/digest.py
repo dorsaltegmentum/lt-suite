@@ -269,7 +269,7 @@ def fix_pins(folder: str | Path, *, check: bool = False, out=None) -> int:
         print(f"OK: every pin under {folder} is current", file=out)
         return 0
     for p, text in sorted(new_text.items()):
-        p.write_text(text, encoding="utf-8")
+        p.write_text(text, encoding="utf-8", newline="\n")
     for c in changes:
         print(f"fixed: {c}", file=out)
     print(f"{len(new_text)} file(s) rewritten under {folder}", file=out)
@@ -277,6 +277,9 @@ def fix_pins(folder: str | Path, *, check: bool = False, out=None) -> int:
 
 
 def main(argv: list[str] | None = None) -> int:
+    from ltcore.streams import configure_utf8
+    configure_utf8()
+
     ap = argparse.ArgumentParser(prog="python3 -m ltcore.digest", description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("path", type=Path, help="module.json, or the folder for --fix-pins")

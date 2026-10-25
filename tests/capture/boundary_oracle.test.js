@@ -37,7 +37,7 @@ function pyFirstStop(modules) {
   ].join('\n');
   const r = spawnSync(PY, ['-c', code], {
     input: JSON.stringify(modules), encoding: 'utf8',
-    env: Object.assign({}, process.env, { PYTHONPATH: SHARED })
+    env: Object.assign({}, process.env, { PYTHONPATH: SHARED, PYTHONIOENCODING: 'utf-8' })
   });
   if (r.status !== 0) throw new Error(`ltcore.boundaries failed: ${r.stderr || r.error}`);
   return JSON.parse(r.stdout).map(H.normStop);

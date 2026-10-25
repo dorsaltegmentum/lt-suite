@@ -30,6 +30,7 @@ const { obs, coll, mdl, Model, panel, textPanel, tablePanel, selectPanel, labelP
 const check = (t, label, got, want) => t.test(label, () => assert.equal(J(got), J(want)));
 const yes = (t, label, cond) => check(t, label, !!cond, true);
 const pyEnv = tmp => Object.assign({}, process.env, {
+  PYTHONIOENCODING: 'utf-8',
   PYTHONPATH: path.join(F.REPO, 'shared'), LT_SUITE_DATA: path.join(tmp, 'data'),
   LT_SUITE_CACHE: path.join(tmp, 'cache'), XDG_CONFIG_HOME: path.join(tmp, 'xdg')
 });

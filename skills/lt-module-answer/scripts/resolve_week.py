@@ -117,6 +117,9 @@ def ilo_lines(num: str, title: str, path: Path | None, stopwords: set[str],
 
 
 def main(argv=None) -> int:
+    from ltcore.streams import configure_utf8
+    configure_utf8()
+
     ap = Parser(description=__doc__)
     source = ap.add_mutually_exclusive_group(required=True)
     source.add_argument("--module", type=Path, help="capture module.json")

@@ -121,7 +121,7 @@ def atomic_write(path, record):
     path.parent.mkdir(parents=True, exist_ok=True)
     fd, scratch = tempfile.mkstemp(prefix=".page-kinds-", dir=path.parent)
     try:
-        with os.fdopen(fd, "w", encoding="utf-8") as f:
+        with os.fdopen(fd, "w", encoding="utf-8", newline="\n") as f:
             f.write(json.dumps(record, indent=1, ensure_ascii=False) + "\n")
             f.flush()
             os.fsync(f.fileno())
@@ -336,6 +336,9 @@ def choose(module, record, policy, index, fill, answer, sheet=None, answers=None
 
 
 def main(argv=None):
+    from ltcore.streams import configure_utf8
+    configure_utf8()
+
     ap = argparse.ArgumentParser(description=__doc__)
     subs = ap.add_subparsers(dest="command", required=True)
     for name in ("classify", "mark", "choose", "roots"):

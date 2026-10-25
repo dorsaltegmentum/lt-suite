@@ -50,7 +50,7 @@ def test_prepare_warns_for_an_unknown_family(tmp_path):
 
 def test_convert_builds_argv_and_keeps_source(tmp_path, monkeypatch):
     src = tmp_path / "in.svg"
-    src.write_text(SVG, encoding="utf-8")
+    src.write_text(SVG, encoding="utf-8", newline="\n")
     monkeypatch.setattr(R.shutil, "which", lambda name: "/usr/bin/rsvg-convert")
     seen = {}
 
@@ -72,7 +72,7 @@ def test_convert_builds_argv_and_keeps_source(tmp_path, monkeypatch):
 def test_convert_renders_a_prepared_copy_and_keeps_source(tmp_path, monkeypatch):
     pytest.importorskip("fontTools")
     src = tmp_path / "in.svg"
-    src.write_text(SVG, encoding="utf-8")
+    src.write_text(SVG, encoding="utf-8", newline="\n")
     monkeypatch.setattr(R.shutil, "which", lambda name: "/usr/bin/rsvg-convert")
     seen = {}
 
@@ -91,7 +91,7 @@ def test_convert_renders_a_prepared_copy_and_keeps_source(tmp_path, monkeypatch)
 
 def test_convert_failure_and_missing_binary(tmp_path, monkeypatch):
     src = tmp_path / "in.svg"
-    src.write_text(SVG, encoding="utf-8")
+    src.write_text(SVG, encoding="utf-8", newline="\n")
     monkeypatch.setattr(R.shutil, "which", lambda name: None)
     with pytest.raises(R.RasterError, match="rsvg-convert not found"):
         R.convert(src, tmp_path / "x.png", prepare_fonts=False)
@@ -107,12 +107,12 @@ def test_convert_failure_and_missing_binary(tmp_path, monkeypatch):
 def test_real_conversion_png_and_pdf(tmp_path):
     pytest.importorskip("fontTools")
     src = tmp_path / "t.svg"
-    src.write_text(SVG, encoding="utf-8")
+    src.write_text(SVG, encoding="utf-8", newline="\n")
     res = R.render(src, tmp_path / "out", formats=("png", "pdf"), png_zoom=2, cache_dir=tmp_path / "cache")
     assert res["png"].read_bytes()[:8] == b"\x89PNG\r\n\x1a\n"
     assert res["pdf"].read_bytes()[:5] == b"%PDF-"
     if shutil.which("pdffonts"):
-        listing = subprocess.run(["pdffonts", str(res["pdf"])], capture_output=True, text=True).stdout
+        listing = subprocess.run(["pdffonts", str(res["pdf"])], capture_output=True, text=True, encoding="utf-8").stdout
         assert "NotoSansStatic-Bold" in listing, listing
         assert "NotoSansStatic-Regular" in listing, listing
 
@@ -157,7 +157,7 @@ def test_prepare_preserves_family_when_an_additional_face_has_rfn(
     assert not list(cache.rglob('*.ttf')), 'no family member may be cut after another face forbids modification'
     assert result.svg == svg and not result.families
     assert any('weight' in warning and family in warning for warning in result.warnings)
-    conf = Path(result.env['FONTCONFIG_FILE']).read_text()
+    conf = Path(result.env['FONTCONFIG_FILE']).read_text(encoding="utf-8")
     assert str(regular.parent.resolve()) in conf and str(italic.parent.resolve()) in conf
     assert [regular.read_bytes(), italic.read_bytes()] == original_bytes
 
@@ -181,8 +181,8 @@ def test_padded_font_stack_embeds_the_resolved_face(tmp_path):
     """A padded stack must embed the prepared bundled face in an actual PDF."""
     source = '<svg xmlns="http://www.w3.org/2000/svg" width="240" height="60"><text x="10" y="30" font-family=" Missing A, Noto Sans ">Test</text></svg>'
     path = tmp_path / 'source.svg'
-    path.write_text(source)
+    path.write_text(source, encoding="utf-8", newline="\n")
     output = R.svg_to_pdf(path, tmp_path / 'output.pdf', cache_dir=tmp_path / 'cache')
-    result = subprocess.run(['pdffonts', str(output)], capture_output=True, text=True, check=True)
+    result = subprocess.run(['pdffonts', str(output)], capture_output=True, text=True, check=True, encoding="utf-8")
     assert 'NotoSansStatic-Regular' in result.stdout, result.stdout
-    assert path.read_text() == source
+    assert path.read_text(encoding="utf-8") == source

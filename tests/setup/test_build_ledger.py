@@ -23,7 +23,7 @@ FAILED = ".module-kcMissing (filtered by panelKey)"
 @pytest.fixture
 def workspace(tmp_path):
     cfg_file = tmp_path / "config.toml"
-    cfg_file.write_text("schema_version = 1\n", encoding="utf-8")
+    cfg_file.write_text("schema_version = 1\n", encoding="utf-8", newline="\n")
     data = tmp_path / "data"
     data.mkdir()
     return cfg_file, data
@@ -46,7 +46,7 @@ def _run(workspace, *args, expected=0):
         env=env,
         capture_output=True,
         text=True,
-    )
+    encoding="utf-8")
     assert result.returncode == expected, (
         f"exit {result.returncode}, expected {expected}\n"
         f"{result.stdout}\n{result.stderr}"
@@ -80,7 +80,7 @@ def _write_run(data, module_id="c1-r101", events=None):
     }
     path = data / "runs" / module_id / "run.json"
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(record) + "\n", encoding="utf-8")
+    path.write_text(json.dumps(record) + "\n", encoding="utf-8", newline="\n")
     return path
 
 
@@ -172,7 +172,7 @@ def test_matching_fill_report_adds_metadata_without_independent_events(
         )
         + "\n",
         encoding="utf-8",
-    )
+    newline="\n")
     baseline_text = _run(workspace, "--dry-run")
     baseline = _ledger(workspace)
 

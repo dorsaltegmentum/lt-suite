@@ -174,7 +174,7 @@ def out_dir_for(cfg: "config_mod.Config | None", flag: str | os.PathLike | None 
 def private_dir(d: Path) -> Path:
     """Create ``d`` with mode 0700, or check that it is safe to write scripts into.
 
-    Safe: a real directory (not a symlink), owned by this user, with no group or other
+    Safe: a real directory (no symlink or reparse point), owned by this user, with no group or other
     permission bits. Anything else raises RenderRefused(2) naming the problem."""
     def unsafe(why: str) -> RenderRefused:
         return RenderRefused(EXIT_USAGE, f"unsafe js_tmp_dir {d}: {why}. Use a folder only you "
@@ -190,6 +190,8 @@ def private_dir(d: Path) -> Path:
         except OSError as exc:
             raise unsafe(f"cannot create it ({exc.strerror or exc})") from None
         st = os.lstat(d)
+    if getattr(st, "st_file_attributes", 0) & stat.FILE_ATTRIBUTE_REPARSE_POINT:
+        raise unsafe("it is a reparse point")
     if stat.S_ISLNK(st.st_mode):
         raise unsafe("it is a symlink")
     if not stat.S_ISDIR(st.st_mode):
@@ -843,6 +845,9 @@ def _emit(obj: dict) -> None:
 
 
 def main(argv: list[str] | None = None) -> int:
+    from ltcore.streams import configure_utf8
+    configure_utf8()
+
     ap = argparse.ArgumentParser(prog="ltjs.py", description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = ap.add_subparsers(dest="cmd", required=True)

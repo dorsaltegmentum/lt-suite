@@ -38,7 +38,7 @@ def test_engine_refuses_rfn_variable_fonts(font_file,monkeypatch,tmp_path):
 
 def test_page_carries_the_chain(toy_build):
     from ltcore import fonts
-    page=(toy_build/'toy-case.html').read_text()
+    page=(toy_build/'toy-case.html').read_text(encoding="utf-8")
     assert '--sans: '+fonts.css_stack() in page
     assert '--mono: '+fonts.css_stack('mono') in page
     assert 'font-family="'+fonts.css_stack()+'"' in page

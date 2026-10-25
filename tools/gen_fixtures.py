@@ -2397,6 +2397,12 @@ def reading_notes(info: dict) -> list[str]:
 # ---------------------------------------------------------------- main -------------------
 
 def main(argv=None) -> int:
+    import sys
+    from pathlib import Path
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "shared"))
+    from ltcore.streams import configure_utf8
+    configure_utf8()
+
     ap = argparse.ArgumentParser(description="Write or check the synthetic fixtures under tests/fixtures.")
     ap.add_argument("--seed", type=int, default=SEED_DEFAULT,
                     help=f"fixture seed (default {SEED_DEFAULT}; --check compares against it)")

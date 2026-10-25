@@ -43,7 +43,7 @@ def test_checksums_match_flat_github_release_assets(tmp_path):
     (tmp_path / 'one.zip').write_bytes(b'one')
     assert m.main(['checksums', '--out', str(tmp_path)]) == 0
     import hashlib
-    assert (tmp_path / 'SHA256SUMS').read_text().splitlines() == [
+    assert (tmp_path / 'SHA256SUMS').read_text(encoding="utf-8").splitlines() == [
         hashlib.sha256(b'one').hexdigest() + '  one.zip',
         hashlib.sha256(b'two').hexdigest() + '  two.zip',
     ]
@@ -87,7 +87,7 @@ def test_test_areas_run_in_separate_sessions_and_collect_failures(tmp_path, monk
     for area in ('first', 'second'):
         folder = tmp_path / 'tests' / area
         folder.mkdir(parents=True)
-        (folder / 'test_example.py').write_text('def test_example(): pass\n')
+        (folder / 'test_example.py').write_text('def test_example(): pass\n', encoding="utf-8", newline="\n")
     monkeypatch.setattr(m, 'ROOT', tmp_path)
     calls = []
 

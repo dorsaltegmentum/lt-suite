@@ -72,7 +72,7 @@ def test_os_fonts_are_never_cut(no_fonts, monkeypatch, font_file, tmp_path):
 @pytest.mark.parametrize('licence,copyright,expected', [
  ('SIL Open Font License 1.1','Test','modify'),
  ('SIL Open Font License 1.1. "Reserved Font Name" refers to any names specified.','Test','modify'),
- ((Path(__file__).resolve().parents[2]/'shared/fonts/noto-sans/OFL.txt').read_text(),'Test','modify'),
+ ((Path(__file__).resolve().parents[2]/'shared/fonts/noto-sans/OFL.txt').read_text(encoding="utf-8"),'Test','modify'),
  ('SIL Open Font License 1.1','with Reserved Font Name "Test"','whole'),
  ('SIL Open Font License 1.1; Reserved Font Names: Test','Test','whole'),
  ('Microsoft supplied font. SIL Open Font License 1.1','Test','none'),

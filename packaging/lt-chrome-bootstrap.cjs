@@ -15,14 +15,16 @@ if(W){h=e.USERPROFILE?e.USERPROFILE:h;c=P.join(e.LOCALAPPDATA?e.LOCALAPPDATA:P.j
 else if(p=='darwin'){c=P.join(h,'Library','Caches','lt-suite')}
 else{c=P.join(x?(P.isAbsolute(x)?x:P.join(h,'.cache')):P.join(h,'.cache'),'lt-suite')}
 var d=P.join(c,'lt-chrome','run'),w=process.cwd(),r=R.length?'no lt-chrome launcher under the plugin folder':'this agent did not pass the plugin folder',why=r;
-try{fs.mkdirSync(d,{recursive:true,mode:448});fs.writeFileSync(P.join(d,'package.json'),'{}');
-// npm adds ancestor .bin folders on POSIX. These nearer shims pin both interpreters.
-if(W==false){var b=P.join(d,'node_modules','.bin');fs.mkdirSync(b,{recursive:true,mode:448});var q=String.fromCharCode(39),Q=String.fromCharCode(34);[['node',process.execPath],['sh','/bin/sh']].forEach(function(t){var s=q+t[1].split(q).join(q+'\\'+q+q)+q;fs.writeFileSync(P.join(b,t[0]),String.fromCharCode(35,33)+'/bin/sh\nexec '+s+' '+Q+'$@'+Q+'\n',{mode:448})})}
+try{d=P.join(d,require('crypto').createHash('sha256').update(fs.readFileSync(process.execPath)).digest('hex'));fs.mkdirSync(d,{recursive:true,mode:448});fs.writeFileSync(P.join(d,'package.json'),'{}');
+// npm adds ancestor .bin folders. Pin the trusted interpreter in the nearest one.
+var b=P.join(d,'node_modules','.bin');fs.mkdirSync(b,{recursive:true,mode:448});
+if(W){var N=P.join(b,'node.exe'),S=false;if(fs.existsSync(N)){S=fs.readFileSync(N).equals(fs.readFileSync(process.execPath))}if(S==false){fs.copyFileSync(process.execPath,N)}}else{var q=String.fromCharCode(39),Q=String.fromCharCode(34);[['node',process.execPath],['sh','/bin/sh']].forEach(function(t){var s=q+t[1].split(q).join(q+'\\'+q+q)+q;fs.writeFileSync(P.join(b,t[0]),String.fromCharCode(35,33)+'/bin/sh\nexec '+s+' '+Q+'$@'+Q+'\n',{mode:448})})}
 w=d}catch(z){why=r+'; '+d+' is not writable, so npx runs in the agent folder'}
 process.stderr.write('lt-chrome: '+why+'; it runs as in lt-suite 0.1.0 (auto-connect, browser settings ignored). Run setup.py lt-chrome snippet to use your settings.\n');
 var n=P.dirname(process.execPath),j=[P.join(n,'node_modules','npm','bin','npx-cli.js'),P.join(n,'..','lib','node_modules','npm','bin','npx-cli.js')].filter(function(f){return fs.existsSync(f)})[0];
 var A=__ARGV__;
 var v={};Object.keys(e).forEach(function(q){var u=W?q.toUpperCase():q;if(u.indexOf('CHROME_DEVTOOLS_MCP_')==0){return}if(u=='PLUGIN_DATA'){return}v[q]=e[q]});
+if(W){v.PATHEXT='.EXE;.CMD;.BAT'}
 v.CHROME_DEVTOOLS_MCP_NO_CONFIG_DISCOVERY='1';v.CHROME_DEVTOOLS_MCP_NO_UPDATE_CHECKS='1';
 var o={stdio:'inherit',cwd:w,env:v,shell:false},k;
 if(j){k=cp.spawn(process.execPath,[j].concat(A),o)}else if(W){o.shell=true;k=cp.spawn('npx '+A.join(' '),o)}else{k=cp.spawn('npx',A,o)}

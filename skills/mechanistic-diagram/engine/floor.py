@@ -61,6 +61,7 @@ import xml.etree.ElementTree as ET
 import zlib
 
 import _bootstrap  # noqa: F401  (engine and shared core on sys.path)
+from _legacy import read_legacy_text
 
 ENGINE = pathlib.Path(__file__).resolve().parent
 FLOOR_JSON = ENGINE / "floor.json"
@@ -78,9 +79,9 @@ class Build:
         self.dir = pathlib.Path(d).resolve()
         if not (self.dir / "geometry.json").exists():
             raise SystemExit(f"{self.dir}: no geometry.json (build the case first)")
-        self.geo = json.loads((self.dir / "geometry.json").read_text())
+        self.geo = json.loads(read_legacy_text(self.dir / "geometry.json"))
         cj = self.dir / "case.json"
-        self.meta = json.loads(cj.read_text()) if cj.exists() else {}
+        self.meta = json.loads(read_legacy_text(cj)) if cj.exists() else {}
         drawios = sorted(self.dir.glob("*.drawio"))
         self.slug = self.meta.get("slug") or (drawios[0].stem if len(drawios) == 1 else None)
         self.drawio = self.dir / f"{self.slug}.drawio" if self.slug else None
@@ -105,7 +106,7 @@ class Build:
     def _artifact(self):
         if not (self.dir / "artifact_content.py").exists():
             return None
-        m = re.search(r'^OUT_NAME\s*=\s*["\']([^"\']+)["\']', (self.dir / "artifact_content.py").read_text(), re.M)
+        m = re.search(r'^OUT_NAME\s*=\s*["\']([^"\']+)["\']', read_legacy_text(self.dir / "artifact_content.py"), re.M)
         p = self.dir / (m.group(1) if m else f"{self.slug}.html")
         return p if p.exists() else None
 
@@ -124,7 +125,7 @@ def sha256(p):
 
 
 def canvas(svg_path):
-    root = ET.parse(svg_path).getroot()
+    root = ET.fromstring(read_legacy_text(svg_path))
     return float(root.get("width")), float(root.get("height"))
 
 
@@ -169,7 +170,7 @@ def _float(v, default=0.0):
 
 def svg_texts(svg_path):
     """Every <text> of an SVG: dict(text, x, y, fs, anchor, bold, italic, mono, family)."""
-    root = ET.parse(svg_path).getroot()
+    root = ET.fromstring(read_legacy_text(svg_path))
     out = []
 
     def walk(el, inherited):
@@ -194,7 +195,7 @@ def svg_texts(svg_path):
 
 def rendered_labels(svg_path, geo):
     """Missing, extra, duplicate or mismatched node labels compared with the geometry's text lines."""
-    root = ET.parse(svg_path).getroot()
+    root = ET.fromstring(read_legacy_text(svg_path))
     found, bad = {}, []
     for group in root.iter(SVG_NS + "g"):
         if "node" not in group.get("class", "").split():
@@ -341,7 +342,7 @@ def gutters(geo):
 
 
 def pdf_pages(p):
-    info = subprocess.run(["pdfinfo", str(p)], capture_output=True, text=True).stdout
+    info = subprocess.run(["pdfinfo", str(p)], capture_output=True, text=True, encoding="utf-8").stdout
     m = re.search(r"^Pages:\s+(\d+)", info, re.M)
     return int(m.group(1)) if m else 0
 
@@ -355,7 +356,7 @@ def aspects(build):
 
 def radii(build, fl):
     """rx of the SVG rects drawn at each box's and each container's geometry: ({rx: n} boxes, {rx: n} containers, unmatched)."""
-    root = ET.parse(build.svg(fl)).getroot()
+    root = ET.fromstring(read_legacy_text(build.svg(fl)))
     rects = {}
     for el in root.iter(SVG_NS + "rect"):
         try:
@@ -574,7 +575,7 @@ def svg_images(root, base_dir=None, where=""):
 
 def drawio_images(path):
     """Image cells of a .drawio: [dict(where, how, rx, ok, note)]."""
-    root = ET.parse(path).getroot()
+    root = ET.fromstring(read_legacy_text(path))
     models = []
     for dg in root.iter("diagram"):
         inner = dg.find("mxGraphModel")
@@ -625,7 +626,7 @@ def drawio_images(path):
 
 def html_images(path):
     """Images of the Artifact page: <image>/<svg> inside its inline SVGs, and <img> tags (border-radius)."""
-    text = path.read_text()
+    text = read_legacy_text(path)
     out = []
     # top-level inline SVGs
     depth, start = 0, None
@@ -661,7 +662,7 @@ def verify_result(build):
     if not p.exists():
         return "WARN", "no verify-result.json (run verify.js in draw.io and save what it returns there)"
     try:
-        r = json.loads(p.read_text())
+        r = json.loads(p.read_text(encoding="utf-8"))
     except ValueError as ex:
         return "WARN", f"verify-result.json is not JSON: {ex}"
     n_edges, n_nodes = len(build.geo["edges"]), len(build.geo["nodes"])
@@ -695,7 +696,7 @@ def check(case_dir, layout=None, access_result=None, floor=None, quiet=False):
         fp = floor_path()
         if not fp.exists():
             raise SystemExit(f"no floor file {fp} (diagram.floor_path)")
-        floor = json.loads(fp.read_text())
+        floor = json.loads(fp.read_text(encoding="utf-8"))
     F = floor
     b = Build(case_dir)
     pals = b.palettes()
@@ -792,7 +793,7 @@ def check(case_dir, layout=None, access_result=None, floor=None, quiet=False):
     imgs = {}
     for fl in pals:
         if b.svg(fl).exists():
-            imgs[f"SVG {fl}"] = svg_images(ET.parse(b.svg(fl)).getroot(), b.dir, where=f"final-{fl}.svg ")
+            imgs[f"SVG {fl}"] = svg_images(ET.fromstring(read_legacy_text(b.svg(fl))), b.dir, where=f"final-{fl}.svg ")
     if b.drawio and b.drawio.exists():
         imgs[".drawio"] = drawio_images(b.drawio)
         if (b.dir / "deliver" / b.drawio.name).exists():
@@ -844,6 +845,9 @@ def table(rows, F, b):
 
 
 def main(argv):
+    from ltcore.streams import configure_utf8
+    configure_utf8()
+
     ap = argparse.ArgumentParser(description="Check a build against the quality minimums in floor.json.")
     ap.add_argument("case_dir")
     ap.add_argument("--floor", help="the floor file (default: diagram.floor_path, else engine/floor.json)")
@@ -852,7 +856,7 @@ def main(argv):
     import style
     try:
         style.configure(a.config)
-        fl = json.loads(pathlib.Path(a.floor).read_text()) if a.floor else None
+        fl = json.loads(pathlib.Path(a.floor).read_text(encoding="utf-8")) if a.floor else None
         _, ok = check(a.case_dir, floor=fl)
     except style.StyleError as ex:
         raise SystemExit(str(ex))

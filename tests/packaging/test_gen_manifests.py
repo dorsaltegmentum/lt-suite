@@ -56,11 +56,11 @@ def source(tmp_path):
     text = re.sub(r"^skills = .*?$", 'skills = ["sample"]', text, flags=re.M)
     if "skills =" not in text:
         text = 'skills = ["sample"]\n' + text
-    config.write_text(text, encoding='utf-8')
-    (tmp_path / "AGENTS.md").write_text("Runtime guide.\n", encoding='utf-8')
+    config.write_text(text, encoding='utf-8', newline="\n")
+    (tmp_path / "AGENTS.md").write_text("Runtime guide.\n", encoding='utf-8', newline="\n")
     skill = tmp_path / "skills/sample/SKILL.md"
     skill.parent.mkdir(parents=True)
-    skill.write_text('---\nname: sample\nmetadata:\n  version: "0.1.0"\n---\nBody.\n', encoding='utf-8')
+    skill.write_text('---\nname: sample\nmetadata:\n  version: "0.1.0"\n---\nBody.\n', encoding='utf-8', newline="\n")
     return tmp_path
 
 
@@ -206,7 +206,7 @@ def test_check_rejects_skill_version_mismatch_without_editing(source, metadata):
     assert run(source).returncode == 0
     path = source / "skills/sample/SKILL.md"
     content = f'---\nname: sample\n{metadata}\n---\nmetadata:\n  version: "0.1.0"\n'
-    path.write_text(content, encoding='utf-8')
+    path.write_text(content, encoding='utf-8', newline="\n")
     result = run(source, "--check")
     assert result.returncode == 1
     assert "skills/sample/SKILL.md" in result.stdout
@@ -223,7 +223,7 @@ def test_check_rejects_skill_version_mismatch_without_editing(source, metadata):
 ])
 def test_check_accepts_skill_metadata_version(source, metadata):
     path = source / "skills/sample/SKILL.md"
-    path.write_text(f"---\nname: sample\n{metadata}\n---\nBody.\n", encoding='utf-8')
+    path.write_text(f"---\nname: sample\n{metadata}\n---\nBody.\n", encoding='utf-8', newline="\n")
     assert run(source).returncode == 0
     assert run(source, "--check").returncode == 0
 
@@ -232,9 +232,9 @@ def test_source_changes_reach_manifests_and_safety_rule(source):
     # Catches hardcoded identity, stale safety copies and missing always-on trigger.
     assert run(source).returncode == 0
     path = source / "packaging/plugin.toml"
-    path.write_text(path.read_text(encoding='utf-8').replace('version = "0.1.0"', 'version = "0.2.0"'), encoding='utf-8')
+    path.write_text(path.read_text(encoding='utf-8').replace('version = "0.1.0"', 'version = "0.2.0"'), encoding='utf-8', newline="\n")
     safety = source / "shared/references/safety.md"
-    safety.write_text(safety.read_text(encoding='utf-8') + "\nAdditional safety instruction.\n", encoding='utf-8')
+    safety.write_text(safety.read_text(encoding='utf-8') + "\nAdditional safety instruction.\n", encoding='utf-8', newline="\n")
     assert run(source, "--check").returncode == 1
     assert run(source).returncode == 0
     for name in ("plugin.json", ".claude-plugin/plugin.json", "gemini-extension.json"):
@@ -283,7 +283,7 @@ def test_context_file_is_required_by_check(source):
 def test_nested_or_duplicate_metadata_fails_closed(source, metadata):
     assert run(source).returncode == 0
     path = source / "skills/sample/SKILL.md"
-    path.write_text(f"---\nname: sample\n{metadata}\n---\nBody.\n", encoding='utf-8')
+    path.write_text(f"---\nname: sample\n{metadata}\n---\nBody.\n", encoding='utf-8', newline="\n")
     assert run(source, "--check").returncode == 1
 
 
@@ -306,7 +306,7 @@ def test_playwright_snippets_enforce_reviewed_tools(source):
         server = read(source, path)["mcpServers"]["lt-playwright"]
         assert set(server[field]) == denied
         assert server["args"] == ["-y", "@playwright/mcp@0.0.83"]
-        (source / path).write_text('{}', encoding='utf-8')
+        (source / path).write_text('{}', encoding='utf-8', newline="\n")
         assert run(source, "--check").returncode == 1
 
 
@@ -333,7 +333,7 @@ def test_playwright_filter_sets_cover_the_observed_runtime_catalog():
 def test_check_reports_stale_pins_block(source):
     assert run(source).returncode == 0
     launcher = source / "shared/lt_chrome/lt-chrome.cjs"
-    launcher.write_text(launcher.read_text(encoding='utf-8').replace('"package":"chrome-devtools-mcp@1.12.0"', '"package":"stale"'), encoding='utf-8')
+    launcher.write_text(launcher.read_text(encoding='utf-8').replace('"package":"chrome-devtools-mcp@1.12.0"', '"package":"stale"'), encoding='utf-8', newline="\n")
     result = run(source, "--check")
     assert result.returncode == 1
     assert "shared/lt_chrome/lt-chrome.cjs" in result.stdout

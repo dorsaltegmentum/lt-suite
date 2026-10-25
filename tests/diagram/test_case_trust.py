@@ -4,11 +4,83 @@
 lt-suite data folder or the skill's examples/, or after explicit hash approval.
 """
 import os
+import json
+import locale
 
 import pytest
 
 import case as C
 from diagram_testkit import ENGINE, TOY, copy_case, run_engine
+
+
+def test_legacy_cp1252_case_metadata_migrates(tmp_path, monkeypatch, capsys):
+    folder = copy_case(tmp_path / "legacy")
+    meta = folder / "case.json"
+    meta.write_bytes(b'{"slug":"legacy","title":"caf\xe9"}\r\n')
+    monkeypatch.setattr(locale, 'getencoding', lambda: 'cp1252')
+    loaded = C.Case(folder, trust=True)
+    assert loaded.meta['title'] == 'caf\u00e9'
+    assert meta.read_bytes() == '{"slug":"legacy","title":"caf\u00e9"}\n'.encode('utf-8')
+    assert 'UTF-8' in capsys.readouterr().err
+    assert json.loads(meta.read_text(encoding='utf-8')) == loaded.meta
+
+
+def test_legacy_cp1252_scaffold_migrates_after_trust(tmp_path, monkeypatch, capsys):
+    folder = copy_case(tmp_path / 'legacy-source')
+    source = folder / 'content.py'
+    text = '# caf\u00e9\n' + source.read_text(encoding='utf-8')
+    # The toy source contains characters outside cp1252; replace only those.
+    legacy = text.encode('cp1252', errors='replace')
+    source.write_bytes(legacy.replace(b'\n', b'\r\n'))
+    monkeypatch.setattr(locale, 'getencoding', lambda: 'cp1252')
+    with pytest.raises(C.CaseTrustError):
+        C.Case(folder)
+    assert source.read_bytes().startswith(b'# caf\xe9\r\n')
+    assert C.Case(folder, trust=True).slug == 'toy-case'
+    assert source.read_bytes().startswith('# caf\u00e9\n'.encode('utf-8'))
+    # Migrated bytes retain the previously granted trust on the next load.
+    assert C.Case(folder).slug == 'toy-case'
+    assert 'UTF-8' in capsys.readouterr().err
+
+
+def test_legacy_cp1252_geometry_migrates(tmp_path, monkeypatch, capsys):
+    import floor
+    folder = tmp_path / 'legacy-build'
+    folder.mkdir()
+    geometry = folder / 'geometry.json'
+    geometry.write_bytes(b'{"label":"caf\xe9"}\r\n')
+    monkeypatch.setattr(locale, 'getencoding', lambda: 'cp1252')
+    assert floor.Build(folder).geo['label'] == 'caf\u00e9'
+    assert geometry.read_bytes() == '{"label":"caf\u00e9"}\n'.encode('utf-8')
+    assert 'UTF-8' in capsys.readouterr().err
+
+
+@pytest.mark.parametrize('kind', ['svg', 'drawio'])
+def test_legacy_cp1252_xml_migrates(tmp_path, monkeypatch, capsys, kind):
+    import floor
+    path = tmp_path / ('legacy.' + kind)
+    raw = (b'<svg xmlns="http://www.w3.org/2000/svg"><text>caf\xe9</text></svg>\r\n'
+           if kind == 'svg' else b'<mxfile title="caf\xe9"><diagram><mxGraphModel/></diagram></mxfile>\r\n')
+    path.write_bytes(raw)
+    monkeypatch.setattr(locale, 'getencoding', lambda: 'cp1252')
+    if kind == 'svg':
+        assert floor.svg_texts(path)[0]['text'] == 'caf\u00e9'
+    else:
+        assert floor.drawio_images(path) == []
+    assert 'caf\u00e9' in path.read_bytes().decode('utf-8')
+    assert b'\r\n' not in path.read_bytes()
+    assert 'UTF-8' in capsys.readouterr().err
+
+
+def test_external_source_is_never_rewritten_by_legacy_migration(tmp_path, monkeypatch):
+    import consistency
+    path = tmp_path / 'external-source.md'
+    raw = b'caf\xe9\r\n'
+    path.write_bytes(raw)
+    monkeypatch.setattr(locale, 'getencoding', lambda: 'cp1252')
+    with pytest.raises(UnicodeDecodeError):
+        consistency.read_source(path)
+    assert path.read_bytes() == raw
 
 
 def test_examples_folder_is_trusted():
@@ -60,7 +132,7 @@ def test_data_folder_is_trusted(tmp_path, monkeypatch):
 def test_untrusted_code_never_runs(tmp_path, monkeypatch):
     case = copy_case(tmp_path / "elsewhere" / "toy-case")
     marker = tmp_path / "ran"
-    (case / "content.py").write_text(f"open({str(marker)!r}, 'w').write('x')\n" + (case / "content.py").read_text())
+    (case / "content.py").write_text(f"open({str(marker)!r}, 'w').write('x')\n" + (case / "content.py").read_text(encoding="utf-8"), encoding="utf-8", newline="\n")
     monkeypatch.chdir(ENGINE)
     with pytest.raises(C.CaseError):
         C.Case(case)

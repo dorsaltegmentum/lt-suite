@@ -21,9 +21,9 @@ from ltcore import config
 def test_bootstrap_config_flag_selects_venv(tmp_path, monkeypatch, flag_style, explicit_argv):
     """The config flag must select the venv before dependency re-execution."""
     selected = tmp_path / "selected.toml"
-    selected.write_text('[paths]\ndata_dir = "selected-data"\n', encoding="utf-8")
+    selected.write_text('[paths]\ndata_dir = "selected-data"\n', encoding="utf-8", newline="\n")
     other = tmp_path / "other.toml"
-    other.write_text('[paths]\ndata_dir = "other-data"\n', encoding="utf-8")
+    other.write_text('[paths]\ndata_dir = "other-data"\n', encoding="utf-8", newline="\n")
     monkeypatch.setenv("LT_SUITE_CONFIG", str(other))
     py = Path(ltcore.venv_python(str(tmp_path / "selected-data")))
     py.parent.mkdir(parents=True)
@@ -59,7 +59,7 @@ def test_config_creation_race_preserves_existing_file(tmp_path, monkeypatch, for
     mkstemp = config.tempfile.mkstemp
 
     def competing_create(*args, **kwargs):
-        target.write_text(original, encoding="utf-8")
+        target.write_text(original, encoding="utf-8", newline="\n")
         return mkstemp(*args, **kwargs)
 
     monkeypatch.setattr(config.tempfile, "mkstemp", competing_create)
@@ -119,8 +119,8 @@ def test_config_forced_replacements_serialize_backup(tmp_path, monkeypatch):
         finally:
             release_first.set()
         assert first.result(timeout=5) == second.result(timeout=5) == target
-    assert tomllib.loads(target.read_text())["institution"]["name"] == "second"
-    assert tomllib.loads(target.with_suffix(".toml.bak").read_text())["institution"]["name"] == "first"
+    assert tomllib.loads(target.read_text(encoding="utf-8"))["institution"]["name"] == "second"
+    assert tomllib.loads(target.with_suffix(".toml.bak").read_text(encoding="utf-8"))["institution"]["name"] == "first"
 
 
 def test_config_failed_replace_cleans_temp_and_lock(tmp_path, monkeypatch):
@@ -137,7 +137,7 @@ def test_config_failed_replace_cleans_temp_and_lock(tmp_path, monkeypatch):
     assert target.read_bytes() == target.with_suffix(".toml.bak").read_bytes() == before
     assert sorted(p.name for p in tmp_path.iterdir()) == ["config.toml", "config.toml.bak"]
     config.write({"institution": {"name": "Updated"}}, target, force=True)
-    assert tomllib.loads(target.read_text())["institution"]["name"] == "Updated"
+    assert tomllib.loads(target.read_text(encoding="utf-8"))["institution"]["name"] == "Updated"
 
 
 @pytest.mark.parametrize("location", ["git-directory", "worktree-file", "data-symlink", "venv-symlink"])
@@ -148,7 +148,7 @@ def test_runtime_environment_stays_outside_repositories(tmp_path, monkeypatch, l
     repo.mkdir()
     marker = repo / ".git"
     if location == "worktree-file":
-        marker.write_text("gitdir: elsewhere\n")
+        marker.write_text("gitdir: elsewhere\n", encoding="utf-8", newline="\n")
     else:
         marker.mkdir()
     external = tmp_path / "external"

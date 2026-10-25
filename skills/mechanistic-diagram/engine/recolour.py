@@ -418,7 +418,7 @@ def trace(mask, scale, turd=8):
         pbm = Path(td) / "m.pbm"
         Image.fromarray(~m).convert("1").save(pbm)      # potrace traces black
         svg = subprocess.run(["potrace", "-b", "svg", "-t", str(turd * scale), "-a", "1.1", "-O", "0.3",
-                              "--flat", "-o", "-", str(pbm)], capture_output=True, text=True, check=True).stdout
+                              "--flat", "-o", "-", str(pbm)], capture_output=True, text=True, check=True, encoding="utf-8").stdout
     g = re.search(r'transform="translate\(([-\d.]+),([-\d.]+)\) scale\(([-\d.]+),([-\d.]+)\)"', svg)
     tx, ty, sx, sy = (float(v) for v in g.groups())
     ds = re.findall(r'<path d="([^"]+)"', svg, re.S)
@@ -439,6 +439,9 @@ def hexs(lab):
 
 
 def main():
+    from ltcore.streams import configure_utf8
+    configure_utf8()
+
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     ap.add_argument("src", type=Path)
     ap.add_argument("--palette", "--flavour", dest="flavour", required=True,
@@ -557,13 +560,13 @@ def main():
         for dd, (tx, ty, sx, sy) in trace(ink, 1, turd=2 * S):
             parts.append(f'<path fill="{hexs(inkc)}" transform="translate({tx / S:.3f},{ty / S:.3f}) scale({sx / S:.6f},{sy / S:.6f})" d="{dd}"/>')
         parts.append("</g></svg>")
-        out.write_text("\n".join(parts))
+        out.write_text("\n".join(parts), encoding="utf-8", newline="\n")
 
     if a.meta:
         a.meta.write_text(json.dumps(dict(src=a.src.name, src_size=[int(rgb.shape[1]), int(rgb.shape[0])],
                                           crop=[int(x0), int(y0), int(x1), int(y1)], out=out.name, out_size=[int(w), int(h)],
                                           flavour=a.flavour, bg=a.bg, card=hexs(card), mode=a.mode, scale=a.scale,
-                                          logo=notes), indent=1))
+                                          logo=notes), indent=1), encoding="utf-8", newline="\n")
     if a.report:
         print(f"{a.src.name} -> {out.name}: crop x {x0}-{x1}, y {y0}-{y1}; paper {hexs(paper)}; card {a.bg} {hexs(card)}")
         for n in notes:

@@ -57,6 +57,7 @@ import numpy as np
 
 sys.dont_write_bytecode = True
 import _bootstrap  # noqa: E402,F401  (engine and shared core on sys.path)
+from _legacy import read_legacy_text
 
 ENGINE = pathlib.Path(__file__).resolve().parent
 import core as E
@@ -1634,7 +1635,7 @@ def engine_verdict(base, data):
     and a tee that end on one line)."""
     fake = with_layout(base, data)
     res = LE.run(fake, quiet=True)
-    g = json.loads(pathlib.Path(res["geometry"]).read_text())
+    g = json.loads(read_legacy_text(pathlib.Path(res["geometry"])))
     edges = g["edges"]
     unrouted = list(res["unrouted"])
     rects = {k: tuple(v) for k, v in g["clusters"].items()}
@@ -2038,7 +2039,7 @@ def write_draft(path, case_dir, A, data, verdict, plan, variant, seed, effort, e
     for (a, b), sp in data["HINT"].items():
         lines.append(f"    ({a!r}, {b!r}): {_fmt_spec(sp)},")
     lines.append("}")
-    path.write_text("\n".join(lines) + "\n")
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8", newline="\n")
 
 
 # =========================================================================== the whole run
@@ -2232,6 +2233,9 @@ def _place_bottom(A, plan, data, tables, bar_rank, seed, effort, workers):
 
 
 def main(argv):
+    from ltcore.streams import configure_utf8
+    configure_utf8()
+
     ap = argparse.ArgumentParser(description="Draft a layout.py from content.py alone (see the module docstring).")
     ap.add_argument("case_dir")
     ap.add_argument("--out", help="the draft's file name or path (default layout.draft.py, or layout_<variant>.draft.py)")

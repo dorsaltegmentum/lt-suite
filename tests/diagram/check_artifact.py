@@ -69,7 +69,7 @@ class Strict(html.parser.HTMLParser):
 def check(page, epoch=None, palettes=None):
     """Problems found in a built page (empty: it passes). palettes: the expected number of palettes."""
     import shutil
-    text = pathlib.Path(page).read_text()
+    text = pathlib.Path(page).read_text(encoding="utf-8")
     head = text[:3000].lower()
     bad = []
     if not head.lstrip().startswith("<!doctype html>"):
@@ -127,7 +127,7 @@ def check(page, epoch=None, palettes=None):
         if set(seen_stages) != stages:
             bad.append(f"figure {k}: stage containers differ from the figure data")
 
-    ui = (ENGINE / "artifact_ui.js").read_text()
+    ui = (ENGINE / "artifact_ui.js").read_text(encoding="utf-8")
     wanted = set(re.findall(r"\$\('([A-Za-z0-9_-]+)'\)", ui)) | set(re.findall(r"getElementById\('([A-Za-z0-9_-]+)'\)", ui))
     made = set(re.findall(r"\.id = '([A-Za-z0-9_-]+)'", ui))          # ids the script gives elements it creates
     bad += [f"the page script asks for #{i}, which the page lacks" for i in sorted(wanted - set(P.ids) - made)]
@@ -140,9 +140,9 @@ def check(page, epoch=None, palettes=None):
         if re.search(r"\b(alert|confirm|prompt)\s*\(", src):
             bad.append("a script calls alert/confirm/prompt")
         if shutil.which("node"):
-            with tempfile.NamedTemporaryFile("w", suffix=".js", delete=False) as f:
+            with tempfile.NamedTemporaryFile("w", suffix=".js", delete=False, encoding="utf-8", newline="\n") as f:
                 f.write(src)
-            r = subprocess.run(["node", "--check", f.name], capture_output=True, text=True)
+            r = subprocess.run(["node", "--check", f.name], capture_output=True, text=True, encoding="utf-8")
             pathlib.Path(f.name).unlink()
             if r.returncode:
                 bad.append("a script does not parse: " + r.stderr.strip().splitlines()[-1])

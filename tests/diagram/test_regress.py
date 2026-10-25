@@ -18,7 +18,7 @@ MANIFEST = HERE / "reference" / "toy-case.manifest.json"
 
 
 def test_manifest_records_every_palette_and_file():
-    man = json.loads(MANIFEST.read_text())
+    man = json.loads(MANIFEST.read_text(encoding="utf-8"))
     assert man["slug"] == "toy-case"
     assert len(man["palettes"]) >= 2
     for p in man["palettes"]:
@@ -38,11 +38,11 @@ def test_fresh_build_matches_the_manifest(toy_build, engine_env):
 
 def test_a_changed_build_fails(toy_copy, engine_env):
     geo = toy_copy / "geometry.json"
-    data = json.loads(geo.read_text())
+    data = json.loads(geo.read_text(encoding="utf-8"))
     data["nodes"]["m_low"]["x"] += 1
-    geo.write_text(json.dumps(data))
+    geo.write_text(json.dumps(data), encoding="utf-8", newline="\n")
     svg = next(toy_copy.glob("final-*.svg"))
-    svg.write_text(svg.read_text().replace("<text ", '<text data-moved="1" ', 1))
+    svg.write_text(svg.read_text(encoding="utf-8").replace("<text ", '<text data-moved="1" ', 1), encoding="utf-8", newline="\n")
     r = run_engine("regress.py", toy_copy, "--manifest", MANIFEST, cwd=toy_copy.parent, env=engine_env)
     assert r.returncode == 1
     assert "FAIL geometry.json" in r.stdout

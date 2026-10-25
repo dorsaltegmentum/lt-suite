@@ -55,7 +55,7 @@ def _clean_env(tmp: Path) -> dict[str, str]:
     env["LT_SUITE_DATA"] = str(tmp / "data")
     env["LT_SUITE_CACHE"] = str(tmp / "cache")
     cfg = tmp / "config.toml"
-    cfg.write_text("schema_version = 1\n", encoding="utf-8")
+    cfg.write_text("schema_version = 1\n", encoding="utf-8", newline="\n")
     env["LT_SUITE_CONFIG"] = str(cfg)  # an empty config: defaults only, never the user's file
     env["LT_SUITE_NO_INSTALL"] = "1"
     return env
@@ -63,7 +63,7 @@ def _clean_env(tmp: Path) -> dict[str, str]:
 
 def build_venv(skill_dir: Path, where: Path) -> tuple[Path | None, str]:
     venv = where / "venv"
-    r = subprocess.run([sys.executable, "-m", "venv", str(venv)], capture_output=True, text=True)
+    r = subprocess.run([sys.executable, "-m", "venv", str(venv)], capture_output=True, text=True, encoding="utf-8")
     if r.returncode:
         return None, f"venv creation failed: {r.stderr.strip()[-400:]}"
     py = venv / ("Scripts/python.exe" if os.name == "nt" else "bin/python")
@@ -71,7 +71,7 @@ def build_venv(skill_dir: Path, where: Path) -> tuple[Path | None, str]:
     if req.is_file() and any(line.strip() and not line.startswith("#")
                              for line in req.read_text(encoding="utf-8").splitlines()):
         r = subprocess.run([str(py), "-m", "pip", "install", "-q", "-r", str(req)],
-                           capture_output=True, text=True)
+                           capture_output=True, text=True, encoding="utf-8")
         if r.returncode:
             return None, f"pip install -r requirements.txt failed: {r.stderr.strip()[-600:]}"
     return py, "venv from requirements.txt"
@@ -101,7 +101,7 @@ def check_skill(name: str, *, root: Path, use_venv: bool, timeout: int) -> list[
             rel = s.relative_to(dst).as_posix()
             try:
                 r = subprocess.run([str(py), str(s), "--help"], cwd=elsewhere, env=env,
-                                   capture_output=True, text=True, timeout=timeout)
+                                   capture_output=True, text=True, timeout=timeout, encoding="utf-8")
             except subprocess.TimeoutExpired:
                 fails.append(f"{rel} --help did not finish in {timeout} s")
                 continue
@@ -115,7 +115,7 @@ def check_skill(name: str, *, root: Path, use_venv: bool, timeout: int) -> list[
             env2 = dict(env)
             env2["PYTHONPATH"] = str(shared)
             r = subprocess.run([str(py), "-c", "import ltcore.validate"], cwd=elsewhere,
-                               env=env2, capture_output=True, text=True, timeout=timeout)
+                               env=env2, capture_output=True, text=True, timeout=timeout, encoding="utf-8")
             if r.returncode != 0:
                 tail = r.stderr.strip().splitlines()[-6:]
                 fails.append("import ltcore.validate failed: " + " | ".join(tail))
@@ -125,6 +125,12 @@ def check_skill(name: str, *, root: Path, use_venv: bool, timeout: int) -> list[
 
 
 def main(argv: list[str] | None = None) -> int:
+    import sys
+    from pathlib import Path
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "shared"))
+    from ltcore.streams import configure_utf8
+    configure_utf8()
+
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--skill", action="append", help="check only this skill (repeatable)")

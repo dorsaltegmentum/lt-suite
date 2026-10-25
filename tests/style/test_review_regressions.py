@@ -78,18 +78,18 @@ def test_prepared_svg_preserves_relative_linked_png(tmp_path, href):
     text = (f'<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" '
             f'width="20" height="20"><image {href}="tile.png" width="20" height="20"/>'
             '<text x="0" y="19" font-family="Noto Sans">.</text></svg>')
-    src.write_text(text)
+    src.write_text(text, encoding="utf-8", newline="\n")
     out, _ = R.convert(src, tmp_path / 'out.png', cache_dir=tmp_path / 'cache')
     with Image.open(out) as im:
         assert im.convert('RGB').getpixel((5, 5)) == (255, 0, 0)
-    assert src.read_text() == text
+    assert src.read_text(encoding="utf-8") == text
 
 
 @pytest.mark.requires_bin('rsvg-convert')
 def test_relative_svg_source_resolves_before_changing_directory(tmp_path, monkeypatch):
     nested = tmp_path / 'nested'
     nested.mkdir()
-    (nested / 'figure.svg').write_text('<svg xmlns="http://www.w3.org/2000/svg" width="4" height="4"/>')
+    (nested / 'figure.svg').write_text('<svg xmlns="http://www.w3.org/2000/svg" width="4" height="4"/>', encoding="utf-8", newline="\n")
     monkeypatch.chdir(tmp_path)
     path, _ = R.convert('nested/figure.svg', tmp_path / 'out.png', prepare_fonts=False)
     assert path.read_bytes().startswith(b'\x89PNG')
@@ -99,7 +99,7 @@ def test_relative_svg_source_resolves_before_changing_directory(tmp_path, monkey
 def test_raster_height_changes_actual_output(tmp_path):
     Image = pytest.importorskip('PIL.Image')
     src = tmp_path / 'figure.svg'
-    src.write_text('<svg xmlns="http://www.w3.org/2000/svg" width="40" height="20"/>')
+    src.write_text('<svg xmlns="http://www.w3.org/2000/svg" width="40" height="20"/>', encoding="utf-8", newline="\n")
     path, _ = R.convert(src, tmp_path / 'out.png', height=60, prepare_fonts=False)
     with Image.open(path) as im:
         assert im.height == 60
@@ -124,7 +124,7 @@ def test_cache_separates_mode(tmp_path):
 def test_custom_catalog_id_bypasses_shipped_override(tmp_path):
     file = tmp_path / 'custom.toml'
     file.write_text('[[palette]]\nid="catppuccin-latte"\nmode="light"\n[palette.roles]\n' +
-                    '\n'.join(f'{k}="{v}"' for k, v in P.catalog()['tol-medium-contrast']['roles'].items()))
+                    '\n'.join(f'{k}="{v}"' for k, v in P.catalog()['tol-medium-contrast']['roles'].items()), encoding="utf-8", newline="\n")
     theme = P.derive_theme('catppuccin-latte', {'style.custom_palettes_file': str(file)}, use_cache=False)
     assert theme['canvas'] == '#ffffff'
     assert theme['source'] == 'derived'
@@ -202,7 +202,7 @@ def test_pdf_cleaner_rejects_changed_page_count(tmp_path):
 
 def test_custom_palette_rejects_invalid_mode(tmp_path):
     file = tmp_path / 'bad.toml'
-    file.write_text('[[palette]]\nid="bad"\nmode="invalid"\n[palette.roles]\nbackground="#fff"\ntext="#000"')
+    file.write_text('[[palette]]\nid="bad"\nmode="invalid"\n[palette.roles]\nbackground="#fff"\ntext="#000"', encoding="utf-8", newline="\n")
     with pytest.raises(P.PaletteError, match='mode'):
         P.load_custom(file)
 
@@ -418,7 +418,7 @@ def test_read_only_svg_folder_renders_with_a_warning(tmp_path):
     folder.mkdir()
     src = folder / 'figure.svg'
     src.write_text('<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20">'
-                   '<text x="0" y="19" font-family="Noto Sans">a</text></svg>')
+                   '<text x="0" y="19" font-family="Noto Sans">a</text></svg>', encoding="utf-8", newline="\n")
     folder.chmod(0o555)
     try:
         if os.access(folder, os.W_OK):

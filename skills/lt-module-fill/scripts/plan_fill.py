@@ -475,6 +475,9 @@ def load_json(path: str) -> dict:
 
 
 def main(argv: list[str] | None = None) -> int:
+    from ltcore.streams import configure_utf8
+    configure_utf8()
+
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("module")
@@ -513,7 +516,7 @@ def main(argv: list[str] | None = None) -> int:
     if args.out:
         out = Path(args.out)
         out.parent.mkdir(parents=True, exist_ok=True)
-        out.write_text(json.dumps(pl, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
+        out.write_text(json.dumps(pl, indent=1, ensure_ascii=False) + "\n", encoding="utf-8", newline="\n")
     if args.json:
         print(json.dumps(pl, indent=1, ensure_ascii=False))
     else:

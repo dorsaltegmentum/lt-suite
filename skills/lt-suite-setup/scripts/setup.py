@@ -48,6 +48,11 @@ if sys.version_info < (3, 8):
 SCRIPTS_DIR = Path(__file__).resolve().parent
 SKILL_DIR = SCRIPTS_DIR.parent
 SHARED_DIR = SCRIPTS_DIR / "_shared"
+# Load the shared stream helper without importing the Python 3.11 core.
+_stream_spec = importlib.util.spec_from_file_location(
+    "lt_suite_streams", SHARED_DIR / "ltcore" / "streams.py")
+_stream_module = importlib.util.module_from_spec(_stream_spec)
+_stream_spec.loader.exec_module(_stream_module)
 # Load this stdlib helper directly so bootstrap still starts before Python 3.11.
 _req_spec = importlib.util.spec_from_file_location(
     "lt_suite_requirement_guards", SHARED_DIR / "ltcore" / "requirements.py")
@@ -599,7 +604,8 @@ def cmd_bootstrap(a):
     for c in conflicts:
         say("note: conflicting pins: " + c)
     reqfile = venv / "lt-suite-requirements.txt"
-    reqfile.write_text("\n".join(required) + ("\n" if required else ""), encoding="utf-8")
+    with reqfile.open("w", encoding="utf-8", newline="\n") as stream:
+        stream.write("\n".join(required) + ("\n" if required else ""))
     want = {dist_name(r): DIST_TO_IMPORT.get(dist_name(r), dist_name(r).replace("-", "_"))
             for r in required if requirement_applies(r, ver)}
     missing = _modules_missing(str(venv_py), sorted(set(want.values())))
@@ -1483,6 +1489,7 @@ def build_parser():
 
 
 def main(argv=None):
+    _stream_module.configure_utf8()
     argv = list(sys.argv[1:] if argv is None else argv)
     ap = build_parser()
     a = ap.parse_args(argv)

@@ -55,7 +55,7 @@ def test_local_fonts_by_default(toy_build):
 
 def test_google_fonts_only_when_asked(toy_copy, tmp_path, engine_env):
     cfg = tmp_path / "google.toml"
-    cfg.write_text('[fonts]\npage_fonts = "google"\n')
+    cfg.write_text('[fonts]\npage_fonts = "google"\n', encoding="utf-8", newline="\n")
     r = run_engine("drawio.py", toy_copy, "--trust-case", "--config", cfg, cwd=toy_copy.parent, env=engine_env, timeout=300)
     assert r.returncode == 0, r.stdout[-2000:] + r.stderr[-2000:]
     text = (toy_copy / "toy-case.drawio").read_text(encoding="utf-8")

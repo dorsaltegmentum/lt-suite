@@ -9,7 +9,7 @@ FIX=Path(__file__).resolve().parents[1]/'fixtures'
 M=FIX/'modules/module-c1-r108.json';F=FIX/'fill-reports/fill-report-c1-r108.json'
 
 
-def docs():return json.loads(F.read_text()),json.loads(M.read_text())
+def docs():return json.loads(F.read_text(encoding="utf-8")),json.loads(M.read_text(encoding="utf-8"))
 
 
 @pytest.mark.parametrize('mutation,rail',[
@@ -33,22 +33,22 @@ def test_each_check_rail(mutation,rail):
 def test_recorded_status_is_independent_of_live_store(tmp_path):
     doc,mod=docs();assert ca.rails(doc,mod)==[]
     # A new classification elsewhere cannot change the policy that authorized these presses.
-    (tmp_path/'page-kinds.json').write_text('{"marks":[]}')
+    (tmp_path/'page-kinds.json').write_text('{"marks":[]}', encoding="utf-8", newline="\n")
     assert ca.rails(doc,mod)==[]
 
 
 def test_report_projection_survives_current_setting_off(emit_mod,tmp_path):
     import make_fill_report
     from ltcore import config,page_kinds,rat
-    mod=json.loads(M.read_text());ans=json.loads((FIX/'answers/answers-c1-r108.json').read_text());source=json.loads(F.read_text())
-    ledger=json.loads((FIX/'runs/c1-r108/check-answer.json').read_text())
+    mod=json.loads(M.read_text(encoding="utf-8"));ans=json.loads((FIX/'answers/answers-c1-r108.json').read_text(encoding="utf-8"));source=json.loads(F.read_text(encoding="utf-8"))
+    ledger=json.loads((FIX/'runs/c1-r108/check-answer.json').read_text(encoding="utf-8"))
     receipts={'receipts':[dict(i['receipt'],item_id=i['item_id']) for i in source['items'] if i.get('receipt')]}
     notes={'approval_mode':'manual','started_at':'2000-01-01T00:00:00Z','ended_at':'2000-01-01T00:00:00Z'}
     cfg=config.load()
     # Refresh the synthetic record under the effective policy, including its week pattern.
     import hashlib
     record=page_kinds.classify(mod,rat.policy_from_config(cfg),answers=ans,
-        record=json.loads((FIX/'page-kinds/page-kinds-c1-r108.json').read_text()),
+        record=json.loads((FIX/'page-kinds/page-kinds-c1-r108.json').read_text(encoding="utf-8")),
         answers_sha256=hashlib.sha256((FIX/'answers/answers-c1-r108.json').read_bytes()).hexdigest())
     pin=tmp_path/'page-kinds.json';page_kinds.atomic_write(pin,record)
     report,_=make_fill_report.build(mod,ans,receipts,notes,FIX/'answers/answers-c1-r108.json',None,
@@ -88,7 +88,7 @@ def test_check_summary_preserves_informed_fill_classification(tmp_path):
     for item in doc['items']:item.pop('check_answer',None)
     doc.pop('check_answer');doc.pop('source_check_answer',None)
     mod['pages'][0]['content']=[{'text':'iRAT terminology appears in this ordinary exercise.'}]
-    ans=json.loads((FIX/'answers/answers-c1-r108.json').read_text())
+    ans=json.loads((FIX/'answers/answers-c1-r108.json').read_text(encoding="utf-8"))
     record=page_kinds.classify(mod,rat.DEFAULT_POLICY,answers=ans)
     record=page_kinds.mark(mod,record,1,'not-rat','This page is an ordinary exercise.')
     path=tmp_path/'page-kinds.json';page_kinds.atomic_write(path,record)
@@ -105,7 +105,7 @@ def test_check_summary_preserves_informed_fill_classification(tmp_path):
 
 def test_historical_check_scope_survives_unneeded_classification_pin_change(tmp_path):
     doc,mod=docs()
-    path=tmp_path/'page-kinds.json';path.write_text('{"marks":[]}')
+    path=tmp_path/'page-kinds.json';path.write_text('{"marks":[]}', encoding="utf-8", newline="\n")
     doc['source_page_kinds']={'path':str(path),'sha256':'0'*64}
     result=validate.validate_doc(doc,'fill-report',module=mod,base_dir=F.parent)
     assert result.exit_code==0,(result.fatal,result.schema_errors,result.rail_errors)
@@ -116,6 +116,6 @@ def test_check_scope_uses_effective_rat_markers(tmp_path):
     doc,mod=docs()
     mod['pages'][0]['content']=[{'text':'iRAT terminology in an ordinary exercise.'}]
     cfg=tmp_path/'lt-suite.toml'
-    cfg.write_text('[rat.kind_markers]\nirat="CUSTOM_INDIVIDUAL"\ntrat="CUSTOM_TEAM"\n')
+    cfg.write_text('[rat.kind_markers]\nirat="CUSTOM_INDIVIDUAL"\ntrat="CUSTOM_TEAM"\n', encoding="utf-8", newline="\n")
     result=validate.validate_doc(doc,'fill-report',module=mod,base_dir=F.parent,config_path=cfg)
     assert result.exit_code==0,(result.fatal,result.schema_errors,result.rail_errors)

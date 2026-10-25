@@ -72,7 +72,7 @@ def check(case_dir, nodes=None, trust=False):
         counts["missing"] = len(tx)
         return lines, counts
     try:
-        led = json.loads(p.read_text())
+        led = json.loads(p.read_text(encoding="utf-8"))
     except ValueError as ex:
         raise SystemExit(f"{head}: {p} is not valid JSON: {ex}")
     verdicts = led.get("verdicts", {})
@@ -126,6 +126,9 @@ def check(case_dir, nodes=None, trust=False):
 
 
 def main(argv):
+    from ltcore.streams import configure_utf8
+    configure_utf8()
+
     ap = argparse.ArgumentParser(description="Check a case's treatment boxes against its guideline ledger.")
     ap.add_argument("case_dir")
     ap.add_argument("--config", help="lt-suite config file (default: the usual lookup)")

@@ -118,7 +118,7 @@ def test_record_and_check_verify_preserve_policy_after_disable(kit):
     kit.write('check.json',receipt)
     r=kit.emit('check-verify','--module','module.json','--check','check.json','--no-render')
     assert r.returncode==0,r.stderr
-    assert h in (kit.run_dir()/'fill-js/_verify-check-c1-r101.js').read_text()
+    assert h in (kit.run_dir()/'fill-js/_verify-check-c1-r101.js').read_text(encoding="utf-8")
     kit.config('')
     kit.write('verify.json',{'ok':True,'module':'c1-r101','mode':'check-verify','fresh_load':True,'doc_id':'fresh','items':[['p1-11','ok',0,h]],'observed_at':'2000-01-01T00:00:01Z'})
     r=kit.emit('record','--module','module.json','--check','check.json','--verify','verify.json')
@@ -267,7 +267,7 @@ def test_check_render_pins_live_classification_inputs(kit):
     owned_payload(kit, mod, ans)
     result = check(kit)
     assert result.returncode == 0, result.stderr
-    source = next((kit.run_dir() / 'fill-js').glob('_check-*-p1.js')).read_text()
+    source = next((kit.run_dir() / 'fill-js').glob('_check-*-p1.js')).read_text(encoding="utf-8")
     cfg = json.JSONDecoder().raw_decode(source.rsplit('return await LtCheck.run(', 1)[1])[0]
     assert cfg['classification_pin']['title'] == mod['pages'][0]['title']
     assert cfg['classification_pin']['content'] == {

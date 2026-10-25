@@ -45,7 +45,7 @@ def rep(kit):
 
 
 def notes_doc(**kw):
-    d = json.loads(NOTES.read_text())
+    d = json.loads(NOTES.read_text(encoding="utf-8"))
     d.update(kw)
     return d
 
@@ -63,7 +63,7 @@ def test_a_valid_report_lists_the_weak_pages(rep):
 
 
 def test_a_receipt_whose_hashes_differ_is_failed(rep):
-    rows = json.loads(RCP.read_text())
+    rows = json.loads(RCP.read_text(encoding="utf-8"))
     rows[0]["observed_hash"] = 1
     r, doc = rep(receipts=rows)
     item = next(i for i in doc["items"] if i["item_id"] == rows[0]["item_id"])
@@ -90,7 +90,7 @@ def test_refusals_write_nothing(rep, label, notes):
 
 
 def test_refuses_a_planned_item_missing_both_receipt_and_note(rep):
-    rows = [x for x in json.loads(RCP.read_text()) if x["item_id"] != "p2-12"]
+    rows = [x for x in json.loads(RCP.read_text(encoding="utf-8")) if x["item_id"] != "p2-12"]
     n = notes_doc()
     n["items"] = {k: v for k, v in n["items"].items() if k != "p2-12"}
     r, doc = rep(notes=n, receipts=rows)

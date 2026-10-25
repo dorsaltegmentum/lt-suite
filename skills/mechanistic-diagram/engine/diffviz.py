@@ -26,6 +26,7 @@ pixels that differ outside the outlined changes are tinted magenta: they show wh
 does not, such as a colour, a stroke or a new glyph. A band above the picture holds the legend and
 the counts. build.py prints the summary whenever accepted/ exists.
 """
+from _legacy import read_legacy_text
 import argparse
 import datetime
 import difflib
@@ -75,7 +76,7 @@ def accept(case_dir, src=None):
         shutil.copyfile(s / f, a / f)
     meta = {"accepted": datetime.datetime.now().astimezone().isoformat(timespec="seconds"), "from": str(s),
             "sha256": {f: sha256(a / f) for f in FILES}}
-    (a / "accepted.json").write_text(json.dumps(meta, indent=1) + "\n")
+    (a / "accepted.json").write_text(json.dumps(meta, indent=1) + "\n", encoding="utf-8", newline="\n")
     print(f"accepted {s} -> {a} ({', '.join(FILES)})")
     return a
 
@@ -416,9 +417,9 @@ def run(case_dir, draw=True, quiet=False):
     a = d / ACCEPTED
     if not (a / "geometry.json").exists():
         return None
-    old = json.loads((a / "geometry.json").read_text())
-    new = json.loads((d / "geometry.json").read_text())
-    meta = json.loads((a / "accepted.json").read_text()) if (a / "accepted.json").exists() else None
+    old = json.loads(read_legacy_text(a / "geometry.json"))
+    new = json.loads(read_legacy_text(d / "geometry.json"))
+    meta = json.loads(read_legacy_text(a / "accepted.json")) if (a / "accepted.json").exists() else None
     ch = compare(old, new)
     out = None
     if draw:
@@ -430,6 +431,9 @@ def run(case_dir, draw=True, quiet=False):
 
 
 def main(argv):
+    from ltcore.streams import configure_utf8
+    configure_utf8()
+
     ap = argparse.ArgumentParser(description="Compare a build with its accepted snapshot, or take one.")
     ap.add_argument("case_dir")
     ap.add_argument("--accept", action="store_true", help="snapshot the build (or --from DIR) as accepted/")

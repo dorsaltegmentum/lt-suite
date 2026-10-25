@@ -565,7 +565,7 @@ def svg_pdf(svg, radius_pt, w_pt):
     key = hashlib.sha1(text.encode()).hexdigest()[:16]
     src, out = (os.path.join(IMAGE_CACHE, f"{key}{ext}") for ext in (".svg", ".pdf"))
     if not os.path.exists(out):
-        Path(src).write_text(text, encoding="utf-8")
+        Path(src).write_text(text, encoding="utf-8", newline="\n")
         _svg_to_pdf(src, out)
     return out
 
@@ -1031,7 +1031,7 @@ def render_page(page: Path, out: Path, cfg) -> dict:
             "converged": converged, "labels": doc.label_audit,
             "splits": doc.splits, "kinds": doc.kinds, "glyph_subs": dict(PW.GLYPH_SUBS)}
     (out / ".build.json").write_text(json.dumps(report, ensure_ascii=False, indent=1),
-                                     encoding="utf-8")
+                                     encoding="utf-8", newline="\n")
     return report
 
 
@@ -1088,7 +1088,7 @@ def finalise(report: dict, out: Path, cfg) -> bool:
             bad.append({"file": str(p), "step": "verify", "status": "verify",
                         "detail": "cleaning changed what the file shows"})
     (out / ".final.json").write_text(json.dumps(rows + [b for b in bad if b["step"] == "verify"],
-                                                ensure_ascii=False, indent=1), encoding="utf-8")
+                                                ensure_ascii=False, indent=1), encoding="utf-8", newline="\n")
     if bad:
         print("FATAL: final pass: "
               + "; ".join(f"{Path(r['file']).name} {r['step']} {r['status']}" for r in bad)
@@ -1209,6 +1209,9 @@ def build_pdfs(page, out, cfg, *, assets=(), render=None, qc=True, final=True) -
 
 
 def main() -> int:
+    from ltcore.streams import configure_utf8
+    configure_utf8()
+
     ap = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument(

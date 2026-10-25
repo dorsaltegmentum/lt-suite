@@ -27,7 +27,7 @@ def mutated(toy_copy, old, new):
     page = toy_copy / "toy-case.html"
     text = page.read_text(encoding="utf-8")
     assert old in text
-    page.write_text(text.replace(old, new, 1), encoding="utf-8")
+    page.write_text(text.replace(old, new, 1), encoding="utf-8", newline="\n")
     return A.check(page, palettes=palettes(toy_copy))
 
 

@@ -279,7 +279,7 @@ def write_json(path: Path, doc) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     fd, tmp = tempfile.mkstemp(prefix="." + path.name + ".", dir=str(path.parent))
     try:
-        with os.fdopen(fd, "w", encoding="utf-8") as fh:
+        with os.fdopen(fd, "w", encoding="utf-8", newline="\n") as fh:
             fh.write(json.dumps(doc, indent=1, ensure_ascii=False) + "\n")
         os.replace(tmp, path)
     except BaseException:
@@ -786,7 +786,7 @@ def run_text_cleaners(cfg, pay: dict, work: Path) -> tuple[dict, list[str]]:
         if isinstance(timeout, bool) or not isinstance(timeout, int) or timeout <= 0:
             raise Refusal(f"text cleaner {name!r}: timeout_s must be a positive integer")
         fin = work / f"payload-{n}.json"
-        fin.write_text(json.dumps(cur, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
+        fin.write_text(json.dumps(cur, indent=1, ensure_ascii=False) + "\n", encoding="utf-8", newline="\n")
         if cl is not None:
             res = cl.run_cleaner(entry, fin, timeout_s=timeout)
             if getattr(res, "status", None) not in ("cleaned", "unchanged"):
@@ -1217,7 +1217,7 @@ def write_scripts(pay: dict, out: Path, ppath: Path, cfg, st, *, requested: int,
     def emit(name: str, kind: str, pages: list[str], head: str, call: str, ticket: str | None = None) -> None:
         body = head + how + script_body(call, lib_url)
         path = out / name
-        path.write_text(body, encoding="utf-8")
+        path.write_text(body, encoding="utf-8", newline="\n")
         rec = {"name": name, "kind": kind, "pages": [int(p) for p in pages], "source": str(path),
                "bytes": len(body), "rendered": None}
         if ticket:
@@ -1473,7 +1473,7 @@ def cmd_check(args,cfg):
                single_attempt_locked=[[s['page_index'],str(next(i['panel_key'] for pg in mod['pages'] for i in pg['items'] if i['item_id']==s['item_id']))] for s in pl['boundary_map'].get('single_attempts_passed',[]) if s['page_index']<=int(p)],
                dialog_max_ms=cfg.get('fill.dialog.max_ms'),resumed=bool(args.resume))
         source=out/f'_check-{mid}-p{p}.js'
-        source.write_text(LIB.read_text(encoding='utf-8')+ '\n'+ _check_body()+'\nreturn await LtCheck.run('+json.dumps(c)+','+json.dumps(js)+');\n',encoding='utf-8')
+        source.write_text(LIB.read_text(encoding='utf-8')+ '\n'+ _check_body()+'\nreturn await LtCheck.run('+json.dumps(c)+','+json.dumps(js)+');\n',encoding='utf-8', newline="\n")
         if not args.no_render:
             r=render_script(source,form=args.form,stub=True if args.stub else False if args.no_stub else None,cfg=cfg,plan=checkplan,out_dir=str(out))
             print(r['path'] if 'path' in r else r)
@@ -1505,7 +1505,7 @@ def cmd_check_verify(args,cfg):
         return 2
     source=out/f'_verify-check-{mid}.js'
     c={'module_id':mid,'run_id':mod['run_id'],'origin':origin_of(mod['source_url']),'instance':mod.get('instance'),'course_id':mod.get('course_id')}
-    source.write_text(LIB.read_text(encoding='utf-8')+'\n'+_check_body()+'\nreturn await LtCheck.verify('+json.dumps(c)+','+json.dumps(pages)+');\n',encoding='utf-8')
+    source.write_text(LIB.read_text(encoding='utf-8')+'\n'+_check_body()+'\nreturn await LtCheck.verify('+json.dumps(c)+','+json.dumps(pages)+');\n',encoding='utf-8', newline="\n")
     if not args.no_render:
         print(render_script(source,form=args.form,stub=True if args.stub else False if args.no_stub else None,cfg=cfg,plan=load(out/'check-plan.json'),out_dir=str(out)))
     else:
@@ -2188,6 +2188,9 @@ def _render_opts(p) -> None:
 
 
 def main(argv=None) -> int:
+    from ltcore.streams import configure_utf8
+    configure_utf8()
+
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = ap.add_subparsers(dest="cmd", required=True)
     p = sub.add_parser("payload", help="answers.json + module.json -> fill-payload.json and plan.json")

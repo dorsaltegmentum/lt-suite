@@ -17,7 +17,7 @@ def declare(repo, license='OFL-1.1'):
     (repo / 'REUSE.toml').write_text(
         'version = 1\n[[annotations]]\npath = ["vendor/**"]\n'
         'precedence = "override"\nSPDX-FileCopyrightText = "Example Font Authors"\n'
-        f'SPDX-License-Identifier = {json.dumps(license)}\n')
+        f'SPDX-License-Identifier = {json.dumps(license)}\n', encoding="utf-8", newline="\n")
     vendor = repo / 'vendor'
     vendor.mkdir(exist_ok=True)
     return vendor
@@ -27,8 +27,8 @@ def index(gate, tmp_path):
     priv = tmp_path / 'private'
     priv.mkdir()
     salt = b's' * 32
-    (priv / 'shingle-salt').write_text(salt.hex())
-    (priv / 'private-patterns.txt').write_text(OWNER)
+    (priv / 'shingle-salt').write_text(salt.hex(), encoding="utf-8", newline="\n")
+    (priv / 'private-patterns.txt').write_text(OWNER, encoding="utf-8", newline="\n")
     gate.write_index(priv / 'shingles.bin', {
         'course': {h for _, h in gate.text_windows(PHRASE, salt)},
         'prose-flagged': {h for _, h in gate.text_windows('the library staff approved a fresh layout for spring', salt)},
@@ -88,7 +88,7 @@ def test_declared_third_party_keeps_private_and_course(run_gate, gate, tmp_path,
 def test_third_party_uses_course_shingles_only(run_gate, gate, tmp_path):
     repo = tmp_path / 'repo'
     p = declare(repo) / 'notice.txt'
-    p.write_text('the library staff approved a fresh layout for spring')
+    p.write_text('the library staff approved a fresh layout for spring', encoding="utf-8", newline="\n")
     priv = index(gate, tmp_path)
     r = run_gate('--repo', str(repo), '--paths', str(p), '--shingles', str(priv / 'shingles.bin'))
     assert r.returncode == 0 and r.stdout == '', r.stdout + r.stderr
@@ -107,7 +107,7 @@ def test_post_names_do_not_form_cross_record_course_prose(run_gate, gate, tmp_pa
     priv = tmp_path / 'private'
     priv.mkdir()
     salt = b's' * 32
-    (priv / 'shingle-salt').write_text(salt.hex())
+    (priv / 'shingle-salt').write_text(salt.hex(), encoding="utf-8", newline="\n")
     sentence = 'Violet lanterns illuminate copper bridges beside amber rivers'
     gate.write_index(priv / 'shingles.bin', {
         gate.shingle_hash(list('abcdefgh'), salt), gate.shingle_hash(sentence.lower().split(), salt),
@@ -136,7 +136,7 @@ def test_post_structure_keeps_course_checks(run_gate, gate, tmp_path):
     priv = tmp_path / 'private'
     priv.mkdir()
     salt = b's' * 32
-    (priv / 'shingle-salt').write_text(salt.hex())
+    (priv / 'shingle-salt').write_text(salt.hex(), encoding="utf-8", newline="\n")
     gate.write_index(priv / 'shingles.bin', {gate.shingle_hash(sentence.lower().split(), salt)})
     table = struct.pack('>I', 0x20000) + sentence.encode().ljust(28, b'\0') + bytes(2)
     p = tmp_path / 'sample.ttf'
@@ -149,16 +149,16 @@ def test_post_structure_keeps_course_checks(run_gate, gate, tmp_path):
 def test_email_rule_separates_escaped_control_prefixes(run_gate, tmp_path, escape):
     # Escape spelling must not become part of an approved email local part.
     p = tmp_path / 'sample.py'
-    p.write_text("record = 'Example" + escape + EMAIL + "'\n")
+    p.write_text("record = 'Example" + escape + EMAIL + "'\n", encoding="utf-8", newline="\n")
     r = run_gate('--paths', str(p))
     assert r.returncode == 0, r.stdout + r.stderr
-    p.write_text("record = 'Example" + escape + "private.person@foundry.test'\n")
+    p.write_text("record = 'Example" + escape + "private.person@foundry.test'\n", encoding="utf-8", newline="\n")
     r = run_gate('--paths', str(p))
     assert r.returncode == 1 and ' email' in r.stdout
 
 
 def test_email_prefix_without_escape_remains_part_of_address(run_gate, tmp_path):
     p = tmp_path / 'sample.txt'
-    p.write_text('x1f' + EMAIL)
+    p.write_text('x1f' + EMAIL, encoding="utf-8", newline="\n")
     r = run_gate('--paths', str(p))
     assert r.returncode == 1 and ' email' in r.stdout

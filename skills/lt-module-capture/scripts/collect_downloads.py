@@ -252,6 +252,9 @@ def collect(module_id: str, downloads: Path, st: "store.Store", mode: str, since
 
 
 def main(argv: list[str] | None = None) -> int:
+    from ltcore.streams import configure_utf8
+    configure_utf8()
+
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("module_ids", nargs="+", metavar="module-id", help="module id(s), e.g. c1-r101")
     ap.add_argument("--downloads-dir", help="browser download folder (default: config paths.downloads_dir, "

@@ -55,10 +55,10 @@ def hook_config(tmp_path):
     """A config with two diagram cleaners: one removes zero-width spaces, one rewrites visible text."""
     ok = tmp_path / "strip_zwsp.py"
     ok.write_text("import sys\nd = open(sys.argv[1], encoding='utf-8').read()\n"
-                  "open(sys.argv[2], 'w', encoding='utf-8').write(d.replace(chr(0x200B), ''))\n")
+                  "open(sys.argv[2], 'w', encoding='utf-8').write(d.replace(chr(0x200B), ''))\n", encoding="utf-8", newline="\n")
     bad = tmp_path / "rewrite.py"
     bad.write_text("import sys\nd = open(sys.argv[1], encoding='utf-8').read()\n"
-                   "open(sys.argv[2], 'w', encoding='utf-8').write(d.replace('enzyme', 'ENZYME'))\n")
+                   "open(sys.argv[2], 'w', encoding='utf-8').write(d.replace('enzyme', 'ENZYME'))\n", encoding="utf-8", newline="\n")
     cfg = tmp_path / "lt-suite.toml"
     py = sys.executable.replace("\\", "/")
     cfg.write_text(
@@ -66,7 +66,7 @@ def hook_config(tmp_path):
         f"argv = [\"{py}\", \"{ok.as_posix()}\", \"{{in}}\", \"{{out}}\"]\n\n"
         "[[text_cleaners]]\nname = \"rewrite\"\nstage = \"diagram\"\n"
         f"argv = [\"{py}\", \"{bad.as_posix()}\", \"{{in}}\", \"{{out}}\"]\n\n"
-        "[[text_cleaners]]\nname = \"other-stage\"\nstage = \"pdf\"\nargv = [\"false\", \"{pdf}\"]\n")
+        "[[text_cleaners]]\nname = \"other-stage\"\nstage = \"pdf\"\nargv = [\"false\", \"{pdf}\"]\n", encoding="utf-8", newline="\n")
     return cfg
 
 
@@ -75,7 +75,7 @@ def test_hooks_keep_only_invisible_changes(tmp_path, hook_config):
     style.configure(str(hook_config))
     try:
         f = tmp_path / "page.html"
-        f.write_text(f"<p>enzyme{ZWSP} X</p>", encoding="utf-8")
+        f.write_text(f"<p>enzyme{ZWSP} X</p>", encoding="utf-8", newline="\n")
         data, notes, problems = F.run_hooks(f, f.read_bytes(), dry=False)
     finally:
         style.configure(None)
@@ -89,7 +89,7 @@ def test_final_build_of_the_worked_example(toy_copy, engine_env):
         pytest.importorskip("pikepdf", reason="the PDF metadata pass needs pikepdf, qpdf or exiftool")
     r = run_engine("build.py", toy_copy, "--trust-case", "--final", cwd=toy_copy.parent, env=engine_env)
     assert r.returncode == 0, r.stdout[-3000:] + r.stderr[-3000:]
-    report = json.loads((toy_copy / "checks" / "final-report.json").read_text())
+    report = json.loads((toy_copy / "checks" / "final-report.json").read_text(encoding="utf-8"))
     assert report
     text = json.dumps(report)
     assert "error" not in [x.get("status") for x in report if isinstance(x, dict)], text[:2000]

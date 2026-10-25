@@ -288,6 +288,12 @@ def check_zip(path: Path, members: dict[str, bytes]) -> None:
 
 
 def main(argv: list[str] | None = None) -> int:
+    import sys
+    from pathlib import Path
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "shared"))
+    from ltcore.streams import configure_utf8
+    configure_utf8()
+
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--root", type=Path, default=REPO, help=argparse.SUPPRESS)
     parser.add_argument("--out", type=Path, default=Path("dist"), help="output directory (relative to source root)")

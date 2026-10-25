@@ -24,10 +24,10 @@ def test_existing_work_folder_is_preserved(tmp_path):
     work = tmp_path / "work"
     sentinel = work / "codex" / "keep.txt"
     sentinel.parent.mkdir(parents=True)
-    sentinel.write_text("existing work")
+    sentinel.write_text("existing work", encoding="utf-8", newline="\n")
     with pytest.raises(SystemExit, match="must not exist"):
         c.Workspace(repo, str(work), False, "codex")
-    assert sentinel.read_text() == "existing work"
+    assert sentinel.read_text(encoding="utf-8") == "existing work"
 
 
 def test_work_inside_source_is_rejected_before_creation(tmp_path):
@@ -52,8 +52,8 @@ def test_entry_point_bytes_are_checked(tmp_path):
     source, target = tmp_path / "source", tmp_path / "target"
     source.mkdir()
     target.mkdir()
-    (source / "main.py").write_text("print(1)\n")
-    (target / "main.py").write_text("print(2)\n")
+    (source / "main.py").write_text("print(1)\n", encoding="utf-8", newline="\n")
+    (target / "main.py").write_text("print(2)\n", encoding="utf-8", newline="\n")
     assert c.file_set(source) == c.file_set(target)
     assert not c.same_files(source, target)
 
@@ -64,9 +64,9 @@ def test_snapshot_omits_gitignored_render_outputs(tmp_path):
     source = tmp_path / "source"
     source.mkdir()
     subprocess.run(["git", "init", "-q", str(source)], check=True)
-    (source / ".gitignore").write_text("final-*.pdf\n")
+    (source / ".gitignore").write_text("final-*.pdf\n", encoding="utf-8", newline="\n")
     (source / "final-example.pdf").write_bytes(b"synthetic render")
-    (source / "source.py").write_text("print(1)\n")
+    (source / "source.py").write_text("print(1)\n", encoding="utf-8", newline="\n")
     with c.Workspace(source, None, False, "test") as ws:
         assert (ws.repo / "source.py").is_file()
         assert not (ws.repo / "final-example.pdf").exists()

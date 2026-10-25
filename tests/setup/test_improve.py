@@ -25,7 +25,7 @@ CHANGED_TAG = "The example value is 3. [T4:10.1000/example]"
 @pytest.fixture
 def workspace(tmp_path):
     cfg_file = tmp_path / "config.toml"
-    cfg_file.write_text("schema_version = 1\n", encoding="utf-8")
+    cfg_file.write_text("schema_version = 1\n", encoding="utf-8", newline="\n")
     data = tmp_path / "data"
     data.mkdir()
     return cfg_file, data
@@ -48,7 +48,7 @@ def _run(workspace, *args, expected=0):
         env=env,
         capture_output=True,
         text=True,
-    )
+    encoding="utf-8")
     assert result.returncode == expected, (
         f"exit {result.returncode}, expected {expected}\n"
         f"{result.stdout}\n{result.stderr}"
@@ -61,7 +61,7 @@ def _write_diff(tmp_path, before=CLAIM, after=CHANGED_CLAIM):
     path.write_text(
         f"--- a (on disk)\n+++ b (this run)\n-{before}\n+{after}\n",
         encoding="utf-8",
-    )
+    newline="\n")
     return path
 
 
@@ -95,7 +95,7 @@ def _write_run(data, module_id="c1-r101", entries=None):
         record["diff_classification"] = entries
     path = data / "runs" / module_id / "run.json"
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(record) + "\n", encoding="utf-8")
+    path.write_text(json.dumps(record) + "\n", encoding="utf-8", newline="\n")
     return path
 
 
@@ -169,7 +169,7 @@ def test_classify_recognizes_tag_templates_from_config(workspace, tmp_path):
         'label = "L"\n'
         'tag_template = "[R1:{x}]"\n',
         encoding="utf-8",
-    )
+    newline="\n")
     diff = _write_diff(
         tmp_path,
         "The example value is 3. [R1:a]",
@@ -383,7 +383,7 @@ def test_propose_uses_the_configured_benchmark_cell(workspace):
         "[improvement]\n"
         'benchmark_cells = ["lt-module-answer: evals/custom pass rate"]\n',
         encoding="utf-8",
-    )
+    newline="\n")
     _seed_pair(data)
 
     result = _run(workspace, "propose")
@@ -428,7 +428,7 @@ def item_diff(tmp_path):
         "  item:: p3-3\n"
         "\t\t- Claim three, untouched. [T2:ExampleGuide:topic]\n",
         encoding="utf-8",
-    )
+    newline="\n")
     diff = tmp_path / "page.md.diff"
     diff.write_text(
         f"--- {page} (on disk)\n"
@@ -444,7 +444,7 @@ def item_diff(tmp_path):
         "+\t\t- Claim two as drafted, regenerated. [T2:ExampleGuide:topic]\n"
         " - ## Question three\n",
         encoding="utf-8",
-    )
+    newline="\n")
     return diff
 
 

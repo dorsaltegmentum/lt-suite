@@ -15,8 +15,8 @@ FIX = Path(__file__).resolve().parents[1] / 'fixtures'
 
 @pytest.fixture
 def rat_run(kit):
-    mod = json.loads((FIX / 'modules/module-c1-r109.json').read_text())
-    ans = json.loads((FIX / 'answers/answers-c1-r109.json').read_text())
+    mod = json.loads((FIX / 'modules/module-c1-r109.json').read_text(encoding="utf-8"))
+    ans = json.loads((FIX / 'answers/answers-c1-r109.json').read_text(encoding="utf-8"))
     root = kit.tmp / 'sheets'
     root.mkdir()
     for p in (FIX / 'curriculum/Block A/RATs').iterdir():
@@ -57,7 +57,7 @@ def test_T30_payload_jobs_todos_exclusion_and_staleness(rat_run, emit_mod):
     assert groups[-1] == ['3']
     rc, pay, out = kit.payload(mod, ans, '--exclude', 'p3-81')
     assert rc == 0 and 'p3-81' not in [j['item'] for j in pay['pages']['3']['jobs']], out
-    (kit.tmp / 'sheets/1.2-team.md').write_text('changed')
+    (kit.tmp / 'sheets/1.2-team.md').write_text('changed', encoding="utf-8", newline="\n")
     assert kit.payload(mod, ans)[0] == 3
 
 
@@ -67,7 +67,7 @@ def test_T30_missing_answer_refuses_and_single_attempt_held(rat_run):
     kit.write("answers.json", ans)
     page_kinds.classify(mod, rat.policy_from_config(cfg), answers=ans, path=path, answers_sha256=hashlib.sha256((kit.tmp / "answers.json").read_bytes()).hexdigest())
     assert kit.payload(mod, ans)[0] == 3
-    ans = json.loads((FIX / 'answers/answers-c1-r109.json').read_text())
+    ans = json.loads((FIX / 'answers/answers-c1-r109.json').read_text(encoding="utf-8"))
     cap = mod['pages'][2]['items'][0]
     cap['attempts'] = 'single'
     ans['source_module']['question_digest'] = __import__('ltcore.digest', fromlist=['question_digest']).question_digest(mod)
@@ -108,7 +108,7 @@ def test_T32_report_safe_sources_and_todos(rat_run, emit_mod):
     sheet_receipts(kit, mod, ans, emit_mod, bound=True)
     r = kit.run('make_fill_report.py', '--module', 'module.json', '--answers', 'answers.json', '--receipts', 'receipts.json', '--notes', 'notes.json')
     assert r.returncode == 0, r.stdout+r.stderr
-    rep = json.loads((kit.run_dir('c1-r109') / 'fill-report.json').read_text())
+    rep = json.loads((kit.run_dir('c1-r109') / 'fill-report.json').read_text(encoding="utf-8"))
     items = {i['item_id']: i for i in rep['items']}
     assert items['p3-84']['result'] == 'todo'
     assert items['p3-81']['answer_source']['kind'] == 'rat-sheet'
@@ -121,8 +121,8 @@ def test_T32_report_safe_sources_and_todos(rat_run, emit_mod):
 
 def test_T24_legacy_explicit_draft_route(kit, emit_mod):
     import plan_fill
-    mod = json.loads((FIX / 'modules/module-c1-r104.json').read_text())
-    ans = json.loads((FIX / 'answers/answers-c1-r104.json').read_text())
+    mod = json.loads((FIX / 'modules/module-c1-r104.json').read_text(encoding="utf-8"))
+    ans = json.loads((FIX / 'answers/answers-c1-r104.json').read_text(encoding="utf-8"))
     cfg = config.build({}, config.Location(None, 'none', kit.tmp/'config.toml', 'flag'))
     assert any(s['reason'] == 'rat-record-stale' for s in plan_fill.plan(mod, ans, True, cfg)['skipped_pages'])
     pol = rat.policy_from_config(cfg)
@@ -137,9 +137,9 @@ def test_T24_legacy_explicit_draft_route(kit, emit_mod):
 def test_T13_confirmed_partial_emits_only_positional_questions(rat_run):
     kit, mod, ans, cfg, record, path = rat_run
     root = kit.tmp / 'sheets'
-    compact = (root / '1.2-team.md').read_text()
-    (root / '1.2-team.md').write_text(compact.split('4. ?')[0])
-    (root / '1.2-readiness.md').write_text('Synthetic notes without choices')
+    compact = (root / '1.2-team.md').read_text(encoding="utf-8")
+    (root / '1.2-team.md').write_text(compact.split('4. ?')[0], encoding="utf-8", newline="\n")
+    (root / '1.2-readiness.md').write_text('Synthetic notes without choices', encoding="utf-8", newline="\n")
     pol = rat.policy_from_config(cfg)
     record = page_kinds.classify(mod, pol, answers=ans,
                                 answers_sha256=hashlib.sha256((kit.tmp/'answers.json').read_bytes()).hexdigest())
@@ -155,8 +155,8 @@ def test_T13_confirmed_partial_emits_only_positional_questions(rat_run):
 
 
 def test_T24_unavailable_skip_evidence_uses_the_actual_legacy_fixture():
-    mod = json.loads((FIX / 'modules/module-demo.json').read_text())
-    ans = json.loads((FIX / 'answers/answers-demo.json').read_text())
+    mod = json.loads((FIX / 'modules/module-demo.json').read_text(encoding="utf-8"))
+    ans = json.loads((FIX / 'answers/answers-demo.json').read_text(encoding="utf-8"))
     record = page_kinds.classify(mod, answers=ans)
     status = next(s for s in page_kinds.page_status(mod, record) if s['page_index'] == 2)
     assert status['kind'] == 'trat' and status['sources'] == ['answers-json']
@@ -210,7 +210,7 @@ def test_sheet_receipts_cannot_rebind_to_current_classification(rat_run, emit_mo
     sheet_receipts(kit, mod, ans, emit_mod)
     if mutation == 'edited':
         sheet = kit.tmp / 'sheets/1.2-team.md'
-        sheet.write_text(sheet.read_text().replace('1. B', '1. A'))
+        sheet.write_text(sheet.read_text(encoding="utf-8").replace('1. B', '1. A'), encoding="utf-8", newline="\n")
         page_kinds.classify(mod, rat.policy_from_config(cfg), answers=ans, path=path,
                            answers_sha256=hashlib.sha256((kit.tmp/'answers.json').read_bytes()).hexdigest())
     else:
@@ -226,7 +226,7 @@ def test_report_sheet_identity_checked_against_pinned_record(rat_run, emit_mod, 
     sheet_receipts(kit, mod, ans, emit_mod, bound=True)
     result = report(kit)
     assert result.returncode == 0, result.stdout + result.stderr
-    rep = json.loads((kit.run_dir('c1-r109')/'fill-report.json').read_text())
+    rep = json.loads((kit.run_dir('c1-r109')/'fill-report.json').read_text(encoding="utf-8"))
     for row in rep['rat_pages']:
         if row.get('sheet'):
             row['sheet'][field] = '0' * 64 if field == 'sha256' else 'rat.answers_dirs[1]' if field == 'root' else 'invented-other'
@@ -244,7 +244,7 @@ def test_bound_sheet_receipts_refuse_changed_execution_inputs(rat_run, emit_mod,
     rows = sheet_receipts(kit, mod, ans, emit_mod, bound=True)
     if mutation == 'edited':
         sheet = kit.tmp / 'sheets/1.2-team.md'
-        sheet.write_text(sheet.read_text().replace('1. B', '1. A'))
+        sheet.write_text(sheet.read_text(encoding="utf-8").replace('1. B', '1. A'), encoding="utf-8", newline="\n")
         page_kinds.classify(mod, rat.policy_from_config(cfg), answers=ans, path=path,
                            answers_sha256=hashlib.sha256((kit.tmp/'answers.json').read_bytes()).hexdigest())
     elif mutation == 'missing':
@@ -281,7 +281,7 @@ def test_record_sheet_receipts_bind_browser_payload(rat_run, emit_mod, binding):
                       '--verify', 'verify.json', '--payload', 'out/fill-payload.json')
     if binding == 'correct':
         assert result.returncode == 0, result.stdout + result.stderr
-        receipts = json.loads((kit.run_dir(mod['module_id'])/'receipts.json').read_text())['receipts']
+        receipts = json.loads((kit.run_dir(mod['module_id'])/'receipts.json').read_text(encoding="utf-8"))['receipts']
         assert [r['source_payload'] for r in receipts] == [r['source_payload'] for r in rows]
         kit.write('receipts.json', {'receipts': receipts})
         assert report(kit).returncode == 0

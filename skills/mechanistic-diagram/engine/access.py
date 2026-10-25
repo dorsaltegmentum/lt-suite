@@ -50,6 +50,7 @@ import sys
 import xml.etree.ElementTree as ET
 
 import _bootstrap  # noqa: F401  (engine and shared core on sys.path)
+from _legacy import read_legacy_text
 
 ENGINE = pathlib.Path(__file__).resolve().parent
 
@@ -169,7 +170,7 @@ def load_exceptions(path=None):
         path = floor.floor_path()
     p = pathlib.Path(path)
     try:
-        return json.loads(p.read_text()).get("contrast_exceptions", [])
+        return json.loads(p.read_text(encoding="utf-8")).get("contrast_exceptions", [])
     except (OSError, ValueError):
         return []
 
@@ -231,7 +232,7 @@ def _num(v, default=0.0):
 def scan_svg(svg_path):
     """Every <text> in the SVG with the colour painted under it: [dict(text, x, y, fs, weight, fg, bg,
     ratio, need, status)]; status 'ok', 'FAIL' or 'not measured (...)'."""
-    root = ET.parse(svg_path).getroot()
+    root = ET.fromstring(read_legacy_text(svg_path))
     W, H = _num(root.get("width"), 0), _num(root.get("height"), 0)
     painted = []          # (x0, y0, x1, y1, rgb or None for an image, alpha)
     texts = []
@@ -383,7 +384,7 @@ def simulate_png(src, out_dir):
     digest = hashlib.sha256(src.read_bytes()).hexdigest()
     stamp = out_dir / "source.sha256"
     outs = [out_dir / f"{src.stem}-{s}.png" for s in SIMS]
-    if stamp.exists() and stamp.read_text().split()[0] == digest and all(p.exists() for p in outs):
+    if stamp.exists() and read_legacy_text(stamp).split()[0] == digest and all(p.exists() for p in outs):
         return outs, False
     rgba = np.asarray(Image.open(src).convert("RGBA"))        # the page PNG may have transparent rounded corners
     im, alpha = rgba[..., :3], rgba[..., 3:]
@@ -398,7 +399,7 @@ def simulate_png(src, out_dir):
             sim = L @ np.array(MACHADO[s], dtype=np.float32).T
         q = np.clip(sim * 4095 + 0.5, 0, 4095).astype(np.int32)
         Image.fromarray(np.concatenate([enc[q].reshape(im.shape), alpha], axis=2), "RGBA").save(p, compress_level=3)
-    stamp.write_text(f"{digest}  {src.name}\n")
+    stamp.write_text(f"{digest}  {src.name}\n", encoding="utf-8", newline="\n")
     return outs, True
 
 
@@ -414,7 +415,7 @@ def run(case_dir, sims=True, quiet=False, flavours=None, strict=False, exception
     exc = [] if strict else (load_exceptions() if exceptions is None else exceptions)
     lines, fails, known, shortfalls = [], [], [], []
     geo_p = d / "geometry.json"
-    geo = json.loads(geo_p.read_text()) if geo_p.exists() else None
+    geo = json.loads(read_legacy_text(geo_p)) if geo_p.exists() else None
     min_text = min_arrow = None
     say = lines.append
     short = {"risk": "risk", "mech": "mech", "anat": "anat", "sign": "sign", "inv": "inv", "dx": "dx", "tx": "tx"}
@@ -498,6 +499,9 @@ def run(case_dir, sims=True, quiet=False, flavours=None, strict=False, exception
 
 
 def main(argv):
+    from ltcore.streams import configure_utf8
+    configure_utf8()
+
     ap = argparse.ArgumentParser(description="WCAG contrast and colour-vision checks of a case's palettes and SVGs.")
     ap.add_argument("case_dir")
     ap.add_argument("--no-sims", action="store_true", help="do not write the simulated PNGs")

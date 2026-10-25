@@ -88,7 +88,7 @@ class Report:
             Path(json_out).write_text(json.dumps(
                 {"platform": self.platform, "counts": c, "results": self.items,
                  "commands": COMMANDS},
-                indent=1) + "\n", encoding="utf-8")
+                indent=1) + "\n", encoding="utf-8", newline="\n")
         return 1 if c["FAIL"] else 0
 
 
@@ -215,7 +215,7 @@ def run(cmd: list, cwd: Path, env: dict, timeout: int = 120) -> Run:
     try:
         p = subprocess.run([str(c) for c in cmd], cwd=str(cwd), env=env, timeout=timeout,
                            stdin=subprocess.DEVNULL, capture_output=True, text=True,
-                           errors="replace")
+                           errors="replace", encoding="utf-8")
         COMMANDS.append({"argv": [str(c) for c in cmd], "cwd": str(cwd), "exit": p.returncode})
         return Run(p.returncode, strip_ansi(p.stdout), strip_ansi(p.stderr))
     except FileNotFoundError as e:

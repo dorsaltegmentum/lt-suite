@@ -1175,7 +1175,7 @@ def build_run_record(module, answers, fill, diagrams, notes, cfg) -> dict:
 def settled(blob: bytes) -> bytes:
     """Ignore export timestamps so unchanged content never creates replacement conflicts."""
     try:
-        return VOLATILE_RE.sub("", blob.decode("utf-8")).encode()
+        return VOLATILE_RE.sub("", blob.decode("utf-8").replace("\r\n", "\n")).encode("utf-8")
     except UnicodeDecodeError:
         return blob
 
@@ -1237,7 +1237,7 @@ def validated_input(path, schema, validate_mod, scratch, module=None, **kwargs):
         validation_path = cleaned_dir / path.name
         validation_path.write_text(
             json.dumps(doc, ensure_ascii=False) + "\n", encoding="utf-8"
-        )
+        , newline="\n")
     if module is not None:
         kwargs["module"] = module
     result = validate_mod.validate_file(validation_path, schema=schema, **kwargs)
@@ -1252,6 +1252,9 @@ def validated_input(path, schema, validate_mod, scratch, module=None, **kwargs):
 
 
 def main(argv=None) -> int:
+    from ltcore.streams import configure_utf8
+    configure_utf8()
+
     parser = ExportArgumentParser(
         description=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -1659,7 +1662,7 @@ def export_run(args, cfg, st, validate_mod, scratch, outputs, want_pdf) -> int:
                 copy_asset(source, destination)
                 if source.suffix.lower() == ".svg":
                     from ltcore import fonts
-                    destination.write_text(fonts.svg_with_stacks(source.read_text(encoding="utf-8"), cfg), encoding="utf-8")
+                    destination.write_text(fonts.svg_with_stacks(source.read_text(encoding="utf-8"), cfg), encoding="utf-8", newline="\n")
                 if destination not in asset_files:
                     asset_files.append(destination)
 
@@ -1806,7 +1809,7 @@ def export_run(args, cfg, st, validate_mod, scratch, outputs, want_pdf) -> int:
         path = staging_path(out_dir, out_dir / output_filename(name))
         if markdown:
             verify_page_stamp(body, stamp_property, module_id)
-        with path.open("w" if args.overwrite else "x", encoding="utf-8") as stream:
+        with path.open("w" if args.overwrite else "x", encoding="utf-8", newline="\n") as stream:
             stream.write(body)
         report["wrote"].append(str(path))
         return path
@@ -2003,7 +2006,7 @@ def export_run(args, cfg, st, validate_mod, scratch, outputs, want_pdf) -> int:
     run_path.write_text(
         json.dumps(record, indent=1, ensure_ascii=False) + "\n",
         encoding="utf-8",
-    )
+    newline="\n")
     result = validate_mod.validate_file(run_path, schema="run")
     if not result.ok:
         print_validation_errors(result)
@@ -2023,7 +2026,7 @@ def export_run(args, cfg, st, validate_mod, scratch, outputs, want_pdf) -> int:
         if isinstance(target.content, bytes):
             target.path.write_bytes(target.content)
         else:
-            target.path.write_text(target.content, encoding="utf-8")
+            target.path.write_text(target.content, encoding="utf-8", newline="\n")
         report["wrote"].append(str(target.path))
 
     if args.json:

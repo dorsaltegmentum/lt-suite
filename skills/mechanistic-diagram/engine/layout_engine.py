@@ -452,11 +452,14 @@ def run(case, quiet=False):
         geo["edges"][i]["label_at"] = lb
     geo.update(font=E.FONT, wght=list(E.WGHT), fs=E.FS, lh=E.LH)
     path = case.dir / geometry
-    path.write_text(json.dumps(geo, indent=1, ensure_ascii=False))
+    path.write_text(json.dumps(geo, indent=1, ensure_ascii=False), encoding="utf-8", newline="\n")
     return dict(unrouted=bad, problems=probs, warnings=warns, crossings=crossings, geometry=path)
 
 
 def main(argv):
+    from ltcore.streams import configure_utf8
+    configure_utf8()
+
     import argparse
     from case import Case, CaseError
     ap = argparse.ArgumentParser(description="Lay a case out and check it; writes geometry.json (no other outputs).")

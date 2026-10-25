@@ -107,7 +107,7 @@ def build_variant(case_dir, variant, autoplace=False, quiet=False, trust=False):
                 render.render(case, flavour, f"final-{flavour}")
             except ValueError as ex:
                 fail(f"render {flavour}: {ex}")
-            info = subprocess.run(["pdfinfo", str(stage / f"final-{flavour}.pdf")], capture_output=True, text=True).stdout
+            info = subprocess.run(["pdfinfo", str(stage / f"final-{flavour}.pdf")], capture_output=True, text=True, encoding="utf-8").stdout
             if re.search(r"^Pages:\s+1$", info, re.M) is None:
                 fail(f"final-{variant}-{flavour}.pdf is not a single page")
         for flavour in FLAVOURS:              # one master per palette, as build.py writes them
@@ -138,6 +138,9 @@ def build_variant(case_dir, variant, autoplace=False, quiet=False, trust=False):
 
 
 def main(argv):
+    from ltcore.streams import configure_utf8
+    configure_utf8()
+
     ap = argparse.ArgumentParser(description="Build one variant of a case (variants.py + layout_<variant>.py).")
     ap.add_argument("case_dir")
     ap.add_argument("--variant", required=True, help="a variant named in variants.py, e.g. core")

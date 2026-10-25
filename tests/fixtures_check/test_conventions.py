@@ -206,7 +206,7 @@ def test_course_folder_has_both_naming_styles_and_one_ambiguous_week():
 
 
 def test_run_records_name_the_unit_and_the_tool():
-    release = tomllib.loads((Path(__file__).resolve().parents[2] / 'pyproject.toml').read_text())['project']['version']
+    release = tomllib.loads((Path(__file__).resolve().parents[2] / 'pyproject.toml').read_text(encoding="utf-8"))['project']['version']
     for mid in ("c1-r101", "c1-r102", "c1-r103", "c1-r104", "c1-r106", "c1-r107"):
         r = read_json(f"runs/{mid}/run.json")
         assert (r["unit_code"], r["institution_profile"], r["tool_version"]) == ("X101", "generic", release)

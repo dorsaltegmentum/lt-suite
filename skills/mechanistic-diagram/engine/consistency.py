@@ -289,7 +289,7 @@ def _closest(shown, sources, label=None, reference=False):
 
 def read_source(path):
     p = pathlib.Path(path)
-    raw = p.read_text()
+    raw = p.read_text(encoding="utf-8")
     if p.suffix.lower() == ".json":
         out = []
 
@@ -383,7 +383,7 @@ def run(case_dir, out=None, quiet=False, trust=False):
         md.append("None.")
     md += ["", "## Found", "", "| Box or stage | Fact | Kind | Where |", "|---|---|---|---|"]
     md += [f"| `{f['where']}` | {f['shown']} | {f['kind']} | {m} |" for f, st, m in res if st == "FOUND"]
-    rp.write_text("\n".join(md) + "\n")
+    rp.write_text("\n".join(md) + "\n", encoding="utf-8", newline="\n")
     lines.append(f"consistency: report written to {rp}")
     if not quiet:
         print("\n".join(lines))
@@ -391,6 +391,9 @@ def run(case_dir, out=None, quiet=False, trust=False):
 
 
 def main(argv):
+    from ltcore.streams import configure_utf8
+    configure_utf8()
+
     ap = argparse.ArgumentParser(description="Check a diagram's facts against the case's sources (warnings only).")
     ap.add_argument("case_dir")
     ap.add_argument("--out", help=f"report path (default: <case_dir>/{REPORT})")

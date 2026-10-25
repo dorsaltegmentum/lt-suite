@@ -12,7 +12,7 @@ EVALS = REPO / "evals" / "lt-module-fill"
 
 
 def test_ten_evals_on_existing_synthetic_fixtures():
-    doc = json.loads((EVALS / "evals.json").read_text())
+    doc = json.loads((EVALS / "evals.json").read_text(encoding="utf-8"))
     assert doc["skill_name"] == "lt-module-fill"
     evs = doc["evals"]
     assert [e["id"] for e in evs] == list(range(1, 9)) + [63, 84]
@@ -24,6 +24,6 @@ def test_ten_evals_on_existing_synthetic_fixtures():
 
 
 def test_trigger_queries_cover_both_answers():
-    rows = json.loads((EVALS / "triggers.json").read_text())["cases"]
+    rows = json.loads((EVALS / "triggers.json").read_text(encoding="utf-8"))["cases"]
     assert {r["should_trigger"] for r in rows} == {True, False}
     assert len({r["query"] for r in rows}) == len(rows)

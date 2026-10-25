@@ -18,6 +18,19 @@ import pytest
 from ltcore import cleaners
 
 
+@pytest.mark.parametrize('channel', ['stdout', 'stderr'])
+def test_cleaner_non_utf8_diagnostic_is_reported(tmp_path, channel):
+    path = tmp_path / 'document.txt'
+    path.write_bytes(b'unchanged')
+    entry = _entry(argv=[sys.executable, '-c',
+                        "import sys;sys." + channel + ".buffer.write(b'caf\\xe9');sys.exit(7)"])
+    result = cleaners.run_cleaner(entry, path)
+    assert result.status == 'failed'
+    assert result.returncode == 7
+    assert result.detail == 'exit 7: caf\ufffd'
+    assert path.read_bytes() == b'unchanged'
+
+
 def _entry(**changes):
     entry = {
         "name": "test-cleaner",
@@ -119,7 +132,9 @@ def test_run_cleaner_success_and_unchanged(tmp_path, stage, output, status):
     path = tmp_path / "document.txt"
     path.write_bytes(b"original text")
 
-    def runner(argv, *, capture_output, text, timeout):
+    def runner(argv, *, capture_output, text, timeout, encoding, errors):
+        assert encoding == "utf-8"
+        assert errors == "replace"
         assert capture_output is True
         assert text is True
         assert timeout == 19
@@ -172,7 +187,9 @@ def test_fake_timeout_preserves_original(tmp_path):
     path = tmp_path / "document.txt"
     path.write_bytes(b"original")
 
-    def runner(argv, *, capture_output, text, timeout):
+    def runner(argv, *, capture_output, text, timeout, encoding, errors):
+        assert encoding == "utf-8"
+        assert errors == "replace"
         assert timeout == 7
         Path(argv[1]).write_bytes(b"modified input")
         Path(argv[2]).write_bytes(b"partial output")
@@ -204,9 +221,9 @@ def test_real_python_cleaner_removes_zero_width_space(tmp_path):
         "text = Path(sys.argv[1]).read_text(encoding='utf-8')\n"
         "Path(sys.argv[2]).write_text(text.replace('\\u200b', ''), encoding='utf-8')\n",
         encoding="utf-8",
-    )
+    newline="\n")
     path = tmp_path / "document.txt"
-    path.write_text("one\u200btwo", encoding="utf-8")
+    path.write_text("one\u200btwo", encoding="utf-8", newline="\n")
     entry = _entry(argv=[sys.executable, str(script), "{in}", "{out}"])
     result = cleaners.run_cleaner(entry, path)
     assert result.status == "cleaned"
@@ -304,12 +321,14 @@ def test_import_without_pikepdf(monkeypatch):
 
 def test_run_one_replaces_placeholders_and_runs_without_shell(tmp_path):
     src, dst = tmp_path / "a b.json", tmp_path / "out.json"
-    src.write_text("{}", encoding="utf-8")
+    src.write_text("{}", encoding="utf-8", newline="\n")
     seen = {}
 
-    def runner(argv, *, capture_output, text, timeout):
+    def runner(argv, *, capture_output, text, timeout, encoding, errors):
+        assert encoding == "utf-8"
+        assert errors == "replace"
         seen["argv"], seen["timeout"] = argv, timeout
-        Path(argv[2]).write_text("{}", encoding="utf-8")
+        Path(argv[2]).write_text("{}", encoding="utf-8", newline="\n")
         return _completed(argv)
 
     r = cleaners.run_one(_entry(argv=["tool", "{in}", "{out}", "--x={in}"]), {"in": src, "out": dst},
@@ -322,7 +341,7 @@ def test_run_one_replaces_placeholders_and_runs_without_shell(tmp_path):
 @pytest.mark.parametrize("case", ["exit", "timeout", "missing-program", "no-out", "empty-out"])
 def test_run_one_raises_on_every_failure(tmp_path, case):
     src, dst = tmp_path / "in.txt", tmp_path / "out.txt"
-    src.write_text("x", encoding="utf-8")
+    src.write_text("x", encoding="utf-8", newline="\n")
 
     def runner(argv, **kw):
         if case == "exit":
@@ -358,9 +377,9 @@ def test_run_one_checks_a_pdf_placeholder(tmp_path):
 
 def test_run_one_real_program(tmp_path):
     src, dst = tmp_path / "in.txt", tmp_path / "out.txt"
-    src.write_text("a\u200bb", encoding="utf-8")
-    code = ("import sys,pathlib;t=pathlib.Path(sys.argv[1]).read_text('utf-8');"
-            "pathlib.Path(sys.argv[2]).write_text(t.replace('\\u200b',''),'utf-8')")
+    src.write_text("a\u200bb", encoding="utf-8", newline="\n")
+    code = ("import sys,pathlib;t=pathlib.Path(sys.argv[1]).read_text(encoding='utf-8');"
+            "pathlib.Path(sys.argv[2]).write_text(t.replace('\\u200b',''),encoding='utf-8',newline='\\n')")
     cleaners.run_one(_entry(argv=[sys.executable, "-c", code, "{in}", "{out}"]), {"in": src, "out": dst})
     assert dst.read_text(encoding="utf-8") == "ab"
 

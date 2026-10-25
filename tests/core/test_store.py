@@ -11,9 +11,18 @@ import pytest
 from ltcore import config, paths, store
 
 
+@pytest.mark.parametrize("name", [
+    "CON", "con.txt", "NUL", "AUX", "PRN", "COM1", "com9.json", "LPT1", "LPT9",
+    "COM\u00b9", "LPT\u00b2.txt", "COM\u00b3", "CONIN$", "CONOUT$", "c1-r101.",
+])
+def test_store_rejects_windows_device_names_and_aliases(name):
+    with pytest.raises(ValueError, match="safe module id"):
+        store.check_id(name)
+
+
 def write(p: Path, text: str) -> Path:
     p.parent.mkdir(parents=True, exist_ok=True)
-    p.write_text(text, encoding="utf-8")
+    p.write_text(text, encoding="utf-8", newline="\n")
     return p
 
 

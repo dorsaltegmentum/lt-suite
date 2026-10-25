@@ -28,7 +28,7 @@ def test_staged_leak_survives_working_tree_cleanup(run_gate, tmp_path, mode):
     git(repo, 'init', '-q')
     oid = git(repo, 'hash-object', '-w', '--stdin', data=LEAK.encode())
     git(repo, 'update-index', '--add', '--cacheinfo', '100644', oid, 'a.txt')
-    (repo / 'a.txt').write_text('clean')
+    (repo / 'a.txt').write_text('clean', encoding="utf-8", newline="\n")
     r = run_gate('--repo', str(repo), *mode)
     assert r.returncode == 1 and 'home-path' in r.stdout, r.stdout + r.stderr
     assert '@index' in r.stdout
@@ -65,16 +65,16 @@ def test_recursive_decoding_reaches_every_layer(run_gate, gate, tmp_path, kinds,
     for kind in kinds:
         text = encode(kind, text)
     target = tmp_path / 'target.json'
-    target.write_text(json.dumps({'payload': text}))
+    target.write_text(json.dumps({'payload': text}), encoding="utf-8", newline="\n")
     args = []
     private = tmp_path / 'private'
     private.mkdir()
     if layer == 'private':
-        (private / 'private-patterns.txt').write_text('synthetic-owner-91\n')
+        (private / 'private-patterns.txt').write_text('synthetic-owner-91\n', encoding="utf-8", newline="\n")
         args += ['--private-dir', str(private), '--require-private']
     elif layer == 'shingle':
         salt = b's' * 32
-        (private / 'shingle-salt').write_text(salt.hex())
+        (private / 'shingle-salt').write_text(salt.hex(), encoding="utf-8", newline="\n")
         gate.write_index(private / 'shingles.bin', {h for _, h in gate.text_windows(PHRASE, salt)})
         args += ['--shingles', str(private / 'shingles.bin')]
     r = run_gate('--paths', str(target), *args)
@@ -89,9 +89,9 @@ def test_private_tag_paths_cannot_widen(run_gate, gate, tmp_path, tag, path):
     if path == "designated-example-traversal":
         path = gate.PRIVATE_TAG_PATHS["example-institution"][0].removesuffix("**") + "../../docs/**"
     target = tmp_path / 'a.txt'
-    target.write_text('Synthetic Academy')
+    target.write_text('Synthetic Academy', encoding="utf-8", newline="\n")
     al = tmp_path / 'allow.toml'
-    al.write_text(f'[[allow]]\npath = "{path}"\npattern = "private:{tag}"\nreason = "Synthetic test"\n')
+    al.write_text(f'[[allow]]\npath = "{path}"\npattern = "private:{tag}"\nreason = "Synthetic test"\n', encoding="utf-8", newline="\n")
     r = run_gate('--allowlist', str(al), '--paths', str(target))
     assert r.returncode == 2 and 'fixed' in r.stderr, r.stdout + r.stderr
 
@@ -101,13 +101,13 @@ def test_designated_course_ranges_keep_benign_vocabulary(run_gate, tmp_path):
     src, private = tmp_path / 'source', tmp_path / 'private'
     src.mkdir()
     private.mkdir()
-    (src / 'course.txt').write_text(PHRASE + '\n')
-    (src / 'benign.txt').write_text('\n'.join(reversed(PHRASE.split())))
-    (private / 'shingle-sources.txt').write_text('[course]\ncourse.txt:1\n[benign]\nbenign.txt\n')
+    (src / 'course.txt').write_text(PHRASE + '\n', encoding="utf-8", newline="\n")
+    (src / 'benign.txt').write_text('\n'.join(reversed(PHRASE.split())), encoding="utf-8", newline="\n")
+    (private / 'shingle-sources.txt').write_text('[course]\ncourse.txt:1\n[benign]\nbenign.txt\n', encoding="utf-8", newline="\n")
     r = run_gate('build-shingles', '--from', str(src), '--out', str(private))
     assert r.returncode == 0, r.stderr
     target = tmp_path / 'a.txt'
-    target.write_text(PHRASE)
+    target.write_text(PHRASE, encoding="utf-8", newline="\n")
     r = run_gate('--paths', str(target), '--shingles', str(private / 'shingles.bin'))
     assert r.returncode == 1 and 'course' in r.stdout, r.stdout + r.stderr
 
@@ -130,7 +130,7 @@ def test_every_gzip_member_header_is_scanned(run_gate, tmp_path):
 def test_ci_refuses_excerpts_before_any_output(run_gate, tmp_path, ci):
     """A set CI variable must prohibit excerpts even when empty or false-like."""
     target = tmp_path / 'a.txt'
-    target.write_text(LEAK)
+    target.write_text(LEAK, encoding="utf-8", newline="\n")
     r = run_gate('--paths', str(target), '--excerpt', env={'CI': ci})
     assert r.returncode == 2 and r.stdout == '', r.stdout + r.stderr
     assert LEAK not in r.stderr
@@ -140,7 +140,7 @@ def test_run_gate_drops_inherited_ci(run_gate, tmp_path, monkeypatch):
     """GitHub Actions sets CI, so every --excerpt test exited 2 there until run_gate dropped it."""
     monkeypatch.setenv('CI', 'true')
     target = tmp_path / 'a.txt'
-    target.write_text(LEAK)
+    target.write_text(LEAK, encoding="utf-8", newline="\n")
     r = run_gate('--paths', str(target), '--excerpt')
     assert r.returncode == 1 and LEAK in r.stdout, r.stdout + r.stderr
 
@@ -213,7 +213,7 @@ def test_explicit_paths_scan_selected_index_blobs(run_gate, tmp_path):
     oid = git(repo, 'hash-object', '-w', '--stdin', data=LEAK.encode())
     git(repo, 'update-index', '--add', '--cacheinfo', '100644', oid, 'a.txt')
     target = repo / 'a.txt'
-    target.write_text('clean')
+    target.write_text('clean', encoding="utf-8", newline="\n")
     r = run_gate('--repo', str(repo), '--paths', str(target))
     assert r.returncode == 1 and '@index' in r.stdout and 'home-path' in r.stdout, r.stdout + r.stderr
 
@@ -223,9 +223,9 @@ def test_directory_scan_skips_git_ignored_outputs_but_explicit_file_scans_them(r
     repo = tmp_path / 'repo'
     repo.mkdir()
     git(repo, 'init', '-q')
-    (repo / '.gitignore').write_text('output.txt\n')
+    (repo / '.gitignore').write_text('output.txt\n', encoding="utf-8", newline="\n")
     target = repo / 'output.txt'
-    target.write_text(LEAK)
+    target.write_text(LEAK, encoding="utf-8", newline="\n")
     r = run_gate('--repo', str(repo), '--paths', str(repo))
     assert r.returncode == 0, r.stdout + r.stderr
     r = run_gate('--repo', str(repo), '--paths', str(target))
@@ -283,12 +283,12 @@ def test_encoded_pdf_bytes_are_not_literal_string_metadata(run_gate, make_pdf_st
 def test_embedded_pdf_font_keeps_private_checks(run_gate, gate, make_pdf_stream, tmp_path, tag, layer):
     private = tmp_path / "private"
     private.mkdir()
-    (private / "private-patterns.txt").write_text("synthetic-owner-91")
+    (private / "private-patterns.txt").write_text("synthetic-owner-91", encoding="utf-8", newline="\n")
     marker = b"synthetic-owner-91" if layer == "private" else PHRASE.encode()
     extra = []
     if layer == "course":
         salt = b"s" * 32
-        (private / "shingle-salt").write_text(salt.hex())
+        (private / "shingle-salt").write_text(salt.hex(), encoding="utf-8", newline="\n")
         gate.write_index(private / "shingles.bin", {h for _, h in gate.text_windows(PHRASE, salt)})
         extra = ["--shingles", str(private / "shingles.bin")]
     if tag == b"name":
@@ -320,7 +320,7 @@ def test_pdf_independent_mapping_records_do_not_form_prose(
     private = tmp_path / "private"
     private.mkdir()
     salt = b"s" * 32
-    (private / "shingle-salt").write_text(salt.hex())
+    (private / "shingle-salt").write_text(salt.hex(), encoding="utf-8", newline="\n")
     gate.write_index(private / "shingles.bin", {gate.shingle_hash(list("abcdefgh"), salt)})
     letters = [chr(code) for code in range(65, 73)]
     payload = ("(" + " ".join(letters) + ")" if joined else

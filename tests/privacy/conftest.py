@@ -49,7 +49,7 @@ def run_gate(empty_private):
         e["LT_PRIVACY_DIR"] = str(empty_private)
         e.update(env or {})
         return subprocess.run([sys.executable, str(GATE), *args], capture_output=True, text=True,
-                              cwd=cwd or REPO, env=e, timeout=timeout)
+                              cwd=cwd or REPO, env=e, timeout=timeout, encoding="utf-8")
     return _run
 
 

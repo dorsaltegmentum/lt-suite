@@ -54,8 +54,8 @@ def test_no_cells_render_nothing(export_module):
 
 @pytest.mark.parametrize("item_id, rows", [("p2-11", 17), ("p2-12", 6)])
 def test_fixture_tables_name_every_body_row(export_module, fixtures, item_id, rows):
-    module = json.loads((fixtures / "modules" / "module-c1-r106.json").read_text("utf-8"))
-    answers = json.loads((fixtures / "answers" / "answers-c1-r106.json").read_text("utf-8"))
+    module = json.loads((fixtures / "modules" / "module-c1-r106.json").read_text(encoding="utf-8"))
+    answers = json.loads((fixtures / "answers" / "answers-c1-r106.json").read_text(encoding="utf-8"))
     item = next(it for it in export_module.module_items(module) if it["item_id"] == item_id)
     ans = export_module.answer_index(answers)[item_id]
     constraints = item["constraints"]
