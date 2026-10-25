@@ -13,8 +13,10 @@ Forms:
               ``javascript_tool``, the DevTools console). It ends in a top-level await.
   function    ``async () => {...}`` for tools that call a function (chrome-devtools-mcp
               ``evaluate_script`` with ``sourcePath``, Playwright MCP ``browser_evaluate``).
-  --stub      the script travels as base64 plus its sha256; the page checks the hash with
-              ``crypto.subtle`` before ``new Function``, so a copying slip stops the run.
+  --stub      gzip base64 carries a parameterized body verified before execution through new Function.
+  --cache     load compressed code from origin storage and request payload on misses.
+  --no-compress  use an uncompressed stub when browser gzip decompression is unavailable.
+  --chunk-bytes N  emit numbered payload files and snippets for checked inline transfers.
 
 A bare name (``capture``, ``fill_lib``, ``guard``, ``ping``, ``upload``) resolves against the
 skill folder this file sits in (``<skill>/scripts/browser/<name>.js``, then
@@ -52,6 +54,7 @@ if __name__ == "__main__" and not __package__:
 
 import argparse  # noqa: E402
 import base64  # noqa: E402
+import gzip  # noqa: E402
 import hashlib  # noqa: E402
 import json  # noqa: E402
 import os  # noqa: E402
@@ -64,6 +67,7 @@ from urllib.parse import parse_qs, urlsplit  # noqa: E402
 
 from ltcore import config as config_mod  # noqa: E402
 from ltcore import store as store_mod  # noqa: E402
+from ltcore import __version__  # noqa: E402
 
 NEEDS = ["browser/lt_guard.js", "browser/lt_net.js", "browser/guard.js"]
 
@@ -82,6 +86,11 @@ PAGE_RE = re.compile(r"^page/([1-9]\d*)$")
 PREVIEW_RE = re.compile(r"/preview(/|$)", re.I)
 FILL_NAMES = {"fill_lib", "confirm_dialog", "upload", "check_answer"}
 FILL_PREFIXES = ("_fill-", "_verify-", "_check-", "_replace-", "_calibrate-")
+CACHEABLE_BROWSER_NAMES = frozenset({
+    "capture.js", "fetch_media.js", "fill_lib.js", "probe_panels.js", "check_answer.js",
+    "confirm_dialog.js", "model_answer.js", "upload.js", "ping.js", "guard.js",
+    "lt_guard.js", "lt_net.js",
+})
 RESERVED = {"lt_guard", "lt_net"}
 ADAPTER_FORM = {
     "claude-in-chrome": ("expression", True),
@@ -89,7 +98,7 @@ ADAPTER_FORM = {
     "antigravity": ("function", False),
     "playwright-mcp": ("function", False),
     "manual-paste": ("expression", False),
-    "auto": ("expression", False),
+    "auto": ("expression", True),
 }
 
 EXIT_OK, EXIT_REFUSED, EXIT_USAGE, EXIT_MODEL_ANSWER = 0, 1, 2, 4
@@ -635,53 +644,156 @@ def _read(p: Path) -> str:
 
 
 def function_text(body: str, *, name: str, args: Mapping[str, Any] | None,
-                  policy: Mapping[str, Any] | None, net: bool) -> str:
+                  policy: Mapping[str, Any] | None, net: bool,
+                  parameterized: bool = False, form: str = "expression") -> str:
     """The script in function form: ``async () => { prelude; return LtGuard.run(...) }``."""
     pol = dict(policy or {"mode": "block-all"})
     parts = [
-        "async () => {",
+        "async (__ltArgs, __ltPolicy) => {" if parameterized else "async () => {",
         f"/* lt-suite page script {_safe_name(name)}, rendered by ltcore/ltjs.py. Edit the source,",
         "   not this file. Inputs: __LT_ARGS__ (frozen). Prepended: lt_guard.js"
         + (", lt_net.js. */" if net else ". */"),
-        f"const __LT_ARGS__ = {FREEZE}(JSON.parse({_js_string(dict(args or {}))}));",
-        f"const __LT_POLICY__ = {FREEZE}(JSON.parse({_js_string(pol)}));",
-        _read(GUARD_JS).rstrip("\n") + ";",
+        ("let" if parameterized else "const") + f" __LT_ARGS__ = {FREEZE}(" + ("__ltArgs" if parameterized else f"JSON.parse({_js_string(dict(args or {}))})") + ");",
+        ("let" if parameterized else "const") + f" __LT_POLICY__ = {FREEZE}(" + ("__ltPolicy" if parameterized else f"JSON.parse({_js_string(pol)})") + ");",
     ]
+    if parameterized:
+        parts.append("try {")
+    parts.append(_read(GUARD_JS).rstrip("\n") + ";")
     if net:
         parts.append(_read(NET_JS).rstrip("\n") + ";")
     parts.append("return await globalThis.LtGuard.run(__LT_POLICY__, async () => {")
     parts.append(body.rstrip("\n"))
     parts.append("}, { net: " + ("true" if net else "false") + " });")
+    if parameterized:
+        parts.append("} finally { __LT_ARGS__ = undefined; __LT_POLICY__ = undefined; __ltArgs = undefined; __ltPolicy = undefined; }")
     parts.append("}")
+    if parameterized:
+        parts.insert(1, f"/* lt-suite {__version__} {form} parameterized body accepts current frozen inputs. */")
     return "\n".join(parts) + "\n"
 
 
-def stub_text(inner: str, name: str) -> str:
-    """Function-form stub: base64 of ``inner`` plus its sha256, checked before new Function."""
+def _payload(inner: str, compress: bool = True) -> tuple[str, str]:
+    """Encode rendered bytes without changing their contents before the integrity check."""
     raw = inner.encode("utf-8")
-    b64 = base64.b64encode(raw).decode("ascii")
-    want = hashlib.sha256(raw).hexdigest()
-    return "\n".join([
+    packed = gzip.compress(raw, compresslevel=9, mtime=0) if compress else raw
+    return base64.b64encode(packed).decode("ascii"), hashlib.sha256(raw).hexdigest()
+
+
+def stub_text(inner: str, name: str, *, args: Mapping[str, Any] | None = None,
+              policy: Mapping[str, Any] | None = None, compress: bool = True,
+              cache: bool = False, chunked: bool = False, cacheable: bool = False) -> str:
+    """Verify browser payload bytes before calling their body with fresh frozen inputs."""
+    b64, want = _payload(inner, compress)
+    lines = [
         "async () => {",
-        f"/* lt-suite stub for {_safe_name(name)}: the script travels as base64 with its sha256",
-        "   and runs only when the hash of the decoded bytes matches. */",
-        f"const B64 = \"{b64}\";",
+        f"/* Verify the {_safe_name(name)} body before running code with current inputs. */",
         f"const WANT = \"{want}\";",
-        "let bytes;",
+        "const KEY = 'lt-suite:js:' + WANT, INDEX = 'lt-suite:js:index';",
+        "const miss = () => ({ok:false, need:'payload', want:WANT.slice(0,12)});",
+    ]
+    if cache and not cacheable:
+        return "\n".join(lines + ["return miss();", "}"]) + "\n"
+    if cache:
+        lines += [
+            "let B64;",
+            "try { B64 = localStorage.getItem(KEY); } catch (e) { return miss(); }",
+            "if (B64 === null) return miss();",
+            "const fail = () => {",
+            "  try { const s = localStorage;",
+            "    if (s.getItem(KEY) !== B64) return miss();",
+            "    s.removeItem(KEY);",
+            "    if (s.getItem(KEY) === null) { const a = JSON.parse(s.getItem(INDEX));",
+            "      if (Array.isArray(a)) s.setItem(INDEX, JSON.stringify(a.filter(k => k !== KEY)));",
+            "    }",
+            "  } catch (e) {}",
+            "  return miss();",
+            "};",
+        ]
+    else:
+        lines += [
+            "const fail = () => ({ok:false, fatal:'stub-hash-mismatch'});",
+        ]
+        if chunked:
+            lines += [
+                "let B64;",
+                "try { const p = globalThis.__ltSuitePayload; const a = p && p[WANT];",
+                "  if (p) delete p[WANT];",
+                "  if (!Array.isArray(a) || !a.length || a.some(s => typeof s !== 'string')) return fail();",
+                "  B64 = a.join('');",
+                "} catch (e) { return fail(); }",
+            ]
+        else:
+            lines.append(f"const B64 = \"{b64}\";")
+    if compress:
+        lines.append("if (typeof DecompressionStream !== 'function') return {ok:false, fatal:'stub-no-decompression'};")
+    lines += [
+        "let bytes, src;",
         "try {",
+        "  if (typeof B64 !== 'string' || !/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(B64)) return fail();",
         "  const bin = atob(B64);",
         "  bytes = new Uint8Array(bin.length);",
         "  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);",
-        "} catch (e) { return { ok: false, fatal: 'stub-hash-mismatch', detail: 'bad-base64' }; }",
-        "const dig = new Uint8Array(await crypto.subtle.digest('SHA-256', bytes));",
-        "const got = Array.from(dig, b => b.toString(16).padStart(2, '0')).join('');",
-        "if (got !== WANT) return { ok: false, fatal: 'stub-hash-mismatch', want: WANT.slice(0, 12), got: got.slice(0, 12) };",
-        "let src;",
-        "try { src = new TextDecoder('utf-8', { fatal: true }).decode(bytes); }",
-        "catch (e) { return { ok: false, fatal: 'stub-hash-mismatch', detail: 'bad-utf8' }; }",
-        "return await (new Function('return (' + src + ')'))()();",
+    ]
+    if compress:
+        lines.append("  bytes = new Uint8Array(await new Response(new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'))).arrayBuffer());")
+    lines += [
+        "  const dig = new Uint8Array(await crypto.subtle.digest('SHA-256', bytes));",
+        "  const got = Array.from(dig, b => b.toString(16).padStart(2, '0')).join('');",
+        "  if (got !== WANT) return fail();",
+        "  src = new TextDecoder('utf-8', {fatal:true}).decode(bytes);",
+        "} catch (e) { return fail(); }",
+    ]
+    if not cache and compress and cacheable:
+        lines += [
+            "try {",
+            "  const s = localStorage, valid = k => /^lt-suite:js:[a-f0-9]{64}$/.test(k);",
+            "  s.setItem(KEY, B64);",
+            "  let a; try { a = JSON.parse(s.getItem(INDEX)); } catch (e) {}",
+            "  const entries = new Map();",
+            "  for (let i = 0; i < s.length; i++) { const k = s.key(i);",
+            "    if (valid(k)) { const v = s.getItem(k); if (v !== null) entries.set(k, v); }",
+            "  }",
+            "  a = Array.isArray(a) ? [...new Set(a.filter(k => typeof k === 'string' && valid(k) && entries.has(k)))] : [];",
+            "  for (const k of [...entries.keys()].sort()) if (!a.includes(k)) a.push(k);",
+            "  const keep = new Set([KEY, ...a.filter(k => k !== KEY).slice(-5)]);",
+            "  s.setItem(INDEX, JSON.stringify(a));",
+            "  const remove = a.filter(k => !keep.has(k));",
+            "  for (const k of remove) if (s.getItem(k) === entries.get(k)) s.removeItem(k);",
+            "  if (remove.length) s.setItem(INDEX, JSON.stringify(a.filter(k => s.getItem(k) !== null)));",
+            "} catch (e) {}",
+        ]
+    lines += [
+        "return await (new Function('return (' + src + ')'))()("
+        f"JSON.parse({_js_string(dict(args or {}))}), JSON.parse({_js_string(dict(policy or {'mode': 'block-all'}))}));",
+        "}",
+    ]
+    return "\n".join(lines) + "\n"
+
+
+def _form_text(fn: str, form: str) -> str:
+    return fn if form == "function" else "await (" + fn.rstrip("\n") + ")();\n"
+
+
+def chunk_text(payload: str, want: str, i: int, form: str) -> str:
+    """Append one verified chunk in order and return its measured transfer receipt."""
+    digest = hashlib.sha256(payload.encode("ascii")).hexdigest()
+    fn = "\n".join([
+        "async () => {",
+        f"const WANT = {json.dumps(want)}, B64 = {json.dumps(payload)}, I = {i};",
+        "const fail = () => { try { if (globalThis.__ltSuitePayload) delete globalThis.__ltSuitePayload[WANT]; } catch(e) {} return {ok:false, fatal:'stub-chunk-mismatch', i:I}; };",
+        "try {",
+        "  const d = new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(B64)));",
+        "  const sha = Array.from(d, b => b.toString(16).padStart(2,'0')).join('');",
+        f"  if (sha !== {json.dumps(digest)}) {{ if (globalThis.__ltSuitePayload) delete globalThis.__ltSuitePayload[WANT]; return fail(); }}",
+        "  const p = globalThis.__ltSuitePayload || (globalThis.__ltSuitePayload = Object.create(null));",
+        "  if (I === 1) p[WANT] = [];",
+        "  if (!Array.isArray(p[WANT]) || p[WANT].length !== I - 1) { delete p[WANT]; return fail(); }",
+        "  p[WANT].push(B64);",
+        "  return {i:I, len:B64.length, sha16:sha.slice(0,16)};",
+        "} catch (e) { return fail(); }",
         "}",
     ]) + "\n"
+    return _form_text(fn, form)
 
 
 _TAIL_AWAIT = re.compile(r"^await\s+(?P<expr>.+?);?\s*$")
@@ -706,24 +818,38 @@ def tail_return(body: str) -> str:
 
 def render_source(body: str, *, name: str, form: str = "expression", stub: bool = False,
                   args: Mapping[str, Any] | None = None, net: bool = False,
-                  policy: Mapping[str, Any] | None = None) -> str:
+                  policy: Mapping[str, Any] | None = None, compress: bool = True,
+                  cache: bool = False, chunked: bool = False, cacheable: bool = False) -> str:
     """Rendered script text for ``body`` (a function body that ends with ``return``)."""
     if form not in FORMS:
         raise RenderRefused(EXIT_USAGE, f"form must be one of {', '.join(FORMS)}, got {form!r}")
     try:
-        fn = function_text(tail_return(body), name=name, args=args, policy=policy, net=net)
+        fn = function_text(tail_return(body), name=name, args=args, policy=policy, net=net,
+                           parameterized=stub or cache, form=form)
+        if stub or cache:
+            fn = stub_text(fn, name, args=args, policy=policy, compress=compress, cache=cache,
+                           chunked=chunked, cacheable=cacheable)
     except (TypeError, ValueError) as exc:
         raise RenderRefused(EXIT_USAGE, f"arguments must be plain JSON values: {exc}") from None
-    if stub:
-        fn = stub_text(fn, name)
-    if form == "function":
-        return fn
-    return "await (" + fn.rstrip("\n") + ")();\n"
+    return _form_text(fn, form)
 
 
 def _safe_name(name: str) -> str:
     s = re.sub(r"[^A-Za-z0-9._-]+", "_", name).strip("._") or "script"
     return s[:64]
+
+
+def cacheable_target(path: Path) -> bool:
+    """Cache bundled browser code while excluding generated files that can embed answers."""
+    if path.name not in CACHEABLE_BROWSER_NAMES or path.name.startswith(FILL_PREFIXES):
+        return False
+    parents = {BROWSER.resolve()}
+    scripts = skill_scripts_dir()
+    if scripts is not None:
+        parents.add((scripts / "browser").resolve())
+    elif SHARED.name == "shared":
+        parents.update(p.resolve() for p in (SHARED.parent / "skills").glob("*/scripts/browser"))
+    return path.resolve().parent in parents
 
 
 def _write(out_dir: Path, name: str, text: str) -> tuple[Path, str]:
@@ -757,7 +883,8 @@ def render(target: str, *, form: str | None = None, stub: bool | None = None,
            plan: Mapping[str, Any] | str | os.PathLike | None = None,
            cfg: "config_mod.Config | None" = None, out_dir: str | os.PathLike | None = None,
            file: str | os.PathLike | None = None, data_dir: str | os.PathLike | None = None,
-           cwd: str | os.PathLike | None = None) -> dict:
+           cwd: str | os.PathLike | None = None, compress: bool = True,
+           cache: bool = False, chunk_bytes: int | None = None) -> dict:
     """Render ``target`` to ``<out_dir>/<name>-<sha8>.js`` and describe the file.
 
     Raises RenderRefused (exit code in ``.code``) or PlanError."""
@@ -771,6 +898,12 @@ def render(target: str, *, form: str | None = None, stub: bool | None = None,
         raise RenderRefused(5, "fill.check_answer.enabled is false; check script refused")
     dform, dstub = default_form(cfg)
     form = form or dform
+    if cache and (stub is False or not compress or chunk_bytes is not None):
+        raise RenderRefused(EXIT_USAGE, "--cache cannot combine with --no-stub, --no-compress or --chunk-bytes")
+    if chunk_bytes is not None and (chunk_bytes <= 0 or stub is False):
+        raise RenderRefused(EXIT_USAGE, "--chunk-bytes needs a positive size and a stub")
+    if cache or chunk_bytes is not None:
+        stub = True
     stub = dstub if stub is None else bool(stub)
     net = wants_net(path, name) if net is None else bool(net)
     a: dict[str, Any] = dict(args or {})
@@ -790,10 +923,31 @@ def render(target: str, *, form: str | None = None, stub: bool | None = None,
     origin = cfg.get("lt.origin", "") if cfg is not None else ""
     inst = cfg.get("lt.instance", "") if cfg is not None else ""
     policy = policy_from_plan(plan, origin or None, inst or None, check_answer_enabled=cfg.get("fill.check_answer.enabled", False))
-    text = render_source(_read(path), name=name, form=form, stub=stub, args=a, net=net, policy=policy)
-    out, digest = _write(out_dir_for(cfg, out_dir), name, text)
+    body = _read(path)
+    cacheable = cacheable_target(path)
+    text = render_source(body, name=name, form=form, stub=stub, args=a, net=net, policy=policy,
+                         compress=compress, cache=cache, chunked=chunk_bytes is not None,
+                         cacheable=cacheable)
+    directory = out_dir_for(cfg, out_dir)
+    body_hash = None
+    chunks = []
+    if stub:
+        inner = function_text(tail_return(body), name=name, args=None, policy=None, net=net,
+                              parameterized=True, form=form)
+        payload, body_hash = _payload(inner, compress)
+        if chunk_bytes is not None:
+            for n, start in enumerate(range(0, len(payload), chunk_bytes), 1):
+                part = payload[start:start + chunk_bytes]
+                label = f"{name}-chunk-{n:03}"
+                payload_path, part_hash = _write(directory, label + "-payload", part)
+                snippet_path, _ = _write(directory, label, chunk_text(part, body_hash, n, form))
+                chunks.append({"i": n, "path": str(snippet_path), "payload_path": str(payload_path),
+                               "len": len(part), "sha16": part_hash[:16]})
+    out, digest = _write(directory, name, text)
     return {"path": str(out), "sha256": digest, "form": form, "bytes": len(text.encode("utf-8")),
-            "name": name, "source": str(path), "stub": stub, "net": net, "guard": policy["mode"]}
+            "name": name, "source": str(path), "stub": stub, "net": net, "guard": policy["mode"],
+            "cache": cache, "compression": ("gzip" if compress else "none") if stub else None,
+            "body_sha256": body_hash, "chunks": chunks, "cacheable": cacheable}
 
 
 def _needs_probe() -> None:
@@ -856,8 +1010,12 @@ def main(argv: list[str] | None = None) -> int:
     r.add_argument("target", help="script name (capture, fill_lib, guard, ping, upload, ...) or file")
     r.add_argument("--form", choices=FORMS, help="default from browser.adapter")
     r.add_argument("--stub", dest="stub", action="store_true", default=None,
-                   help="base64 plus sha256 stub (default for claude-in-chrome)")
+                   help="gzip base64 plus sha256 stub (default for claude-in-chrome and auto)")
     r.add_argument("--no-stub", dest="stub", action="store_false")
+    r.add_argument("--cache", action="store_true", help="load verified gzip code from the page cache")
+    r.add_argument("--no-compress", dest="compress", action="store_false",
+                   help="use a legacy uncompressed stub without page caching")
+    r.add_argument("--chunk-bytes", type=int, metavar="N", help="split payload into chunks, for example 20000")
     r.add_argument("--arg", action="append", metavar="K=V", help="string argument")
     r.add_argument("--arg-json", action="append", metavar="K=JSON", help="JSON argument")
     r.add_argument("--args-file", help="JSON object of arguments")
@@ -888,7 +1046,8 @@ def main(argv: list[str] | None = None) -> int:
             cfg = _load_cfg(a.config)
             data_dir = store_mod.Store(cfg, data_dir=a.data_dir).data_dir if a.file else None
             info = render(a.target, form=a.form, stub=a.stub, args=_parse_args(a), net=a.net,
-                          plan=a.plan, cfg=cfg, out_dir=a.out_dir, file=a.file, data_dir=data_dir)
+                          plan=a.plan, cfg=cfg, out_dir=a.out_dir, file=a.file, data_dir=data_dir,
+                          compress=a.compress, cache=a.cache, chunk_bytes=a.chunk_bytes)
         except RenderRefused as exc:
             print(f"ltjs render: {exc}", file=sys.stderr)
             return exc.code

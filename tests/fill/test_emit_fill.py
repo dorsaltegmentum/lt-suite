@@ -313,7 +313,7 @@ def test_comment_stripping_keeps_code_and_parses(emit_mod, tmp_path):
 
 
 def test_inline_build_is_the_default_and_renders_with_the_guard(eight):
-    r = eight.emit("scripts", "--out", "out", "--form", "function")
+    r = eight.emit("scripts", "--out", "out", "--form", "function", "--no-stub")
     assert r.returncode == 0, r.stdout + r.stderr
     man = eight.read("out/scripts.json")
     body = (eight.tmp / "out" / man["calls"][0]["name"]).read_text(encoding="utf-8")

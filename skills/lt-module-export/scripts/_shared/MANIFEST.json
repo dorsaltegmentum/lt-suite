@@ -5,7 +5,7 @@
   {
    "path": "references/_shared/browser-adapters.md",
    "source": "shared/references/browser-adapters.md",
-   "sha256": "91e89015ddae7879a2bb186f4aa823cf02ed662600a94fbba972f363b33ef297"
+   "sha256": "6b24c484ed0f7bd3f07c493d9dd672e832ea3b779d86814086dcb16a35c7759a"
   },
   {
    "path": "references/_shared/lexicon/answer-provenance-style.md",
@@ -50,7 +50,7 @@
   {
    "path": "scripts/_shared/ltcore/__init__.py",
    "source": "shared/ltcore/__init__.py",
-   "sha256": "5adc246ac465764df0bbab6204193df06ee46fa50bfba6cf1a39de2891105dcb"
+   "sha256": "6bc4e56f090f9498d1392d9ba5b6bba0e81f472ecd5d6aec5c4282368359b7d8"
   },
   {
    "path": "scripts/_shared/ltcore/approvals.py",

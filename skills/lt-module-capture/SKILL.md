@@ -6,7 +6,7 @@ description: Read one Lt run from the user's signed-in browser tab into module.j
 license: AGPL-3.0-or-later
 compatibility: "A Chromium browser signed in to Lt, and an agent browser tool that runs a JavaScript file in that tab (or the user pastes it into DevTools). Python 3.11+ with jsonschema. Node 18+ only for the repository tests."
 metadata:
-  version: 0.2.1
+  version: 0.2.2
 ---
 
 <!-- Capture one Lt run into module.json and a quarantined reference.json without writing to Lt. -->
@@ -125,15 +125,17 @@ may have a loopback of its own that the browser never sees (`references/transpor
 ### 3. Render and run the capture
 
 ```bash
-python3 "$SKILL_DIR/scripts/_shared/ltcore/ltjs.py" render capture --form <expression|function> [--stub] \
+python3 "$SKILL_DIR/scripts/_shared/ltcore/ltjs.py" render capture --form <expression|function> [--cache|--no-stub] \
     --arg transport=sink --arg sink=http://127.0.0.1:<port> --arg token=<token>
 ```
 
 Copy the arguments from the `--print-args` output without changes: the three `--arg` pairs
 above, plus `drop_text_patterns` and `post_ms` when the config changes them. Add the form
-and stub flag that your browser tool needs (`references/_shared/browser-adapters.md`); when
+and flags that your browser tool needs (`references/_shared/browser-adapters.md`); when
 they are missing, `ltjs.py` derives them from `browser.adapter`. The command prints
-`{"path", "sha256", "form", "bytes"}`. Run the file named by `path` in the Lt tab with the
+`{"path", "sha256", "form", "bytes", "body_sha256", "chunks"}`. Inline tools follow the
+loader and payload protocol in `references/_shared/browser-adapters.md`, including chunk receipt checks.
+Run the file named by `path` in the Lt tab with the
 evaluate-file action, and save the JSON it returns as
 `<data>/runs/<module_id>/logs/capture-receipt.json`.
 
@@ -209,7 +211,8 @@ Visit them in the printed order. On each page:
 1. Run `python3 "$SKILL_DIR/scripts/_shared/ltcore/ltjs.py" check-url --plan <media-plan.json> <url>`
    and continue only when it exits 0.
 2. Navigate there with the `navigate` verb. The very next browser call is the guard:
-   `ltjs.py render guard --form <form> [--stub] --plan <media-plan.json>`.
+   `ltjs.py render guard --form <form> [--cache|--no-stub] --plan <media-plan.json>`.
+   Inline tools follow the protocol in `references/_shared/browser-adapters.md` for every guard call.
 3. Render `fetch_media` with the capture's `--arg` pairs plus `--plan <media-plan.json>` and
    run it. The receipt marks each image `saved` or `failed` and lists `keys_not_fetched`.
 

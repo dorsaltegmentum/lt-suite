@@ -33,7 +33,7 @@ The `browser.adapter = "auto"` setting chooses the first available adapter in th
 
 | Agent or backend | `tab` | `navigate` | `eval_file` | `upload` | `screenshot` |
 |---|---|---|---|---|---|
-| Claude in Chrome, Claude Code or Desktop | `tabs_context_mcp` | `navigate` | `javascript_tool`, expression text rendered with `--stub` | Page JS through `eval_file` | `computer`, action `screenshot` |
+| Claude in Chrome, Claude Code or Desktop | `tabs_context_mcp` | `navigate` | `javascript_tool`, loader and compressed payload protocol | Page JS through `eval_file` | `computer`, action `screenshot` |
 | chrome-devtools-mcp 1.12.0, server `lt-chrome` | `list_pages`, `select_page` | `navigate_page`, type `url`, `handleBeforeUnload: "dismiss"` | `evaluate_script`, function file through `sourcePath` | Page JS through `eval_file` | `take_screenshot(filePath)` |
 | Playwright MCP 0.0.83, `--extension` | `browser_tabs`, list/select | `browser_navigate` | `browser_evaluate`, rendered function text | Page JS through `eval_file` | `browser_take_screenshot` |
 | Antigravity, `lt-chrome` in `mcp_config.json` | `list_pages`, `select_page` | `navigate_page` | `evaluate_script`, function file through `sourcePath` | Page JS through `eval_file` | `take_screenshot` |
@@ -170,20 +170,31 @@ The active skill sets `SKILL_DIR` to the absolute directory containing its `SKIL
 The renderer resolves bundled script names beneath that skill, independently of the working directory.
 
 ```text
-python3 "$SKILL_DIR/scripts/_shared/ltcore/ltjs.py" render <name> --form expression --stub --arg key=value
-python3 "$SKILL_DIR/scripts/_shared/ltcore/ltjs.py" render <name> --form function --arg key=value
-python3 "$SKILL_DIR/scripts/_shared/ltcore/ltjs.py" render <name> --form expression --arg key=value
+python3 "$SKILL_DIR/scripts/_shared/ltcore/ltjs.py" render <name> --form expression --cache --arg key=value
+python3 "$SKILL_DIR/scripts/_shared/ltcore/ltjs.py" render <name> --form function --no-stub --arg key=value
 ```
 
 | Form | Output | Consumer |
 |---|---|---|
 | `expression` | An asynchronous expression ending with top-level `await` | Claude in Chrome or manual DevTools paste |
 | `function` | An `async () => { ... }` function | chrome-devtools-mcp or Playwright MCP |
-| `--stub` | Embedded base64 script plus a SHA-256 integrity check | Claude in Chrome's inline-text interface |
+| `--stub` | Gzip base64 script plus a SHA-256 integrity check | Inline tools receiving their first payload |
+| `--cache` | Loader for verified compressed code in origin storage | Claude in Chrome, Playwright text and manual paste |
+| `--chunk-bytes 20000` | Numbered payload files and verified snippets | Inline tools with large first payloads |
+| `--no-compress` | Uncompressed stub without caching | Legacy browsers without gzip decompression |
 
-The `--stub` wrapper decodes its embedded script and calculates SHA-256 using `crypto.subtle.digest`.
+The `--stub` wrapper decompresses gzip bytes and calculates SHA-256 using `crypto.subtle.digest`.
+The SHA-256 gate assumes the page's globals and JavaScript prototypes remain unmodified.
+This assumption also applied to the previous uncompressed stub.
+Modified `TextDecoder`, `Function`, `crypto.subtle`, `Array.prototype`, `JSON.parse` or `Object.freeze` can bypass checks or retain inputs.
+A hostile page can already read anything passed to its execution context.
+The renderer uses the page's existing execution realm throughout these operations.
+
 Only a matching SHA-256 permits execution of the decoded script through `new Function`.
-A mismatch returns `fatal: "stub-hash-mismatch"` and executes none of the embedded script.
+With intact page globals, a mismatch returns `fatal: "stub-hash-mismatch"` and executes none of the embedded script.
+The agent protocol appears once in [the shared browser adapter reference](../shared/references/browser-adapters.md#inline-protocol).
+Every inline tool follows that protocol; file tools keep direct `sourcePath` scripts with `--no-stub`.
+The `auto` and `claude-in-chrome` adapters default to compressed stubs without another configuration switch.
 
 The renderer places arguments in the deep-frozen JSON object named `__LT_ARGS__`.
 The wrapper uses `JSON.parse`, preserving a `__proto__` key as an own property.
@@ -268,7 +279,7 @@ The `/run/background` route uses its listed URL mapping, otherwise flow index `1
 After every navigation, render `guard` using the selected adapter's form and flags.
 
 ```text
-python3 "$SKILL_DIR/scripts/_shared/ltcore/ltjs.py" render guard --form expression --stub --plan plan.json
+python3 "$SKILL_DIR/scripts/_shared/ltcore/ltjs.py" render guard --form expression --cache --plan plan.json
 python3 "$SKILL_DIR/scripts/_shared/ltcore/ltjs.py" render guard --form function --plan plan.json
 python3 "$SKILL_DIR/scripts/_shared/ltcore/ltjs.py" render guard --form expression --plan plan.json
 ```
@@ -344,7 +355,7 @@ python3 "$SKILL_DIR/scripts/_shared/ltcore/ltjs.py" check-upload "<data>/figure.
 python3 "$SKILL_DIR/scripts/_shared/ltcore/ltjs.py" render upload --form function --arg panel=<key> --file "<data>/figure.png"
 ```
 
-Use the adapter's render form and add `--stub` for Claude in Chrome.
+Use the adapter's render form and the shared inline protocol for inline tools.
 
 | Check | Required result |
 |---|---|

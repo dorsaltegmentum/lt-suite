@@ -381,8 +381,8 @@ function makeEnv(opts) {
   const timers = new Map();
   let timerId = 0;
   const sandbox = {
-    console, URL, URLSearchParams, TextEncoder, TextDecoder, Blob, FormData,
-    atob: s => Buffer.from(String(s), 'base64').toString('latin1'),
+    console, URL, URLSearchParams, TextEncoder, TextDecoder, Blob, FormData, Response, DecompressionStream,
+    atob,
     btoa: s => Buffer.from(String(s), 'latin1').toString('base64'),
     crypto: webcrypto,
     location: loc, document, ko, navigation, HTMLFormElement,

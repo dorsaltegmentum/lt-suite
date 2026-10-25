@@ -32,9 +32,8 @@ Its result includes `path`, `sha256`, `form`, and the rendered file's `bytes`.
 Replace `<name>` with the bundled script name required by the active skill.
 
 ```text
-python3 "$SKILL_DIR/scripts/_shared/ltcore/ltjs.py" render <name> --form expression --stub --arg key=value
-python3 "$SKILL_DIR/scripts/_shared/ltcore/ltjs.py" render <name> --form function --arg key=value
-python3 "$SKILL_DIR/scripts/_shared/ltcore/ltjs.py" render <name> --form expression --arg key=value
+python3 "$SKILL_DIR/scripts/_shared/ltcore/ltjs.py" render <name> --form expression --cache --arg key=value
+python3 "$SKILL_DIR/scripts/_shared/ltcore/ltjs.py" render <name> --form function --no-stub --arg key=value
 ```
 
 The `--arg` option places values inside the deep-frozen JSON object `__LT_ARGS__`.
@@ -43,14 +42,53 @@ The renderer adds `lt_guard.js`; fill-related scripts also receive `lt_net.js`.
 
 | Browser tool | Form and flags | Execution |
 |---|---|---|
-| Claude in Chrome `javascript_tool` | `--form expression --stub` | Read the rendered file and pass its text inline. |
-| chrome-devtools-mcp `evaluate_script` | `--form function` | Pass the local rendered path as `sourcePath`, with `format="function"`. |
-| Playwright MCP `browser_evaluate` | `--form function` | Read the rendered file and pass its function text. |
-| Antigravity, Gemini CLI, Codex CLI, Copilot, Cursor through `lt-chrome` | `--form function` | Use the chrome-devtools-mcp execution rule. |
-| Manual paste | `--form expression` | The user pastes the rendered text into DevTools and returns its JSON. |
+| Claude in Chrome `javascript_tool` | `--form expression --cache` | Follow the inline protocol below with rendered expression text. |
+| chrome-devtools-mcp `evaluate_script` | `--form function --no-stub` | Pass the local rendered path as `sourcePath`, with `format="function"`. |
+| Playwright MCP `browser_evaluate` | `--form function --cache` | Follow the inline protocol below with rendered function text. |
+| Antigravity, Gemini CLI, Codex CLI, Copilot, Cursor through `lt-chrome` | `--form function --no-stub` | Use the chrome-devtools-mcp execution rule. |
+| Manual paste | `--form expression --cache` | The user executes each rendered expression and returns its JSON receipt. |
 
 The `expression` form ends with top-level `await`, which preserves asynchronous results.
-The `--stub` form checks SHA-256 before executing decoded code through `new Function`.
+The `--stub` form decompresses gzip bytes, verifies SHA-256, then executes through `new Function`.
+The `claude-in-chrome` and `auto` adapters default to compressed stubs without another configuration switch.
+
+The SHA-256 gate assumes the page's globals and JavaScript prototypes remain unmodified.
+This assumption also applied to the previous uncompressed stub.
+Modified `TextDecoder`, `Function`, `crypto.subtle`, `Array.prototype`, `JSON.parse` or `Object.freeze` can bypass checks or retain inputs.
+A hostile page can already read anything passed to its execution context.
+The renderer uses the page's existing execution realm throughout these operations.
+
+### Inline protocol
+
+1. Render the target with `--cache`, the adapter's form, and every current argument and plan.
+   Execute the file's text inline and inspect the awaited JSON receipt.
+2. On `{ok:false, need:'payload', want:<12 hex>}`, render the same target with `--stub` instead of `--cache`.
+   Keep the same form, arguments, plan and network flags so `body_sha256` matches.
+3. For large payloads, add `--chunk-bytes 20000` to that stub render command.
+   Its JSON lists `chunks` with numbered snippet `path`, `payload_path`, `len` and `sha16` values.
+   Execute each snippet in order and compare its `{i,len,sha16}` receipt with the printed metadata.
+   Expressions await at top level; function tools receive the rendered function form.
+   Stop on any mismatch and render a fresh set before retrying.
+4. Execute the stub file named by the top-level `path` and inspect its normal target receipt.
+   The stub consumes assembled chunks and clears that body's temporary global payload.
+5. Start later calls with step 1, including after navigation within the same Lt origin.
+   Blocked storage can require another stub on every call; a cache miss executes nothing.
+
+With intact page globals, only verified compressed code enters `localStorage` under `lt-suite:js:<full SHA-256>`.
+The `lt-suite:js:index` key tracks at most 6 entries and prunes the oldest stored bodies.
+Each body excludes arguments and policy; every call supplies deeply frozen current inputs.
+The wrapper clears input bindings after completion so published closures cannot reuse a completed run's token.
+Only allowlisted shipped script names inside bundled browser directories qualify; `cacheable` reports that decision in render metadata.
+Generated filename prefixes remain excluded even when their files appear inside a bundled browser directory.
+Generated fill scripts and other file targets can embed answers, so their stubs bypass origin storage.
+Their loaders always request a payload; compressed and chunked transfers still work for those targets.
+With intact page globals, cache writes contain code and exclude tokens, Lt content and receipts.
+Unreadable, corrupt or mismatched entries return `need:'payload'`; cleanup preserves replacements written after the failed read.
+Successful insertion precedes pruning; failed writes preserve existing bodies and leave later calls to repair the index.
+Index repair reserves the current body among 6 survivors and records entries before pruning.
+Browsers without `DecompressionStream` return `fatal:'stub-no-decompression'` and execute no body.
+Use `--stub --no-compress` for legacy browsers; that form bypasses the page cache.
+Never remove the SHA-256 check or replace refused payloads with handwritten page code.
 
 Rendered files go to `browser.js_tmp_dir`, else `<OS temp>/lt-suite-js-<uid>`.
 `render` exits 2 with `unsafe js_tmp_dir` when that folder is a symlink, belongs to another account, or has group or other permissions.
@@ -84,7 +122,7 @@ Never pass `initScript` to `navigate_page`.
 After every navigation, render `guard` using your adapter's form and flags, with the plan when there is one.
 
 ```text
-python3 "$SKILL_DIR/scripts/_shared/ltcore/ltjs.py" render guard --form expression --stub --plan plan.json
+python3 "$SKILL_DIR/scripts/_shared/ltcore/ltjs.py" render guard --form expression --cache --plan plan.json
 python3 "$SKILL_DIR/scripts/_shared/ltcore/ltjs.py" render guard --form function --plan plan.json
 python3 "$SKILL_DIR/scripts/_shared/ltcore/ltjs.py" render guard --form expression --plan plan.json
 ```
@@ -101,7 +139,7 @@ python3 "$SKILL_DIR/scripts/_shared/ltcore/ltjs.py" check-upload "<data>/figure.
 python3 "$SKILL_DIR/scripts/_shared/ltcore/ltjs.py" render upload --form function --arg panel=<key> --file "<data>/figure.png"
 ```
 
-Use your adapter's `--form` and `--stub` settings when rendering `upload`.
+Use your adapter's form and the inline protocol when rendering `upload`.
 The `check-upload` command requires a regular file inside the configured data directory.
 It refuses symlinks and files over 8 MB, and checks PNG or JPEG magic bytes.
 The `upload` script requires exactly 1 file input inside the named panel.
@@ -112,7 +150,7 @@ The `upload` script refuses missing or multiple inputs and never dispatches clic
 
 | Agent | `tab` | `navigate` | `eval_file` | `upload` | `screenshot` |
 |---|---|---|---|---|---|
-| Claude in Chrome, Claude Code or Desktop | `tabs_context_mcp` | `navigate` | `javascript_tool`, expression text with `--stub` | Page JS through `eval_file` | `computer`, action `screenshot` |
+| Claude in Chrome, Claude Code or Desktop | `tabs_context_mcp` | `navigate` | `javascript_tool`, loader then compressed stub through the inline protocol | Page JS through `eval_file` | `computer`, action `screenshot` |
 | chrome-devtools-mcp 1.12.0, server `lt-chrome` | `list_pages`, `select_page` | `navigate_page`, type `url`, `handleBeforeUnload: "dismiss"` | `evaluate_script`, function file through `sourcePath` | Page JS through `eval_file` | `take_screenshot(filePath)` |
 | Playwright MCP 0.0.83, `--extension` | `browser_tabs`, list/select | `browser_navigate` | `browser_evaluate`, function text | Page JS through `eval_file` | `browser_take_screenshot` |
 | Antigravity, `mcp_config.json`, `disabledTools` | `list_pages`, `select_page` | `navigate_page` | `evaluate_script`, `sourcePath` | Page JS through `eval_file` | `take_screenshot` |
@@ -201,10 +239,13 @@ Run `lt-chrome install` again after upgrading the skill; doctor warns when the s
 | `fatal: "forbidden-route"` | The guard refused the current route before running the script body. |
 | `fatal: "guard-install-failed"` | A guard wrapper could not be installed; the script body never ran. |
 | `fatal: "stub-hash-mismatch"` | The stub detected changed bytes and executed no script body. |
+| `fatal: "stub-no-decompression"` | The browser lacks gzip decompression; use the legacy uncompressed stub. |
+| `fatal: "stub-chunk-mismatch"` | A chunk failed verification or arrived out of order; execute no stub. |
+| `need: "payload"` | The loader executed nothing; continue with the inline protocol's stub step. |
 | `fatal: "script-threw"` | The script threw; the receipt includes its error and `guard_trips`. |
 | `guard_trips > 0` | A guard blocked an action; the cumulative count survives within this document. |
 
-For any listed refusal or positive `guard_trips`, stop and tell the user.
+For any fatal refusal or positive `guard_trips`, stop and tell the user.
 Ask the user and wait for the answer.
 
 The page guard contains accidents in lt-suite's own scripts; it cannot stop JavaScript an agent writes itself.

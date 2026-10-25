@@ -20,7 +20,7 @@ from .streams import configure_utf8
 
 from .requirements import requirement_applies
 
-__version__ = "0.2.1"
+__version__ = "0.2.2"
 
 NEEDS = []  # type: list
 

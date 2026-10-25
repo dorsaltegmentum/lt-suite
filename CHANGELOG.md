@@ -8,6 +8,14 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 lt-suite records notable changes using [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/).
 Versions follow [Semantic Versioning 2.0.0](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.2] - 2026-10-26
+
+### Changed
+
+- Inline browser tools receive gzip compressed page scripts with SHA-256 verification.
+- Page cache loaders reuse verified code with current frozen arguments and guard policies.
+- Chunked payload snippets verify numbered transfers before the stub assembles its body.
+
 ## [0.2.1] - 2026-10-26
 
 ### Added

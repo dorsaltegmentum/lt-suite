@@ -157,6 +157,7 @@ async function runCapture(env, opts = {}) {
   const listEl = { __el: true };
   const sandbox = {
     console, DOMParser,
+    localStorage: opts.storage,
     document: {
       querySelector: sel => (sel === 'div.pageList' ? listEl : null),
       createElement: () => ({
@@ -169,7 +170,7 @@ async function runCapture(env, opts = {}) {
       body: { appendChild() {} }
     },
     navigation: nav.api,
-    URL: pageURL(loc.origin), Blob, AbortController, TextEncoder, TextDecoder,
+    URL: pageURL(loc.origin), Blob, AbortController, TextEncoder, TextDecoder, Response, DecompressionStream,
     atob, btoa, crypto: webcrypto,
     ko: Object.assign({ contextFor: () => (env.noContext ? undefined : { $root: env.root }) }, KO),
     location: { pathname: loc.pathname, origin: loc.origin, href: loc.href || `${loc.origin}${loc.pathname}` },
@@ -220,10 +221,11 @@ async function runCapture(env, opts = {}) {
   /* Values made in the vm context carry that context's prototypes; a JSON round trip
    * brings the receipt into this realm so deepStrictEqual compares plain data. */
   if (receipt !== undefined) receipt = JSON.parse(JSON.stringify(receipt));
+  const secondReceipt = opts.rendered && opts.secondCall ? await sandbox.captureLtRun(opts.secondCall) : null;
   const moduleName = Object.keys(docs).find(n => n.startsWith('module-'));
   const refName = Object.keys(docs).find(n => n.startsWith('reference-'));
   return {
-    receipt, posts, hellos, downloads, cancelled, navigateListeners: nav.listeners.length,
+    receipt, secondReceipt, posts, hellos, downloads, cancelled, navigateListeners: nav.listeners.length,
     doc: moduleName ? docs[moduleName] : null,
     reference: refName ? docs[refName] : null,
     names: posts.map(p => p.url.split('/').pop())

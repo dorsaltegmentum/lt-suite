@@ -4,7 +4,7 @@ description: "First-time lt-suite setup and doctor: config, accessible palettes,
 license: AGPL-3.0-or-later
 compatibility: "Setup starts on Python 3.8; runtime needs Python 3.11+. Previews need Pillow. Browser checks need a signed-in Lt tab and an evaluate-file adapter."
 metadata:
-  version: "0.2.1"
+  version: "0.2.2"
 ---
 <!-- SPDX-FileCopyrightText: 2026 dorsaltegmentum -->
 <!-- SPDX-License-Identifier: AGPL-3.0-or-later -->

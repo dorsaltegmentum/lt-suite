@@ -300,7 +300,7 @@ def test_render_resolves_names_in_the_skill_from_another_cwd(run_py, tmp_path):
     (elsewhere / "scripts" / "browser" / "ping.js").write_text("return 'decoy';\n", encoding="utf-8", newline="\n")
     (elsewhere / "ping.js").write_text("return 'decoy';\n", encoding="utf-8", newline="\n")
     out = tmp_path / "out"
-    r = render_in(skill, run_py, "ping", "--form", "function", "--arg", "x=7", "--out-dir", str(out), cwd=elsewhere)
+    r = render_in(skill, run_py, "ping", "--form", "function", "--no-stub", "--arg", "x=7", "--out-dir", str(out), cwd=elsewhere)
     assert r.returncode == 0, r.stderr
     info = json.loads(r.stdout)
     text = Path(info["path"]).read_text(encoding="utf-8")
@@ -333,12 +333,12 @@ def test_render_refuses_model_answer_when_reading_is_off(run_py, tmp_path):
 def test_render_prepends_guard_always_and_net_for_fill(tmp_path):
     body = tmp_path / "x.js"
     body.write_text("return { ok: true };\n", encoding="utf-8", newline="\n")
-    plain = ltjs.render(str(body), form="function", out_dir=tmp_path / "o")
+    plain = ltjs.render(str(body), form="function", stub=False, out_dir=tmp_path / "o")
     text = Path(plain["path"]).read_text(encoding="utf-8")
     assert "LtGuard" in text and "globalThis.LtNet" not in text and plain["net"] is False
     fill = tmp_path / "_fill-demo-p1.js"
     fill.write_text("return { ok: true };\n", encoding="utf-8", newline="\n")
-    info = ltjs.render(str(fill), form="function", out_dir=tmp_path / "o")
+    info = ltjs.render(str(fill), form="function", stub=False, out_dir=tmp_path / "o")
     assert info["net"] is True and "LtNet" in Path(info["path"]).read_text(encoding="utf-8")
     assert ltjs.render(str(fill), form="function", net=False, out_dir=tmp_path / "o")["net"] is False
     assert ltjs.render(str(body), form="function", net=True, out_dir=tmp_path / "o")["net"] is True
@@ -356,7 +356,7 @@ def test_render_forms_and_adapter_defaults(tmp_path, run_py):
     assert e.startswith("await (async () => {") and e.rstrip().endswith(")();")
     assert f.startswith("async () => {") and f.rstrip().endswith("}")
     cfg = tmp_path / "c.toml"
-    for adapter, form, stub in [("claude-in-chrome", "expression", True), ("chrome-devtools-mcp", "function", False),
+    for adapter, form, stub in [("auto", "expression", True), ("claude-in-chrome", "expression", True), ("chrome-devtools-mcp", "function", False),
                                 ("playwright-mcp", "function", False), ("manual-paste", "expression", False)]:
         cfg.write_text(f'[browser]\nadapter = "{adapter}"\n', encoding="utf-8", newline="\n")
         r = cli(run_py, "render", str(body), "--config", str(cfg), "--out-dir", str(tmp_path / "o"))
@@ -653,3 +653,80 @@ def test_check_grants_depend_on_setting():
     plan={'check_answer_keys':[[4,'K']]}
     assert 'check_answer_keys' not in ltjs.policy_from_plan(plan)
     assert ltjs.policy_from_plan(plan,check_answer_enabled=True)['check_answer_keys']==[[4,'K']]
+
+
+def test_render_cache_and_chunk_cli_metadata(run_py, tmp_path):
+    source = tmp_path / 'probe.js'
+    source.write_text('return {ok:true};', encoding='utf-8', newline='\n')
+    opts = ('--out-dir', str(tmp_path / 'out'))
+    cached = cli(run_py, 'render', str(source), '--cache', *opts)
+    assert cached.returncode == 0, cached.stderr
+    info = json.loads(cached.stdout)
+    assert info['cache'] is True and info['compression'] == 'gzip'
+    assert len(info['body_sha256']) == 64 and info['chunks'] == []
+    chunked = cli(run_py, 'render', str(source), '--stub', '--chunk-bytes', '20000', *opts)
+    assert chunked.returncode == 0, chunked.stderr
+    full = json.loads(chunked.stdout)
+    assert full['body_sha256'] == info['body_sha256']
+    assert full['chunks']
+    import hashlib
+    for i, chunk in enumerate(full['chunks'], 1):
+        raw = Path(chunk['payload_path']).read_bytes()
+        assert chunk['i'] == i and chunk['len'] == len(raw) <= 20000
+        assert chunk['sha16'] == hashlib.sha256(raw).hexdigest()[:16]
+        assert Path(chunk['path']).read_text(encoding='utf-8').startswith('await (')
+    for flags in [('--chunk-bytes', '0'), ('--chunk-bytes', '-1'),
+                  ('--cache', '--chunk-bytes', '20000'), ('--cache', '--no-compress'),
+                  ('--no-stub', '--chunk-bytes', '20000'), ('--cache', '--no-stub')]:
+        assert cli(run_py, 'render', str(source), *flags, *opts).returncode == 2
+    legacy = cli(run_py, 'render', str(source), '--stub', '--no-compress', *opts)
+    assert legacy.returncode == 0, legacy.stderr
+    assert json.loads(legacy.stdout)['compression'] == 'none'
+    direct = cli(run_py, 'render', str(source), '--no-stub', *opts)
+    assert direct.returncode == 0, direct.stderr
+    assert json.loads(direct.stdout)['body_sha256'] is None
+
+
+def test_inline_body_hash_ignores_inputs_and_tracks_render_identity(tmp_path):
+    source = tmp_path / 'probe.js'
+    source.write_text('return {ok:true};', encoding='utf-8', newline='\n')
+    opts = {'out_dir': tmp_path / 'out', 'stub': True}
+    a = ltjs.render(str(source), args={'token': 'first'}, **opts)
+    b = ltjs.render(str(source), args={'token': 'second'}, plan={'origin': ORIGIN}, **opts)
+    assert a['body_sha256'] == b['body_sha256']
+    assert a['sha256'] != b['sha256']
+    for changes in ({'form': 'function'}, {'net': True}):
+        assert ltjs.render(str(source), **changes, **opts)['body_sha256'] != a['body_sha256']
+
+
+@needs_node
+def test_generated_content_never_enters_page_cache(tmp_path):
+    source = tmp_path / '_fill-demo-p1.js'
+    source.write_text('return {ok:true, answer:"private synthetic answer"};', encoding='utf-8', newline='\n')
+    info = ltjs.render(str(source), stub=True, net=False, out_dir=tmp_path / 'out')
+    assert info['cacheable'] is False
+    text = Path(info['path']).read_text(encoding='utf-8')
+    assert 'setItem' not in text
+    loader = ltjs.render(str(source), cache=True, net=False, out_dir=tmp_path / 'out')
+    result = node({'mode': 'run', 'file': loader['path']}, tmp_path)
+    assert result['result']['need'] == 'payload'
+    assert result['ran'] is False
+
+
+def test_cache_allowlist_matches_shipped_browser_names():
+    paths = list((REPO / 'shared' / 'browser').glob('*.js'))
+    paths += list((REPO / 'skills').glob('*/scripts/browser/*.js'))
+    assert ltjs.CACHEABLE_BROWSER_NAMES == {p.name for p in paths}
+
+
+def test_cache_allowlist_rejects_unknown_and_generated_names(tmp_path, monkeypatch):
+    skill = make_skill(tmp_path)
+    scripts = skill / 'scripts'
+    monkeypatch.setattr(ltjs, 'skill_scripts_dir', lambda: scripts)
+    browser = scripts / 'browser'
+    for filename in ('extra.js', '_fill-demo.js', '_verify-demo.js', '_check-demo.js',
+                     '_replace-demo.js', '_calibrate-demo.js'):
+        source = browser / filename
+        source.write_text('return {ok:true};\n', encoding='utf-8', newline='\n')
+        assert not ltjs.cacheable_target(source), filename
+    assert ltjs.cacheable_target(browser / 'ping.js')

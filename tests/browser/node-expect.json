@@ -1,8 +1,10 @@
 {
  "groups": {
   "lt_net": 54,
-  "lt_guard": 36
+  "lt_guard": 36,
+  "inline": 21,
+  "inline review": 19
  },
- "files": 2,
- "min_tests": 90
+ "files": 4,
+ "min_tests": 130
 }

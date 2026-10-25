@@ -48,7 +48,7 @@ def run(path: str, form: str, scenario: str = "plain") -> dict:
 
 def test_names_resolve_against_the_skill_folder_from_any_cwd(tmp_path):
     for name in ("capture", "fetch_media"):
-        out = render(tmp_path, name, "--form", "function", *SINK_ARGS)
+        out = render(tmp_path, name, "--form", "function", "--no-stub", *SINK_ARGS)
         assert Path(out["source"]).resolve() == (SKILL / "scripts" / "browser" / f"{name}.js").resolve()
         assert out["net"] is False, "capture scripts carry no save watcher"
         assert out["guard"] == "block-all", "capture has no plan, so every page change is blocked"

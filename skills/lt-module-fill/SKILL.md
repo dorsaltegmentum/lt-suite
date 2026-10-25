@@ -6,7 +6,7 @@ description: Write drafted answers into a captured Lt run in the user's signed-i
 license: AGPL-3.0-or-later
 compatibility: "A Chromium browser signed in to Lt, and an agent browser tool that runs a JavaScript file in that tab (or the user pastes it into DevTools). Python 3.11+ with jsonschema; Pillow, numpy and scipy for micrograph labels. Node 18+ only for the repository tests."
 metadata:
-  version: 0.2.1
+  version: 0.2.2
 ---
 
 <!-- Fill a captured Lt run from answers.json up to the first one-way door, verify from a fresh load, and hand the run back for the user to submit. -->
@@ -64,7 +64,8 @@ the answer; never guess.
   run that file in the tab.
 - Run each rendered file with your browser tool's evaluate-file action.
   `references/_shared/browser-adapters.md` lists that action per agent and the form
-  (`expression` or `function`, with or without `--stub`) each one takes.
+  (`expression` or `function`) each tool takes, plus the shared inline loader and payload protocol.
+  Apply that protocol to guard, fill, verify, upload and Check Answer scripts.
 - Save every JSON a script returns under `<data>/runs/<module_id>/logs/`, unchanged.
 - With `fill.check_answer.enabled` off, the agent never presses Check Answer. With it on, only rendered `_check-` scripts press eligible items (step 6b).
 
