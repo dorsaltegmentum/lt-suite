@@ -288,3 +288,31 @@ def test_record_sheet_receipts_bind_browser_payload(rat_run, emit_mod, binding):
     else:
         assert result.returncode == 3, result.stdout + result.stderr
         assert 'RAT receipt binding' in result.stderr
+
+
+def test_stale_answers_classification_names_refresh_before_receipt_binding(rat_run, emit_mod):
+    kit, mod, ans, cfg, record, path = rat_run
+    sheet_receipts(kit, mod, ans, emit_mod)
+    ans['drafted_at'] = '2000-01-02T00:00:00Z'
+    kit.write('answers.json', ans)
+    result = report(kit)
+    assert result.returncode == 3
+    assert 'page-kinds.json is stale for this answers.json; run page_kinds.py classify' in result.stderr
+
+
+@pytest.mark.parametrize('redacted', [False, True])
+def test_report_binds_redacted_payload_hash_by_unique_short_prefix(rat_run, emit_mod, redacted):
+    kit, mod, ans, cfg, record, path = rat_run
+    rows = sheet_receipts(kit, mod, ans, emit_mod, bound=True)
+    for row in rows:
+        pin = row['source_payload']
+        pin['sha16'] = pin['sha256'][:16]
+        if redacted:
+            pin['sha256'] = '[BLOCKED: Base64 encoded data]'
+        else:
+            del pin['sha256']
+    kit.write('receipts.json', {'receipts': rows})
+    result = report(kit)
+    assert result.returncode == 0, result.stdout + result.stderr
+    result_doc = json.loads((kit.run_dir('c1-r109') / 'fill-report.json').read_text(encoding='utf-8'))
+    assert 'source_payload_sha16' in next(r for r in result_doc['items'] if r['item_id'] == 'p3-81')['stopped_reason']

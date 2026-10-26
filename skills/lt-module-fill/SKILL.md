@@ -61,7 +61,9 @@ the answer; never guess.
   run the fresh-load verify next.
 - Right after every navigation, run the guard alone:
   `python3 "$SKILL_DIR/scripts/_shared/ltcore/ltjs.py" render guard --plan <plan.json>`, then
-  run that file in the tab.
+  run that file as the next call in that tab. Its `ok` must be true before filling.
+  The guard waits up to `fill.save_wait.render_wait_ms` for the view model.
+  A `guard-degraded` receipt stops fill, verify, probe and Check Answer calls.
 - Run each rendered file with your browser tool's evaluate-file action.
   `references/_shared/browser-adapters.md` lists that action per agent and the form
   (`expression` or `function`) each tool takes, plus the shared inline loader and payload protocol.
@@ -444,3 +446,21 @@ TODO count. Include: "Start a new session for further drafting after RAT entry."
 Reading a run into `module.json` belongs to lt-module-capture. Drafting answers belongs to
 lt-module-answer, diagrams to mechanistic-diagram, notes and flashcards to lt-module-export.
 Submitting belongs to the user alone.
+
+### Receipt payload binding
+
+`record` binds each fill and verify receipt to the payload it executed.
+It searches default payloads, `--payload` paths and sibling `fill-js*` manifests under the run.
+The full `source_payload_sha256` binds first; redacted values use the unique `source_payload_sha16` prefix.
+A missing or ambiguous identity refuses and lists the candidate payloads tried.
+The recorded `payload_binding` names the field used for each receipt.
+
+A conflicting item and observation time refuses before any receipt file changes.
+Use `record --supersede` to correct rows from the same verify receipt.
+The command archives replaced rows and their reason in `receipts-superseded.json`.
+It keeps the verify receipt hash, so a different observation cannot replace those rows.
+
+Fallback fill receipts include `save_diag` with at most 20 aggregated request rows.
+Each row records method, templated path, status, count and whether a written model fired Backbone sync.
+Numeric and hex path segments become `:id`; query strings, headers, bodies and answer text remain excluded.
+`record` copies `save_diag` to `save-waits.json` for later transport identification.

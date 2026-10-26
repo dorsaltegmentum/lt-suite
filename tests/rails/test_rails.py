@@ -1084,6 +1084,8 @@ def run_validator(tmp_path: Path, base: str, doc: dict, opts: dict, quiet: bool 
     if base in ("fill-report", "answers") and not opts.get("no_module"):
         mod = opts.get("module", ident)(load("module"))
         mp = tmp_path / "cross-module.json"
+        if base == "answers" and mod == load("module") and doc["source_module"]["path"] == "module.example.json":
+            mp = tmp_path / "module.example.json"
         mp.write_text(json.dumps(mod, indent=1), encoding="utf-8", newline="\n")
         argv += ["--module", str(mp)]
         if base == "answers" and doc["source_module"]["path"] == "cross-module.json":

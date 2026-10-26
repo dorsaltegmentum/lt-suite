@@ -344,3 +344,33 @@ print(json.dumps(ltjs.render_source(b,name='served',stub=False,net=True,args=s['
     assert.equal(e.writes.length,method==='fillPage'?1:0);
   });
 }
+
+for (const method of ['fillPage', 'fillPages', 'verify', 'probe', 'check', 'checkVerify']) {
+  test('cached-fill: degraded guard refuses ' + method + ' without writes or presses', async () => {
+    const e = env();
+    e.setRootReady(false);
+    e.presses = [];
+    const a = args(); a.method = method;
+    if (['verify', 'checkVerify'].includes(method)) a.jobs = {1: a.jobs};
+    if (method === 'fillPages') a.jobs = [{page: 1, jobs: a.jobs}];
+    const r = await fallback(e, render(a));
+    assert.equal(r.ok, false);
+    assert.equal(r.fatal, 'guard-degraded');
+    assert.equal(e.writes.length, 0);
+    assert.equal(e.presses.length, 0);
+  });
+}
+
+test('cached-fill: probe and check receipts include short payload hashes', async () => {
+  const sha = 'b'.repeat(64), probeArgs = {method: 'probe', cfg: {source_payload_sha256: sha}};
+  const e = env();
+  const probe = await fallback(e, render(probeArgs));
+  assert.equal(probe.source_payload_sha16, sha.slice(0, 16));
+  const C = require('./check_env.js'), c = C.setup();
+  c.ctx.localStorage = storage();
+  const checked = await fallback(c, render({method: 'check', cfg: {...c.cfg, source_payload_sha256: sha}, jobs: [c.job]}, {...policy(), check_answer_keys: [[1, 'K']]}));
+  assert.equal(checked.source_payload_sha16, sha.slice(0, 16));
+  const verified = await fallback(c, render({method: 'checkVerify', cfg: {...c.cfg, source_payload_sha256: sha},
+    jobs: {1: [{...c.job, final_h: checked.items[0].final_h}]}}));
+  assert.equal(verified.source_payload_sha16, sha.slice(0, 16));
+});

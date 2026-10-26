@@ -662,7 +662,7 @@ def function_text(body: str, *, name: str, args: Mapping[str, Any] | None,
         parts.append(_read(NET_JS).rstrip("\n") + ";")
     parts.append("return await globalThis.LtGuard.run(__LT_POLICY__, async () => {")
     parts.append(body.rstrip("\n"))
-    parts.append("}, { net: " + ("true" if net else "false") + " });")
+    parts.append("}, { net: " + ("true" if net else "false") + ", render_wait_ms: __LT_ARGS__.cfg?.save_wait?.render_wait_ms ?? __LT_POLICY__.render_wait_ms });")
     if parameterized:
         parts.append("} finally { __LT_ARGS__ = undefined; __LT_POLICY__ = undefined; __ltArgs = undefined; __ltPolicy = undefined; }")
     parts.append("}")
@@ -934,7 +934,7 @@ def render(target: str, *, form: str | None = None, stub: bool | None = None,
     if name == "probe_panels" and stub and compress and cacheable_target(path):
         runner = path.with_name("fill_runner.js")
         if runner.is_file():
-            return render(str(runner), args={"method": "probe"}, form=form, stub=True, net=True,
+            return render(str(runner), args={**dict(args or {}), "method": "probe"}, form=form, stub=True, net=True,
                           plan=plan, cfg=cfg, out_dir=out_dir, cache=cache, chunk_bytes=chunk_bytes)
     net = wants_net(path, name) if net is None else bool(net)
     a: dict[str, Any] = dict(args or {})
@@ -954,6 +954,7 @@ def render(target: str, *, form: str | None = None, stub: bool | None = None,
     origin = cfg.get("lt.origin", "") if cfg is not None else ""
     inst = cfg.get("lt.instance", "") if cfg is not None else ""
     policy = policy_from_plan(plan, origin or None, inst or None, check_answer_enabled=cfg.get("fill.check_answer.enabled", False))
+    policy["render_wait_ms"] = cfg.get("fill.save_wait.render_wait_ms", 5000)
     body = browser_body(path)
     cacheable = cacheable_target(path)
     text = render_source(body, name=name, form=form, stub=stub, args=a, net=net, policy=policy,

@@ -153,6 +153,10 @@ mark unresolved items as blocked with a precise TODO, and explain the access lim
 packet. Do not invent an external citation, pretend to search, or claim a source is absent.
 An unavailable configured source records an access blocker rather than a false absence.
 
+Verification status belongs in `uncertainties`, never in segment text sent to Lt.
+The `answers.meta_text_patterns` rail refuses draft status phrases, TODO markers and tier tags in segments.
+Extend that configuration list when additional drafting markers need the same protection.
+
 Write `segments` as `claim` or `connective`. Every claim references resolving entries in
 `provenance`. Use configured tag templates; connective text introduces no new facts.
 Apply the schema and rails to these answer shapes:

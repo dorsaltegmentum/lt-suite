@@ -41,6 +41,7 @@ import argparse  # noqa: E402
 import collections  # noqa: E402
 import datetime as dt  # noqa: E402
 import hashlib  # noqa: E402
+import html  # noqa: E402
 import json  # noqa: E402
 import os  # noqa: E402
 import re  # noqa: E402
@@ -83,6 +84,26 @@ SCHEMA_BY_PREFIX = [
 DENIED_KEYS = {"modelanswer", "modelanswers", "answerkey", "iscorrect", "correctanswer", "checked"}
 MODEL_ANSWER_SOURCE = "lt-model-answer"
 CONNECTIVE_SHARE_MAX = 0.25
+DEFAULT_META_TEXT_PATTERNS = (
+    r"\bthis draft\b", r"\bin (the|this) draft\b",
+    r"\bnot (yet )?(checked|verified) in\b", r"\bTODO\b", r"\bTBD\b",
+    r"\bFIXME\b", r"\bplaceholder\b", r"\[T[1-4](?::[^\]]*)?\]",
+)
+
+
+def meta_text_errors(text, patterns=DEFAULT_META_TEXT_PATTERNS, label="segment"):
+    """Reject drafting status in text that will reach the answer field."""
+    plain = re.sub(r"<[^>]*>", "", html.unescape(str(text)))
+    plain = re.sub(r"\s+", " ", plain)
+    errors = []
+    for pattern in patterns:
+        try:
+            if re.search(pattern, plain, re.IGNORECASE):
+                errors.append(f"{label}: meta-text matches {pattern!r}; put verification status in uncertainties")
+        except re.error as error:
+            errors.append(f"answers.meta_text_patterns: invalid pattern {pattern!r}: {error}")
+    return errors
+
 DOI_RE = re.compile(r"^10\.\d{4,9}/\S+$")
 PMID_RE = re.compile(r"^PMID:\d+$", re.IGNORECASE)
 
@@ -148,6 +169,8 @@ class _Ctx:
     """What the rails need beyond the document."""
     base_dir: Path
     module: dict | None = None
+    module_path: Path | None = None
+    meta_text_patterns: tuple | list = DEFAULT_META_TEXT_PATTERNS
     approvals: dict | None = None
     model_answer_read: bool = True
     model_answer_where: str = "default"
@@ -537,12 +560,9 @@ def _unique_item_ids(doc: dict) -> list[str]:
     return errors
 
 
-def rails_answers(doc, ctx: _Ctx):
-    errs = _unique_item_ids(doc)
-    # The draft is bound to one capture by sha256, and a re-capture that changes a
-    # question invalidates it. The file hash says which capture; the question digest says
-    # whether its questions are still the ones this draft answers. The digest decides.
-    # Both the recorded source and any supplied capture must remain verifiable.
+def source_binding_errors(doc, ctx: _Ctx):
+    """Check the recorded capture path and pins before generating any writable payload."""
+    errs = []
     src = doc.get("source_module") or {}
     want, rel = src.get("sha256"), src.get("path")
     want_q = src.get("question_digest")
@@ -551,7 +571,11 @@ def rails_answers(doc, ctx: _Ctx):
     if cand is None:
         errs.append(f"source_module.path {rel!r} does not resolve to a readable capture; "
                     "the binding cannot be verified")
-    if want and rel:
+    if cand is not None and ctx.module_path is not None and cand.resolve() != ctx.module_path.resolve():
+        errs.append(f"source_module.path {rel!r} does not resolve to the supplied --module file")
+    if not want and not want_q:
+        errs.append("source_module.sha256 or question_digest must identify the capture")
+    if (want or want_q) and rel:
         if cand is not None:
             # After a fill the file hash always moves; the question digest does not.
             try:
@@ -595,6 +619,11 @@ def rails_answers(doc, ctx: _Ctx):
         elif question_digest(ctx.module) != bound_q:
             errs.append("the supplied capture question_digest differs from source_module: "
                         "the questions changed; re-draft and request a new approval")
+    return errs
+
+
+def rails_answers(doc, ctx: _Ctx):
+    errs = _unique_item_ids(doc) + source_binding_errors(doc, ctx)
     # Contamination cannot be laundered by the field it is declared in.
     for i, c in enumerate(doc.get("tier1_corpus", [])):
         for fld in ("path", "source_id"):
@@ -626,6 +655,7 @@ def rails_answers(doc, ctx: _Ctx):
             errs.append(f"{iid}: duplicate provenance ref")
         used = set()
         for i, seg in enumerate(a.get("segments", [])):
+            errs.extend(meta_text_errors(seg.get("text", ""), ctx.meta_text_patterns, f"{iid}: segment {i}"))
             for r in seg.get("provenance_refs", []):
                 used.add(r)
                 if r not in prov:
@@ -1260,7 +1290,8 @@ def validate_doc(doc, schema_name: str, *, module: dict | None = None,
                  approvals: dict | None = None, model_answer_read: bool | None = None,
                  config_path: str | os.PathLike | None = None,
                  schemas_dir: str | os.PathLike | None = None,
-                 base_dir: str | os.PathLike | None = None, document_sha256: str | None = None) -> Result:
+                 base_dir: str | os.PathLike | None = None, document_sha256: str | None = None,
+                 module_path: str | os.PathLike | None = None) -> Result:
     """Validate a parsed document. ``schema_name`` is e.g. "module" or
     "module.schema.json". Relative source paths resolve against ``base_dir``.
 
@@ -1288,7 +1319,7 @@ def validate_doc(doc, schema_name: str, *, module: dict | None = None,
             res.exit_code, res.notes = 2, pre_notes
             return res
         ctx = _Ctx(base_dir=Path(base_dir or os.getcwd()), module=module, approvals=approvals,
-                   notes=pre_notes)
+                   notes=pre_notes, module_path=Path(module_path) if module_path else None)
         if schema_name in ("answers.schema.json", "reference.schema.json",
                            "fill-report.schema.json", "reconciled.schema.json"):
             ctx.model_answer_read, ctx.model_answer_where = _model_answer_setting(
@@ -1300,6 +1331,7 @@ def validate_doc(doc, schema_name: str, *, module: dict | None = None,
         from ltcore import config as config_mod
         try:
             cfg = config_mod.load(config_path)
+            ctx.meta_text_patterns = cfg.get("answers.meta_text_patterns", DEFAULT_META_TEXT_PATTERNS)
             ctx.rat_policy = rat.policy_from_config(cfg)
             ctx.rat_roots = [p for _, p in rat.effective_roots(ctx.rat_policy)]
             if module and schema_name == "answers.schema.json":
@@ -1393,7 +1425,8 @@ def validate_file(path: str | os.PathLike, schema: str | None = None, *,
     except ValidationSetupError as e:
         return Result(name, exit_code=3, fatal=str(e))
     return validate_doc(doc, name, module=mod, approvals=appr, model_answer_read=model_answer_read,
-                        config_path=config_path, schemas_dir=schemas_dir, base_dir=p.parent, document_sha256=hashlib.sha256(p.read_bytes()).hexdigest())
+                        config_path=config_path, schemas_dir=schemas_dir, base_dir=p.parent, document_sha256=hashlib.sha256(p.read_bytes()).hexdigest(),
+                        module_path=module if isinstance(module, (str, os.PathLike)) else None)
 
 
 def _bool_arg(v: str) -> bool:

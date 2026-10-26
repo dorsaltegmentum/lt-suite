@@ -22,7 +22,7 @@ SUPPORTED = {"$schema", "$id", "title", "description", "type", "enum", "const", 
 
 # Every key in the design's key table (section 4), dotted; [] marks array-of-table items.
 DESIGN_KEYS = """
-schema_version institution.profile institution.name institution.unit_code institution.locale
+schema_version answers.meta_text_patterns institution.profile institution.name institution.unit_code institution.locale
 institution.timezone lt.origin lt.instance lt.allowed_url_patterns paths.data_dir
 paths.captures_dir paths.runs_dir paths.downloads_dir paths.downloads_mode paths.cache_dir
 notes.graph_path notes.format notes.pages_dir notes.assets_dir notes.whiteboards_dir

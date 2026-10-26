@@ -5,7 +5,7 @@
   {
    "path": "references/_shared/browser-adapters.md",
    "source": "shared/references/browser-adapters.md",
-   "sha256": "da040be4b555eea100b39b3aeb3956c440fe90cef2b89f15e4da3af9920c2056"
+   "sha256": "6140d5e8ac5e48969b506ce3c913be531367717225fc60991090de6791274e25"
   },
   {
    "path": "references/_shared/lexicon/lt-client-vocabulary.md",
@@ -25,17 +25,17 @@
   {
    "path": "scripts/_shared/browser/lt_guard.js",
    "source": "shared/browser/lt_guard.js",
-   "sha256": "6a99af1b60ce2e4a121ee5e73dc88230ee020137a5410cea7d3fcde56c8e9a49"
+   "sha256": "85e79db1f51c2810f98edc84503093eb8f4d2317e8787c9549f9cae5fd0b54a6"
   },
   {
    "path": "scripts/_shared/browser/lt_net.js",
    "source": "shared/browser/lt_net.js",
-   "sha256": "a9be38be466c8fd449ebf9c55448f58029ae0b864674a70a3a7c8589edc965ab"
+   "sha256": "2ea8e85ba52f5968afd1c69c92e0a7376bc72e7440b534bfbb9e688ff1ab76e6"
   },
   {
    "path": "scripts/_shared/config.defaults.toml",
    "source": "shared/config.defaults.toml",
-   "sha256": "bf83b3a8ad1d78f7caebad76d7a676558868535604cc47706934875eb98cf0c1"
+   "sha256": "1cc6c3048c5418970178f8a7f87095b89ef6e8dd6a7bb5fd483948f8b3c8aaae"
   },
   {
    "path": "scripts/_shared/ltcore/__init__.py",
@@ -70,7 +70,7 @@
   {
    "path": "scripts/_shared/ltcore/ltjs.py",
    "source": "shared/ltcore/ltjs.py",
-   "sha256": "f2cf179eb14ecfb860cf15b47021b157ed5c4f2ce3ac7c4dbdf6da53833b0cad"
+   "sha256": "933a0ec2170cfb6cd67c629a73d55c1f228d8f4e4870633e1f1c38ec97f3fb40"
   },
   {
    "path": "scripts/_shared/ltcore/page_kinds.py",
@@ -115,7 +115,7 @@
   {
    "path": "scripts/_shared/ltcore/validate.py",
    "source": "shared/ltcore/validate.py",
-   "sha256": "ee4c62c1b884223658ede94b711cbe7ffb2715aa14034a12f81163627ed03aad"
+   "sha256": "5edb34db2e559a4ca837799e22838cb9f1608a03e2180d12b7b0fcc1adec9955"
   },
   {
    "path": "scripts/_shared/schemas/answers.schema.json",
@@ -130,7 +130,7 @@
   {
    "path": "scripts/_shared/schemas/config.schema.json",
    "source": "shared/schemas/config.schema.json",
-   "sha256": "26bc618259bda7ac48ffbb01bbedcd22c5fe83d6d2c335dc259d75b2ea075ce9"
+   "sha256": "7da03c50240f7a9bb7c2df536fbc9bb43b7837f438fc6409bf6a234d6e6f3d33"
   },
   {
    "path": "scripts/_shared/schemas/fill-report.schema.json",

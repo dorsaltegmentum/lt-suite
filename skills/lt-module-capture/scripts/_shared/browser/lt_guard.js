@@ -209,6 +209,8 @@
   }
   function armCheck(page, key) {
     st.token = null;
+    check();
+    if (unlocked().length) return false;
     const pol = st.active, painted = paintedPage();
     if (!pol || !Array.isArray(pol.check_answer_keys) ||
         !pol.check_answer_keys.some(pair => pair[0] === page && String(pair[1]) === String(key)) ||
@@ -237,7 +239,7 @@
       if (button) {
         const token = st.token, raw = contextPanel(button), painted = paintedPage();
         st.token = null;
-        if (token && token.policy === st.active && now() < token.until && painted &&
+        if (token && status().ok && token.policy === st.active && now() < token.until && painted &&
             painted.idx === token.page && panelKey(raw) === token.key && checkable(raw)) return;
         why = 'check-answer-token';
       }
@@ -294,7 +296,7 @@
     for (let o = root; o && o !== Object.prototype; o = Object.getPrototypeOf(o)) {
       if (Object.prototype.hasOwnProperty.call(o, name)) owners.push(o);
     }
-    if (!owners.length) return 'absent';
+    if (!owners.length) owners.push(root);
     if (owners.indexOf(root) < 0) owners.unshift(root);
     let state = 'locked';
     for (const o of owners) {
@@ -554,6 +556,20 @@
     return bad;
   };
 
+  const unlocked = () => MUTATORS.filter(n => !['locked', 'wrapped', 'rewrapped'].includes(st.mutators[n]));
+
+  async function ready(waitMs) {
+    const ck = G.__ltClock || {now: () => Date.now(), sleep: ms => new Promise(r => G.setTimeout(r, ms))};
+    const limit = Number.isFinite(waitMs) && waitMs >= 0 ? waitMs : 5000;
+    const start = ck.now();
+    check();
+    while (unlocked().length && ck.now() - start < limit) {
+      await ck.sleep(Math.min(50, limit - (ck.now() - start)));
+      check();
+    }
+    return unlocked();
+  }
+
   function stamp(r) {
     if (!r || typeof r !== 'object' || Array.isArray(r)) return r;
     const out = Object.assign({}, r, { guard_trips: st.trips });
@@ -567,16 +583,19 @@
       if (!['locked', 'wrapped', 'rewrapped'].includes(state)) degraded.push('mutators:' + n + ':' + state);
     }
     if (degraded.length) out.guard_degraded = degraded.join(',');
+    const open = unlocked();
+    if (open.length && out.ok === true) Object.assign(out, {ok: false, fatal: 'guard-degraded', unlocked: open});
     return out;
   }
 
   async function run(policy, body, opts) {
     addPolicy(policy);
     check();
-    const bad = failedParts();
-    if (bad.length) return stamp({ ok: false, fatal: 'guard-install-failed', detail: bad.join(',') });
     const refused = routeRefusal();
     if (refused) return stamp({ ok: false, fatal: 'forbidden-route', route: refused });
+    const bad = await ready(opts?.render_wait_ms ?? policy?.render_wait_ms);
+    if (bad.length) return stamp({ok: false, fatal: 'guard-degraded', unlocked: bad});
+    if (failedParts().length) return stamp({ok: false, fatal: 'guard-install-failed', detail: failedParts().join(',')});
     if (opts && opts.net) {
       if (!G.LtNet || typeof G.LtNet.install !== 'function') return stamp({ ok: false, fatal: 'net-missing' });
       G.LtNet.install(G);
@@ -599,9 +618,10 @@
     check();
     const muts = {};
     for (const n of MUTATORS) muts[n] = st.mutators[n] || 'no-root';
-    const bad = failedParts();
+    const bad = unlocked();
     return {
-      ok: bad.length === 0, installed: st.installed, version: 2, guard_trips: st.trips,
+      ok: bad.length === 0 && failedParts().length === 0,
+      ...(bad.length ? {fatal: "guard-degraded", unlocked: bad} : {}), installed: st.installed, version: 2, guard_trips: st.trips,
       mutators: muts, form: st.form, submit_listener: st.submit_listener, navigate: st.navigate,
       events: st.events, confirm: st.confirm,
       policy: blockAll() ? 'block-all' : 'plan', policies: st.policies.length,

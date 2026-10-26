@@ -153,7 +153,7 @@ def load_receipts(raw, answer_ids, start, end):
     by_item: dict[str, list] = {}
     for n, r in enumerate(rows):
         tag = f"receipts[{n}]"
-        if not isinstance(r, dict) or set(r) not in (RECEIPT_KEYS, RECEIPT_KEYS | {"source_payload"}):
+        if not isinstance(r, dict) or not RECEIPT_KEYS <= set(r) or set(r) - RECEIPT_KEYS - {"source_payload", "payload_binding", "verify_receipt_sha256"}:
             got = sorted(r) if isinstance(r, dict) else type(r).__name__
             raise Refused(f"{tag}: keys must be {sorted(RECEIPT_KEYS)} with optional source_payload, got {got}")
         if r["item_id"] not in answer_ids:
@@ -275,7 +275,15 @@ def build(mod, ans, raw_receipts, notes, answers_path, receipts_path, *, save_wa
     # echo the payload hash; record pins it, and the payload pins classification.
     import emit_fill
     pkpath = Path(page_kinds_path) if page_kinds_path else store.Store(cfg, data_dir=data_dir).run_dir(mod["module_id"]) / "page-kinds.json"
+    if pkpath.is_file():
+        try:
+            stored = json.loads(pkpath.read_text(encoding="utf-8"))
+            if stored.get("scan", {}).get("answers_sha256") != hashlib.sha256(answers_path.read_bytes()).hexdigest():
+                raise Refused("page-kinds.json is stale for this answers.json; run page_kinds.py classify")
+        except (OSError, ValueError, AttributeError):
+            pass
     payloads = {}
+    binding_fields = {}
     for iid, rs in receipts.items():
         pg = mod_items[iid][0]
         answer = next(a for a in ans["items"] if a["item_id"] == iid)
@@ -288,23 +296,32 @@ def build(mod, ans, raw_receipts, notes, answers_path, receipts_path, *, save_wa
             if not binding and not required:
                 continue
             try:
-                if not isinstance(binding, dict) or set(binding) != {"path", "sha256"}:
+                if not isinstance(binding, dict) or "path" not in binding or set(binding) - {"path", "sha256", "sha16"}:
                     raise ValueError
                 ppath = Path(binding["path"])
                 if not ppath.is_absolute():
                     ppath = (receipts_path.parent if receipts_path else answers_path.parent) / ppath
                 if any(rat.within(ppath, root) for _, root in rat.effective_roots(rat.policy_from_config(cfg))):
                     raise ValueError
+                candidates = emit_fill.payload_candidates(store.Store(cfg, data_dir=data_dir), mod["module_id"], [ppath])
+                ppath, digest, bound_field = emit_fill.bind_payload(
+                    {"source_payload_sha256": binding.get("sha256"), "source_payload_sha16": binding.get("sha16")}, candidates)
+                binding_fields[(iid, receipt["observed_at"])] = bound_field
                 raw = ppath.read_bytes()
-                if hashlib.sha256(raw).hexdigest() != binding["sha256"]:
-                    raise ValueError
-                payload = payloads.setdefault(binding["sha256"], json.loads(raw))
+                payload = payloads.setdefault(digest, json.loads(raw))
                 if (payload.get("schema") != emit_fill.PAYLOAD_SCHEMA or
                         payload.get("module_id") != mod["module_id"] or
                         payload.get("run_id") != mod["run_id"] or
                         payload.get("module", {}).get("question_digest") != emit_fill.question_digest(mod) or
                         payload.get("answers", {}).get("sha256") != hashlib.sha256(answers_path.read_bytes()).hexdigest()):
                     raise ValueError
+                job = next(j for page in payload["pages"].values() for j in page["jobs"] if j["item"] == iid)
+                if str(emit_fill.expected_hash(job)) != str(receipt["expected_hash"]):
+                    raise ValueError
+                if job.get("source") != "rat-sheet":
+                    if required:
+                        raise ValueError
+                    continue
                 pin = payload.get("source_page_kinds") or {}
                 if (not pin.get("sha256") or not pkpath.is_file() or
                         hashlib.sha256(pkpath.read_bytes()).hexdigest() != pin["sha256"] or
@@ -316,7 +333,7 @@ def build(mod, ans, raw_receipts, notes, answers_path, receipts_path, *, save_wa
                         any(job.get("sheet", {}).get(k) != sheet.get(k) for k in ("root", "name", "sha256")) or
                         str(emit_fill.expected_hash(job)) != str(receipt["expected_hash"])):
                     raise ValueError
-            except (OSError, ValueError, TypeError, KeyError, StopIteration):
+            except (OSError, ValueError, TypeError, KeyError, StopIteration, emit_fill.Refusal):
                 raise Refused("RAT receipt binding: executed payload or classification snapshot is missing or changed") from None
 
     bm = pl["boundary_map"]
@@ -357,7 +374,9 @@ def build(mod, ans, raw_receipts, notes, answers_path, receipts_path, *, save_wa
             base.update(attempted=True, method=method, result="filled" if ok else "failed",
                         verified=ok, stopped_reason=joined(note.get("stopped_reason"),
                                                            WEAK_SIGNALS.get(weak.get(pg)),
-                                                           receipt_reason(rs)),
+                                                           receipt_reason(rs),
+                                                           ("payload bound by " + binding_fields[(iid, rs[-1]["observed_at"])])
+                                                           if (iid, rs[-1]["observed_at"]) in binding_fields else None),
                         receipt={k: last[k] for k in ("expected_hash", "observed_hash",
                                                       "observed_at")})
             ap = a.get("single_attempt_approval") or {}

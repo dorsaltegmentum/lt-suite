@@ -27,7 +27,13 @@
  *
  * An answerable panel has an input key in panelState.
  */
-const probeLtPanels = async () => {
+const probeLtPanels = async (jobs) => {
+  const args = typeof __LT_ARGS__ === 'undefined' ? {} : __LT_ARGS__;
+  jobs = jobs || args.jobs || [];
+  const cfg = args.cfg || args;
+  const pin = cfg.source_payload_sha256 ? {source_payload_sha256: cfg.source_payload_sha256,
+    source_payload_sha16: cfg.source_payload_sha256.slice(0, 16)} : {};
+  if (globalThis.LtGuard && globalThis.LtGuard.status().ok !== true) return {ok: false, fatal: 'guard-degraded', ...pin};
   const el = document.querySelector('div.pageList');
   if (!el || typeof ko === 'undefined') {
     return { ok: false, reason: 'Not an Lt lesson page, or the Knockout client has not painted yet.' };
@@ -85,7 +91,16 @@ const probeLtPanels = async () => {
       const idx = models(inp.selectedAnswers).filter(n => Number.isInteger(n));
       return { occupied: idx.length > 0, evidence: { selected: idx.length } };
     },
-    'table-question': (c, inp) => {
+    'table-question': (c, inp, job) => {
+      if (job?.cells) {
+        const rows = grid(inp.rows), targets = new Set(job.cells.map(cell => cell.row + ',' + cell.col));
+        let filled = 0, others = 0;
+        rows.forEach((row, r) => row.cells.forEach((cell, col) => {
+          if (!cell.text.length) return;
+          if (targets.has(r + ',' + col)) filled++; else others++;
+        }));
+        return {occupied: filled > 0, evidence: {filled_cells: filled, student_cells: targets.size, other_cells_filled: others}};
+      }
       const body = gridBody(grid(inp.rows));
       let filled = 0, cells = 0;
       for (const row of body) {
@@ -235,7 +250,8 @@ const probeLtPanels = async () => {
     }
     const inp = A(st.input) || {};
     const fn = OCCUPANCY[pk];
-    const occ = fn ? fn(c, inp) : null;
+    const job = jobs.find(j => String(j.panel_key) === key && (!j.item || j.item.startsWith(`p${pageIndex}-`)));
+    const occ = fn ? fn(c, inp, job) : null;
     panels.push({
       dom_order: domOrder++,
       // Targets need both page_index and panel_key because panel keys may recur across pages.
@@ -296,7 +312,7 @@ const probeLtPanels = async () => {
 
   const answerable = panels.filter(p => p.kind === 'answerable');
   return {
-    ok: true,
+    ok: true, ...pin,
     page_index: pageIndex,
     page_title: S(U(page.title)),
     is_checkpoint: isCheckpointPage,   // Checkpoints use structural detection.

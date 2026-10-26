@@ -5,7 +5,7 @@
   {
    "path": "references/_shared/browser-adapters.md",
    "source": "shared/references/browser-adapters.md",
-   "sha256": "da040be4b555eea100b39b3aeb3956c440fe90cef2b89f15e4da3af9920c2056"
+   "sha256": "6140d5e8ac5e48969b506ce3c913be531367717225fc60991090de6791274e25"
   },
   {
    "path": "references/_shared/lexicon/answer-provenance-style.md",
@@ -20,7 +20,7 @@
   {
    "path": "scripts/_shared/config.defaults.toml",
    "source": "shared/config.defaults.toml",
-   "sha256": "bf83b3a8ad1d78f7caebad76d7a676558868535604cc47706934875eb98cf0c1"
+   "sha256": "1cc6c3048c5418970178f8a7f87095b89ef6e8dd6a7bb5fd483948f8b3c8aaae"
   },
   {
    "path": "scripts/_shared/fonts/catalog.json",
@@ -140,7 +140,7 @@
   {
    "path": "scripts/_shared/schemas/config.schema.json",
    "source": "shared/schemas/config.schema.json",
-   "sha256": "26bc618259bda7ac48ffbb01bbedcd22c5fe83d6d2c335dc259d75b2ea075ce9"
+   "sha256": "7da03c50240f7a9bb7c2df536fbc9bb43b7837f438fc6409bf6a234d6e6f3d33"
   },
   {
    "path": "scripts/_shared/schemas/page-kinds.schema.json",

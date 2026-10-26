@@ -263,16 +263,19 @@ const LtCheck = (function (G) {
     }
     return null;
   }
+  const payloadPin = cfg => cfg.source_payload_sha256 ? {source_payload_sha256: cfg.source_payload_sha256,
+    source_payload_sha16: cfg.source_payload_sha256.slice(0, 16)} : {};
   async function run(cfg, jobs) {
     const ck=clock(), deadline=ck.now()+CALL_DEADLINE_MS, f=L();
     const out={ok:true, module:cfg.module_id, run:cfg.run_id, page:cfg.page, policy:cfg.policy, rat_page:cfg.rat_page,
-      mode:'check', observed_at:new Date(ck.now()).toISOString(), ...f.ids({}), writes:0, items:[]};
+      ...payloadPin(cfg), mode:'check', observed_at:new Date(ck.now()).toISOString(), ...f.ids({}), writes:0, items:[]};
     const sw=cfg.save_wait || {}, reserve=VERDICT_MAX_MS+(cfg.dialog_max_ms??15000)+(sw.max_ms??20000);
     const enough=()=>deadline-ck.now()>=reserve;
     const cap=ms=>Math.max(0,Math.min(ms,deadline-ck.now()));
     const end=reason=>{out.fatal=reason; out.ok=false;};
     if (cfg.enabled !== true || !cfg.policy || cfg.policy.enabled !== true) {end('check-answer-off'); return out;}
     if (!G.LtGuard || G.LtGuard.version<2 || !G.LtGuard.armCheck || !G.LtGuard.commitControl) {end('guard-version'); return out;}
+    if (G.LtGuard.status().ok !== true) {end('guard-degraded'); return out;}
     if (G.document.__ltCheckUnsafe === true) {end('fresh-document-required'); return out;}
     if (!sw.calibration || f.staleReason(sw.calibration) || !G.LtNet) {end('calibration-stale'); return out;}
     const loc=f.checkLocation(cfg,null);
@@ -409,7 +412,8 @@ const LtCheck = (function (G) {
     out.guard_trips=trips();
     return out;
   }
-  async function verify(cfg, pages) {
+    async function verify(cfg, pages) {
+    if (G.LtGuard && G.LtGuard.status().ok !== true) return {ok:false,fatal:"guard-degraded",...payloadPin(cfg)};
     const f=L(), root=f.rootOf(), items=[];
     const loc=f.checkLocation(cfg,null);
     if (loc.fatal || !root) return {ok:false,fatal:loc.fatal||'no-lt-client'};
@@ -422,7 +426,7 @@ const LtCheck = (function (G) {
         items.push([job.item,s&&shape(job,raw)&&pairHash(s)===job.final_h?'ok':raw?'BAD':'no-panel',0,s?pairHash(s):'no-panel']);
       }
     }
-    return {ok:true,module:cfg.module_id,mode:'check-verify',fresh_load:fresh,...f.ids({}),observed_at:new Date(clock().now()).toISOString(),items};
+    return {ok:true,...payloadPin(cfg),module:cfg.module_id,mode:'check-verify',fresh_load:fresh,...f.ids({}),observed_at:new Date(clock().now()).toISOString(),items};
   }
   return {run:async (cfg,jobs)=>{const r=await run(cfg,jobs);G.__ltCheckDocument=true;return r;},verify,snapshot,encode,decode,DENY};
 })(typeof globalThis !== 'undefined' ? globalThis : this);

@@ -214,3 +214,6 @@ post_ms = 30000
 
 [improvement]
 benchmark_cells = []
+
+[answers]
+meta_text_patterns = ['\bthis draft\b', '\bin (the|this) draft\b', '\bnot (yet )?(checked|verified) in\b', '\bTODO\b', '\bTBD\b', '\bFIXME\b', '\bplaceholder\b', '\[T[1-4](?::[^\]]*)?\]']

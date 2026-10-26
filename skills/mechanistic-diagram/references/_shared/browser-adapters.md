@@ -15,13 +15,15 @@ Run every lt-suite script through its absolute path beneath `SKILL_DIR`.
 | Verb | Input and output | Rule |
 |---|---|---|
 | `tab` | No input; returns a tab identifier | Select the user's existing Lt tab. Never open a URL or create a profile. |
-| `navigate` | URL; no result | Run `check-url --plan --from` first. After navigation, make the guard script the next browser call. |
+| `navigate` | URL; no result | Run `check-url --plan --from` first. After navigation, make the guard script the next call in that tab and require `ok: true` before filling. |
 | `eval_file` | Rendered JavaScript file; small JSON receipt | Run page code only through files produced by `ltjs.py render`. |
 | `upload` | Panel key and checked image; receipt | Execute the rendered upload script through `eval_file`. Never use an agent-side upload tool. |
 | `screenshot` | Output path; image file | Use an optional screenshot to inspect the page visually. |
 
 Lt agents never click, type or press keys in the Lt tab, and never submit, commit or finish.
 Every write runs inside a rendered page script.
+After each navigation, the guard waits for the view model within `fill.save_wait.render_wait_ms`.
+A guard receipt with `ok: false` or `fatal: "guard-degraded"` stops subsequent fill calls.
 At login pages or CAPTCHAs, ask the user and wait for the answer.
 
 ## Render and run

@@ -190,6 +190,7 @@
   function addSub(e, m, role) {
     if (!m || typeof m.on !== 'function') return;
     const ms = modelState();
+    ms.syncFired = false;
     const onRequest = (a, b, options) => {
       if (st.entries.get(e.key) !== e || !e.subs.has(m)) return;
       if (!options || typeof options !== 'object') { st.diag.model_unidentified++; return; }
@@ -203,6 +204,7 @@
     };
     const onDone = ok => (a, b, options) => {
       if (st.entries.get(e.key) !== e || !e.subs.has(m)) return;
+      if (ok && role !== 'parent') ms.syncFired = true;
       if ((st.subCount.get(m) || 0) > 1) { st.diag.shared_model++; return; }
       const op = options && typeof options === 'object' ? ms.opts.get(options) : null;
       if (!op) return;
@@ -287,10 +289,10 @@
   }
 
   function startRec(rec, body) {
-    if (!counted(rec)) { rec.matched = true; return rec; }
-    st.diag.non_get++;
     st.reqs.push(rec);
     if (st.reqs.length > KEEP_REQS) st.reqs.shift();
+    if (!counted(rec)) { rec.matched = true; return rec; }
+    st.diag.non_get++;
     const cands = [];
     for (const e of st.entries.values()) if (e.seq < rec.seq && !e.weak) cands.push(e);
     if (!cands.length) { rec.matched = true; return rec; }
@@ -552,7 +554,7 @@
   function quietRef(cal) {
     let end = null;
     for (const r of st.reqs) {
-      if (r.seq <= st.session.startSeq) continue;
+      if (r.seq <= st.session.startSeq || !counted(r)) continue;
       if (cal && cal.method && cal.tpl && !(r.method === cal.method && r.tpl === cal.tpl)) continue;
       if (!r.ended) return { busy: true };
       if (end === null || r.t1 > end) end = r.t1;
@@ -582,6 +584,20 @@
       }
     }
     return { first, list: out.slice(0, 5) };
+  }
+
+  function saveDiagnostics(entries) {
+    const sync = entries.some(e => e && Array.from(e.subs.values()).some(s => s.ms.syncFired));
+    const rows = new Map();
+    for (const request of st.reqs) {
+      if (request.seq <= st.session.startSeq) continue;
+      const path = request.url?.pathname || '';
+      const template = path.split('/').map(segment => /^(?:[0-9a-f]+|[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12})$/i.test(segment) ? ':id' : segment).join('/');
+      const key = request.method + ' ' + template + ' ' + request.status;
+      if (!rows.has(key) && rows.size < 20) rows.set(key, {method: request.method, path_template: template, status: request.status, count: 0, model_sync: sync});
+      if (rows.has(key)) rows.get(key).count++;
+    }
+    return Array.from(rows.values());
   }
 
   async function waitForSave(keys, opts) {
@@ -621,6 +637,7 @@
       const confirmed = signal === 'model' || signal === 'net';
       return {
         save_signal: signal,
+        ...(signal === 'fallback' ? {save_diag: saveDiagnostics(entries)} : {}),
         signal,
         state: confirmed ? 'ok' : signal,
         save_confirmed: confirmed,

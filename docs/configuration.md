@@ -427,3 +427,24 @@ Run review and the improvement loop.
 | Key | Type | Default | Meaning |
 |---|---|---|---|
 | `improvement.benchmark_cells` | list[str] | `[]` | Benchmark cells the improvement loop compares before and after a change. |
+
+### `answers`
+
+| Key | Type | Default | Meaning |
+|---|---|---|---|
+| `answers.meta_text_patterns` | list[str] | see below | Case insensitive regular expressions that refuse draft status in answer segments and emitted HTML. Arrays replace defaults; copy the defaults when extending this list. Verification status belongs in uncertainties. |
+
+Default for `answers.meta_text_patterns`:
+
+```toml
+meta_text_patterns = [
+    '\bthis draft\b',
+    '\bin (the|this) draft\b',
+    '\bnot (yet )?(checked|verified) in\b',
+    '\bTODO\b',
+    '\bTBD\b',
+    '\bFIXME\b',
+    '\bplaceholder\b',
+    '\[T[1-4](?::[^\]]*)?\]',
+]
+```

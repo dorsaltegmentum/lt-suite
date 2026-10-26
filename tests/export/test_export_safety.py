@@ -141,8 +141,12 @@ def test_caption_injection_stays_one_literal_image_node(
     path = tmp_path / "module.json"
     path.write_text(json.dumps(module), encoding="utf-8", newline="\n")
     argv = export_args(answers=False)
-    # Answers stay bound to the unchanged questions; media alt is not in the digest.
-    argv += ["--answers", fixtures / "answers/answers-c1-r101.json"]
+    # Media captions preserve question identity while the copied answer names its capture.
+    answer = json.loads((fixtures / "answers/answers-c1-r101.json").read_text(encoding="utf-8"))
+    answer["source_module"]["path"] = "module.json"
+    answer_path = tmp_path / "answers.json"
+    answer_path.write_text(json.dumps(answer), encoding="utf-8", newline="\n")
+    argv += ["--answers", answer_path]
     argv[argv.index("--module") + 1] = path
     rc, _, err = run(*argv)
     assert rc == 0, err

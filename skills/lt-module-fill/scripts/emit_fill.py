@@ -95,7 +95,7 @@ ltcore.bootstrap([])
 from ltcore import approvals, config, store  # noqa: E402
 from ltcore.digest import question_digest  # noqa: E402
 
-from ltcore import page_kinds, rat
+from ltcore import page_kinds, rat, validate
 
 import argparse  # noqa: E402
 import copy  # noqa: E402
@@ -832,6 +832,21 @@ def _approvals_path(args, st, mod) -> Path | None:
     return p
 
 
+def check_payload_text(pay, cfg):
+    """Check every emitted HTML value before writing the payload to disk."""
+    if isinstance(pay, dict):
+        for key, value in pay.items():
+            if key == "html":
+                errors = validate.meta_text_errors(value, cfg.get("answers.meta_text_patterns"), "payload html")
+                if errors:
+                    raise Refusal("; ".join(errors))
+            else:
+                check_payload_text(value, cfg)
+    elif isinstance(pay, list):
+        for value in pay:
+            check_payload_text(value, cfg)
+
+
 def _write_payload(pay: dict, dest: Path, cfg, force: bool) -> list[str]:
     if dest.exists() and not force:
         raise Refusal(f"{dest} exists. It may be the record of a fill already made, which a later "
@@ -839,6 +854,7 @@ def _write_payload(pay: dict, dest: Path, cfg, force: bool) -> list[str]:
     with tempfile.TemporaryDirectory(prefix="lt-fill-clean-") as td:
         pay, notes = run_text_cleaners(cfg, pay, Path(td))
     pay["notes"] = pay.get("notes", []) + notes
+    check_payload_text(pay, cfg)
     write_json(dest, pay)
     write_json(dest.parent / "plan.json", pay["plan"])
     return notes
@@ -846,6 +862,16 @@ def _write_payload(pay: dict, dest: Path, cfg, force: bool) -> list[str]:
 
 def cmd_payload(args, cfg) -> int:
     mod, ans = load_module(args.module), load(args.answers)
+    ctx = validate._Ctx(base_dir=Path(args.answers).resolve().parent, module=mod,
+                        module_path=Path(args.module).resolve())
+    errors = validate.source_binding_errors(ans, ctx)
+    if errors:
+        raise Refusal("; ".join(errors))
+    for answer in ans.get("items", []):
+        for segment in answer.get("segments", []):
+            errors += validate.meta_text_errors(segment.get("text", ""), cfg.get("answers.meta_text_patterns"))
+    if errors:
+        raise Refusal("; ".join(errors))
     st = _open_store(args, cfg)
     pay = build_jobs(mod, ans, args, cfg, approvals_path=_approvals_path(args, st, mod))
     out = Path(args.out) if args.out else st.fill_js_dir(mod["module_id"])
@@ -1014,7 +1040,8 @@ def save_wait(cfg, save_rec: dict | None) -> tuple[dict, list[str]]:
 def cfg_base(pay: dict, sw: dict) -> dict:
     return {"module_id": pay["module_id"], "run_id": pay["run_id"], "instance": pay.get("instance"),
             "course_id": pay.get("course_id"), "origin": pay.get("origin"), "mode": pay["mode"],
-            "save_wait": sw, "source_payload_sha256": pay.get("_source_payload_sha256")}
+            "save_wait": sw, "source_payload_sha256": pay.get("_source_payload_sha256"),
+            "source_payload_sha16": (pay.get("_source_payload_sha256") or "")[:16]}
 
 
 def cfg_page(pay: dict, sw: dict, page: str, pg: dict, ticket: str | None = None) -> dict:
@@ -1176,8 +1203,7 @@ def write_scripts(pay: dict, out: Path, ppath: Path, cfg, st, *, requested: int,
     trial batch when it has a save record and no cross_page record."""
     psha = sha256(ppath)[:16]
     full_sha = sha256(ppath)
-    if pay.get("source_page_kinds"):
-        pay = dict(pay, _source_payload_sha256=full_sha)
+    pay = dict(pay, _source_payload_sha256=full_sha)
     mid = pay["module_id"]
     origin = pay.get("origin")
     prefix = prefix or ("_replace" if pay["mode"] == "replace" else "_fill")
@@ -1285,7 +1311,7 @@ def write_scripts(pay: dict, out: Path, ppath: Path, cfg, st, *, requested: int,
         vcall = ("LtFillLib.verify(" + json.dumps(cfg_base(pay, sw), ensure_ascii=False) + ", "
                  + json.dumps(vpages, ensure_ascii=False) + ")")
         emit(vname, "verify-run", all_pages, vhead, vcall, runner_args={"method": "verify", "cfg": cfg_base(pay, sw), "jobs": vpages})
-    manifest = {"payload": str(ppath), "payload_sha256": full_sha, "generated_at": now_utc(),
+    manifest = {"payload": str(ppath.resolve()), "payload_sha256": full_sha, "generated_at": now_utc(),
                 "origin": origin, "calibrated": bool(sw["calibration"]),
                 "groups": groups, "calls": calls, "tickets": tickets, "notes": notes}
     write_json(out / ("scripts.json" if prefix in ("_fill", "_replace") else f"scripts{prefix}.json"), manifest)
@@ -1389,6 +1415,7 @@ def cmd_check(args,cfg):
     pay=load(ppath)
     if pay.get('schema')!=PAYLOAD_SCHEMA or pay.get('module_id')!=mid:
         raise Refusal('check needs this module’s fill-payload.json')
+    pay = dict(pay, _source_payload_sha256=sha256(ppath))
     apath=Path(args.answers or pay['answers']['path']); ans=load(apath)
     check_binding(mod,ans)
     if pay['answers']['sha256']!=sha256(apath) or pay['module']['question_digest']!=question_digest(mod):
@@ -1472,7 +1499,8 @@ def cmd_check(args,cfg):
             by={j['item']:j for j in js}
             by.update({j['item']:j for j in all_pages.get(p,[])})
             all_pages[p]=list(by.values())
-    write_json(previous_jobs,{'module_id':mid,'pages':all_pages,'answers_sha256':sha256(apath)})
+    write_json(previous_jobs,{'module_id':mid,'pages':all_pages,'answers_sha256':sha256(apath),
+                              'source_payload_sha256':sha256(ppath)})
     policy={'enabled':True,'config':hashlib.sha256(json.dumps(cfg.values,sort_keys=True).encode()).hexdigest()}
     for p,js in pages.items():
         c=dict(cfg_base(pay,sw),enabled=True,page=int(p),policy=policy,rat_page=statuses[int(p)],
@@ -1513,7 +1541,8 @@ def cmd_check_verify(args,cfg):
     if not pages:
         return 2
     source=out/f'_verify-check-{mid}.js'
-    c={'module_id':mid,'run_id':mod['run_id'],'origin':origin_of(mod['source_url']),'instance':mod.get('instance'),'course_id':mod.get('course_id')}
+    c={'module_id':mid,'run_id':mod['run_id'],'origin':origin_of(mod['source_url']),'instance':mod.get('instance'),'course_id':mod.get('course_id'),
+       'source_payload_sha256':jobsdoc.get('source_payload_sha256')}
     source.write_text(LIB.read_text(encoding='utf-8')+'\n'+_check_body()+'\nreturn await LtCheck.verify('+json.dumps(c)+','+json.dumps(pages)+');\n',encoding='utf-8', newline="\n")
     if not args.no_render:
         info = render_script(source,form=args.form,stub=True if args.stub else False if args.no_stub else None,
@@ -1550,14 +1579,15 @@ def record_check(args,cfg,mod,st):
         # failed status in the receipt so hash-only report readers also fail.
         observed=vr[3] if vr and vr[1]=='ok' else 'verify-'+str(vr[1]) if vr else 'missing'
         records.append({'item_id':iid,'expected_hash':row['final_h'],'observed_hash':observed,
-                        'observed_at':ver.get('observed_at') or now_utc()})
+                        'observed_at':ver.get('observed_at') or now_utc(),
+                        'verify_receipt_sha256':sha256(Path(args.verify))})
         if observed!=row['final_h']:
             misses.append(iid)
             if last_write.get(iid) in {'model','net'}:
                 drop=True
     run=st.run_dir(mid)
     _append_unique(run/'check-answer.json','checks',ledger,lambda r:r['receipt_sha256'])
-    _append_unique(run/'receipts.json','receipts',records,lambda r:(r['item_id'],r['observed_at']))
+    save_receipts(run, records, getattr(args, 'supersede', False))
     if drop:
         origin=origin_of(mod['source_url']);cal=load_calibration(st.calibration_path);state=cal.get(origin,{})
         state.pop('save',None)
@@ -1619,6 +1649,92 @@ def _payload_jobs(paths: list[Path]) -> dict[str, dict]:
             for j in pg.get("jobs", []):
                 jobs[j["item"]] = dict(j, _source_payload=binding)
     return jobs
+
+
+def payload_candidates(st, mid, explicit):
+    """Collect default and sibling manifest payloads without merging their item jobs."""
+    folder = st.fill_js_dir(mid)
+    paths = [folder / name for name in ("fill-payload.json", "replace-payload.json", "calibrate-payload.json")]
+    paths += [Path(p) for p in explicit or []]
+    for manifest in sorted(st.run_dir(mid).glob("fill-js*/scripts.json")):
+        try:
+            named = load(manifest).get("payload")
+            if named:
+                path = Path(named)
+                if path.is_absolute():
+                    paths.append(path)
+                else:
+                    paths.extend([manifest.parent / path, st.run_dir(mid) / path,
+                                  manifest.parent / path.name])
+        except (OSError, ValueError, TypeError, AttributeError):
+            continue
+    return list(dict.fromkeys(p.resolve() for p in paths))
+
+
+def bind_payload(receipt, paths):
+    """Bind one receipt using its full hash or an unambiguous short hash."""
+    full = receipt.get("source_payload_sha256")
+    short = receipt.get("source_payload_sha16")
+    redacted = full in (None, "", "[BLOCKED: Base64 encoded data]")
+    field = "source_payload_sha16" if redacted else "source_payload_sha256"
+    value = short if redacted else full
+    matches = {}
+    tried = []
+    for path in paths:
+        try:
+            digest = sha256(path)
+            tried.append(f"{path} ({digest[:16]})")
+        except OSError:
+            tried.append(f"{path} (unreadable)")
+            continue
+        valid = isinstance(value, str) and re.fullmatch(r"[0-9a-f]{16}" if redacted else r"[0-9a-f]{64}", value)
+        if valid and (digest[:16] if redacted else digest) == value:
+            matches[digest] = path
+    if len(matches) != 1:
+        reason = "ambiguous" if len(matches) > 1 else "missing or unmatched"
+        raise Refusal(f"RAT receipt binding: payload identity is {reason}; tried: " + "; ".join(tried))
+    digest, path = next(iter(matches.items()))
+    if not redacted and short is not None and short != digest[:16]:
+        raise Refusal("payload hash fields disagree; tried: " + "; ".join(tried))
+    return path, digest, field
+
+
+def save_receipts(run_dir, rows, supersede):
+    """Refuse conflicting keys unless replacement preserves the same verification receipt."""
+    path = run_dir / "receipts.json"
+    doc = load(path) if path.is_file() else {"receipts": []}
+    key = lambda row: (row["item_id"], row["observed_at"])
+    existing = {key(row): index for index, row in enumerate(doc["receipts"])}
+    replaced, added = [], 0
+    for row in rows:
+        index = existing.get(key(row))
+        if index is None:
+            existing[key(row)] = len(doc["receipts"])
+            doc["receipts"].append(row)
+            added += 1
+            continue
+        old = doc["receipts"][index]
+        if old == row:
+            continue
+        conflict = any(old.get(k) != row.get(k) for k in ("expected_hash", "observed_hash"))
+        if not supersede:
+            if conflict:
+                raise Refusal(f"{row['item_id']}: receipt key clashes with different hashes; use record --supersede")
+            continue
+        prior = old.get("verify_receipt_sha256")
+        if prior and prior != row["verify_receipt_sha256"]:
+            raise Refusal(f"{row['item_id']}: --supersede requires the same verify receipt")
+        replaced.append({"replaced": old, "reason": "record --supersede corrected payload binding for the same verify receipt",
+                         "verify_receipt_sha256": row["verify_receipt_sha256"]})
+        doc["receipts"][index] = row
+        added += 1
+    if replaced:
+        archive_path = run_dir / "receipts-superseded.json"
+        archive = load(archive_path) if archive_path.is_file() else {"receipts": []}
+        archive["receipts"].extend(replaced)
+        write_json(archive_path, archive)
+    write_json(path, doc)
+    return added
 
 
 def _append_unique(path: Path, key: str, rows: list[dict], ident) -> int:
@@ -1961,47 +2077,54 @@ def cmd_record(args, cfg) -> int:
         raise Refusal(f"{vpath}: fresh_load is not true. A verify in the document that filled proves "
                       f"nothing about the server; load the page again and run the _verify file there")
 
-    fjs = st.fill_js_dir(mid)
-    ppaths = [Path(p) for p in args.payload] if args.payload else [
-        fjs / "fill-payload.json", fjs / "replace-payload.json", fjs / "calibrate-payload.json"]
+    ppaths = payload_candidates(st, mid, args.payload)
     if any(rat.within(p, root) for p in ppaths for _, root in rat.effective_roots(rat.policy_from_config(cfg))):
         raise Refusal("RAT receipt binding: payload path is inside a quarantined RAT root")
-    jobs = _payload_jobs(ppaths)
+    vpayload, vsha, vfield = bind_payload(ver, ppaths)
     vrows = {str(row[0]): row for row in ver.get("items", []) if isinstance(row, list) and row}
     observed_at = ver.get("observed_at") or now_utc()
 
     receipts, waits, misses = [], [], []
     for p, f in fills:
+        payload_path, digest, field = bind_payload(f, ppaths)
+        if digest != vsha:
+            raise Refusal(f"fill and verify payload hashes differ; tried: {', '.join(map(str, ppaths))}")
+        jobs = _payload_jobs([payload_path])
+        payload = load(payload_path)
+        if payload.get("module_id") != mid or payload.get("run_id") != mod["run_id"]:
+            raise Refusal("executed payload names another module or run")
         waits.append({"receipt": p.name, "receipt_sha256": sha256(p), "pages": _pages_of(f),
                       "save_signal": f.get("save_signal"), "waited_ms": f.get("waited_ms"),
                       "keys_total": f.get("keys_total"), "keys_saved": f.get("keys_saved"),
                       "keys_pending": f.get("keys_pending"), "save_errors": f.get("save_errors"),
                       "calibrated": bool(f.get("calibrated")), "ok": bool(f.get("ok")),
-                      "fatal": f.get("fatal")})
+                      "fatal": f.get("fatal"), **({"save_diag": f["save_diag"]} if "save_diag" in f else {})})
         for rec in f.get("items") or []:
             if rec.get("result") not in WRITE_RESULTS:
                 continue
             iid = rec["item"]
             row = vrows.get(iid)
-            if iid in jobs and jobs[iid].get("source") == "rat-sheet":
-                binding = jobs[iid]["_source_payload"]
-                if (f.get("source_payload_sha256") != binding["sha256"] or
-                        ver.get("source_payload_sha256") != binding["sha256"]):
-                    raise Refusal("RAT receipt binding: fill and verify must name the executed payload")
+            if iid not in jobs:
+                raise Refusal(f"{iid}: written item is missing from its executed payload {payload_path}")
+            expected = expected_hash(jobs[iid])
+            if rec.get("h") is not None and str(rec["h"]) != str(expected):
+                raise Refusal(f"{iid}: fill receipt hash differs from its executed payload {payload_path}")
+            metadata = {"source_payload": jobs[iid]["_source_payload"],
+                        "payload_binding": {"fill": field, "verify": vfield},
+                        "verify_receipt_sha256": sha256(vpath)}
             if row is None or row[1] != "ok":
                 misses.append(f"{iid} {row[1] if row else 'not in the verify'}")
             if iid in jobs and row is not None and len(row) >= 4:
                 receipts.append({"item_id": iid, "expected_hash": expected_hash(jobs[iid]),
                                  "observed_hash": row[3], "observed_at": observed_at,
-                                 **({"source_payload": jobs[iid]["_source_payload"]} if jobs[iid].get("source") == "rat-sheet" else {})})
+                                 **metadata})
             elif row is not None and row[1] in ("no-page", "no-panel") and iid in jobs:
                 receipts.append({"item_id": iid, "expected_hash": expected_hash(jobs[iid]),
                                  "observed_hash": row[1], "observed_at": observed_at,
-                                 **({"source_payload": jobs[iid]["_source_payload"]} if jobs[iid].get("source") == "rat-sheet" else {})})
+                                 **metadata})
 
     run_dir = st.run_dir(mid)
-    nr = _append_unique(run_dir / "receipts.json", "receipts", receipts,
-                        lambda r: (r["item_id"], r["observed_at"]))
+    nr = save_receipts(run_dir, receipts, getattr(args, "supersede", False))
     nw = _append_unique(run_dir / "save-waits.json", "save_waits", waits,
                         lambda r: r["receipt_sha256"])
     _append_unique(run_dir / 'fill-results.json', 'items',
@@ -2259,6 +2382,7 @@ def main(argv=None) -> int:
     r.add_argument("--fill", nargs="+", help="fill receipt(s): the JSON the fill script returned")
     r.add_argument("--verify", help="the verify receipt from a fresh load")
     r.add_argument("--payload", nargs="+", help="payload(s) holding the jobs (default: those in fill-js)")
+    r.add_argument("--supersede", action="store_true", help="replace conflicting rows from the same verify receipt")
     r.add_argument("--check", nargs="+", help="check receipt(s), preserving historical policy")
     r.add_argument("--dialog", help="a confirm_dialog.js receipt, to calibrate the dialog wait")
     _common(r)

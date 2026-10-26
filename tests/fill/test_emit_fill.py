@@ -11,6 +11,7 @@ runs the page side.
 from __future__ import annotations
 
 import json
+import hashlib
 import shutil
 import subprocess
 import sys
@@ -55,6 +56,18 @@ def fills(man) -> list[list[str]]:
     return man["groups"]
 
 
+def receipt_payload(kit, ticket=None):
+    if ticket:
+        for name in ("scripts.json", "scripts_calibrate.json"):
+            path = kit.tmp / "out" / name
+            if path.is_file():
+                manifest = json.loads(path.read_text(encoding="utf-8"))
+                if any(t.get("ticket") == ticket for t in manifest.get("tickets", [])):
+                    named = Path(manifest["payload"])
+                    return named if named.is_absolute() else kit.tmp / named
+    return kit.tmp / "out/fill-payload.json"
+
+
 def fill_receipt(kit, name: str, pages: list[int], written: list[str], *, signal: str, calibrated: bool,
                  ticket: str | None = None, doc: str = "a1a1a1a1a1a1a1a1", client: str = "c1-2-0badf00d",
                  ack=("net", "PUT", TPL), ok: bool = True, extra_items=None, **kw) -> Path:
@@ -69,15 +82,19 @@ def fill_receipt(kit, name: str, pages: list[int], written: list[str], *, signal
         rec["page"] = pages[0]
     else:
         rec["batch"] = pages
+    payload = receipt_payload(kit, ticket)
+    if payload.is_file():
+        rec["source_payload_sha256"] = hashlib.sha256(payload.read_bytes()).hexdigest()
     rec.update(kw)
     return kit.write(name, rec)
 
 
 def verify_receipt(kit, name: str, rows: dict[str, str], *, doc: str = "b2b2b2b2b2b2b2b2",
-                   client: str = "c1-2-0badf00d", fresh: bool = True) -> Path:
+                   client: str = "c1-2-0badf00d", fresh: bool = True, ticket=None) -> Path:
     return kit.write(name, {"ok": True, "module": "c1-r101", "run": 101, "mode": "fill", "doc_id": doc,
                             "client_sig": client, "fresh_load": fresh, "waited": None,
                             "observed_at": "2000-01-01T00:00:00Z",
+                            "source_payload_sha256": hashlib.sha256(receipt_payload(kit, ticket).read_bytes()).hexdigest(),
                             "items": [[i, state, 8, 12345] for i, state in rows.items()]})
 
 
@@ -189,6 +206,7 @@ def test_committed_capture_fills_only_the_team_quiz(kit):
                       ("answers.json", FIX / "answers/answers-c1-r104.json"),
                       ("approvals.json", FIX / "approvals/approvals-c1-r104.json")):
         shutil.copy(src, kit.tmp / name)
+    kit.write("answers.json", kit.read("answers.json"))
     for extra in ([], ["--mark", "9=trat", "--answer", "Team test"]):
         r = kit.run("page_kinds.py", "mark" if extra else "classify", "--module", "module.json", "--answers", "answers.json", *extra)
         assert r.returncode in (0, 1), r.stdout + r.stderr
@@ -645,7 +663,7 @@ def test_explicit_calibrate_clears_a_failed_cross_page(eight):
     t = ticket_of(man, "save")["ticket"]
     assert calibration(eight)["pending"][0]["explicit"] is True
     f = fill_receipt(eight, "r/fill-cal.json", [3], ["p3-30"], signal="fallback", calibrated=False, ticket=t)
-    v = verify_receipt(eight, "r/verify-cal.json", {"p3-30": "ok"})
+    v = verify_receipt(eight, "r/verify-cal.json", {"p3-30": "ok"}, ticket=t)
     r = eight.emit("record", "--module", "module.json", "--fill", str(f), "--verify", str(v),
                    "--payload", "out/calibrate-payload.json")
     assert r.returncode == 0
@@ -843,7 +861,7 @@ def test_an_explicit_calibration_that_fails_drops_save_and_batching(eight):
     assert r.returncode == 0
     t = ticket_of(eight.read("out/scripts_calibrate.json"), "save")["ticket"]
     f = fill_receipt(eight, "r/fill-cal.json", [3], ["p3-30"], signal="fallback", calibrated=False, ticket=t)
-    v = verify_receipt(eight, "r/verify-cal.json", {"p3-30": "BAD"})
+    v = verify_receipt(eight, "r/verify-cal.json", {"p3-30": "BAD"}, ticket=t)
     eight.emit("record", "--module", "module.json", "--fill", str(f), "--verify", str(v),
                "--payload", "out/calibrate-payload.json")
     st = calibration(eight)

@@ -461,3 +461,35 @@ test('lt_guard: subtree control inspection reuses commit vocabulary (50)',()=>{
  const button=env.el('button',{text:'Save',attrs:{'data-bind':'click: commitClicked'},parent:el});assert.equal(G.commitControl(el),true);
  button.attrs={};button.textContent='Submit';assert.equal(G.commitControl(el),true);
 });
+
+for (const [delay, limit, success] of [[300, 5000, true], [6000, 7000, true], [6000, 5000, false], [null, 5000, false]]) {
+  test(`lt_guard: waits for root ${delay} ms within ${limit} ms before running`, async () => {
+    const {env, G} = setup({rootReady: false});
+    if (delay !== null) env.after(delay, () => env.setRootReady(true));
+    let calls = 0;
+    const before = env.clock.now();
+    const pending = run(G, {render_wait_ms: limit}, async () => {
+      calls++;
+      assert.ok(delay !== null && env.clock.now() - before >= delay);
+      return {ok: true};
+    });
+    await env.clock.advance(limit + 100);
+    const result = await pending;
+    assert.equal(result.ok, success);
+    assert.equal(calls, success ? 1 : 0);
+    if (!success) {
+      assert.equal(result.fatal, 'guard-degraded');
+      assert.equal(result.unlocked.length, 4);
+    }
+    assert.ok(env.clock.now() - before >= (success ? delay : limit));
+    assert.equal(env.commits.length, 0);
+  });
+}
+
+test('lt_guard: losing the root during a call returns a degraded receipt', async () => {
+  const {env, G} = setup();
+  const result = await run(G, null, async () => {env.setRootReady(false); return {ok: true};});
+  assert.equal(result.ok, false);
+  assert.equal(result.fatal, 'guard-degraded');
+  assert.equal(result.unlocked.length, 4);
+});

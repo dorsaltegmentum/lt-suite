@@ -16,6 +16,19 @@ Versions follow [Semantic Versioning 2.0.0](https://semver.org/spec/v2.0.0.html)
 - Download handoffs use paced groups of 8 and report missing media keys by page.
 - Media calls use a configurable 20 second budget and return pending keys for resumed downloads.
 
+
+### Fixed
+
+- Bind fill records to the executed payload, including payloads generated in sibling folders.
+- Refuse conflicting receipt hashes and archive corrected rows with `record --supersede`.
+- Refuse draft status text in answer segments and payload HTML through configurable patterns.
+- Check the answer file capture path and hash binding before generating fill payloads.
+- Wait for the Lt view model and refuse calls while commit guards remain unlocked.
+- Include compact request diagnostics in fallback save receipts and saved wait records.
+- Measure table occupancy over target cells while reporting other filled cells separately.
+- Name stale page classifications and the command that refreshes them before checking receipt bindings.
+- Add short payload hashes for browser tools that redact full hashes and bind unique matches.
+
 ## [0.2.2] - 2026-10-26
 
 ### Changed

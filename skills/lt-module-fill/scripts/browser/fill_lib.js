@@ -389,12 +389,12 @@ const LtFillLib = (function () {
   const SET_KINDS = new Set(['text', 'table', 'select']);
 
   /* ---- the probe: rail 4 ---- */
-  const runProbe = async deps => {
+  const runProbe = async (deps, jobs) => {
     let fn = deps && deps.probe;
     const lib = LtFillLib;
     if (!fn && typeof lib.loadProbe === 'function') fn = lib.loadProbe();
     if (typeof fn !== 'function') throw new Error('probe_panels.js is not loaded');
-    return await fn();
+    return await fn(jobs);
   };
 
   /* ---- rail 7 without LtNet: the old rule, used only when lt_net.js is absent ---- */
@@ -451,6 +451,7 @@ const LtFillLib = (function () {
       ack_endpoints: endpoints,
       model_unidentified: mu ? Number(mu[1]) : null,
       calibrated: typeof w.calibrated === 'boolean' ? w.calibrated : null,
+      ...(w.save_diag ? {save_diag: w.save_diag} : {}),
       calibration_stale: w.calibration_stale === true
     };
   };
@@ -459,6 +460,7 @@ const LtFillLib = (function () {
    * ctx: {replace, singleKeys, occ (probe entries by key, or null), onPage, ck, sw, w (write
    * state)}. Returns the job's record; a write registers its key and a read-back closure. */
   const writeModel = (w, ck, key, model, parent, fn) => {
+    if (G.LtGuard && G.LtGuard.status().ok !== true) {w.threw++; return false;}
     if (w.net) w.net.expect(key, model, parent);
     w.keys.add(key);
     w.last = ck.now();
@@ -476,7 +478,12 @@ const LtFillLib = (function () {
     if (!raw) { rec.result = 'no-panel'; return rec; }
     if (job.plugin_key && pluginOf(raw) !== job.plugin_key) { rec.result = 'plugin-mismatch'; return rec; }
     const c = contentOf(raw);
-    const pe = occ ? occ[key] : undefined;
+    let pe = occ ? occ[key] : undefined;
+    if (job.kind === 'table' && pe) {
+      const rows = gridOf(inputOf(raw));
+      const filled = job.cells.filter(t => {const cell = cellAt(rows, t.row, t.col).cell; return cell && cellText(cell).length;}).length;
+      pe = Object.assign({}, pe, {occupied: filled > 0});
+    }
     // rail 3: the capture's flag, the live flag and the probe's flag, any one of them.
     const single = ctx.singleKeys.has(key) || U(c.singleAttempt) === true || (pe && pe.single_attempt === true);
     if (single && job.single_attempt_approved !== true) { rec.result = 'refused-single-attempt'; return rec; }
@@ -717,6 +724,7 @@ const LtFillLib = (function () {
     ? 'fresh-load verify of these pages before any other page' : null;
   /* The receipt's save fields, shared by fillPage and fillPages. */
   const waitFields = (wait, sw, n, w) => ({
+    ...(wait.save_signal === 'fallback' ? {save_diag: wait.save_diag || []} : {}),
     save_signal: wait.save_signal, save_confirmed: wait.save_confirmed === true, waited_ms: wait.waited_ms,
     wait_capped: wait.save_signal === 'unconfirmed',
     keys_total: wait.keys_total, keys_saved: wait.keys_saved, keys_pending: wait.keys_pending,
@@ -738,7 +746,11 @@ const LtFillLib = (function () {
     const ck = clock();
     const sw = saveWaitOf(cfg);
     const head = Object.assign({ module: cfg.module_id, run: cfg.run_id, page: cfg.page, mode: cfg.mode || 'fill' }, ids(cfg));
-    if (cfg.source_payload_sha256) head.source_payload_sha256 = cfg.source_payload_sha256;
+    if (cfg.source_payload_sha256) {
+      head.source_payload_sha256 = cfg.source_payload_sha256;
+      head.source_payload_sha16 = cfg.source_payload_sha256.slice(0, 16);
+    }
+    if (G.LtGuard && G.LtGuard.status().ok !== true) return {ok: false, fatal: 'guard-degraded', ...head};
     const fatal = (reason, extra) => Object.assign({ ok: false, fatal: reason }, head, extra || {}, { writes: 0, guard_trips: guardTrips() });
 
     const loc = checkLocation(cfg, cfg.page);
@@ -754,7 +766,7 @@ const LtFillLib = (function () {
     if (cfg.title && liveTitle && liveTitle !== String(cfg.title).replace(/\s+/g, ' ')) return fatal('page-title-mismatch');
 
     let probe;
-    try { probe = await runProbe(deps); }
+    try { probe = await runProbe(deps, jobs); }
     catch (e) { return fatal('probe-error', { detail: String(e && e.message || e).slice(0, 80) }); }
     if (!probe || probe.ok !== true) return fatal(probe && probe.is_checkpoint ? 'checkpoint-page' : 'probe-refused');
     if (Number(probe.page_index) !== Number(cfg.page)) return fatal('probe-page-mismatch');
@@ -793,7 +805,11 @@ const LtFillLib = (function () {
     const sw = saveWaitOf(cfg);
     const pagesWanted = (plan || []).map(e => Number(e.page));
     const head = Object.assign({ module: cfg.module_id, run: cfg.run_id, batch: pagesWanted, mode: cfg.mode || 'fill' }, ids(cfg));
-    if (cfg.source_payload_sha256) head.source_payload_sha256 = cfg.source_payload_sha256;
+    if (cfg.source_payload_sha256) {
+      head.source_payload_sha256 = cfg.source_payload_sha256;
+      head.source_payload_sha16 = cfg.source_payload_sha256.slice(0, 16);
+    }
+    if (G.LtGuard && G.LtGuard.status().ok !== true) return {ok: false, fatal: 'guard-degraded', ...head};
     const fatal = (reason, extra) => Object.assign({ ok: false, fatal: reason }, head, extra || {}, { writes: 0, guard_trips: guardTrips() });
 
     const loc = checkLocation(cfg, null);
@@ -834,7 +850,7 @@ const LtFillLib = (function () {
     /* The probe reads the displayed page only. When that page is in the batch its entries
      * decide occupancy there; the other pages use the view model and the direct test. */
     let probe;
-    try { probe = await runProbe(deps); }
+    try { probe = await runProbe(deps, plan.flatMap(p => p.jobs || [])); }
     catch (err) { return fatal('probe-error', { detail: String(err && err.message || err).slice(0, 80) }); }
     if (!probe || probe.ok !== true) return fatal(probe && probe.is_checkpoint ? 'checkpoint-page' : 'probe-refused');
     const shown = currentPageIndex(root) ?? Number(probe.page_index);
@@ -888,7 +904,11 @@ const LtFillLib = (function () {
     const ck = clock();
     const sw = saveWaitOf(cfg);
     const head = { module: cfg.module_id, run: cfg.run_id, mode: cfg.mode || 'fill', doc_id: docId(), client_sig: clientSig() };
-    if (cfg.source_payload_sha256) head.source_payload_sha256 = cfg.source_payload_sha256;
+    if (cfg.source_payload_sha256) {
+      head.source_payload_sha256 = cfg.source_payload_sha256;
+      head.source_payload_sha16 = cfg.source_payload_sha256.slice(0, 16);
+    }
+    if (G.LtGuard && G.LtGuard.status().ok !== true) return {ok: false, fatal: 'guard-degraded', ...head};
     const loc = checkLocation(cfg, null);
     if (loc.fatal) return Object.assign({ ok: false, fatal: loc.fatal }, head);
     const root = rootOf();

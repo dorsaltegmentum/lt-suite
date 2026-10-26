@@ -670,3 +670,39 @@ for (const via of ['xhr', 'fetch']) {
     assert.equal(r.ack_path_template, '/api/cells/{n}');
   });
 }
+
+test('lt_net: fallback diagnostics aggregate sanitized paths without request content', async () => {
+  const env = H.makeEnv();
+  env.loadShared('lt_net');
+  const net = env.ctx.LtNet;
+  net.install();
+  const model = env.model('written-key', {strategy: 'never'});
+  net.expect('written-key', model);
+  const secret = 'private-answer-secret';
+  for (let i = 0; i < 2; i++) env.request('POST', '/api/save/123/deadbeef?token=' + secret, secret);
+  env.request('GET', '/api/read/456/abcdef', secret);
+  model.trigger('sync', model, {}, {});
+  const pending = net.waitForSave(['written-key'], {fallback_ms: 4000});
+  await env.clock.advance(4500);
+  const result = await pending;
+  assert.equal(result.signal, 'fallback');
+  const diag = JSON.parse(JSON.stringify(result.save_diag));
+  assert.deepEqual(diag, [
+    {method: 'POST', path_template: '/api/save/:id/:id', status: 200, count: 2, model_sync: true},
+    {method: 'GET', path_template: '/api/read/:id/:id', status: 200, count: 1, model_sync: true}
+  ]);
+  assert.ok(!JSON.stringify(diag).includes(secret));
+  assert.ok(!JSON.stringify(diag).includes('?'));
+});
+
+test('lt_net: fallback diagnostics keep at most twenty rows', async () => {
+  const env = H.makeEnv();
+  env.loadShared('lt_net');
+  const net = env.ctx.LtNet;
+  net.install(); net.expect('written-key');
+  for (let i = 0; i < 25; i++) env.request('POST', '/api/' + 'route'.repeat(i + 1), 'private');
+  const pending = net.waitForSave(['written-key'], {fallback_ms: 4000});
+  await env.clock.advance(4500);
+  const result = await pending;
+  assert.equal(result.save_diag.length, 20);
+});

@@ -292,7 +292,7 @@ test('write paths: authored table cells and a label in two bins', async t => {
     placements: [{ label: 'alpha', cat_index: 0, cat: 'Bin A' }, { label: 'alpha', cat_index: 1, cat: 'Bin B' }, { label: 'beta', cat_index: 1, cat: 'Bin B' }] };
   cat.h = L0.djb2(L0.canon.categories(cat.placements.map(p => [p.cat_index, p.label])));
   const r = await run(env, {}, [tab, cat]);
-  await check(t, 'table: authored text in a non-target cell does not block the empty target', [byItem(r, 'p4-11').result, byItem(r, 'p4-11').probe], ['written', 'occupied']);
+  await check(t, 'table: authored text in a non-target cell does not block the empty target', [byItem(r, 'p4-11').result, byItem(r, 'p4-11').probe], ['written', 'empty']);
   await check(t, 'categories: a label in two bins takes both pool copies', [byItem(r, 'p4-15').result, env.cat.inp.calls], ['written', [[0, 0], [2, 1], [1, 1]]]);
 });
 
@@ -875,6 +875,7 @@ test('emit_fill.py end to end: the scripts it writes run, both builds', async t 
       drafted('p5-21'), drafted('p6-30'), drafted('p6-31')
     ]
   };
+  ans.source_module = {path: 'module.json', sha256: require('node:crypto').createHash('sha256').update(fs.readFileSync(path.join(tmp, 'module.json'))).digest('hex')};
   fs.writeFileSync(path.join(tmp, 'answers.json'), JSON.stringify(ans));
   r = py(['payload', '--module', 'module.json', '--answers', 'answers.json', '--out', 'out', '--approvals', 'approvals.json']);
   await check(t, 'payload: exit 0', r.status, 0);
@@ -977,6 +978,7 @@ test('rendered end to end: ltjs.py wraps the body with the guard and the save wa
   const ans = { schema_version: 2, module_id: 'c1-r101', run_id: 101, drafted_at: '2000-01-01T00:00:00Z', source_module: { path: 'module.json', sha256: '0'.repeat(64) },
     items: ['10', '11'].map(k => ({ item_id: 'p1-' + k, status: 'drafted', confidence: 'high', segments: [{ kind: 'claim', text: 'Draft ' + k, provenance_refs: ['p1'] }], provenance: [{ ref: 'p1', tier: 1, source_id: 'X', locator: 'slide 1' }] })) };
   fs.writeFileSync(path.join(tmp, 'module.json'), JSON.stringify(mod));
+  ans.source_module = {path: 'module.json', sha256: require('node:crypto').createHash('sha256').update(fs.readFileSync(path.join(tmp, 'module.json'))).digest('hex')};
   fs.writeFileSync(path.join(tmp, 'answers.json'), JSON.stringify(ans));
   fs.writeFileSync(path.join(tmp, 'lt-suite.toml'), `[lt]\norigin = "${F.ORIGIN}"\n[browser]\njs_tmp_dir = "${path.join(tmp, 'js').replace(/\\/g, '/')}"\n`);
   const py = args => cp.spawnSync('python3', [F.EMIT].concat(args), { encoding: 'utf8', cwd: tmp, env: pyEnv(tmp) });
@@ -1014,6 +1016,7 @@ test('rail RAT sheet occupancy: generated page 3 keeps an existing team selectio
     const mod = JSON.parse(fs.readFileSync(path.join(fix, 'modules', 'module-c1-r109.json')));
     const ans = JSON.parse(fs.readFileSync(path.join(fix, 'answers', 'answers-c1-r109.json')));
     fs.writeFileSync(path.join(tmp, 'module.json'), JSON.stringify(mod));
+    ans.source_module = {path: 'module.json', sha256: require('node:crypto').createHash('sha256').update(fs.readFileSync(path.join(tmp, 'module.json'))).digest('hex')};
     fs.writeFileSync(path.join(tmp, 'answers.json'), JSON.stringify(ans));
     fs.writeFileSync(path.join(tmp, 'lt-suite.toml'), `[rat]\nanswers_dir = "sheets"\ntrat = "from_dir"\n`);
     const py = (script, args) => cp.spawnSync('python3', [path.join(F.SKILL, 'scripts', script), ...args], { encoding: 'utf8', cwd: tmp, env: Object.assign(pyEnv(tmp), { LT_SUITE_CONFIG: path.join(tmp, 'lt-suite.toml') }) });
@@ -1046,4 +1049,40 @@ test('RAT receipts echo the executed payload identity', async t => {
   const fresh = makeEnv(e => fourPages(e, [textPanel(e, '10', '<p>ours</p>')]));
   const verified = await fresh.L.verify(CFG({ source_payload_sha256: pin }), { 4: [textJob('10', '<p>ours</p>')] });
   await check(t, 'fresh verification echoes payload hash', verified.source_payload_sha256, pin);
+});
+
+for (const [name, label, target] of [['authored labels', 'Label', ''], ['occupied target', 'Label', 'Existing'], ['empty table', '', '']]) {
+  test(`rail 4: table occupancy uses job targets with ${name}`, async () => {
+    const env = makeEnv(e => fourPages(e, [tablePanel(e, '42', [{cells: [{text: label}, {text: target}]}])]));
+    const job = {item: 'p4-42', panel_key: '42', plugin_key: 'table-question', kind: 'table',
+      cells: [{row: 0, col: 1, html: '<p>New</p>', h: hText('New')}]};
+    const probe = await env.L.loadProbe()([job]);
+    const entry = probe.panels.find(p => p.target.panel_key === '42');
+    assert.equal(entry.occupied, !!target);
+    assert.equal(entry.evidence.other_cells_filled, label ? 1 : 0);
+    const result = await run(env, {}, [job]);
+    assert.equal(result.items[0].probe, target ? 'occupied' : 'empty');
+    assert.equal(result.items[0].result, target ? 'occupied-skipped' : 'written');
+    assert.equal(env.writes, target ? 0 : 1);
+  });
+}
+
+test('identity: fill and verify include the short payload hash', async () => {
+  const env = makeEnv(e => fourPages(e, [textPanel(e, '42', '')]));
+  const sha = 'a'.repeat(64), cfg = {source_payload_sha256: sha};
+  const result = await run(env, cfg, [textJob('42', 'New')]);
+  assert.equal(result.source_payload_sha16, sha.slice(0, 16));
+  const verified = await env.L.verify(CFG(cfg), {'4': [textJob('42', 'New')]});
+  assert.equal(verified.source_payload_sha16, sha.slice(0, 16));
+});
+
+test('guard: a root lost between jobs prevents subsequent model writes', async () => {
+  const env = F.netEnv({guard: true, pages: [{title: 'Page 1', current: true,
+    panels: e => [F.netTextPanel(e, 10, 1), F.netTextPanel(e, 11, 2)]}]});
+  const first = env.made[0][0].model;
+  const original = first.set.bind(first);
+  first.set = (...args) => {const result = original(...args); env.setRootReady(false); return result;};
+  const receipt = await env.L.fillPage(F.netCfg({}), [F.netJob(10, 'First'), F.netJob(11, 'Second')], F.stubProbe(1));
+  assert.equal(env.writes.length, 1);
+  assert.equal(receipt.items[1].result, 'write-threw');
 });
