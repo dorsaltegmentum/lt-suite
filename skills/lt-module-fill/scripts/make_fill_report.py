@@ -267,7 +267,8 @@ def build(mod, ans, raw_receipts, notes, answers_path, receipts_path, *, save_wa
     if stray:
         raise Refused(f"notes.items: {stray} are not items in answers.json")
 
-    pl = plan_fill.plan(mod, ans, False, cfg, page_kinds_path=page_kinds_path, data_dir=data_dir, answers_sha256=hashlib.sha256(answers_path.read_bytes()).hexdigest())
+    answers_digest = hashlib.sha256(answers_path.read_bytes()).hexdigest()
+    pl = plan_fill.plan(mod, ans, False, cfg, page_kinds_path=page_kinds_path, data_dir=data_dir, answers_sha256=answers_digest)
     rat_status = {r["page_index"]: r for r in pl.get("rat_pages", [])}
     sheet_status = {idx: r for idx, r in rat_status.items() if r["decision"] == "fill-from-sheet"}
 
@@ -278,7 +279,7 @@ def build(mod, ans, raw_receipts, notes, answers_path, receipts_path, *, save_wa
     if pkpath.is_file():
         try:
             stored = json.loads(pkpath.read_text(encoding="utf-8"))
-            if stored.get("scan", {}).get("answers_sha256") != hashlib.sha256(answers_path.read_bytes()).hexdigest():
+            if stored.get("scan", {}).get("answers_sha256") != answers_digest:
                 raise Refused("page-kinds.json is stale for this answers.json; run page_kinds.py classify")
         except (OSError, ValueError, AttributeError):
             pass
@@ -295,46 +296,65 @@ def build(mod, ans, raw_receipts, notes, answers_path, receipts_path, *, save_wa
                         rat_status.get(pg, {}).get("decision") not in {"not-rat", "fill-from-draft"})
             if not binding and not required:
                 continue
+            rat_receipt = required
+            reason = "source payload binding is missing or malformed"
             try:
                 if not isinstance(binding, dict) or "path" not in binding or set(binding) - {"path", "sha256", "sha16"}:
                     raise ValueError
+                reason = "payload path is invalid"
                 ppath = Path(binding["path"])
                 if not ppath.is_absolute():
                     ppath = (receipts_path.parent if receipts_path else answers_path.parent) / ppath
                 if any(rat.within(ppath, root) for _, root in rat.effective_roots(rat.policy_from_config(cfg))):
+                    reason = "payload path is inside a RAT answers folder"
                     raise ValueError
                 candidates = emit_fill.payload_candidates(store.Store(cfg, data_dir=data_dir), mod["module_id"], [ppath])
+                reason = "payload hash mismatch" if ppath.is_file() else "payload file missing"
                 ppath, digest, bound_field = emit_fill.bind_payload(
                     {"source_payload_sha256": binding.get("sha256"), "source_payload_sha16": binding.get("sha16")}, candidates)
                 binding_fields[(iid, receipt["observed_at"])] = bound_field
+                reason = "payload file missing or unreadable"
                 raw = ppath.read_bytes()
+                reason = "payload JSON is malformed"
                 payload = payloads.setdefault(digest, json.loads(raw))
-                if (payload.get("schema") != emit_fill.PAYLOAD_SCHEMA or
-                        payload.get("module_id") != mod["module_id"] or
-                        payload.get("run_id") != mod["run_id"] or
-                        payload.get("module", {}).get("question_digest") != emit_fill.question_digest(mod) or
-                        payload.get("answers", {}).get("sha256") != hashlib.sha256(answers_path.read_bytes()).hexdigest()):
+                reason = "payload schema differs"
+                if payload.get("schema") != emit_fill.PAYLOAD_SCHEMA:
                     raise ValueError
+                reason = "payload module or run differs"
+                if payload.get("module_id") != mod["module_id"] or payload.get("run_id") != mod["run_id"]:
+                    raise ValueError
+                reason = "question digest changed"
+                if payload.get("module", {}).get("question_digest") != emit_fill.question_digest(mod):
+                    raise ValueError
+                pinned_answers = payload.get("answers", {}).get("sha256")
+                reason = ("answers.json changed since the payload was built "
+                          f"(payload {str(pinned_answers)[:16]}, current {answers_digest[:16]})")
+                if pinned_answers != answers_digest:
+                    raise ValueError
+                reason = f"job missing for {iid}"
                 job = next(j for page in payload["pages"].values() for j in page["jobs"] if j["item"] == iid)
+                rat_receipt = required or job.get("source") == "rat-sheet"
+                reason = f"expected hash differs for {iid}"
                 if str(emit_fill.expected_hash(job)) != str(receipt["expected_hash"]):
                     raise ValueError
                 if job.get("source") != "rat-sheet":
                     if required:
+                        reason = f"job source differs from the RAT sheet for {iid}"
                         raise ValueError
                     continue
+                reason = "page-kinds snapshot changed"
                 pin = payload.get("source_page_kinds") or {}
                 if (not pin.get("sha256") or not pkpath.is_file() or
                         hashlib.sha256(pkpath.read_bytes()).hexdigest() != pin["sha256"] or
                         pl["rat_policy"]["record_sha256"] != pin["sha256"]):
                     raise ValueError
-                job = next(j for page in payload["pages"].values() for j in page["jobs"] if j["item"] == iid)
+                reason = f"RAT sheet identity changed for {iid}"
                 sheet = sheet_status.get(pg, {}).get("sheet") or {}
-                if (job.get("source") != "rat-sheet" or
-                        any(job.get("sheet", {}).get(k) != sheet.get(k) for k in ("root", "name", "sha256")) or
-                        str(emit_fill.expected_hash(job)) != str(receipt["expected_hash"])):
+                if any(job.get("sheet", {}).get(k) != sheet.get(k) for k in ("root", "name", "sha256")):
                     raise ValueError
             except (OSError, ValueError, TypeError, KeyError, StopIteration, emit_fill.Refusal):
-                raise Refused("RAT receipt binding: executed payload or classification snapshot is missing or changed") from None
+                prefix = "RAT receipt binding" if rat_receipt else "receipt binding"
+                raise Refused(f"{prefix}: {reason}") from None
 
     bm = pl["boundary_map"]
     fillable, held, page_skips = plan_index(pl)

@@ -8,6 +8,7 @@ copy.
 from __future__ import annotations
 
 import json
+import hashlib
 import sys
 from pathlib import Path
 
@@ -109,3 +110,86 @@ def test_the_validator_comes_from_the_shared_copy():
     import make_fill_report  # noqa: PLC0415
     p = make_fill_report.validator_path()
     assert p is not None and p.name == "validate.py" and p.parent.name == "ltcore"
+
+
+@pytest.fixture
+def bound_report(kit, fk, emit_mod):
+    mod = fk.module(fk.text_pages(1))
+    ans = fk.answers([fk.drafted("p1-10")])
+    folder = kit.run_dir() / "fill-js"
+    code, payload, output = kit.payload(mod, ans, out=str(folder))
+    assert code == 0, output
+    path = folder / "fill-payload.json"
+    value = emit_mod.expected_hash(payload["pages"]["1"]["jobs"][0])
+    receipt = {"item_id": "p1-10", "expected_hash": value, "observed_hash": value,
+               "observed_at": "2000-01-01T00:00:00Z"}
+    kit.write("notes.json", {"approval_mode": "manual", "started_at": "2000-01-01T00:00:00Z"})
+
+    def run(*, update_payload=False, missing=False, changed=False):
+        if update_payload:
+            kit.write(str(path), payload)
+        receipt["source_payload"] = {"path": str(path), "sha256": hashlib.sha256(path.read_bytes()).hexdigest()}
+        if missing:
+            path.unlink()
+        if changed:
+            path.write_bytes(path.read_bytes() + b" ")
+        kit.write("receipts.json", [receipt])
+        result = kit.run("make_fill_report.py", "--module", "module.json", "--answers", "answers.json",
+                         "--receipts", "receipts.json", "--notes", "notes.json", "--out", "report.json")
+        return result
+
+    return kit, payload, receipt, run
+
+
+def assert_binding_refusal(kit, result, condition):
+    assert result.returncode == 3, result.stdout + result.stderr
+    assert f"receipt binding: {condition}" in result.stderr
+    assert "RAT receipt binding" not in result.stderr
+    assert not (kit.tmp / "report.json").exists()
+
+
+def test_report_accepts_unchanged_case_payload(bound_report):
+    kit, payload, receipt, run = bound_report
+    result = run()
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert kit.read("report.json")["items"][0]["verified"] is True
+
+
+def test_report_names_missing_payload_file(bound_report):
+    kit, payload, receipt, run = bound_report
+    assert_binding_refusal(kit, run(missing=True), "payload file missing")
+
+
+def test_report_names_payload_hash_mismatch(bound_report):
+    kit, payload, receipt, run = bound_report
+    assert_binding_refusal(kit, run(changed=True), "payload hash mismatch")
+
+
+def test_report_names_changed_answers_with_hash_prefixes(bound_report):
+    kit, payload, receipt, run = bound_report
+    original = payload["answers"]["sha256"][:16]
+    path = kit.tmp / "answers.json"
+    path.write_bytes(path.read_bytes() + b" ")
+    current = hashlib.sha256(path.read_bytes()).hexdigest()[:16]
+    result = run()
+    assert_binding_refusal(kit, result, "answers.json changed since the payload was built")
+    assert f"payload {original}" in result.stderr
+    assert f"current {current}" in result.stderr
+
+
+def test_report_names_changed_question_digest(bound_report):
+    kit, payload, receipt, run = bound_report
+    payload["module"]["question_digest"] = "0" * 64
+    assert_binding_refusal(kit, run(update_payload=True), "question digest changed")
+
+
+def test_report_names_missing_payload_job(bound_report):
+    kit, payload, receipt, run = bound_report
+    payload["pages"]["1"]["jobs"] = []
+    assert_binding_refusal(kit, run(update_payload=True), "job missing")
+
+
+def test_report_names_differing_expected_hash(bound_report):
+    kit, payload, receipt, run = bound_report
+    receipt["expected_hash"] = receipt["observed_hash"] = 12345
+    assert_binding_refusal(kit, run(), "expected hash differs")

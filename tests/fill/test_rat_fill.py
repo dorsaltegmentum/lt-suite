@@ -205,6 +205,16 @@ def report(kit):
                    '--receipts', 'receipts.json', '--notes', 'notes.json')
 
 
+def test_report_names_changed_page_kinds_snapshot(rat_run, emit_mod):
+    kit, mod, ans, cfg, record, path = rat_run
+    sheet_receipts(kit, mod, ans, emit_mod, bound=True)
+    path.write_bytes(path.read_bytes() + b' ')
+    result = report(kit)
+    assert result.returncode == 3, result.stdout + result.stderr
+    assert 'RAT receipt binding: page-kinds snapshot changed' in result.stderr
+    assert not (kit.run_dir(mod['module_id']) / 'fill-report.json').exists()
+
+
 @pytest.mark.parametrize('mutation', ['edited', 'missing'])
 def test_sheet_receipts_cannot_rebind_to_current_classification(rat_run, emit_mod, mutation):
     kit, mod, ans, cfg, record, path = rat_run

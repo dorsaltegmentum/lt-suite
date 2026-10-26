@@ -91,6 +91,8 @@ review of past runs reads it, so do not discard it.
 each one that no item cites with a warning line. A map that lists only what was covered
 cannot show what was missed.
 
+Exported citations show absolute local locators by file name while preserving the remaining locator text and answers.json.
+
 **Links point only at pages that exist.** With `export.outputs.notes_graph` on, answer
 text and outcomes link to existing pages by whole-word match and nothing else. Lt's own
 prompt text is reproduced as captured and never linked.

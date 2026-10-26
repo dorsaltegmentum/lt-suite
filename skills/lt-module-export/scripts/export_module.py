@@ -27,7 +27,7 @@ from __future__ import annotations
 import sys
 if sys.version_info < (3, 11):
     sys.exit("lt-suite needs Python 3.11 or newer. Run the setup skill's bootstrap step: python3 <setup skill>/scripts/setup.py bootstrap")
-from pathlib import Path
+from pathlib import Path, PurePosixPath, PureWindowsPath
 SELF = Path(__file__).resolve().parent
 sys.path.insert(0, str(SELF / "_shared"))
 sys.path.insert(0, str(SELF))
@@ -526,7 +526,13 @@ def source_display(source_id: str, corpus: dict, self_ids: set, cfg):
 def render_citation(pv: dict, corpus: dict, self_ids: set, cfg) -> str:
     """Render one provenance entry with its source and optional locator."""
     kind, value = source_display(pv["source_id"], corpus, self_ids, cfg)
-    locator = (pv.get("locator") or "").strip()
+    locator = pv.get("locator") or ""
+    first, separator, rest = locator.partition(";")
+    local_path = first.strip()
+    if local_path.startswith("/"):
+        locator = PurePosixPath(local_path).name + separator + rest
+    elif re.match(r"^[A-Za-z]:[\\/]", local_path):
+        locator = PureWindowsPath(local_path).name + separator + rest
     title = (pv.get("title") or "").strip()
     if kind == "link":
         inner = f"[{title or pv['source_id']}]({value})"
