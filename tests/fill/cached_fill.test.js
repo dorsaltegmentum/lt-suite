@@ -5,6 +5,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const cp = require('node:child_process');
 const {gzipSync, gunzipSync} = require('node:zlib');
+const vm = require('node:vm');
 const F = require('./fill_env.js');
 const H = F.harness();
 const storage = () => {
@@ -64,6 +65,10 @@ async function fallback(e, r) {
   for (const chunk of r.chunks) await execute(e, chunk);
   return execute(e, r.stub);
 }
+/* Node 22 keeps a context global after the sandbox object loses it, so clear and read page code inside the context. */
+const PAGE_CODE = ['LtFillLib', 'LtCheck', 'probeLtPanels'];
+const clearPageCode = (e, names = PAGE_CODE) => vm.runInContext(names.map(n => 'delete globalThis.' + n + ';').join(''), e.ctx);
+const pageCode = (e, name) => vm.runInContext('typeof globalThis.' + name, e.ctx);
 const cachedCode = (e, want) => gunzipSync(Buffer.from(e.ctx.localStorage.getItem('lt-suite:js:' + want), 'base64')).toString();
 
 test('cached-fill: miss writes nothing and chunk fallback shares code across calls', async () => {
@@ -220,7 +225,7 @@ for (const method of ['fillPage', 'fillPages', 'verify', 'probe', 'check', 'chec
     e.ctx.localStorage=storage();
     const checkCfg=method.startsWith('check') ? e.cfg : null;
     const checkJobs=method.startsWith('check') ? [e.job] : null;
-    delete e.ctx.LtFillLib; delete e.ctx.LtCheck; delete e.ctx.probeLtPanels;
+    clearPageCode(e);
     let a=args();
     if (method==='probe') a={method};
     else if (method.startsWith('check')) a={method,cfg:checkCfg,jobs:method==='check' ? checkJobs : {1:checkJobs}};
@@ -229,17 +234,17 @@ for (const method of ['fillPage', 'fillPages', 'verify', 'probe', 'check', 'chec
     const r=render(a,{...policy(),check_answer_keys:[[1,'K']]});
     const contextFor=e.ctx.ko.contextFor;
     e.ctx.ko.contextFor=(...values)=>{
-      for (const name of ['LtFillLib','LtCheck','probeLtPanels']) assert.equal(e.ctx[name],undefined,name);
+      for (const name of ['LtFillLib','LtCheck','probeLtPanels']) assert.equal(pageCode(e,name),'undefined',name);
       return contextFor(...values);
     };
     for (const source of (method==='check' ? [null,r.loader] : [null,r.loader,r.direct])) {
       if (source && method==='check') {
         const store=e.ctx.localStorage;
         e=setup();e.ctx.localStorage=store;
-        delete e.ctx.LtFillLib;delete e.ctx.LtCheck;delete e.ctx.probeLtPanels;
+        clearPageCode(e);
         const contextFor=e.ctx.ko.contextFor;
         e.ctx.ko.contextFor=(...v)=>{
-          for(const name of ['LtFillLib','LtCheck','probeLtPanels'])assert.equal(e.ctx[name],undefined,name);
+          for(const name of ['LtFillLib','LtCheck','probeLtPanels'])assert.equal(pageCode(e,name),'undefined',name);
           return contextFor(...v);
         };
       }
@@ -248,11 +253,11 @@ for (const method of ['fillPage', 'fillPages', 'verify', 'probe', 'check', 'chec
       const writes=Array.isArray(e.writes) ? e.writes.length : e.writes || 0;
       const presses=e.presses?.length || 0;
       const attack=args('page chosen answer after completed call');
-      if (e.ctx.LtFillLib?.fillPage) await execute(e,`async () => await LtFillLib.fillPage(${JSON.stringify(attack.cfg)},${JSON.stringify(attack.jobs)})`);
-      if (e.ctx.LtCheck?.run && checkCfg) await execute(e,`async () => await LtGuard.run(${JSON.stringify({...policy(),check_answer_keys:[[1,'K']]})},()=>LtCheck.run(${JSON.stringify(checkCfg)},${JSON.stringify(checkJobs)}))`);
+      if (pageCode(e,'LtFillLib')!=='undefined') await execute(e,`async () => await LtFillLib.fillPage(${JSON.stringify(attack.cfg)},${JSON.stringify(attack.jobs)})`);
+      if (pageCode(e,'LtCheck')!=='undefined' && checkCfg) await execute(e,`async () => await LtGuard.run(${JSON.stringify({...policy(),check_answer_keys:[[1,'K']]})},()=>LtCheck.run(${JSON.stringify(checkCfg)},${JSON.stringify(checkJobs)}))`);
       assert.equal(Array.isArray(e.writes) ? e.writes.length : e.writes || 0,writes);
       assert.equal(e.presses?.length || 0,presses);
-      for (const name of ['LtFillLib','LtCheck','probeLtPanels']) assert.equal(e.ctx[name],undefined,name);
+      for (const name of ['LtFillLib','LtCheck','probeLtPanels']) assert.equal(pageCode(e,name),'undefined',name);
     }
   });
 }
@@ -305,7 +310,7 @@ for (const method of ['probe','fillPage','verify','check']) {
 test('cached-fill: R14 completed probe rejects arbitrary writer and check jobs', async () => {
   const e=require('./check_env.js').setup();
   e.ctx.localStorage=storage();
-  delete e.ctx.LtFillLib; delete e.ctx.LtCheck; delete e.ctx.probeLtPanels;
+  clearPageCode(e);
   assert.equal((await fallback(e,render({method:'probe'}))).ok,true);
   const attack=args('page chosen answer after completed probe');
   const r=await execute(e,`async () => {
@@ -316,7 +321,7 @@ test('cached-fill: R14 completed probe rejects arbitrary writer and check jobs',
   assert.equal(r.ok,true);
   assert.equal(e.presses.length,0);
   assert.equal(e.writes.length,0);
-  for (const name of ['LtFillLib','LtCheck','probeLtPanels']) assert.equal(e.ctx[name],undefined,name);
+  for (const name of ['LtFillLib','LtCheck','probeLtPanels']) assert.equal(pageCode(e,name),'undefined',name);
 });
 
 for (const method of ['fillPage','verify']) {
@@ -332,8 +337,8 @@ print(json.dumps(ltjs.render_source(b,name='served',stub=False,net=True,args=s['
     const result=cp.spawnSync(process.env.PYTHON || 'python3',['-c',code],{cwd:F.REPO,input:JSON.stringify({args:a,policy:policy()}),encoding:'utf8',env:{...process.env,PYTHONPATH:F.REPO+'/shared',PYTHONIOENCODING:'utf-8'}});
     assert.equal(result.status,0,result.stderr);
     const e=env();
-    delete e.ctx.LtFillLib;delete e.ctx.probeLtPanels;
-    const inspect=()=>{for(const name of ['LtFillLib','LtCheck','probeLtPanels'])assert.equal(e.ctx[name],undefined,name);};
+    clearPageCode(e,['LtFillLib','probeLtPanels']);
+    const inspect=()=>{for(const name of ['LtFillLib','LtCheck','probeLtPanels'])assert.equal(pageCode(e,name),'undefined',name);};
     const contextFor=e.ctx.ko.contextFor;e.ctx.ko.contextFor=(...v)=>{inspect();return contextFor(...v);};
     e.ctx.AbortController=AbortController;
     e.ctx.fetch=async url=>({ok:true,text:async()=>require('node:fs').readFileSync(F.BROWSER+'/'+new URL(url).pathname.split('/').pop(),'utf8')});
