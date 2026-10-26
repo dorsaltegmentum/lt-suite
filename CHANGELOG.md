@@ -19,6 +19,7 @@ Versions follow [Semantic Versioning 2.0.0](https://semver.org/spec/v2.0.0.html)
 
 ### Fixed
 
+- Preserve hyphens at wrapped line ends when checking PDF content.
 - Accept bounded save request diagnostics in fill reports and export validation.
 - Use a neutral receipt binding message for ordinary fill receipts.
 - Keep payload discovery inside each run and resolve manifest paths from their containing folders.

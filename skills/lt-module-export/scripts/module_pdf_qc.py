@@ -161,6 +161,8 @@ def page_texts(pdf):
         tp = pg.get_textpage()
         body = tp.get_text_bounded(left=0, bottom=FOOT, right=w, top=h)
         foot = tp.get_text_bounded(left=0, bottom=0, right=w, top=FOOT)
+        # PDFium marks rendered hyphens at wrapped line ends with this control character.
+        body, foot = (text.replace(chr(2), "-") for text in (body, foot))
         lines = body.replace("\r", "").split("\n")
         conts = [j for j, x in enumerate(y for y in lines if y.strip())
                  if x.strip().endswith("— continued")]
