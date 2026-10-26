@@ -26,6 +26,8 @@ def prepare(kit, text='New answer.'):
 
 
 def payload(kit, folder, text):
+    if folder in ('out', 'other'):
+        folder = kit.run_dir().relative_to(kit.tmp).as_posix() + '/fill-js-' + folder
     prepare(kit, text)
     result = kit.emit('payload', '--module', 'module.json', '--answers', 'answers.json',
                       '--out', folder, '--force')
@@ -197,16 +199,152 @@ def test_record_copies_fallback_save_diagnostics(kit):
     assert waits['save_waits'][0]['save_diag'] == diag
 
 
-def test_record_discovers_legacy_relative_sibling_manifest(kit):
+@pytest.mark.parametrize('diag', [[], [{'method': 'PUT', 'path_template': '/runs/:id/data',
+                           'status': 200, 'count': 1, 'model_sync': False}] * 20])
+def test_record_report_export_accept_save_diagnostics(kit, diag):
+    import subprocess
+    import sys
+    from fillkit import REPO
+    run = kit.run_dir().relative_to(kit.tmp).as_posix()
+    path, pay = payload(kit, run + '/fill-js', 'Answer.')
+    receipts(kit, path, pay, short=True)
+    fill = kit.read('fill.json')
+    fill.update(save_diag=diag, waited_ms=4000)
+    kit.write('fill.json', fill)
+    assert record(kit).returncode == 0
+    kit.write(run + '/fill-notes.json', {'approval_mode': 'manual',
+              'started_at': '2000-01-01T00:00:00Z', 'ended_at': '2000-01-01T00:00:00Z'})
+    result = kit.run('make_fill_report.py', '--module', 'module.json', '--answers', 'answers.json')
+    assert result.returncode == 0, result.stdout + result.stderr
+    report = kit.read(run + '/fill-report.json')
+    assert report['save_waits'][0]['save_diag'] == diag
+    assert all(row['verified'] and row['result'] == 'filled' for row in report['items'])
+    script = '''import sys
+from pathlib import Path
+sys.path.insert(0, sys.argv[1])
+import export_module
+from ltcore import validate
+assert '/lt-module-export/scripts/_shared/' in validate.__file__.replace(chr(92), '/')
+doc, path, rc = export_module.validated_input(Path(sys.argv[2]), 'fill-report', validate,
+                                            Path('.'), module=Path('module.json'))
+assert rc == 0, rc
+assert doc['save_waits'][0]['save_diag'] == __import__('json').loads(sys.argv[3])
+'''
+    result = subprocess.run([sys.executable, '-c', script,
+                    str(REPO / 'skills/lt-module-export/scripts'), run + '/fill-report.json',
+                    json.dumps(diag)], cwd=kit.tmp, env=kit.env, capture_output=True, text=True, encoding='utf-8')
+    assert result.returncode == 0, result.stdout + result.stderr
+    for validator in [REPO / 'shared/ltcore/validate.py',
+                      *sorted((REPO / 'skills').glob('*/scripts/_shared/ltcore/validate.py'))]:
+        result = subprocess.run([sys.executable, str(validator), run + '/fill-report.json',
+                    '--schema', 'fill-report', '--module', 'module.json'],
+                    cwd=kit.tmp, env=kit.env, capture_output=True, text=True, encoding='utf-8')
+        assert result.returncode == 0, result.stdout + result.stderr
+    for skill, command, expected in [
+        ('lt-module-answer', ['reconcile.py', 'prepare', '--module', 'module.json',
+                             '--answers', 'answers.json', '--fill-report', run + '/fill-report.json'], 2),
+        ('lt-suite-setup', ['build_ledger.py', '--fill-report', run + '/fill-report.json', '--dry-run'], 0),
+    ]:
+        result = subprocess.run([sys.executable, str(REPO / 'skills' / skill / 'scripts' / command[0]),
+                                 *command[1:]], cwd=kit.tmp, env=kit.env, capture_output=True, text=True, encoding='utf-8')
+        assert result.returncode == expected, result.stdout + result.stderr
+
+
+@pytest.mark.parametrize('mutation', ['extra', 'missing', 'method', 'path', 'status', 'count', 'sync', 'limit'])
+def test_save_diagnostic_schema_rejects_invalid_rows(mutation):
+    from fillkit import REPO
+    import jsonschema
+    schema = json.loads((REPO / 'shared/schemas/fill-report.schema.json').read_text(encoding='utf-8'))
+    diag_schema = schema['properties']['save_waits']['items']['properties'].get('save_diag')
+    assert diag_schema is not None
+    row = {'method': 'PUT', 'path_template': '/runs/:id/data', 'status': 200,
+           'count': 1, 'model_sync': False}
+    if mutation == 'extra':
+        row['body'] = 'private'
+    elif mutation == 'missing':
+        del row['method']
+    elif mutation == 'method':
+        row['method'] = 3
+    elif mutation == 'path':
+        row['path_template'] = None
+    elif mutation == 'status':
+        row['status'] = '200'
+    elif mutation == 'count':
+        row['count'] = 0
+    elif mutation == 'sync':
+        row['model_sync'] = 'false'
+    rows = [row] * (21 if mutation == 'limit' else 1)
+    assert list(jsonschema.Draft202012Validator(diag_schema).iter_errors(rows))
+
+
+def test_record_ordinary_binding_refusal_uses_neutral_prefix(kit):
+    run = kit.run_dir().relative_to(kit.tmp).as_posix()
+    path, pay = payload(kit, run + '/fill-js', 'Answer.')
+    receipts(kit, path, pay)
+    ver = kit.read('verify.json')
+    ver['source_payload_sha256'] = '0' * 64
+    kit.write('verify.json', ver)
+    result = record(kit)
+    assert result.returncode == 3
+    assert 'receipt binding: payload identity' in result.stderr
+    assert 'RAT receipt binding:' not in result.stderr
+
+
+@pytest.mark.parametrize('outside', ['absolute', 'relative', 'symlink', 'manifest-symlink', 'explicit'])
+def test_payload_discovery_confines_manifest_candidates(kit, emit_mod, outside):
+    from ltcore import config, store
+    run = kit.run_dir().relative_to(kit.tmp).as_posix()
+    path, _ = payload(kit, run + '/fill-js-p11', 'Answer.')
+    external = kit.write('outside/fill-payload.json', {'private': True})
+    manifest = path.parent / 'scripts.json'
+    if outside in ('absolute', 'explicit'):
+        kit.write(str(manifest), {'payload': str(external)})
+    elif outside == 'relative':
+        kit.write(str(manifest), {'payload': '../../../../outside/fill-payload.json'})
+    elif outside == 'symlink':
+        link = path.parent / 'external.json'
+        try:
+            link.symlink_to(external)
+        except OSError:
+            pytest.skip('symlinks are unavailable')
+        kit.write(str(manifest), {'payload': 'external.json'})
+    else:
+        external_manifest = kit.write('outside/scripts.json', {'payload': str(path)})
+        manifest.unlink()
+        try:
+            manifest.symlink_to(external_manifest)
+        except OSError:
+            pytest.skip('symlinks are unavailable')
+    st = store.Store(config.load(), data_dir=kit.data)
+    candidates = emit_mod.payload_candidates(st, 'c1-r101', [external] if outside == 'explicit' else [])
+    assert external.resolve() not in candidates
+    assert all(p.is_relative_to(kit.run_dir().resolve()) for p in candidates)
+    assert path not in candidates
+
+
+def test_payload_discovery_resolves_relative_paths_from_manifest_folder(kit, emit_mod):
+    from ltcore import config, store
+    run = kit.run_dir().relative_to(kit.tmp).as_posix()
+    path, pay = payload(kit, run + '/fill-js-p11', 'Answer.')
+    kit.write(str(path.parent / 'scripts.json'), {'payload': 'fill-payload.json'})
+    st = store.Store(config.load(), data_dir=kit.data)
+    candidates = emit_mod.payload_candidates(st, 'c1-r101', [])
+    assert path in candidates
+    assert not any('fill-js-p11/fill-js-p11' in p.as_posix() for p in candidates)
+    assert all(p.is_file() for p in candidates)
+    receipts(kit, path, pay)
+    assert record(kit).returncode == 0
+
+
+def test_record_refuses_doubled_relative_sibling_manifest(kit):
     run = kit.run_dir().relative_to(kit.tmp).as_posix()
     payload(kit, run + '/fill-js', 'Old answer.')
     path, pay = payload(kit, run + '/fill-js-p11', 'Corrected answer.')
     kit.write(run + '/fill-js-p11/scripts.json', {'payload': 'fill-js-p11/fill-payload.json'})
     receipts(kit, path, pay)
     result = record(kit)
-    assert result.returncode == 0, result.stderr
-    rows = kit.read(run + '/receipts.json')['receipts']
-    assert all(r['source_payload']['path'] == str(path) for r in rows)
+    assert result.returncode == 3, result.stderr
+    assert not (kit.run_dir() / 'receipts.json').exists()
 
 
 def test_supersede_refuses_a_different_verify_receipt(kit):

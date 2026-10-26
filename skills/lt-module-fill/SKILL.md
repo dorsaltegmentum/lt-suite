@@ -451,6 +451,8 @@ Submitting belongs to the user alone.
 
 `record` binds each fill and verify receipt to the payload it executed.
 It searches default payloads, `--payload` paths and sibling `fill-js*` manifests under the run.
+Every candidate must resolve to an existing file inside the run folder.
+Relative manifest paths resolve from the folder containing that manifest file.
 The full `source_payload_sha256` binds first; redacted values use the unique `source_payload_sha16` prefix.
 A missing or ambiguous identity refuses and lists the candidate payloads tried.
 The recorded `payload_binding` names the field used for each receipt.

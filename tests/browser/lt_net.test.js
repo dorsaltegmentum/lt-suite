@@ -549,6 +549,18 @@ test('lt_net: a calibration bound to another Lt client is stale and the old rule
   assert.equal(r3.client_sig, null);
 });
 
+test('lt_net: page chunks change signatures while script ordering leaves signatures equal', () => {
+  const common = ['/static/app.3f9a1c.js', '/static/vendor.123abc.js'];
+  const first = setup({scripts: [...common, '/static/page-a.111aaa.js']});
+  const second = setup({scripts: [...common, '/static/page-b.222bbb.js']});
+  assert.notEqual(first.N.clientSig(), second.N.clientSig());
+  first.env.setScripts(['/static/page-a.111aaa.js', ...common.reverse()]);
+  const ordered = setup({scripts: ['/static/app.3f9a1c.js', '/static/vendor.123abc.js', '/static/page-a.111aaa.js']});
+  assert.equal(first.N.clientSig(), ordered.N.clientSig());
+  first.env.setScripts([...common, '/static/page-a.111aaa.js', '/static/lazy.333ccc.js']);
+  assert.notEqual(first.N.clientSig(), ordered.N.clientSig());
+});
+
 // Backbone sync must not turn an unvalidated request into permission to navigate.
 for (const [name, mo] of [
   ['202', { status: 202 }],

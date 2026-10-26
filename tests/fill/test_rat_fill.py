@@ -182,9 +182,10 @@ def test_custom_marker_without_current_record_holds_plan(kit, emit_mod, fk, stal
 
 
 def sheet_receipts(kit, mod, ans, emit_mod, bound=False):
-    rc, pay, out = kit.payload(mod, ans)
+    folder = kit.run_dir(mod['module_id']) / 'fill-js'
+    rc, pay, out = kit.payload(mod, ans, out=str(folder))
     assert rc == 0, out
-    payload = kit.tmp / 'out/fill-payload.json'
+    payload = folder / 'fill-payload.json'
     rows = []
     for job in pay['pages']['3']['jobs']:
         value = emit_mod.expected_hash(job)
@@ -250,7 +251,7 @@ def test_bound_sheet_receipts_refuse_changed_execution_inputs(rat_run, emit_mod,
     elif mutation == 'missing':
         path.unlink()
     elif mutation == 'payload':
-        payload = kit.tmp/'out/fill-payload.json'
+        payload = kit.run_dir(mod['module_id']) / 'fill-js/fill-payload.json'
         payload.write_bytes(payload.read_bytes() + b' ')
     else:
         rows[0]['expected_hash'] = rows[0]['observed_hash'] = 12345
@@ -278,7 +279,7 @@ def test_record_sheet_receipts_bind_browser_payload(rat_run, emit_mod, binding):
     kit.write('fill.json', fill)
     kit.write('verify.json', ver)
     result = kit.emit('record', '--module', 'module.json', '--fill', 'fill.json',
-                      '--verify', 'verify.json', '--payload', 'out/fill-payload.json')
+                      '--verify', 'verify.json', '--payload', str(kit.run_dir(mod['module_id']) / 'fill-js/fill-payload.json'))
     if binding == 'correct':
         assert result.returncode == 0, result.stdout + result.stderr
         receipts = json.loads((kit.run_dir(mod['module_id'])/'receipts.json').read_text(encoding="utf-8"))['receipts']

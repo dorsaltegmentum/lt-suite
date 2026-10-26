@@ -19,6 +19,9 @@ Versions follow [Semantic Versioning 2.0.0](https://semver.org/spec/v2.0.0.html)
 
 ### Fixed
 
+- Accept bounded save request diagnostics in fill reports and export validation.
+- Use a neutral receipt binding message for ordinary fill receipts.
+- Keep payload discovery inside each run and resolve manifest paths from their containing folders.
 - Bind fill records to the executed payload, including payloads generated in sibling folders.
 - Refuse conflicting receipt hashes and archive corrected rows with `record --supersede`.
 - Refuse draft status text in answer segments and payload HTML through configurable patterns.

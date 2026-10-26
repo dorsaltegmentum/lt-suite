@@ -1412,6 +1412,22 @@
       "type": "string",
       "pattern": "^[0-9a-f]{64}$"
      },
+     "save_diag": {
+      "type": "array",
+      "maxItems": 20,
+      "items": {
+       "type": "object",
+       "additionalProperties": false,
+       "required": ["method", "path_template", "status", "count", "model_sync"],
+       "properties": {
+        "method": {"type": "string", "minLength": 1},
+        "path_template": {"type": "string"},
+        "status": {"type": "integer", "minimum": 0},
+        "count": {"type": "integer", "minimum": 1},
+        "model_sync": {"type": "boolean"}
+       }
+      }
+     },
      "pages": {
       "type": "array",
       "uniqueItems": true,

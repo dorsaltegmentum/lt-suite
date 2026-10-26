@@ -1652,26 +1652,33 @@ def _payload_jobs(paths: list[Path]) -> dict[str, dict]:
 
 
 def payload_candidates(st, mid, explicit):
-    """Collect default and sibling manifest payloads without merging their item jobs."""
+    """Collect existing payload files while keeping every candidate inside this run."""
+    run = st.run_dir(mid).resolve()
     folder = st.fill_js_dir(mid)
     paths = [folder / name for name in ("fill-payload.json", "replace-payload.json", "calibrate-payload.json")]
     paths += [Path(p) for p in explicit or []]
-    for manifest in sorted(st.run_dir(mid).glob("fill-js*/scripts.json")):
+    for manifest in sorted(run.glob("fill-js*/scripts.json")):
         try:
+            if not manifest.resolve().is_relative_to(run):
+                continue
             named = load(manifest).get("payload")
             if named:
                 path = Path(named)
-                if path.is_absolute():
-                    paths.append(path)
-                else:
-                    paths.extend([manifest.parent / path, st.run_dir(mid) / path,
-                                  manifest.parent / path.name])
-        except (OSError, ValueError, TypeError, AttributeError):
+                paths.append(path if path.is_absolute() else manifest.parent / path)
+        except (OSError, ValueError, TypeError, AttributeError, RuntimeError):
             continue
-    return list(dict.fromkeys(p.resolve() for p in paths))
+    candidates = []
+    for path in paths:
+        try:
+            resolved = path.resolve()
+            if resolved.is_relative_to(run) and resolved.is_file() and resolved not in candidates:
+                candidates.append(resolved)
+        except (OSError, RuntimeError):
+            continue
+    return candidates
 
 
-def bind_payload(receipt, paths):
+def bind_payload(receipt, paths, *, rat_receipt=False):
     """Bind one receipt using its full hash or an unambiguous short hash."""
     full = receipt.get("source_payload_sha256")
     short = receipt.get("source_payload_sha16")
@@ -1692,7 +1699,8 @@ def bind_payload(receipt, paths):
             matches[digest] = path
     if len(matches) != 1:
         reason = "ambiguous" if len(matches) > 1 else "missing or unmatched"
-        raise Refusal(f"RAT receipt binding: payload identity is {reason}; tried: " + "; ".join(tried))
+        prefix = "RAT receipt binding" if rat_receipt else "receipt binding"
+        raise Refusal(f"{prefix}: payload identity is {reason}; tried: " + "; ".join(tried))
     digest, path = next(iter(matches.items()))
     if not redacted and short is not None and short != digest[:16]:
         raise Refusal("payload hash fields disagree; tried: " + "; ".join(tried))
@@ -2080,13 +2088,16 @@ def cmd_record(args, cfg) -> int:
     ppaths = payload_candidates(st, mid, args.payload)
     if any(rat.within(p, root) for p in ppaths for _, root in rat.effective_roots(rat.policy_from_config(cfg))):
         raise Refusal("RAT receipt binding: payload path is inside a quarantined RAT root")
-    vpayload, vsha, vfield = bind_payload(ver, ppaths)
+    rat_pages = {p["page_index"] for p in mod["pages"]
+                 if page_kinds.is_candidate(p, rat.policy_from_config(cfg))}
+    rat_receipt = any(rat_pages.intersection(_pages_of(f)) for _, f in fills)
+    vpayload, vsha, vfield = bind_payload(ver, ppaths, rat_receipt=rat_receipt)
     vrows = {str(row[0]): row for row in ver.get("items", []) if isinstance(row, list) and row}
     observed_at = ver.get("observed_at") or now_utc()
 
     receipts, waits, misses = [], [], []
     for p, f in fills:
-        payload_path, digest, field = bind_payload(f, ppaths)
+        payload_path, digest, field = bind_payload(f, ppaths, rat_receipt=bool(rat_pages.intersection(_pages_of(f))))
         if digest != vsha:
             raise Refusal(f"fill and verify payload hashes differ; tried: {', '.join(map(str, ppaths))}")
         jobs = _payload_jobs([payload_path])

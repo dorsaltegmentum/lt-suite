@@ -99,8 +99,11 @@ def verify_receipt(kit, name: str, rows: dict[str, str], *, doc: str = "b2b2b2b2
 
 
 def record(kit, fill_paths, verify_path) -> subprocess.CompletedProcess:
+    destination = kit.run_dir() / 'fill-js/fill-payload.json'
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(kit.tmp / 'out/fill-payload.json', destination)
     return kit.emit("record", "--module", "module.json", "--fill", *map(str, fill_paths),
-                    "--verify", str(verify_path), "--payload", "out/fill-payload.json")
+                    "--verify", str(verify_path), "--payload", str(destination))
 
 
 @pytest.fixture
@@ -664,8 +667,11 @@ def test_explicit_calibrate_clears_a_failed_cross_page(eight):
     assert calibration(eight)["pending"][0]["explicit"] is True
     f = fill_receipt(eight, "r/fill-cal.json", [3], ["p3-30"], signal="fallback", calibrated=False, ticket=t)
     v = verify_receipt(eight, "r/verify-cal.json", {"p3-30": "ok"}, ticket=t)
+    destination = eight.run_dir() / 'calibrate-payload.json'
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(eight.tmp / 'out/calibrate-payload.json', destination)
     r = eight.emit("record", "--module", "module.json", "--fill", str(f), "--verify", str(v),
-                   "--payload", "out/calibrate-payload.json")
+                   "--payload", str(destination))
     assert r.returncode == 0
     st = calibration(eight)
     assert st["save"]["source"] == "net" and "cross_page" not in st
@@ -862,8 +868,11 @@ def test_an_explicit_calibration_that_fails_drops_save_and_batching(eight):
     t = ticket_of(eight.read("out/scripts_calibrate.json"), "save")["ticket"]
     f = fill_receipt(eight, "r/fill-cal.json", [3], ["p3-30"], signal="fallback", calibrated=False, ticket=t)
     v = verify_receipt(eight, "r/verify-cal.json", {"p3-30": "BAD"}, ticket=t)
+    destination = eight.run_dir() / 'calibrate-payload.json'
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(eight.tmp / 'out/calibrate-payload.json', destination)
     eight.emit("record", "--module", "module.json", "--fill", str(f), "--verify", str(v),
-               "--payload", "out/calibrate-payload.json")
+               "--payload", str(destination))
     st = calibration(eight)
     assert "save" not in st and st["cross_page"]["ok"] is False
     assert fills(scripts(eight))[0] == ["1"]
