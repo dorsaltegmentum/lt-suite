@@ -989,7 +989,13 @@ test('rendered end to end: ltjs.py wraps the body with the guard and the save wa
   const call = man.calls.find(c => c.kind === 'fill');
   await yes(t, 'rendered: the fill call has a rendered file', call && call.rendered && fs.existsSync(call.rendered));
   const env = F.netEnv({ net: false, pages: [{ title: 'Page 1', current: true, panels: e => [F.netTextPanel(e, 10, 1), F.netTextPanel(e, 11, 2)] }] });
-  const rec = await env.runRendered(fs.readFileSync(call.rendered, 'utf8'));
+  const miss = await env.runRendered(fs.readFileSync(call.rendered, 'utf8'));
+  await check(t, 'rendered: loader miss requests the runner without writes', [miss.need, env.writes.length], ['payload', 0]);
+  for (const chunk of call.runner_payload.chunks) {
+    const receipt = await env.runRendered(fs.readFileSync(chunk.path, 'utf8'));
+    assert.deepEqual(F.J(receipt), F.J({i:chunk.i,len:chunk.len,sha16:chunk.sha16}));
+  }
+  const rec = await env.runRendered(fs.readFileSync(call.runner_payload.path, 'utf8'));
   const nav = env.navigate();
   await check(t, 'rendered: two written through the real probe', [rec.ok, rec.counts && rec.counts.written], [true, 2]);
   await check(t, 'rendered: the guard stamped the receipt', rec.guard_trips, 0);

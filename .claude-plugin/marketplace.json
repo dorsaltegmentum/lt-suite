@@ -10,7 +10,7 @@
       "name": "lt-suite",
       "source": "./",
       "description": "Unofficial tools to capture, draft, diagram, fill and export Lt learning modules.",
-      "version": "0.2.2"
+      "version": "0.2.3"
     }
   ]
 }

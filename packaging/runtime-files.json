@@ -262,6 +262,7 @@
   "skills/lt-module-fill/scripts/browser/check_answer.js",
   "skills/lt-module-fill/scripts/browser/confirm_dialog.js",
   "skills/lt-module-fill/scripts/browser/fill_lib.js",
+  "skills/lt-module-fill/scripts/browser/fill_runner.js",
   "skills/lt-module-fill/scripts/browser/model_answer.js",
   "skills/lt-module-fill/scripts/browser/probe_panels.js",
   "skills/lt-module-fill/scripts/browser/upload.js",

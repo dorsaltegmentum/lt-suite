@@ -21,6 +21,8 @@ async function runMedia({ panels = [], pathname, args = {}, reply, entry = false
   const posts = [];
   const requests = [];
   const downloads = [];
+  const waits = [];
+  const timers = H.fastTimers();
   const nodes = [];
   const owners = new Map();
   for (const p of panels) {
@@ -66,7 +68,8 @@ async function runMedia({ panels = [], pathname, args = {}, reply, entry = false
       posts.push({ url: u, headers: (o && o.headers) || {}, credentials: o && o.credentials, body: o?.body });
       return reply ? reply(u, o) : H.response(200, { ok: true });
     },
-    ...H.fastTimers()
+    ...timers,
+    setTimeout(fn, ms) { waits.push(ms); return ms === 15000 || ms === 30000 ? timers.setTimeout(fn, ms) : setTimeout(fn, 0); }
   };
   sandbox.globalThis = sandbox;
   vm.createContext(sandbox);
@@ -79,7 +82,7 @@ async function runMedia({ panels = [], pathname, args = {}, reply, entry = false
     await vm.runInContext(`(async () => {\n${src}\n})()`, sandbox);
     receipt = await sandbox.fetchLtMedia(all);
   }
-  return { receipt: JSON.parse(JSON.stringify(receipt)), posts, downloads, requests };
+  return { receipt: JSON.parse(JSON.stringify(receipt)), posts, downloads, requests, waits };
 }
 
 const vmPanel = (key, content, input) => ({
@@ -337,3 +340,19 @@ for (const family of ['ipv4-racing-port', 'ipv6-other-family']) {
     }
   });
 }
+
+
+test('fetch-media: download handoffs use configured gaps and pause after eight', async () => {
+  const panels = Array.from({length: 12}, (_, i) => ({
+    vm: vmPanel(String(i + 1), {imageResourceKey: String(i + 100)}),
+    imgs: [{src: `${IMG_HOST}${i + 100}`}]
+  }));
+  for (const [args, gap, pause] of [[{}, 250, 2000], [{download_gap_ms: 75, download_pause_ms: 900}, 75, 900]]) {
+    const r = await runMedia({panels, args: {transport: 'download', ...args}});
+    assert.equal(r.downloads.length, 12);
+    assert.equal(r.waits.filter(ms => ms === gap).length, 10);
+    assert.equal(r.waits.filter(ms => ms === pause).length, 1);
+    assert.equal(r.receipt.downloads_confirmed, false);
+    assert.match(r.receipt.download_note, /cannot confirm/);
+  }
+});

@@ -36,7 +36,7 @@ Run these in a shell whose `HOME` points at an empty temp folder:
 ```bash
 gemini extensions validate <repo>
 gemini extensions link <repo>
-gemini extensions list            # lt-suite 0.2.2
+gemini extensions list            # lt-suite 0.2.3
 gemini skills list --all          # 6 lt-suite skills
 agy plugin validate <repo>
 agy plugin install <repo>

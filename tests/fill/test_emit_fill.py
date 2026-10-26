@@ -884,3 +884,27 @@ def test_a_new_save_record_needs_a_new_cross_page_proof(eight):
     assert st["save"]["version"] == 1 and "cross_page" not in st
     man = scripts(eight, "--pages", "2-8")
     assert fills(man)[0] == ["2", "3"] and ticket_of(man, "cross_page")["pages"] == [2, 3]
+
+
+def test_inline_fill_and_verify_share_cached_runner_without_payload_data(eight):
+    import base64
+    import gzip
+    import re
+    result = eight.emit('scripts', '--out', 'out', '--stub')
+    assert result.returncode == 0, result.stdout + result.stderr
+    calls = eight.read('out/scripts.json')['calls']
+    bodies = set()
+    for call in calls:
+        loader = Path(call['rendered']).read_text(encoding='utf-8')
+        assert len(loader.encode()) < 15000
+        assert 'localStorage.getItem(KEY)' in loader
+        fallback = call['runner_payload']
+        bodies.add(fallback['body_sha256'])
+        packed = ''.join(Path(p['payload_path']).read_text(encoding='utf-8') for p in fallback['chunks'])
+        body = gzip.decompress(base64.b64decode(packed)).decode()
+        assert 'LtFillLib.fillPage' in body
+        assert 'LtCheck.run' in body
+        assert 'probeLtPanels' in body
+        assert call.get('ticket', 'T-secret') not in body
+        assert not re.search(r'"html"\s*:', body)
+    assert len(bodies) == 1

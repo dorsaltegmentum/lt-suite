@@ -31,7 +31,7 @@ import _common as c  # noqa: E402
 GEMINI_MANUAL = [
     ("gemini-validate", "gemini extensions validate <repo>"),
     ("gemini-link", "gemini extensions link <repo>   (or: gemini extensions install <repo>)"),
-    ("gemini-list", "gemini extensions list   -> lt-suite 0.2.2, enabled"),
+    ("gemini-list", "gemini extensions list   -> lt-suite 0.2.3, enabled"),
     ("gemini-skills", "gemini skills list --all   -> the 6 lt-suite skills"),
     ("gemini-session", "gemini, then /skills list   -> the 6 skills; /mcp   -> lt-chrome with input tools excluded"),
 ]

@@ -394,3 +394,15 @@ def test_a_linked_media_folder_stops_the_stamp_before_any_move(tmp_path):
     assert image.is_file()
     assert (inc / f'module-{mid}.json').is_file()
     assert not (cap / f'module-{mid}.json').exists()
+
+
+def test_stamp_names_each_missing_key_with_upload_role_and_page(tmp_path):
+    stamp = load_stamp()
+    doc = {'module_id': 'c1-r101', 'pages': [{'page_index': 4, 'media': [
+        {'key': '30', 'role': 'author-supplied'}, {'key': '30', 'role': 'student-upload'},
+        {'key': None, 'role': 'student-upload'}], 'items': [{'media': [{'key': '31'}]}]}]}
+    missing = []
+    assert stamp.backfill_local_paths(doc, tmp_path / 'module.json', tmp_path / 'media',
+                                     lambda path: False, missing) == (0, 3, 1)
+    assert missing == ['page 4: missing media key 30', 'page 4: missing media key u30',
+                       'page 4: missing media key 31']

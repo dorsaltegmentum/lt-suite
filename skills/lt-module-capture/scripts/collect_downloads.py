@@ -247,6 +247,17 @@ def collect(module_id: str, downloads: Path, st: "store.Store", mode: str, since
         stale_note(dst.name, files[1:])
     if n_media:
         log.append(f"{'would ' if dry else ''}{mode} {n_media} image(s) -> {st.incoming_dir / 'media'}")
+    from stamp_capture import backfill_local_paths, incoming_copies
+    captures = incoming_copies(st.incoming_dir, module_id)
+    capture = cands[0] if dry and cands and got_module else captures[-1] if captures else st.capture_path(module_id)
+    if capture.is_file() and doc_ok(capture, module_id) is None:
+        doc = json.loads(capture.read_text(encoding="utf-8"))
+        missing = []
+        def exists(path):
+            return path.is_file() or (st.incoming_dir / "media" / path.name).is_file() or (
+                dry and any(fresh(p) and image_ok(p) for p in imgs.get(path.name, [])))
+        backfill_local_paths(doc, st.capture_path(module_id), st.media_dir, exists, missing)
+        log.extend(dict.fromkeys(missing))
     return got_module or (not cands and st.capture_path(module_id).is_file()
                           and doc_ok(st.capture_path(module_id), module_id) is None)
 

@@ -194,7 +194,24 @@ Only a matching SHA-256 permits execution of the decoded script through `new Fun
 With intact page globals, a mismatch returns `fatal: "stub-hash-mismatch"` and executes none of the embedded script.
 The agent protocol appears once in [the shared browser adapter reference](../shared/references/browser-adapters.md#inline-protocol).
 Every inline tool follows that protocol; file tools keep direct `sourcePath` scripts with `--no-stub`.
-The `auto` and `claude-in-chrome` adapters default to compressed stubs without another configuration switch.
+The `auto` and `claude-in-chrome` adapters default to compressed stubs for ordinary page targets.
+Inline fill, verify, check and probe calls start with a cached runner loader containing current call data.
+On `need:'payload'`, send the listed runner chunks, verify their receipts, then execute the fallback stub.
+Later calls on that origin need only their own loader, including verification after a fresh load.
+`emit_fill.py scripts` records fallback paths in `scripts.json`; check commands print render metadata.
+
+A synthetic 5-page fixture measures fill loaders at 3,047 to 3,153 bytes, previously 45,595 to 45,631 bytes.
+Per-page verify loaders measure 2,905 to 3,050 bytes, previously 45,401 to 45,469 bytes.
+Eligible check loaders measure 4,258 to 4,379 bytes, previously 59,464 to 59,536 bytes.
+The aggregate verify loader measures 3,871 bytes for 5 pages, previously 45,766 bytes.
+The shared runner uses 63,672 base64 bytes and 4 chunks at 20,000 bytes each.
+The first text call transfers 71,394 bytes across chunk snippets and its 3,810-byte final stub.
+The fixture contains 1 text, table, MCQ, category and labeling item on separate pages.
+
+Only fixed shipped code enters `localStorage`; jobs, expected hashes, tickets and policies remain call arguments.
+The wrapper deep-freezes current arguments and policy, then installs the guard before dispatching any write.
+The runner reads its lexical arguments and publishes no callable runner accepting page globals.
+Generated answer files remain ineligible for caching; served mode and `--no-stub` retain their existing scripts.
 
 The renderer places arguments in the deep-frozen JSON object named `__LT_ARGS__`.
 The wrapper uses `JSON.parse`, preserving a `__proto__` key as an own property.

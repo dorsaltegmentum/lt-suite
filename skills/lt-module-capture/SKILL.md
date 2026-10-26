@@ -6,7 +6,7 @@ description: Read one Lt run from the user's signed-in browser tab into module.j
 license: AGPL-3.0-or-later
 compatibility: "A Chromium browser signed in to Lt, and an agent browser tool that runs a JavaScript file in that tab (or the user pastes it into DevTools). Python 3.11+ with jsonschema. Node 18+ only for the repository tests."
 metadata:
-  version: 0.2.2
+  version: 0.2.3
 ---
 
 <!-- Capture one Lt run into module.json and a quarantined reference.json without writing to Lt. -->
@@ -219,8 +219,14 @@ Visit them in the printed order. On each page:
 Afterwards run `stamp_capture.py <module_id>` once more. It moves the images into
 `<data>/captures/media/` and fills their `local_path`. On the download route, run
 `collect_downloads.py <module_id>` before this second stamp. List every image key that is
-still missing in the run report. When an image is blocked cross-origin, the user can save it
-with "Save image as".
+still missing in the run report. Both collection and stamping name each missing key and page.
+Re-run `fetch_media` on that page for missing keys, then collect and stamp again.
+
+Download handoffs wait 250 ms between files and pause 2,000 ms after each group of 8.
+Set per-call `--arg-json download_gap_ms=250` and `--arg-json download_pause_ms=2000` to adjust those waits.
+The pause must exceed the gap; otherwise the default pause applies.
+The receipt says `downloads_confirmed:false` because page JavaScript cannot confirm a download landed.
+When an image is blocked cross-origin, the user can save it with "Save image as".
 
 ### 7. Recount from the saved file, then report
 

@@ -4,7 +4,7 @@ description: Export a worked Lt module as a notes page and PDFs, with optional f
 license: AGPL-3.0-or-later
 compatibility: "Python 3.11+ and local files. Needs a module.json from lt-module-capture, normally an answers.json too. PDFs need reportlab, Pillow, fontTools and pypdfium2 (the setup skill installs them); PyMuPDF, qpdf and exiftool are optional."
 metadata:
-  version: "0.2.2"
+  version: "0.2.3"
 ---
 <!-- SPDX-FileCopyrightText: 2026 dorsaltegmentum -->
 <!-- SPDX-License-Identifier: AGPL-3.0-or-later -->

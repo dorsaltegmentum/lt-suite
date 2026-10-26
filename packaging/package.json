@@ -1,6 +1,6 @@
 {
   "name": "lt-suite-browser-dependency-pins",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "private": true,
   "description": "Dependency update metadata; browser packages run through generated MCP snippets.",
   "license": "AGPL-3.0-or-later",

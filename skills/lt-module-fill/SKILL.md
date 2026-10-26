@@ -6,7 +6,7 @@ description: Write drafted answers into a captured Lt run in the user's signed-i
 license: AGPL-3.0-or-later
 compatibility: "A Chromium browser signed in to Lt, and an agent browser tool that runs a JavaScript file in that tab (or the user pastes it into DevTools). Python 3.11+ with jsonschema; Pillow, numpy and scipy for micrograph labels. Node 18+ only for the repository tests."
 metadata:
-  version: 0.2.2
+  version: 0.2.3
 ---
 
 <!-- Fill a captured Lt run from answers.json up to the first one-way door, verify from a fresh load, and hand the run back for the user to submit. -->
@@ -220,6 +220,15 @@ Served mode (`--lib-mode served` with `emit_fill.py serve`) keeps each file smal
 checks both library files by sha256 and returns `lib-integrity` on any difference. Inline is
 the default and needs no server.
 
+Inline tools receive a loader containing current call data for the shipped cached fill runner.
+`scripts.json` lists `calls[].rendered` plus `runner_payload.path` and numbered `runner_payload.chunks`.
+On `need:'payload'`, send those chunks in order, check each receipt, then execute the fallback stub.
+That stub executes this call and stores only verified code; later calls start with their own loader.
+The shared [inline protocol](references/_shared/browser-adapters.md#fill-call-protocol) defines each transfer step.
+A synthetic 5-page fixture measures fill loaders at 3,047 to 3,153 bytes, previously about 45.6 KB.
+Per-page verify loaders measure 2,905 to 3,050 bytes; the 63,672-byte runner uses 4 chunks at 20,000 bytes.
+File adapters keep `--no-stub` output, and served adapters keep their existing library loader.
+
 ### 6. Per call: navigate, fill, verify, record
 
 To read the live state of a page without writing (which targets are empty right now), render
@@ -229,13 +238,14 @@ counts and lengths per panel, never text. The fill scripts run the same probe be
 
 1. `check-url --plan <fill-js>/plan.json --from <current URL> <page URL>`; navigate only on
    exit 0, then run the guard.
-2. Run the rendered fill file on that page. Save the receipt. The receipt reports numbers
+2. Run the rendered loader with this call's data on that page. On `need:'payload'`, send its
+   listed runner chunks, verify their receipts, then execute the fallback stub. Save the call receipt. The receipt reports numbers
    only (counts, a result per item, hashes, lengths) plus `save_signal`; answer text never
    appears in it.
 3. `save_signal` `unconfirmed` or `error` stops the call without navigation. The next step is
    that call's verify in a fresh load, before any other page.
 4. Load an allowed page of the run again and run the call's
-   `_verify` file there. Save its receipt. It must report `fresh_load: true`; a verify in the
+   `_verify` loader there. Apply the same chunk fallback on a cache miss. Save its receipt. It must report `fresh_load: true`; a verify in the
    document that filled proves nothing about the server. Use a new tab while a save remains
    unconfirmed; reloading the filling tab can cancel its pending request. Apply the same URL
    check and guard to the new tab.
@@ -291,7 +301,11 @@ The origin needs a valid save calibration. A check page containing
 any single-attempt item requires manual approval; item approvals permit writes only.
 
 Check the URL with `--plan <check-plan.json>`, navigate, run the guard as the next call,
-then execute the rendered script. One page per call, with approval following
+then execute the rendered loader with that call's data. On `need:'payload'`, send its listed
+runner chunks and check receipts before executing the fallback stub. `check` and `check-verify`
+print render metadata with fallback files under `payload`. Both reuse the fill runner cache.
+Eligible check loaders measure 4,258 to 4,379 bytes in the 5-page fixture, previously about 59.5 KB.
+One page per call, with approval following
 `fill.approval_mode`. Save every receipt. Never edit the script or press by another route.
 The loop retries without a press limit. It stops on Correct, lock, exhausted candidates,
 no progress or an unknown state. Every write waits for `model` or `net`; a fallback or

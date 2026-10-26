@@ -11,8 +11,9 @@
   "model-answer": 9,
   "probe": 81,
   "rail": 102,
-  "check-answer": 80
+  "check-answer": 80,
+  "cached-fill": 15
  },
- "files": 6,
- "min_tests": 461
+ "files": 7,
+ "min_tests": 476
 }

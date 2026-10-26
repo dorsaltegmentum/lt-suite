@@ -254,12 +254,19 @@ const fetchLtMedia = async (opts) => {
    * means HANDED TO THE BROWSER. collect_downloads.py then checks the download folder. Each
    * image is a separate download; Chromium allows ONE scripted download per site and asks
    * the user to allow automatic downloads before any more go through. */
-  const saveViaDownload = (name, blob) => {
+  const gap = Number.isFinite(Number(g.download_gap_ms)) && Number(g.download_gap_ms) >= 0
+    ? Number(g.download_gap_ms) : 250;
+  const pause = Number.isFinite(Number(g.download_pause_ms)) && Number(g.download_pause_ms) > gap
+    ? Number(g.download_pause_ms) : Math.max(2000, gap * 8);
+  let handoffs = 0;
+  const saveViaDownload = async (name, blob) => {
+    if (handoffs) await new Promise(ok => setTimeout(ok, handoffs % 8 === 0 ? pause : gap));
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url; a.download = name;
     document.body.appendChild(a); a.click(); a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 15000);
+    handoffs++;
     return { status: null, ok: true, route: 'download', handed_off: true };
   };
 
@@ -369,6 +376,9 @@ const fetchLtMedia = async (opts) => {
     page_index: capturePageIndex,
     url_page: pageIndex,
     transport,
+    ...(transport === 'download' ? {downloads_confirmed: false,
+      download_note: 'The browser cannot confirm files landed. Run collect_downloads.py and stamp_capture.py.',
+      download_gap_ms: gap, download_pause_ms: pause, download_batch_size: 8} : {}),
     images: out.map(o => ({ panel_key: o.panel_key, key: o.key, role: o.role, paired: o.paired,
                             result: o.result, route: o.route || null, file: o.file, bytes: o.bytes,
                             svg_bytes: o.svg_bytes || null, handed_off: o.handed_off === true,

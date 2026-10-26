@@ -89,7 +89,7 @@ FILL_PREFIXES = ("_fill-", "_verify-", "_check-", "_replace-", "_calibrate-")
 CACHEABLE_BROWSER_NAMES = frozenset({
     "capture.js", "fetch_media.js", "fill_lib.js", "probe_panels.js", "check_answer.js",
     "confirm_dialog.js", "model_answer.js", "upload.js", "ping.js", "guard.js",
-    "lt_guard.js", "lt_net.js",
+    "lt_guard.js", "lt_net.js", "fill_runner.js",
 })
 RESERVED = {"lt_guard", "lt_net"}
 ADAPTER_FORM = {
@@ -629,9 +629,9 @@ def check_upload(path: str | os.PathLike, data_dir: str | os.PathLike, *,
 
 # --------------------------------------------------------------------------- render
 
-def _js_string(obj: Any) -> str:
+def _js_string(obj: Any, *, sort_keys: bool = True) -> str:
     """A JS string literal holding the JSON text of ``obj`` (ASCII only)."""
-    return json.dumps(json.dumps(obj, ensure_ascii=True, sort_keys=True, allow_nan=False))
+    return json.dumps(json.dumps(obj, ensure_ascii=True, sort_keys=sort_keys, allow_nan=False))
 
 
 FREEZE = ("(function f(o) { if (o && typeof o === 'object' && !Object.isFrozen(o)) "
@@ -764,7 +764,7 @@ def stub_text(inner: str, name: str, *, args: Mapping[str, Any] | None = None,
         ]
     lines += [
         "return await (new Function('return (' + src + ')'))()("
-        f"JSON.parse({_js_string(dict(args or {}))}), JSON.parse({_js_string(dict(policy or {'mode': 'block-all'}))}));",
+        f"JSON.parse({_js_string(dict(args or {}), sort_keys=False)}), JSON.parse({_js_string(dict(policy or {'mode': 'block-all'}))}));",
         "}",
     ]
     return "\n".join(lines) + "\n"
@@ -852,6 +852,31 @@ def cacheable_target(path: Path) -> bool:
     return path.resolve().parent in parents
 
 
+def browser_body(path: Path) -> str:
+    """Compose the shipped fill runner from libraries beside its trusted source file."""
+    body = _read(path)
+    if path.name != "fill_runner.js" or not cacheable_target(path):
+        return body
+    probe = _read(path.with_name("probe_panels.js"))
+    probe, count = re.subn(r"\n[ \t]*return await probeLtPanels\(\);[ \t]*\n?$", "\n", probe)
+    if count != 1:
+        raise RenderRefused(EXIT_USAGE, "probe entry point changed")
+    check = _read(path.with_name("check_answer.js"))
+    tail = "return await LtCheck.run(__LT_ARGS__.cfg, __LT_ARGS__.jobs);"
+    if not check.rstrip().endswith(tail):
+        raise RenderRefused(EXIT_USAGE, "check entry point changed")
+    check = check.rstrip()[:-len(tail)]
+    return body.replace("/*__LT_FILL_LIB__*/", _read(path.with_name("fill_lib.js"))).replace(
+        "/*__LT_PROBE__*/", probe).replace("/*__LT_CHECK__*/", check)
+
+
+def render_fill_call(target: str, *, args: Mapping[str, Any], **options) -> dict:
+    """Render one loader and its checked chunked fallback with identical call arguments."""
+    info = render(target, args=args, cache=True, **options)
+    info["payload"] = render(target, args=args, chunk_bytes=20000, **options)
+    return info
+
+
 def _write(out_dir: Path, name: str, text: str) -> tuple[Path, str]:
     """Write a new file ``<name>-<sha8>-<random8>.js`` with mode 0600; never follow or reuse."""
     data = text.encode("utf-8")
@@ -896,6 +921,8 @@ def render(target: str, *, form: str | None = None, stub: bool | None = None,
                             "model_answer.read is false in the config, so model_answer.js is not rendered")
     if (name == "check_answer" or name.startswith("_check-")) and cfg.get("fill.check_answer.enabled", False) is not True:
         raise RenderRefused(5, "fill.check_answer.enabled is false; check script refused")
+    if name == "fill_runner" and (args or {}).get("method") == "check" and cfg.get("fill.check_answer.enabled", False) is not True:
+        raise RenderRefused(5, "fill.check_answer.enabled is false; check script refused")
     dform, dstub = default_form(cfg)
     form = form or dform
     if cache and (stub is False or not compress or chunk_bytes is not None):
@@ -905,6 +932,14 @@ def render(target: str, *, form: str | None = None, stub: bool | None = None,
     if cache or chunk_bytes is not None:
         stub = True
     stub = dstub if stub is None else bool(stub)
+    if name == "probe_panels" and stub and compress and cacheable_target(path):
+        runner = path.with_name("fill_runner.js")
+        if runner.is_file() and (cache or chunk_bytes is not None):
+            return render(str(runner), args={"method": "probe"}, form=form, stub=True, net=True,
+                          plan=plan, cfg=cfg, out_dir=out_dir, cache=cache, chunk_bytes=chunk_bytes)
+        if runner.is_file():
+            return render_fill_call(str(runner), args={"method": "probe"}, form=form, net=True,
+                                    plan=plan, cfg=cfg, out_dir=out_dir)
     net = wants_net(path, name) if net is None else bool(net)
     a: dict[str, Any] = dict(args or {})
     for k in a:
@@ -923,7 +958,7 @@ def render(target: str, *, form: str | None = None, stub: bool | None = None,
     origin = cfg.get("lt.origin", "") if cfg is not None else ""
     inst = cfg.get("lt.instance", "") if cfg is not None else ""
     policy = policy_from_plan(plan, origin or None, inst or None, check_answer_enabled=cfg.get("fill.check_answer.enabled", False))
-    body = _read(path)
+    body = browser_body(path)
     cacheable = cacheable_target(path)
     text = render_source(body, name=name, form=form, stub=stub, args=a, net=net, policy=policy,
                          compress=compress, cache=cache, chunked=chunk_bytes is not None,

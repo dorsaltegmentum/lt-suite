@@ -80,8 +80,10 @@ Each body excludes arguments and policy; every call supplies deeply frozen curre
 The wrapper clears input bindings after completion so published closures cannot reuse a completed run's token.
 Only allowlisted shipped script names inside bundled browser directories qualify; `cacheable` reports that decision in render metadata.
 Generated filename prefixes remain excluded even when their files appear inside a bundled browser directory.
-Generated fill scripts and other file targets can embed answers, so their stubs bypass origin storage.
-Their loaders always request a payload; compressed and chunked transfers still work for those targets.
+Generated fill files keep their original contents for `--no-stub` and served adapters.
+Inline fill emission renders the shipped `fill_runner` with each call's data as separate JSON arguments.
+The runner combines `fill_lib.js`, `probe_panels.js`, `check_answer.js` and a fixed method dispatcher.
+Generated answer files remain ineligible for caching, including when placed inside bundled browser directories.
 With intact page globals, cache writes contain code and exclude tokens, Lt content and receipts.
 Unreadable, corrupt or mismatched entries return `need:'payload'`; cleanup preserves replacements written after the failed read.
 Successful insertion precedes pruning; failed writes preserve existing bodies and leave later calls to repair the index.
@@ -93,6 +95,32 @@ Never remove the SHA-256 check or replace refused payloads with handwritten page
 Rendered files go to `browser.js_tmp_dir`, else `<OS temp>/lt-suite-js-<uid>`.
 `render` exits 2 with `unsafe js_tmp_dir` when that folder is a symlink, belongs to another account, or has group or other permissions.
 Then stop and tell the user; never loosen the folder's permissions to get past it.
+
+### Fill call protocol
+
+`emit_fill.py scripts` lists each loader in `scripts.json` under `calls[].rendered`.
+Each call also lists `runner_payload.path` and its numbered `runner_payload.chunks` metadata.
+`check` and `check-verify` print render metadata with the same fallback under `payload`.
+Inline `probe_panels` rendering also returns a loader and `payload` metadata for the same runner.
+
+1. Execute the loader with that call's data, current plan and adapter form.
+2. On `need:'payload'`, execute that call's runner chunks in order and compare every transfer receipt.
+3. Execute the listed fallback stub once; its receipt belongs to the fill, verify, check or probe call.
+4. Start every later call with its own loader, including after a fresh page load.
+
+Each cache hit verifies the decompressed runner against WANT before installing this call's guard and executing.
+Arguments include jobs, expected hashes, calibration tickets, save waits and check plans.
+Only shipped code enters storage or chunk assembly; the wrapper clears argument bindings after completion.
+A blocked cache repeats the chunk fallback, while a miss executes no page code.
+
+A synthetic 5-page fixture uses 1 text, table, MCQ, category and labeling item per page.
+Fill loaders measure 3,047 to 3,153 bytes, replacing 45,595 to 45,631 rendered bytes per call.
+Per-page verify loaders measure 2,905 to 3,050 bytes, replacing 45,401 to 45,469 rendered bytes per call.
+Check loaders measure 4,258 to 4,379 bytes, replacing 59,464 to 59,536 rendered bytes per eligible call.
+The aggregate 5-page verify loader measures 3,871 bytes, replacing 45,766 bytes.
+The runner carries 63,672 base64 bytes in 4 chunks at `--chunk-bytes 20000`.
+The first text call's chunk snippets and final stub total 71,394 bytes, including its 3,810-byte stub.
+Call data and plan size determine loader size; the runner body stays identical across these calls.
 
 ## Navigation and upload
 

@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Source for tools/gen_manifests.py. Regenerate after changing this file.
 name = "lt-suite"
-version = "0.2.2"
+version = "0.2.3"
 description = "Unofficial tools to capture, draft, diagram, fill and export Lt learning modules."
 author = "dorsaltegmentum"
 author_url = "https://github.com/dorsaltegmentum"

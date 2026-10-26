@@ -32,7 +32,7 @@ COURSE = 1
 LESSON_ID = 1
 UNIT = "X101"
 COURSE_TITLE = "Example Course 2000 (X101)"
-TOOL_VERSION = "0.2.2"
+TOOL_VERSION = "0.2.3"
 CONFIG_DIGEST = hashlib.sha256(b"lt-suite fixture config").hexdigest()
 
 # Directories the generator owns. Everything in them except HAND_WRITTEN is rewritten and

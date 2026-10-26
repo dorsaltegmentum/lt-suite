@@ -6,7 +6,7 @@ description: "Build an accessible mechanism or pathway diagram (draw.io, SVG, PD
 license: AGPL-3.0-or-later
 compatibility: "Python 3.11+ with numpy, Pillow and fontTools; rsvg-convert, pdfinfo, pdftoppm and xmllint. Optional: pikepdf, qpdf and exiftool (final metadata pass); potrace, opencv-python-headless and scikit-learn (illustration insets); drawio-desktop and node (extra checks)."
 metadata:
-  version: "0.2.2"
+  version: "0.2.3"
 ---
 
 <!-- Build a mechanism diagram from a case folder, check it, and deliver files plus a placement TODO. -->

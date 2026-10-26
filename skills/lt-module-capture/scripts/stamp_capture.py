@@ -60,7 +60,8 @@ INCOMING_RE = re.compile(r"^module-([A-Za-z0-9_-]{1,64})(?:\.(\d{1,6}))?\.json$"
 
 
 def backfill_local_paths(doc: dict, capture_path: Path, media_dir: Path,
-                         exists: Callable[[Path], bool] | None = None) -> tuple[int, int, int]:
+                         exists: Callable[[Path], bool] | None = None,
+                         missing: list[str] | None = None) -> tuple[int, int, int]:
     """Set each media entry's local_path to the file fetch_media.js saved.
 
     Returns (found, keyed, no_key). capture.js writes `local_path: null`, since a web page has
@@ -99,6 +100,8 @@ def backfill_local_paths(doc: dict, capture_path: Path, media_dir: Path,
             cands = [media_dir / f"lt-{mid}-{s}{ext}" for s in stems(e) for ext in EXTS]
             hit = next((c for c in cands if exists(c)), None)
             if hit is None:
+                if missing is not None:
+                    missing.append(f"page {page_index}: missing media key {stems(e)[0]}")
                 if e.get("role") == "student-upload":
                     e["local_path"] = None      # an old path without `u` could point at an author image
                 continue
@@ -110,6 +113,7 @@ def backfill_local_paths(doc: dict, capture_path: Path, media_dir: Path,
 
     # Media sit at pages[].media, pages[].items[].media and pages[].content[].media.
     for pg in doc.get("pages", []) or []:
+        page_index = pg.get("page_index")
         visit(pg.get("media"))
         for it in pg.get("items", []) or []:
             visit(it.get("media"))
@@ -337,7 +341,10 @@ def main(argv: list[str] | None = None) -> int:
     def exists(p: Path) -> bool:
         return p.is_file() or (p.parent == media_dir and p.name in pending)
 
-    found, keyed, no_key = backfill_local_paths(doc, dest, media_dir, exists)
+    missing = []
+    found, keyed, no_key = backfill_local_paths(doc, dest, media_dir, exists, missing)
+    for message in dict.fromkeys(missing):
+        print(message)
     if keyed or no_key:
         print(f"local_path: {found} of {keyed} keyed media entries resolved against {media_dir}")
         if found < keyed:

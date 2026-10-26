@@ -275,3 +275,21 @@ def test_check_render_pins_live_classification_inputs(kit):
     assert cfg['classification_pin']['items']['11'] == {
         'plugin_key': 'select', 'attempts': 'multi', 'assessment_type': 'instantFeedback'}
     assert 'proposed_selection' not in cfg['classification_pin']['items']['11']
+
+
+def test_check_inline_metadata_reuses_runner_and_keeps_direct_output(kit):
+    mod, ans = setup_check(kit)
+    (kit.run_dir() / "fill-js").mkdir(parents=True, mode=0o700)
+    owned_payload(kit, mod, ans)
+    result = kit.emit('check', '--module', 'module.json', '--fill', 'fill.json', '--stub')
+    assert result.returncode == 0, result.stdout + result.stderr
+    metadata = __import__('json').loads(result.stdout.splitlines()[0])
+    assert metadata['cache'] is True
+    assert metadata['body_sha256'] == metadata['payload']['body_sha256']
+    assert metadata['payload']['chunks']
+    loader = Path(metadata['path']).read_text(encoding='utf-8')
+    assert 'localStorage.getItem(KEY)' in loader
+    direct = kit.emit('check', '--module', 'module.json', '--fill', 'fill.json', '--no-stub')
+    assert direct.returncode == 0, direct.stdout + direct.stderr
+    assert Path(direct.stdout.splitlines()[0]).is_file()
+    assert 'LtCheck.run' in Path(direct.stdout.splitlines()[0]).read_text(encoding='utf-8')

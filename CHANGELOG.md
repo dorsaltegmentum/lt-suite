@@ -8,6 +8,13 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 lt-suite records notable changes using [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/).
 Versions follow [Semantic Versioning 2.0.0](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.3] - 2026-10-26
+
+### Changed
+
+- Inline fill calls reuse one cached runner with current frozen arguments and guard policies.
+- Download handoffs use paced groups of 8 and report missing media keys by page.
+
 ## [0.2.2] - 2026-10-26
 
 ### Changed

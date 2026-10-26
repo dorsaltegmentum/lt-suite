@@ -251,3 +251,14 @@ def test_a_link_in_place_of_incoming_is_refused_without_a_traceback(tmp_path, dl
     assert 'is a link' in r.stderr
     assert list(elsewhere.iterdir()) == []
     assert (dl / f'module-{MID}.json').is_file()
+
+
+def test_collection_names_every_missing_media_key_and_page(tmp_path, dl):
+    put(dl / f'module-{MID}.json', {'module_id': MID, 'pages': [
+        {'page_index': 3, 'media': [{'key': '30', 'role': 'author-supplied'},
+                                  {'key': '31', 'role': 'student-upload'}]}]})
+    put(dl / f'lt-{MID}-30.png', PNG)
+    result = run(tmp_path, MID, '--downloads-dir', str(dl))
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert 'page 3: missing media key u31' in result.stdout
+    assert 'missing media key 30' not in result.stdout

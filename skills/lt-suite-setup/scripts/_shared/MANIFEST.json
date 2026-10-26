@@ -5,7 +5,7 @@
   {
    "path": "references/_shared/browser-adapters.md",
    "source": "shared/references/browser-adapters.md",
-   "sha256": "6b24c484ed0f7bd3f07c493d9dd672e832ea3b779d86814086dcb16a35c7759a"
+   "sha256": "18ec7551ba87c0b017aa3035c32135c7468bbb6813e5426a7b4ac71a0640fe09"
   },
   {
    "path": "references/_shared/lexicon/README.md",
@@ -70,12 +70,12 @@
   {
    "path": "scripts/_shared/lt_chrome/lt-chrome.cjs",
    "source": "shared/lt_chrome/lt-chrome.cjs",
-   "sha256": "e698c00c4c09ad1a5ddb2836bb5d2d30bbd6827422414a34cb720467c31ee9dc"
+   "sha256": "cba780256a6b9f99ccc815ed60c0e37718f522ef8dcf91ed463cae1fedbef418"
   },
   {
    "path": "scripts/_shared/ltcore/__init__.py",
    "source": "shared/ltcore/__init__.py",
-   "sha256": "6bc4e56f090f9498d1392d9ba5b6bba0e81f472ecd5d6aec5c4282368359b7d8"
+   "sha256": "20cb715f3f572ea594314b8988726c574bd5208be4118e5e0938df5b1a6291eb"
   },
   {
    "path": "scripts/_shared/ltcore/approvals.py",
@@ -110,7 +110,7 @@
   {
    "path": "scripts/_shared/ltcore/ltjs.py",
    "source": "shared/ltcore/ltjs.py",
-   "sha256": "9cd40a46dd9ee7a3921b5f1717cd64bad3f877934dd0e0d7e46e766e37d1e173"
+   "sha256": "cad92859df16d37369efedd055eecbbcf1df4bf9d28a1bd27014d5b0e1702a59"
   },
   {
    "path": "scripts/_shared/ltcore/page_kinds.py",
