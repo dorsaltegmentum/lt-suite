@@ -27,7 +27,8 @@ o=dict(name='fill_runner',stub=True,net=True,cacheable=True,args=s['args'],polic
 inner=ltjs.function_text(b,name='fill_runner',args=None,policy=None,net=True,parameterized=True,form=s['form'])
 packed,want=ltjs._payload(inner)
 print(json.dumps(dict(loader=ltjs.render_source(b,cache=True,**o),stub=ltjs.render_source(b,chunked=True,**o),want=want,
-chunks=[ltjs.chunk_text(packed[i:i+20000],want,n,s['form']) for n,i in enumerate(range(0,len(packed),20000),1)])))`;
+chunks=[ltjs.chunk_text(packed[i:i+20000],want,n,s['form']) for n,i in enumerate(range(0,len(packed),20000),1)],
+direct=ltjs.render_source(b,name='fill_runner',stub=False,net=True,args=s['args'],policy=s['policy'],form=s['form']))))`;
   const result = cp.spawnSync(process.env.PYTHON || 'python3', ['-c', code], {
     cwd:F.REPO, input:JSON.stringify({args:a, policy:p, form}), encoding:'utf8',
     env:{...process.env, PYTHONPATH:F.REPO + '/shared', PYTHONIOENCODING:'utf-8'}
@@ -211,3 +212,135 @@ test('cached-fill: changed batch calibration refuses before writing', async () =
   assert.equal(result.fatal,'calibration-stale',JSON.stringify(result));
   assert.equal(e.writes.length,0);
 });
+
+for (const method of ['fillPage', 'fillPages', 'verify', 'probe', 'check', 'checkVerify']) {
+  test('cached-fill: completed ' + method + ' leaves zero global writes and presses', async () => {
+    const {setup}=require('./check_env.js');
+    let e=method.startsWith('check') ? setup() : method==='fillPages' ? F.netEnv({pages:[{title:'Page 1',current:true,panels:e=>[F.netTextPanel(e,'K',1)]}]}) : env();
+    e.ctx.localStorage=storage();
+    const checkCfg=method.startsWith('check') ? e.cfg : null;
+    const checkJobs=method.startsWith('check') ? [e.job] : null;
+    delete e.ctx.LtFillLib; delete e.ctx.LtCheck; delete e.ctx.probeLtPanels;
+    let a=args();
+    if (method==='probe') a={method};
+    else if (method.startsWith('check')) a={method,cfg:checkCfg,jobs:method==='check' ? checkJobs : {1:checkJobs}};
+    else if (method==='verify') a={...a,method,jobs:{1:a.jobs}};
+    else if (method==='fillPages') a={...a,method,cfg:{...a.cfg,batch_pages:[1],save_wait:{...a.cfg.save_wait,calibration:{...F.NET_CAL,client_sig:e.ctx.LtNet.clientSig()}}},jobs:[{page:1,title_hash:F.L0.titleHash('Page 1'),jobs:a.jobs}]};
+    const r=render(a,{...policy(),check_answer_keys:[[1,'K']]});
+    const contextFor=e.ctx.ko.contextFor;
+    e.ctx.ko.contextFor=(...values)=>{
+      for (const name of ['LtFillLib','LtCheck','probeLtPanels']) assert.equal(e.ctx[name],undefined,name);
+      return contextFor(...values);
+    };
+    for (const source of (method==='check' ? [null,r.loader] : [null,r.loader,r.direct])) {
+      if (source && method==='check') {
+        const store=e.ctx.localStorage;
+        e=setup();e.ctx.localStorage=store;
+        delete e.ctx.LtFillLib;delete e.ctx.LtCheck;delete e.ctx.probeLtPanels;
+        const contextFor=e.ctx.ko.contextFor;
+        e.ctx.ko.contextFor=(...v)=>{
+          for(const name of ['LtFillLib','LtCheck','probeLtPanels'])assert.equal(e.ctx[name],undefined,name);
+          return contextFor(...v);
+        };
+      }
+      const result=source ? await execute(e,source) : await fallback(e,r);
+      assert.equal(result.ok,true,JSON.stringify(result));
+      const writes=Array.isArray(e.writes) ? e.writes.length : e.writes || 0;
+      const presses=e.presses?.length || 0;
+      const attack=args('page chosen answer after completed call');
+      if (e.ctx.LtFillLib?.fillPage) await execute(e,`async () => await LtFillLib.fillPage(${JSON.stringify(attack.cfg)},${JSON.stringify(attack.jobs)})`);
+      if (e.ctx.LtCheck?.run && checkCfg) await execute(e,`async () => await LtGuard.run(${JSON.stringify({...policy(),check_answer_keys:[[1,'K']]})},()=>LtCheck.run(${JSON.stringify(checkCfg)},${JSON.stringify(checkJobs)}))`);
+      assert.equal(Array.isArray(e.writes) ? e.writes.length : e.writes || 0,writes);
+      assert.equal(e.presses?.length || 0,presses);
+      for (const name of ['LtFillLib','LtCheck','probeLtPanels']) assert.equal(e.ctx[name],undefined,name);
+    }
+  });
+}
+
+function protocol(a, form, chunked) {
+  const code=`import json,sys,tempfile,subprocess
+from pathlib import Path
+s=json.load(sys.stdin)
+with tempfile.TemporaryDirectory() as folder:
+ p=Path(folder)
+ (p/'config.toml').write_text(chr(10).join(['[fill.check_answer]','enabled = true','']),encoding='utf-8')
+ (p/'args.json').write_text(json.dumps(s['args']),encoding='utf-8')
+ plan=dict(origin='https://lt.example.invalid',instance='inst0001',course_id=1,run_id=101,pages=[dict(page_index=1,page_no=1)],check_answer_keys=[[1,'K']])
+ (p/'plan.json').write_text(json.dumps(plan),encoding='utf-8')
+ target='probe_panels' if s['args']['method']=='probe' else 'fill_runner'
+ target=str(Path('skills/lt-module-fill/scripts/browser')/(target+'.js'))
+ base=[sys.executable,'-m','ltcore.ltjs','render',target,'--config',str(p/'config.toml'),'--plan',str(p/'plan.json'),'--args-file',str(p/'args.json'),'--form',s['form'],'--out-dir',str(p/'js')]
+ def render(flags):
+  result=subprocess.run(base+flags,capture_output=True,encoding='utf-8')
+  if result.returncode: raise RuntimeError(result.stderr)
+  meta=json.loads(result.stdout)
+  return dict(meta=meta,source=Path(meta['path']).read_text(encoding='utf-8'),chunks=[dict(meta=c,source=Path(c['path']).read_text(encoding='utf-8')) for c in meta['chunks']])
+ print(json.dumps(dict(loader=render(['--cache']),fallback=render(['--stub']+(['--chunk-bytes','20000'] if s['chunked'] else [])))))`;
+  const r=cp.spawnSync(process.env.PYTHON || 'python3',['-c',code],{cwd:F.REPO,input:JSON.stringify({args:a,form,chunked}),encoding:'utf8',env:{...process.env,PYTHONPATH:F.REPO+'/shared',PYTHONIOENCODING:'utf-8'}});
+  assert.equal(r.status,0,r.stderr);
+  return JSON.parse(r.stdout);
+}
+for (const method of ['probe','fillPage','verify','check']) {
+  test('cached-fill: documented fallback sequence executes ' + method, async () => {
+    for (const form of ['expression','function']) for (const chunked of [false,true]) {
+      const e=method==='check' ? require('./check_env.js').setup() : env();
+      e.ctx.localStorage=storage();
+      let a=method==='probe' ? {method} : method==='check' ? {method,cfg:e.cfg,jobs:[e.job]} : args();
+      if (method==='verify') a={...a,method,jobs:{1:a.jobs}};
+      const r=protocol(a,form,chunked);
+      assert.equal((await execute(e,r.loader.source)).need,'payload');
+      assert.equal(r.loader.meta.body_sha256,r.fallback.meta.body_sha256);
+      for (const c of r.fallback.chunks) {
+        const receipt=await execute(e,c.source);
+        for (const key of ['i','len','sha16']) assert.equal(receipt[key],c.meta[key]);
+      }
+      const result=await execute(e,r.fallback.source);
+      assert.equal(result.ok,true,JSON.stringify(result));
+      assert.equal(result.need,undefined);
+      assert.equal((await execute(e,r.loader.source)).need,undefined);
+    }
+  });
+}
+
+test('cached-fill: R14 completed probe rejects arbitrary writer and check jobs', async () => {
+  const e=require('./check_env.js').setup();
+  e.ctx.localStorage=storage();
+  delete e.ctx.LtFillLib; delete e.ctx.LtCheck; delete e.ctx.probeLtPanels;
+  assert.equal((await fallback(e,render({method:'probe'}))).ok,true);
+  const attack=args('page chosen answer after completed probe');
+  const r=await execute(e,`async () => {
+    if (globalThis.LtFillLib) await LtFillLib.fillPage(${JSON.stringify(attack.cfg)},${JSON.stringify(attack.jobs)});
+    if (globalThis.LtCheck) await LtGuard.run(${JSON.stringify({...policy(),check_answer_keys:[[1,'K']]})},()=>LtCheck.run(${JSON.stringify(e.cfg)},${JSON.stringify([e.job])}));
+    return {ok:true};
+  }`);
+  assert.equal(r.ok,true);
+  assert.equal(e.presses.length,0);
+  assert.equal(e.writes.length,0);
+  for (const name of ['LtFillLib','LtCheck','probeLtPanels']) assert.equal(e.ctx[name],undefined,name);
+});
+
+for (const method of ['fillPage','verify']) {
+  test('cached-fill: served ' + method + ' keeps writers private during and after calls',async()=>{
+    const a=args();
+    if (method==='verify') {a.method=method;a.jobs={1:a.jobs};}
+    const code=`import json,sys,runpy
+from ltcore import ltjs
+s=json.load(sys.stdin)
+e=runpy.run_path('skills/lt-module-fill/scripts/emit_fill.py')
+b=e['script_body']('LtFillLib.'+s['args']['method']+'(__LT_ARGS__.cfg,__LT_ARGS__.jobs)','http://127.0.0.1:8733')
+print(json.dumps(ltjs.render_source(b,name='served',stub=False,net=True,args=s['args'],policy=s['policy'])))`;
+    const result=cp.spawnSync(process.env.PYTHON || 'python3',['-c',code],{cwd:F.REPO,input:JSON.stringify({args:a,policy:policy()}),encoding:'utf8',env:{...process.env,PYTHONPATH:F.REPO+'/shared',PYTHONIOENCODING:'utf-8'}});
+    assert.equal(result.status,0,result.stderr);
+    const e=env();
+    delete e.ctx.LtFillLib;delete e.ctx.probeLtPanels;
+    const inspect=()=>{for(const name of ['LtFillLib','LtCheck','probeLtPanels'])assert.equal(e.ctx[name],undefined,name);};
+    const contextFor=e.ctx.ko.contextFor;e.ctx.ko.contextFor=(...v)=>{inspect();return contextFor(...v);};
+    e.ctx.AbortController=AbortController;
+    e.ctx.fetch=async url=>({ok:true,text:async()=>require('node:fs').readFileSync(F.BROWSER+'/'+new URL(url).pathname.split('/').pop(),'utf8')});
+    inspect();
+    const receipt=await execute(e,JSON.parse(result.stdout));
+    assert.equal(receipt.ok,true,JSON.stringify(receipt));
+    inspect();
+    assert.equal(e.writes.length,method==='fillPage'?1:0);
+  });
+}

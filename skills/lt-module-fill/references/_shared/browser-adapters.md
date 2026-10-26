@@ -83,6 +83,8 @@ Generated filename prefixes remain excluded even when their files appear inside 
 Generated fill files keep their original contents for `--no-stub` and served adapters.
 Inline fill emission renders the shipped `fill_runner` with each call's data as separate JSON arguments.
 The runner combines `fill_lib.js`, `probe_panels.js`, `check_answer.js` and a fixed method dispatcher.
+Fill, probe and check functions stay inside each call's lexical scope throughout execution.
+Served loaders verify both library sources and create private instances for each call.
 Generated answer files remain ineligible for caching, including when placed inside bundled browser directories.
 With intact page globals, cache writes contain code and exclude tokens, Lt content and receipts.
 Unreadable, corrupt or mismatched entries return `need:'payload'`; cleanup preserves replacements written after the failed read.
@@ -101,7 +103,8 @@ Then stop and tell the user; never loosen the folder's permissions to get past i
 `emit_fill.py scripts` lists each loader in `scripts.json` under `calls[].rendered`.
 Each call also lists `runner_payload.path` and its numbered `runner_payload.chunks` metadata.
 `check` and `check-verify` print render metadata with the same fallback under `payload`.
-Inline `probe_panels` rendering also returns a loader and `payload` metadata for the same runner.
+Inline `probe_panels --cache` returns a loader for the same runner.
+Use the generic inline protocol to render `--stub` and execute its top-level `path`.
 
 1. Execute the loader with that call's data, current plan and adapter form.
 2. On `need:'payload'`, execute that call's runner chunks in order and compare every transfer receipt.

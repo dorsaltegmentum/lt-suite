@@ -323,8 +323,4 @@ const probeLtPanels = async () => {
   };
 };
 
-/* Export the probe for later calls. This file is the body of an async function (ltjs.py
- * render wraps it); emit_fill.py drops the final return line when it embeds the probe in a
- * fill script. */
-if (typeof globalThis !== "undefined") globalThis.probeLtPanels = probeLtPanels;
 return await probeLtPanels();

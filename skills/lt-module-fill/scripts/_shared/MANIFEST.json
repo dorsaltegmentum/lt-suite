@@ -5,7 +5,7 @@
   {
    "path": "references/_shared/browser-adapters.md",
    "source": "shared/references/browser-adapters.md",
-   "sha256": "18ec7551ba87c0b017aa3035c32135c7468bbb6813e5426a7b4ac71a0640fe09"
+   "sha256": "da040be4b555eea100b39b3aeb3956c440fe90cef2b89f15e4da3af9920c2056"
   },
   {
    "path": "references/_shared/lexicon/lt-client-vocabulary.md",
@@ -105,7 +105,7 @@
   {
    "path": "scripts/_shared/ltcore/ltjs.py",
    "source": "shared/ltcore/ltjs.py",
-   "sha256": "cad92859df16d37369efedd055eecbbcf1df4bf9d28a1bd27014d5b0e1702a59"
+   "sha256": "f2cf179eb14ecfb860cf15b47021b157ed5c4f2ce3ac7c4dbdf6da53833b0cad"
   },
   {
    "path": "scripts/_shared/ltcore/page_kinds.py",

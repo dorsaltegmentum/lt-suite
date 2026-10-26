@@ -32,7 +32,7 @@
  * no commit control.
  */
 
-const LT_MEDIA_DEFAULTS = Object.freeze({ transport: 'sink', sink: 'http://127.0.0.1:8731', post_ms: 30000 });
+const LT_MEDIA_DEFAULTS = Object.freeze({ transport: 'sink', sink: 'http://127.0.0.1:8731', post_ms: 30000, budget_ms: 20000 });
 
 /* The sink proves possession of the secret before the page sends any content.
  * Each upload then authenticates its exact destination and bytes without sending the secret. */
@@ -65,6 +65,32 @@ const ltSinkSession = async (base, token, postMs) => {
 const fetchLtMedia = async (opts) => {
   const baked = (typeof __LT_ARGS__ === 'object' && __LT_ARGS__) ? __LT_ARGS__ : {};
   const g = Object.assign({}, baked, opts || {});
+  const budgetMs = (n => Number.isFinite(n) && n > 0 ? n : LT_MEDIA_DEFAULTS.budget_ms)(Number(g.budget_ms));
+  const started = performance.now();
+  const remaining = () => Math.max(0, budgetMs - (performance.now() - started));
+  const budgetError = new Error('media call budget exhausted');
+  const controller = new AbortController();
+  let exhausted = false;
+  const ensureTime = () => {
+    if (exhausted || remaining() <= 0) { exhausted = true; controller.abort(); throw budgetError; }
+  };
+  const bounded = async operation => {
+    ensureTime();
+    let timer;
+    try {
+      const result = await Promise.race([
+        new Promise((_, reject) => { timer = setTimeout(() => {
+          exhausted = true; controller.abort(); reject(budgetError);
+        }, remaining()); }),
+        operation()
+      ]);
+      ensureTime();
+      return result;
+    } finally { clearTimeout(timer); }
+  };
+  const tag = (key, role) => role === 'student-upload' ? `u${key}` : String(key);
+  const selected = g.keys == null ? null : new Set((Array.isArray(g.keys) ? g.keys : String(g.keys).split(','))
+    .map(k => String(k).trim()).filter(Boolean));
   const transport = String(g.transport || LT_MEDIA_DEFAULTS.transport) === 'download' ? 'download' : 'sink';
   const sinkBase = String(g.sink || LT_MEDIA_DEFAULTS.sink).replace(/\/+$/, '');
   const token = String(g.token || '');
@@ -80,11 +106,6 @@ const fetchLtMedia = async (opts) => {
     if (!token) return { ok: false, reason: 'No sink token. Pass the token sink.py printed (--arg token=...), or render with transport=download.' };
   }
 
-  let authenticate;
-  if (transport === 'sink') {
-    try { authenticate = await ltSinkSession(sinkBase, token, postMs); }
-    catch (e) { return {ok: false, fatal: 'sink-unauthenticated'}; }
-  }
   const el = document.querySelector('div.pageList');
   if (!el || typeof ko === 'undefined') {
     return { ok: false, reason: 'No Lt lesson view model on this page (wrong tab, or Lt is still loading).' };
@@ -186,186 +207,204 @@ const fetchLtMedia = async (opts) => {
   const loaded = () => Array.from(document.querySelectorAll('img'))
     .filter(n => n.complete && n.naturalWidth > 0).length;
 
-  const before = document.querySelectorAll('img').length;
-  const height = document.body.scrollHeight;
-  const scrollY0 = window.scrollY;
-  for (let y = 0; y < height; y += 400) { window.scrollTo(0, y); await settle(150); }
-  window.scrollTo(0, scrollY0);
-
-  let stable = 0, last = -1;
-  for (let i = 0; i < 40 && stable < 3; i++) {
-    await settle(400);
-    const n = loaded();
-    stable = (n === last) ? stable + 1 : 0;
-    last = n;
-  }
-  const revealed = document.querySelectorAll('img').length - before;
-
-  const imgs = Array.from(document.querySelectorAll('img'))
-    .filter(n => n.currentSrc || n.src)
-    .map(n => ({ node: n, src: n.currentSrc || n.src,
-                 w: n.naturalWidth || null, h: n.naturalHeight || null }))
-    .filter(x => !/^data:/.test(x.src));
-
-  /* Records how a URL is built and leaves the URL out. Signed URLs act as credentials, and
-   * some browser tools mask long opaque strings in results anyway. Counting path segments
-   * and listing query-parameter NAMES is enough for the measurement. */
-  const shape = u => {
-    try {
-      const p = new URL(u, location.href);
-      const segs = p.pathname.split('/').filter(Boolean);
-      return { same_origin: p.origin === location.origin, scheme: p.protocol,
-               segments: segs.length, first_segment_len: (segs[0] || '').length,
-               last_segment_len: (segs[segs.length - 1] || '').length,
-               query_keys: Array.from(p.searchParams.keys()).sort() };
-    } catch (e) { return { same_origin: false, scheme: null, segments: 0, query_keys: [] }; }
-  };
-
-  const EXT = { 'image/png': '.png', 'image/jpeg': '.jpg', 'image/jpg': '.jpg',
-                'image/gif': '.gif', 'image/webp': '.webp', 'image/bmp': '.bmp' };
-
-  /* Matches each rendered <img> to a key and records how:
-   *   by-key-in-url   the key appears unchanged inside src
-   *   by-position     its panel has exactly one key and this is the img for it
-   *   unpaired-*      no match; listed under its panel in the receipt */
-  const keyInSrc = (key, src) => {
-    const esc = String(key).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    return new RegExp(`(^|[^A-Za-z0-9])${esc}([^A-Za-z0-9]|$)`).test(src);
-  };
-  const planned = [];
-  const seenSrc = new Set();
-  for (const im of imgs) {
-    if (seenSrc.has(im.src)) continue;
-    seenSrc.add(im.src);
-    const panel = ownerPanelKey(im.node);
-    const entries = (panel && keysByPanel.get(panel)) || [];
-    let hit = entries.find(e => keyInSrc(e.key, im.src));
-    let how = hit ? 'by-key-in-url' : null;
-    if (!hit && entries.length === 1) { hit = entries[0]; how = 'by-position'; }
-    planned.push({
-      panel_key: panel, src: im.src, url_shape: shape(im.src),
-      key: hit ? hit.key : null, role: hit ? hit.role : null,
-      paired: how || (panel ? 'unpaired-ambiguous' : 'unpaired-no-owner-panel'),
-      natural: { w: im.w, h: im.h }
-    });
-  }
-
-  /* The page never learns whether a download finished, so on this route `saved` only
-   * means HANDED TO THE BROWSER. collect_downloads.py then checks the download folder. Each
-   * image is a separate download; Chromium allows ONE scripted download per site and asks
-   * the user to allow automatic downloads before any more go through. */
   const gap = Number.isFinite(Number(g.download_gap_ms)) && Number(g.download_gap_ms) >= 0
     ? Number(g.download_gap_ms) : 250;
   const pause = Number.isFinite(Number(g.download_pause_ms)) && Number(g.download_pause_ms) > gap
     ? Number(g.download_pause_ms) : Math.max(2000, gap * 8);
-  let handoffs = 0;
-  const saveViaDownload = async (name, blob) => {
-    if (handoffs) await new Promise(ok => setTimeout(ok, handoffs % 8 === 0 ? pause : gap));
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url; a.download = name;
-    document.body.appendChild(a); a.click(); a.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 15000);
-    handoffs++;
-    return { status: null, ok: true, route: 'download', handed_off: true };
-  };
-
-  /* Downloads require an explicit transport choice. Upload failures stay failures. */
-
-  const post = async (name, blob) => {
-    if (transport === 'download') return saveViaDownload(name, blob);
-    const ac = new AbortController();
-    const timer = setTimeout(() => ac.abort(), postMs);
-    try {
-      const res = await fetch(`${sinkBase}/media/${name}`, {
-        method: 'POST', mode: 'cors', signal: ac.signal, credentials: 'omit',
-        headers: { 'Content-Type': blob.type || 'application/octet-stream', 'X-Lt-Suite-Auth': await authenticate(`media/${name}`, blob) },
-        body: blob
-      });
-      const ok = res.ok === undefined ? (res.status >= 200 && res.status < 300) : !!res.ok;
-      let why = null;
-      if (!ok) {
-        try { why = typeof res.text === 'function' ? String(await res.text()).slice(0, 200) : null; }
-        catch (e) { why = null; }
-      }
-      return { status: res.status, ok, route: 'sink', error: ok ? null : (why || `sink ${res.status}`) };
-    } catch (e) {
-      return {ok: false, route: 'sink',
-        error: 'sink network failure', sink_error: `${e && e.name}: ${String((e && e.message) || e).slice(0, 120)}`};
-    } finally { clearTimeout(timer); }
-  };
-
-  const out = [];
-  const unpairedSeen = new Map();
-  for (const p of planned) {
-    /* File name = lt-<module_id>-<image key>.<ext>; stamp_capture.py and the exporter look
-     * images up by it. Lt numbers uploads and author images with independent counters, so an
-     * upload gets a `u` before its key (lt-<module_id>-u<key>). An image without a key takes
-     * its panel's name, which still leads back to (page_index, panel_key). */
-    let blob = null, err = null;
-    try {
-      const res = await fetch(p.src, { credentials: 'include', mode: 'cors' });
-      if (res.type === 'opaque') err = 'blocked-cross-origin: opaque response, bytes unreadable';
-      else if (!res.ok) err = `http ${res.status}`;
-      else blob = await res.blob();
-    } catch (e) {
-      err = (p.url_shape.same_origin ? '' : 'blocked-cross-origin: ')
-          + `${e && e.name}: ${String((e && e.message) || e).slice(0, 100)}`;
+  let authenticate;
+  const out = [], planned = [];
+  let revealed = 0, imgs = [];
+  try {
+    if (transport === 'sink') {
+      try { authenticate = await bounded(() => ltSinkSession(sinkBase, token, Math.min(postMs, remaining()))); }
+      catch (e) { ensureTime(); return {ok: false, fatal: 'sink-unauthenticated'}; }
     }
-    if (!blob) {
-      out.push({ ...p, result: 'failed', error: err, bytes: 0, file: null });
-      continue;
+    const before = document.querySelectorAll('img').length;
+    const height = document.body.scrollHeight;
+    const scrollY0 = window.scrollY;
+    try {
+      for (let y = 0; y < height; y += 400) { window.scrollTo(0, y); await bounded(() => settle(150)); }
+    } finally { window.scrollTo(0, scrollY0); }
+
+    let stable = 0, last = -1;
+    for (let i = 0; i < 40 && stable < 3; i++) {
+      await bounded(() => settle(400));
+      const n = loaded();
+      stable = (n === last) ? stable + 1 : 0;
+      last = n;
     }
-    /* Some author figures are SVG, while the sink takes raster files only (checked by their
-     * first bytes). The page converts them to PNG itself; drawing from a blob: URL counts as
-     * same-origin, so the canvas stays readable. The longer side ends up 1920 px or more,
-     * with limits of 3840 px and 4x. svg_bytes keeps the size of the SVG. */
-    let svgBytes = null;
-    if (/^image\/svg\+xml/.test(blob.type)) {
+    revealed = document.querySelectorAll('img').length - before;
+
+    imgs = Array.from(document.querySelectorAll('img'))
+      .filter(n => n.currentSrc || n.src)
+      .map(n => ({ node: n, src: n.currentSrc || n.src,
+                   w: n.naturalWidth || null, h: n.naturalHeight || null }))
+      .filter(x => !/^data:/.test(x.src));
+
+    /* Records how a URL is built and leaves the URL out. Signed URLs act as credentials, and
+     * some browser tools mask long opaque strings in results anyway. Counting path segments
+     * and listing query-parameter NAMES is enough for the measurement. */
+    const shape = u => {
       try {
-        svgBytes = blob.size;
-        const url = URL.createObjectURL(new Blob([await blob.text()], { type: 'image/svg+xml' }));
-        const img = new Image();
-        await new Promise((ok, bad) => { img.onload = ok; img.onerror = () => bad(new Error('svg decode failed')); img.src = url; });
-        const w0 = img.naturalWidth || p.natural.w || 1000, h0 = img.naturalHeight || p.natural.h || 1000;
-        const s = Math.min(3840 / Math.max(w0, h0), 4, Math.max(1, 1920 / Math.max(w0, h0)));
-        const cv = document.createElement('canvas');
-        cv.width = Math.round(w0 * s); cv.height = Math.round(h0 * s);
-        const g2 = cv.getContext('2d');
-        g2.fillStyle = '#ffffff'; g2.fillRect(0, 0, cv.width, cv.height);
-        g2.drawImage(img, 0, 0, cv.width, cv.height);
-        URL.revokeObjectURL(url);
-        blob = await new Promise(ok => cv.toBlob(ok, 'image/png'));
-        if (!blob) throw new Error('canvas encoding returned no image');
+        const p = new URL(u, location.href);
+        const segs = p.pathname.split('/').filter(Boolean);
+        return { same_origin: p.origin === location.origin, scheme: p.protocol,
+                 segments: segs.length, first_segment_len: (segs[0] || '').length,
+                 last_segment_len: (segs[segs.length - 1] || '').length,
+                 query_keys: Array.from(p.searchParams.keys()).sort() };
+      } catch (e) { return { same_origin: false, scheme: null, segments: 0, query_keys: [] }; }
+    };
+
+    const EXT = { 'image/png': '.png', 'image/jpeg': '.jpg', 'image/jpg': '.jpg',
+                  'image/gif': '.gif', 'image/webp': '.webp', 'image/bmp': '.bmp' };
+
+    /* Matches each rendered <img> to a key and records how:
+     *   by-key-in-url   the key appears unchanged inside src
+     *   by-position     its panel has exactly one key and this is the img for it
+     *   unpaired-*      no match; listed under its panel in the receipt */
+    const keyInSrc = (key, src) => {
+      const esc = String(key).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      return new RegExp(`(^|[^A-Za-z0-9])${esc}([^A-Za-z0-9]|$)`).test(src);
+    };
+    const seenSrc = new Set();
+    for (const im of imgs) {
+      if (seenSrc.has(im.src)) continue;
+      seenSrc.add(im.src);
+      const panel = ownerPanelKey(im.node);
+      const entries = (panel && keysByPanel.get(panel)) || [];
+      let hit = entries.find(e => keyInSrc(e.key, im.src));
+      let how = hit ? 'by-key-in-url' : null;
+      if (!hit && entries.length === 1) { hit = entries[0]; how = 'by-position'; }
+      planned.push({
+        panel_key: panel, src: im.src, url_shape: shape(im.src),
+        key: hit ? hit.key : null, role: hit ? hit.role : null,
+        paired: how || (panel ? 'unpaired-ambiguous' : 'unpaired-no-owner-panel'),
+        natural: { w: im.w, h: im.h }
+      });
+    }
+
+    /* The page never learns whether a download finished, so on this route `saved` only
+     * means HANDED TO THE BROWSER. collect_downloads.py then checks the download folder. Each
+     * image is a separate download; Chromium allows ONE scripted download per site and asks
+     * the user to allow automatic downloads before any more go through. */
+    let handoffs = 0;
+    const saveViaDownload = async (name, blob) => {
+      if (handoffs) await bounded(() => settle(handoffs % 8 === 0 ? pause : gap));
+      ensureTime();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = name;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 15000);
+      handoffs++;
+      return { status: null, ok: true, route: 'download', handed_off: true };
+    };
+
+    /* Downloads require an explicit transport choice. Upload failures stay failures. */
+
+    const post = async (name, blob) => {
+      if (transport === 'download') return saveViaDownload(name, blob);
+      const ac = new AbortController();
+      const timer = setTimeout(() => ac.abort(), Math.min(postMs, remaining()));
+      const abort = () => ac.abort();
+      controller.signal.addEventListener('abort', abort, {once:true});
+      try {
+        const signature = await bounded(() => authenticate(`media/${name}`, blob));
+        ensureTime();
+        const res = await fetch(`${sinkBase}/media/${name}`, {
+          method: 'POST', mode: 'cors', signal: ac.signal, credentials: 'omit',
+          headers: { 'Content-Type': blob.type || 'application/octet-stream', 'X-Lt-Suite-Auth': signature },
+          body: blob
+        });
+        const ok = res.ok === undefined ? (res.status >= 200 && res.status < 300) : !!res.ok;
+        let why = null;
+        if (!ok) {
+          try { why = typeof res.text === 'function' ? String(await res.text()).slice(0, 200) : null; }
+          catch (e) { why = null; }
+        }
+        return { status: res.status, ok, route: 'sink', error: ok ? null : (why || `sink ${res.status}`) };
       } catch (e) {
-        out.push({ ...p, result: 'failed', bytes: svgBytes, file: null,
-                   error: `svg rasterise failed: ${String((e && e.message) || e).slice(0, 80)}` });
+        return {ok: false, route: 'sink',
+          error: 'sink network failure', sink_error: `${e && e.name}: ${String((e && e.message) || e).slice(0, 120)}`};
+      } finally { clearTimeout(timer); controller.signal.removeEventListener('abort', abort); }
+    };
+    const unpairedSeen = new Map();
+    for (const p of planned) {
+      if (selected && (!p.key || !selected.has(tag(p.key, p.role)))) continue;
+      ensureTime();
+      /* File name = lt-<module_id>-<image key>.<ext>; stamp_capture.py and the exporter look
+       * images up by it. Lt numbers uploads and author images with independent counters, so an
+       * upload gets a `u` before its key (lt-<module_id>-u<key>). An image without a key takes
+       * its panel's name, which still leads back to (page_index, panel_key). */
+      let blob = null, err = null;
+      try {
+        const res = await bounded(() => fetch(p.src, { credentials: 'include', mode: 'cors', signal: controller.signal }));
+        if (res.type === 'opaque') err = 'blocked-cross-origin: opaque response, bytes unreadable';
+        else if (!res.ok) err = `http ${res.status}`;
+        else blob = await bounded(() => res.blob());
+      } catch (e) {
+        ensureTime();
+        err = (p.url_shape.same_origin ? '' : 'blocked-cross-origin: ')
+            + `${e && e.name}: ${String((e && e.message) || e).slice(0, 100)}`;
+      }
+      if (!blob) {
+        out.push({ ...p, result: 'failed', error: err, bytes: 0, file: null });
         continue;
       }
+      /* Some author figures are SVG, while the sink takes raster files only (checked by their
+       * first bytes). The page converts them to PNG itself; drawing from a blob: URL counts as
+       * same-origin, so the canvas stays readable. The longer side ends up 1920 px or more,
+       * with limits of 3840 px and 4x. svg_bytes keeps the size of the SVG. */
+      let svgBytes = null;
+      if (/^image\/svg\+xml/.test(blob.type)) {
+        try {
+          svgBytes = blob.size;
+          const url = URL.createObjectURL(new Blob([await bounded(() => blob.text())], { type: 'image/svg+xml' }));
+          const img = new Image();
+          await bounded(() => new Promise((ok, bad) => { img.onload = ok; img.onerror = () => bad(new Error('svg decode failed')); img.src = url; }));
+          const w0 = img.naturalWidth || p.natural.w || 1000, h0 = img.naturalHeight || p.natural.h || 1000;
+          const s = Math.min(3840 / Math.max(w0, h0), 4, Math.max(1, 1920 / Math.max(w0, h0)));
+          const cv = document.createElement('canvas');
+          cv.width = Math.round(w0 * s); cv.height = Math.round(h0 * s);
+          const g2 = cv.getContext('2d');
+          g2.fillStyle = '#ffffff'; g2.fillRect(0, 0, cv.width, cv.height);
+          g2.drawImage(img, 0, 0, cv.width, cv.height);
+          URL.revokeObjectURL(url);
+          blob = await bounded(() => new Promise(ok => cv.toBlob(ok, 'image/png')));
+          if (!blob) throw new Error('canvas encoding returned no image');
+        } catch (e) {
+          ensureTime();
+          out.push({ ...p, result: 'failed', bytes: svgBytes, file: null,
+                     error: `svg rasterise failed: ${String((e && e.message) || e).slice(0, 80)}` });
+          continue;
+        }
+      }
+      const ext = EXT[blob.type] || '';
+      if (!ext) {
+        out.push({ ...p, result: 'failed', bytes: blob.size, file: null,
+                   error: `unsupported content type ${blob.type || '(none)'}: only raster images are `
+                        + `saved, and no file extension is guessed` });
+        continue;
+      }
+      const safe = s => String(s).replace(/[^A-Za-z0-9_-]/g, '_').slice(0, 64);
+      let stem = p.key ? (p.role === 'student-upload' ? `u${safe(p.key)}` : safe(p.key)) : `panel-${safe(p.panel_key)}`;
+      if (!p.key) {
+        const n = (unpairedSeen.get(stem) || 0) + 1;
+        unpairedSeen.set(stem, n);
+        if (n > 1) stem = `${stem}-${n}`;
+      }
+      const file = `lt-${moduleId}-${stem}${ext}`;
+      const r = await bounded(() => post(file, blob));
+      out.push({ ...p, result: r.ok ? 'saved' : 'failed', bytes: blob.size, file,
+                 mime: blob.type, route: r.route || null, svg_bytes: svgBytes,
+                 handed_off: r.handed_off === true, sink_error: r.sink_error || null,
+                 error: r.ok ? null : (r.error || `sink ${r.status}`) });
     }
-    const ext = EXT[blob.type] || '';
-    if (!ext) {
-      out.push({ ...p, result: 'failed', bytes: blob.size, file: null,
-                 error: `unsupported content type ${blob.type || '(none)'}: only raster images are `
-                      + `saved, and no file extension is guessed` });
-      continue;
-    }
-    const safe = s => String(s).replace(/[^A-Za-z0-9_-]/g, '_').slice(0, 64);
-    let stem = p.key ? (p.role === 'student-upload' ? `u${safe(p.key)}` : safe(p.key)) : `panel-${safe(p.panel_key)}`;
-    if (!p.key) {
-      const n = (unpairedSeen.get(stem) || 0) + 1;
-      unpairedSeen.set(stem, n);
-      if (n > 1) stem = `${stem}-${n}`;
-    }
-    const file = `lt-${moduleId}-${stem}${ext}`;
-    const r = await post(file, blob);
-    out.push({ ...p, result: r.ok ? 'saved' : 'failed', bytes: blob.size, file,
-               mime: blob.type, route: r.route || null, svg_bytes: svgBytes,
-               handed_off: r.handed_off === true, sink_error: r.sink_error || null,
-               error: r.ok ? null : (r.error || `sink ${r.status}`) });
-  }
 
-  const tag = (key, role) => (role === 'student-upload' ? `u${key}` : String(key));
+  } catch (e) {
+    if (e !== budgetError && !exhausted) throw e;
+    exhausted = true;
+  }
   const keysOnPage = new Set();
   for (const es of keysByPanel.values()) for (const e of es) keysOnPage.add(tag(e.key, e.role));
   const fetched = new Set(out.filter(o => o.result === 'saved' && o.key).map(o => tag(o.key, o.role)));
@@ -376,6 +415,11 @@ const fetchLtMedia = async (opts) => {
     page_index: capturePageIndex,
     url_page: pageIndex,
     transport,
+    budget_ms: budgetMs,
+    elapsed_ms: performance.now() - started,
+    budget_exhausted: exhausted,
+    pending_keys: exhausted ? Array.from(keysOnPage).filter(k => (!selected || selected.has(k))
+      && !out.some(o => o.key && tag(o.key, o.role) === k)) : [],
     ...(transport === 'download' ? {downloads_confirmed: false,
       download_note: 'The browser cannot confirm files landed. Run collect_downloads.py and stamp_capture.py.',
       download_gap_ms: gap, download_pause_ms: pause, download_batch_size: 8} : {}),

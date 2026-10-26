@@ -122,6 +122,17 @@ def backfill_local_paths(doc: dict, capture_path: Path, media_dir: Path,
     return found, keyed, no_key
 
 
+def pending_media_keys(missing: list[str]) -> list[str]:
+    """Group missing files by page so download calls can resume with those keys."""
+    pages = {}
+    for message in missing:
+        match = re.fullmatch(r"page (.+): missing media key (.+)", message)
+        if match:
+            pages.setdefault(match[1], []).append(match[2])
+    return [f"page {page}: pending_keys=" + ",".join(dict.fromkeys(keys))
+            for page, keys in pages.items()]
+
+
 def incoming_copies(incoming: Path, module_id: str) -> list[Path]:
     """Incoming copies of one module, oldest first (module-<id>.json, then .1, .2, ...)."""
     out = []
@@ -343,7 +354,7 @@ def main(argv: list[str] | None = None) -> int:
 
     missing = []
     found, keyed, no_key = backfill_local_paths(doc, dest, media_dir, exists, missing)
-    for message in dict.fromkeys(missing):
+    for message in [*dict.fromkeys(missing), *pending_media_keys(missing)]:
         print(message)
     if keyed or no_key:
         print(f"local_path: {found} of {keyed} keyed media entries resolved against {media_dir}")

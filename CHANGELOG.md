@@ -14,6 +14,7 @@ Versions follow [Semantic Versioning 2.0.0](https://semver.org/spec/v2.0.0.html)
 
 - Inline fill calls reuse one cached runner with current frozen arguments and guard policies.
 - Download handoffs use paced groups of 8 and report missing media keys by page.
+- Media calls use a configurable 20 second budget and return pending keys for resumed downloads.
 
 ## [0.2.2] - 2026-10-26
 

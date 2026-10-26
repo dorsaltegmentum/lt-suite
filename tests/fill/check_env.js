@@ -4,7 +4,7 @@
 const fs=require('fs'), path=require('path'), vm=require('vm');
 const F=require('./fill_env.js'), H=F.harness();
 const SRC=fs.readFileSync(path.join(F.BROWSER,'check_answer.js'),'utf8');
-const BODY=SRC.split('return await LtCheck.run(__LT_ARGS__.cfg, __LT_ARGS__.jobs);')[0];
+const BODY='(function () {\nconst LtFillLib = globalThis.LtFillLib;\n' + SRC.split('return await LtCheck.run(__LT_ARGS__.cfg, __LT_ARGS__.jobs);')[0] + '\nglobalThis.LtCheck = LtCheck;})();';
 const status={candidate:false,rat:false,kind:null,sources:[],decision:'not-rat',check_allowed:true};
 
 // The double changes only DOM and transport. The real guard, writer, network watcher and loop run.
@@ -56,7 +56,7 @@ function setup(o={}) {
     mutate();return d;
   };
   const button=node('button',{text:'Check Answer',attrs:{type:'button'},parent:panel,on:{click:()=>{
-    const snap=env.ctx.LtCheck.snapshot(env.job,raw);env.presses.push(snap.state);
+    const snap=env.snapshot(env.job,raw);env.presses.push(snap.state);
     const answer=o.verdict?o.verdict(env,env.presses.length,snap):env.presses.length===(o.correctAt||3)?{verdict:'Correct'}:{verdict:'Incorrect'};
     if(answer){const show=()=>{env.dialog(answer.verdict,answer.marks||{},answer);if(answer.change)input.attributes.selectedAnswers=answer.change;if(answer.lock)input.attributes.locked=true;if(answer.confirm)env.ctx.confirm('Continue?');};
       if(answer.delay)env.after(answer.delay,show);else show();}
@@ -65,7 +65,7 @@ function setup(o={}) {
   env.loadShared('lt_guard');
   if(o.signal)env.ctx.LtNet={install(){},expect(){},clientSig:()=>"synthetic",waitForSave:async()=>({save_signal:o.signal})};
   else env.loadShared('lt_net');env.ctx.LtNet.install(env.ctx);
-  env.load(F.LIB_SRC,'fill_lib.js');env.load(BODY,'check_answer.js');
+  env.load(F.LIB_SRC,'fill_lib.js');env.load(BODY,'check_answer.js');env.snapshot=env.ctx.LtCheck.snapshot;
   // Label models use their real write helper with a synthetic keyed network acknowledgement.
   if(o.kind){state.uuids=F.uuidFor(1);env.writes=0;env.save=()=>{env.request('PUT','/api/panels/'+F.uuidFor(1)+'/state',JSON.stringify({uuid:F.uuidFor(1)}),{latency:100});};}
   const kind=o.kind||'select';

@@ -262,3 +262,12 @@ def test_collection_names_every_missing_media_key_and_page(tmp_path, dl):
     assert result.returncode == 0, result.stdout + result.stderr
     assert 'page 3: missing media key u31' in result.stdout
     assert 'missing media key 30' not in result.stdout
+
+
+def test_collection_reports_pending_keys_for_resumable_downloads(tmp_path, dl):
+    put(dl / f'module-{MID}.json', {'module_id': MID, 'pages': [
+        {'page_index': 3, 'media': [{'key': '30'}, {'key': '31', 'role': 'student-upload'}]}]})
+    put(dl / f'lt-{MID}-30.png', PNG)
+    result = run(tmp_path, MID, '--downloads-dir', str(dl))
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert 'page 3: pending_keys=u31' in result.stdout

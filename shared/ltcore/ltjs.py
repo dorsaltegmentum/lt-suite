@@ -933,12 +933,9 @@ def render(target: str, *, form: str | None = None, stub: bool | None = None,
     stub = dstub if stub is None else bool(stub)
     if name == "probe_panels" and stub and compress and cacheable_target(path):
         runner = path.with_name("fill_runner.js")
-        if runner.is_file() and (cache or chunk_bytes is not None):
+        if runner.is_file():
             return render(str(runner), args={"method": "probe"}, form=form, stub=True, net=True,
                           plan=plan, cfg=cfg, out_dir=out_dir, cache=cache, chunk_bytes=chunk_bytes)
-        if runner.is_file():
-            return render_fill_call(str(runner), args={"method": "probe"}, form=form, net=True,
-                                    plan=plan, cfg=cfg, out_dir=out_dir)
     net = wants_net(path, name) if net is None else bool(net)
     a: dict[str, Any] = dict(args or {})
     for k in a:

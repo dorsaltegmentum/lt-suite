@@ -742,10 +742,10 @@ def test_inline_probe_reuses_fill_runner_for_loader_and_chunk_modes(tmp_path):
     chunks = ltjs.render(str(probe), chunk_bytes=20000, cfg=cfg, out_dir=tmp_path)
     fill = ltjs.render(str(runner), cache=True, net=True, args={'method': 'fillPage'},
                        cfg=cfg, out_dir=tmp_path)
-    assert first['cache'] is True
-    assert first['payload']['chunks']
+    assert first['cache'] is False
+    assert 'payload' not in first
     assert len({r['body_sha256'] for r in (first, hit, chunks, fill)}) == 1
-    assert first['payload']['body_sha256'] == fill['body_sha256']
+    assert chunks['chunks']
 
 
 def test_cached_runner_check_render_respects_disabled_policy(tmp_path):

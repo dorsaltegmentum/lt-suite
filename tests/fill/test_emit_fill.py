@@ -703,7 +703,7 @@ vm.runInContext('(async () => {\n' + body + '\n})()', ctx).then(r => {
 
 
 @pytest.mark.requires_bin("node")
-@pytest.mark.parametrize("tamper,fatal,loaded", [("none", None, True), ("lib", "lib-integrity", False)])
+@pytest.mark.parametrize("tamper,fatal,loaded", [("none", None, False), ("lib", "lib-integrity", False)])
 def test_served_build_checks_the_library_hash(eight, tamper, fatal, loaded):
     r = eight.emit("scripts", "--out", "out", "--no-render", "--lib-mode", "served",
                    "--lib-url", "http://127.0.0.1:8799")

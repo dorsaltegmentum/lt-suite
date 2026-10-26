@@ -1050,11 +1050,10 @@ def batch_plan(pay: dict, pages: list[str]) -> list[dict]:
     return out
 
 
-# The thin loader (served mode). It fetches both sources from a loopback server, checks each
-# against the sha256 this script was built with, and reuses a copy already loaded in the tab.
-THIN = r"""const BASE = __URL__, BUILD = __BUILD__, WANT = __WANT__;
-const G = globalThis;
-if (!(G.LtFillLib && G.LtFillLib.build === BUILD)) {
+# The served loader verifies both library sources before creating private call instances.
+THIN = r"""const BASE = __URL__, WANT = __WANT__;
+let LtFillLib;
+{
   const get = async n => {
     const ac = new AbortController(); const t = setTimeout(() => ac.abort(), 8000);
     try { const r = await fetch(BASE + '/' + n, { signal: ac.signal, cache: 'no-store' }); return r.ok ? await r.text() : null; }
@@ -1068,10 +1067,9 @@ if (!(G.LtFillLib && G.LtFillLib.build === BUILD)) {
     if (src[n] === null) return { ok: false, fatal: 'lib-unreachable', file: n, writes: 0 };
     if (await hex(src[n]) !== WANT[n]) return { ok: false, fatal: 'lib-integrity', file: n, writes: 0 };
   }
-  new Function(src['fill_lib.js'])();
+  LtFillLib = new Function(src['fill_lib.js'] + '\nreturn LtFillLib;')();
   const probeBody = src['probe_panels.js'].replace(/\n[ \t]*return await probeLtPanels\(\);[ \t]*\n?$/, '\n');
-  G.LtFillLib.loadProbe = new Function(probeBody + '\nreturn probeLtPanels;');
-  G.LtFillLib.build = BUILD;
+  LtFillLib.loadProbe = new Function(probeBody + '\nreturn probeLtPanels;');
 }
 return await __CALL__;
 """
@@ -1081,8 +1079,7 @@ def script_body(call: str, lib_url: str | None) -> str:
     """The script body after its header: the whole library inline, or the thin loader."""
     if lib_url:
         want = {"fill_lib.js": sha256(LIB), "probe_panels.js": sha256(PROBE)}
-        build = hashlib.sha256((want["fill_lib.js"] + want["probe_panels.js"]).encode()).hexdigest()[:16]
-        return (THIN.replace("__URL__", json.dumps(lib_url.rstrip("/"))).replace("__BUILD__", json.dumps(build))
+        return (THIN.replace("__URL__", json.dumps(lib_url.rstrip("/")))
                 .replace("__WANT__", json.dumps(want)).replace("__CALL__", call))
     lib = strip_comments(LIB.read_text(encoding="utf-8"))
     probe = probe_function_body()

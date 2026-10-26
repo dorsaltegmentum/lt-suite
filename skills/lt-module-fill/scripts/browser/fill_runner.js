@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: 2026 dorsaltegmentum
 // SPDX-License-Identifier: AGPL-3.0-or-later
-/* The renderer includes shipped libraries before dispatching this call with frozen arguments. */
+/* The renderer creates lexical library instances before dispatching this call with frozen arguments. */
 /*__LT_FILL_LIB__*/
 LtFillLib.loadProbe = function () {
 /*__LT_PROBE__*/

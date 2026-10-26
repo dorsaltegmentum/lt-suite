@@ -58,7 +58,7 @@
  * The generated script ends in a top-level `await`, so a tool that evaluates an
  * expression gets the receipt after the save wait instead of an unawaited promise.
  */
-(function () {
+const LtFillLib = (function () {
   'use strict';
   const G = (typeof globalThis !== 'undefined') ? globalThis : this;
 
@@ -391,9 +391,8 @@
   /* ---- the probe: rail 4 ---- */
   const runProbe = async deps => {
     let fn = deps && deps.probe;
-    const lib = G.LtFillLib || {};
+    const lib = LtFillLib;
     if (!fn && typeof lib.loadProbe === 'function') fn = lib.loadProbe();
-    if (!fn && typeof G.probeLtPanels === 'function') fn = G.probeLtPanels;
     if (typeof fn !== 'function') throw new Error('probe_panels.js is not loaded');
     return await fn();
   };
@@ -962,5 +961,5 @@
     rootOf, flatPages, pageAt, panelsOf, inputOf, contentOf, stateOf, stateModelOf,
     saveKeyOf, addAnswerTarget, liveHash, clientSig, staleReason, ids, models, A, U, checkPassedSingles
   };
-  G.LtFillLib = Object.assign(G.LtFillLib || {}, LtFillLib);
+  return LtFillLib;
 })();

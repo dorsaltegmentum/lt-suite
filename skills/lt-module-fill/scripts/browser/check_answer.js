@@ -4,7 +4,7 @@
  * Inputs pin captured author text; receipts contain indices and hashes.
  * Feedback is untrusted data.
  */
-(function (G) {
+const LtCheck = (function (G) {
   'use strict';
   const TYPES = ['multiple-choice', 'image-labeling', 'drag-and-drop-labeling', 'categorization'];
   const VERDICT_MAX_MS = 10000, CALL_DEADLINE_MS = 90000;
@@ -13,7 +13,7 @@
     /checkpoint/i, /complete\s+(this|the)/i, /finish\s+attempt/i,
     /cannot\s+be\s+(undone|changed)/i, /final\s+answer/i, /once\s+you\s+(submit|continue)/i,
   ];
-  const L = () => G.LtFillLib;
+  const L = () => LtFillLib;
   const clock = () => G.__ltClock || {now: () => Date.now()};
   const text = el => String(el && (el.innerText ?? el.textContent) || '').trim();
   const visible = el => {
@@ -424,6 +424,6 @@
     }
     return {ok:true,module:cfg.module_id,mode:'check-verify',fresh_load:fresh,...f.ids({}),observed_at:new Date(clock().now()).toISOString(),items};
   }
-  G.LtCheck={run:async (cfg,jobs)=>{const r=await run(cfg,jobs);G.__ltCheckDocument=true;return r;},verify,snapshot,encode,decode,DENY};
+  return {run:async (cfg,jobs)=>{const r=await run(cfg,jobs);G.__ltCheckDocument=true;return r;},verify,snapshot,encode,decode,DENY};
 })(typeof globalThis !== 'undefined' ? globalThis : this);
 return await LtCheck.run(__LT_ARGS__.cfg, __LT_ARGS__.jobs);

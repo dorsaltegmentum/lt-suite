@@ -406,3 +406,15 @@ def test_stamp_names_each_missing_key_with_upload_role_and_page(tmp_path):
                                      lambda path: False, missing) == (0, 3, 1)
     assert missing == ['page 4: missing media key 30', 'page 4: missing media key u30',
                        'page 4: missing media key 31']
+
+
+def test_stamp_reports_pending_keys_by_page_without_saved_files(tmp_path):
+    stamp = load_stamp()
+    doc = {'module_id': 'c1-r101', 'pages': [
+        {'page_index': 4, 'media': [{'key': '30'}, {'key': '30', 'role': 'student-upload'}]},
+        {'page_index': 5, 'media': [{'key': '31'}, {'key': '31'}]}]}
+    missing = []
+    stamp.backfill_local_paths(doc, tmp_path / 'module.json', tmp_path / 'media',
+                               lambda path: False, missing)
+    assert stamp.pending_media_keys(missing) == [
+        'page 4: pending_keys=30,u30', 'page 5: pending_keys=31']

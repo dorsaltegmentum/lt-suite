@@ -21,7 +21,7 @@ const REPO = path.resolve(__dirname, '..', '..');
 const SKILL = path.join(REPO, 'skills', 'lt-module-fill');
 const BROWSER = path.join(SKILL, 'scripts', 'browser');
 const EMIT = path.join(SKILL, 'scripts', 'emit_fill.py');
-const LIB_SRC = fs.readFileSync(process.env.FILL_LIB_JS || path.join(BROWSER, 'fill_lib.js'), 'utf8');
+const LIB_SRC = '(function () {\n' + fs.readFileSync(process.env.FILL_LIB_JS || path.join(BROWSER, 'fill_lib.js'), 'utf8') + '\nglobalThis.LtFillLib = LtFillLib;})();';
 const PROBE_FILE = fs.readFileSync(path.join(BROWSER, 'probe_panels.js'), 'utf8');
 /* probe_panels.js is a function body ending in `return await probeLtPanels();`; for loading
  * it inside a plain function that line goes, as emit_fill.py drops it. */

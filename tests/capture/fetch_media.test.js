@@ -17,12 +17,12 @@ const PNG = Buffer.from('89504e470d0a1a0a0000000d49484452', 'hex');
 const IMG_HOST = 'https://lt.example.invalid/media/';
 
 /* page: { panels: [{ vm, imgs: [{ src, w, h }] }], current } */
-async function runMedia({ panels = [], pathname, args = {}, reply, entry = false, imageReply, helloReply, extraImgs = [] } = {}) {
+async function runMedia({ panels = [], pathname, args = {}, reply, entry = false, imageReply, helloReply, extraImgs = [], height = 900, afterReturn = 0 } = {}) {
+  const clock = new (require('../browser/harness.js').Clock)(0);
   const posts = [];
   const requests = [];
   const downloads = [];
   const waits = [];
-  const timers = H.fastTimers();
   const nodes = [];
   const owners = new Map();
   for (const p of panels) {
@@ -40,11 +40,12 @@ async function runMedia({ panels = [], pathname, args = {}, reply, entry = false
   const root = { lessonFlowPages: () => [pageVm] };
   const sandbox = {
     console, URL, Blob, AbortController, TextEncoder, crypto: webcrypto,
+    performance: {now: () => clock.now()},
     document: {
       querySelector: sel => (sel === 'div.pageList' ? { __el: true } : null),
       querySelectorAll: sel => (sel === 'img' ? nodes : []),
       createElement: () => ({ click() { downloads.push(this.download); }, remove() {} }),
-      body: { appendChild() {}, scrollHeight: 900 }
+      body: { appendChild() {}, scrollHeight: height }
     },
     window: { scrollTo() {}, scrollY: 0 },
     ko: Object.assign({
@@ -62,27 +63,41 @@ async function runMedia({ panels = [], pathname, args = {}, reply, entry = false
           .update(`lt-suite-sink|${n}|${H.ORIGIN}`).digest('hex')});
       }
       if (u.startsWith(IMG_HOST)) {
-        if (imageReply) return imageReply(u);
+        if (args.fetch_delay_ms) await new Promise((resolve,reject) => {
+          const id=clock.after(args.fetch_delay_ms,resolve);
+          o?.signal?.addEventListener('abort',()=>{clock.cancel(id);reject(new Error('aborted'));},{once:true});
+        });
+        if (imageReply) return imageReply(u,o);
         return { type: 'basic', ok: true, status: 200, blob: async () => new Blob([PNG], { type: 'image/png' }) };
       }
       posts.push({ url: u, headers: (o && o.headers) || {}, credentials: o && o.credentials, body: o?.body });
       return reply ? reply(u, o) : H.response(200, { ok: true });
     },
-    ...timers,
-    setTimeout(fn, ms) { waits.push(ms); return ms === 15000 || ms === 30000 ? timers.setTimeout(fn, ms) : setTimeout(fn, 0); }
+    setTimeout(fn, ms) { waits.push(ms); return clock.after(ms,fn); },
+    clearTimeout(id) { clock.cancel(id); }
   };
   sandbox.globalThis = sandbox;
   vm.createContext(sandbox);
   const all = Object.assign({ transport: 'sink', sink: H.SINK, token: H.TOKEN }, args);
   const src = H.source('fetch_media');
   let receipt;
+  const run = async () => {
   if (entry) {
     receipt = await vm.runInContext(`(async () => {\nconst __LT_ARGS__ = Object.freeze(${JSON.stringify(all)});\n${src}\n})()`, sandbox);
   } else {
     await vm.runInContext(`(async () => {\n${src}\n})()`, sandbox);
     receipt = await sandbox.fetchLtMedia(all);
   }
-  return { receipt: JSON.parse(JSON.stringify(receipt)), posts, downloads, requests, waits };
+  };
+  let done=false, error;
+  const promise=run().then(()=>{done=true;},err=>{done=true;error=err;});
+  for (let i=0;!done && i<100000;i++) await clock.advance(1);
+  assert.equal(done,true,'media call completed');
+  await promise;
+  if (error) throw error;
+  const elapsed=clock.now();
+  if (afterReturn) await clock.advance(afterReturn);
+  return { receipt: JSON.parse(JSON.stringify(receipt)), posts, downloads, requests, waits, elapsed };
 }
 
 const vmPanel = (key, content, input) => ({
@@ -355,4 +370,53 @@ test('fetch-media: download handoffs use configured gaps and pause after eight',
     assert.equal(r.receipt.downloads_confirmed, false);
     assert.match(r.receipt.download_note, /cannot confirm/);
   }
+});
+
+for (const count of [12,40]) for (const delay of [0,300,1100]) {
+  test(`fetch-media: ${count} keys with ${delay} ms fetches respect the call budget and resume`, async () => {
+    const panels=Array.from({length:count},(_,i)=>({vm:vmPanel(String(i+1),{imageResourceKey:String(i+100)}),imgs:[{src:IMG_HOST+(i+100)}]}));
+    const saved=[];
+    let keys;
+    for (let call=0;call<count;call++) {
+      const r=await runMedia({panels,args:{transport:'download',fetch_delay_ms:delay,...(keys ? {keys} : {})}});
+      assert.ok(r.elapsed<=20000,JSON.stringify({count,delay,elapsed:r.elapsed}));
+      assert.equal(r.receipt.downloads_confirmed,false);
+      assert.ok(r.downloads.length>0);
+      saved.push(...r.downloads);
+      keys=r.receipt.pending_keys;
+      assert.ok(Array.isArray(keys));
+      if (!keys.length) break;
+    }
+    assert.deepEqual(keys,[]);
+    assert.equal(saved.length,count);
+    assert.equal(new Set(saved).size,count);
+  });
+}
+
+
+test('fetch-media: configured budget interrupts scrolling and returns selected pending keys',async()=>{
+  const panels=[{vm:vmPanel('1',{imageResourceKey:'100'}),imgs:[{src:IMG_HOST+'100'}]}];
+  const r=await runMedia({panels,height:100000,args:{transport:'download',budget_ms:500,keys:'100'}});
+  assert.equal(r.elapsed,500);
+  assert.deepEqual(r.receipt.pending_keys,['100']);
+  assert.equal(r.receipt.budget_exhausted,true);
+  assert.deepEqual(r.downloads,[]);
+});
+
+test('fetch-media: stalled image fetch returns pending keys without late download handoffs',async()=>{
+  const panels=[{vm:vmPanel('1',{imageResourceKey:'100'}),imgs:[{src:IMG_HOST+'100'}]}];
+  const r=await runMedia({panels,args:{transport:'download',budget_ms:5000},
+    imageReply:()=>new Promise(()=>{}),afterReturn:50000});
+  assert.equal(r.elapsed,5000);
+  assert.deepEqual(r.receipt.pending_keys,['100']);
+  assert.deepEqual(r.downloads,[]);
+});
+
+test('fetch-media: key selection separates author images and student uploads',async()=>{
+  const panels=[{vm:vmPanel('1',{imageResourceKey:'100'},{imageKey:'100'}),imgs:[{src:IMG_HOST+'100'}]},
+    {vm:vmPanel('2',{},{imageKey:'101'}),imgs:[{src:IMG_HOST+'101'}]}];
+  const r=await runMedia({panels,args:{transport:'download',keys:'u101'}});
+  assert.deepEqual(r.downloads,['lt-c1-r101-u101.png']);
+  assert.equal(r.requests.filter(r=>r.url.startsWith(IMG_HOST)).length,1);
+  assert.deepEqual(r.receipt.pending_keys,[]);
 });

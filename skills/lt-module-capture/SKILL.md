@@ -214,14 +214,20 @@ Visit them in the printed order. On each page:
    `ltjs.py render guard --form <form> [--cache|--no-stub] --plan <media-plan.json>`.
    Inline tools follow the protocol in `references/_shared/browser-adapters.md` for every guard call.
 3. Render `fetch_media` with the capture's `--arg` pairs plus `--plan <media-plan.json>` and
-   run it. The receipt marks each image `saved` or `failed` and lists `keys_not_fetched`.
+   run it. The receipt marks each attempted image `saved` or `failed` and lists `keys_not_fetched`.
+4. If `pending_keys` contains keys, stay on this page and repeat with `--arg keys=<comma-separated-keys>`.
+   Keep the same arguments and plan, replacing `keys` with each new receipt's pending list.
+   Continue until `pending_keys` is empty before visiting the next planned page.
 
 Afterwards run `stamp_capture.py <module_id>` once more. It moves the images into
 `<data>/captures/media/` and fills their `local_path`. On the download route, run
 `collect_downloads.py <module_id>` before this second stamp. List every image key that is
 still missing in the run report. Both collection and stamping name each missing key and page.
-Re-run `fetch_media` on that page for missing keys, then collect and stamp again.
+Re-run `fetch_media` on that page with `--arg keys=<comma-separated-keys>`, then collect and stamp again.
 
+Calls use a 20,000 ms elapsed budget, including scrolling, network requests and pacing waits.
+Set `--arg-json budget_ms=20000` to adjust the budget below the browser tool timeout.
+Receipts return `pending_keys`; collection and stamping report pending keys from missing files.
 Download handoffs wait 250 ms between files and pause 2,000 ms after each group of 8.
 Set per-call `--arg-json download_gap_ms=250` and `--arg-json download_pause_ms=2000` to adjust those waits.
 The pause must exceed the gap; otherwise the default pause applies.
