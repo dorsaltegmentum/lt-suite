@@ -4,6 +4,7 @@
   "instance": "inst0001",
   "course_id": 1,
   "run_id": 101,
+  "route_source": "datakey+location",
   "stop_before_page": 5,
   "never_navigated": [
     {"route": "complete", "reason": "completion page"},

@@ -8,7 +8,9 @@
  *
  * __LT_ARGS__ (every key optional): transport ('sink' or 'download'), sink (loopback base
  * URL from sink.py), token (sink.py session token), module_id (defaults to c<course>-r<run>
- * from the URL), post_ms (abort a sink POST after this many milliseconds).
+ * from the URL), post_ms (abort a sink POST after this many milliseconds), render_wait_ms
+ * (how long to wait for Lt to paint a page; default the rendered policy's
+ * fill.save_wait.render_wait_ms, else 5000).
  *
  * WHY THE PAGE DOES THE FETCHING. Lt hands out images through signed URLs. The page holds
  * a signed-in session and shows the images already, so it downloads them itself and passes
@@ -32,7 +34,7 @@
  * no commit control.
  */
 
-const LT_MEDIA_DEFAULTS = Object.freeze({ transport: 'sink', sink: 'http://127.0.0.1:8731', post_ms: 30000, budget_ms: 20000 });
+const LT_MEDIA_DEFAULTS = Object.freeze({ transport: 'sink', sink: 'http://127.0.0.1:8731', post_ms: 30000, budget_ms: 20000, render_wait_ms: 5000 });
 
 /* The sink proves possession of the secret before the page sends any content.
  * Each upload then authenticates its exact destination and bytes without sending the secret. */
@@ -147,8 +149,24 @@ const fetchLtMedia = async (opts) => {
   const ctx = (() => { try { return ko.contextFor(el); } catch (e) { return null; } })();
   if (!ctx || !ctx.$root) return { ok: false, reason: 'No Lt lesson view model on this page (wrong tab, or Lt is still loading).' };
   const root = ctx.$root;
-  const flowRaw = models(root.lessonFlowPages());
-  let flowPos = flowRaw.findIndex(p => { try { return U(p.current) === true; } catch (e) { return false; } });
+  /* Lt sets current() only once its start-up ends, and the guard runs straight after the
+   * navigation. While the page list is empty, or its pages carry current flags and none reads
+   * true, wait up to render_wait_ms; then refuse rather than fall back to the URL number. */
+  const isCur = p => { try { return U(p.current) === true; } catch (e) { return false; } };
+  const unpainted = list => !list.some(isCur) && (!list.length || list.some(p => p && typeof p.current !== 'undefined'));
+  const policyWait = (typeof __LT_POLICY__ === 'object' && __LT_POLICY__) ? __LT_POLICY__.render_wait_ms : undefined;
+  const paintWait = Math.min(remaining(), (n => (Number.isFinite(n) && n >= 0 ? n : LT_MEDIA_DEFAULTS.render_wait_ms))(Number(g.render_wait_ms ?? policyWait)));
+  const paintStart = performance.now();
+  let flowRaw = models(root.lessonFlowPages());
+  while (unpainted(flowRaw) && performance.now() - paintStart < paintWait) {
+    await new Promise(r => setTimeout(r, Math.min(250, paintWait - (performance.now() - paintStart))));
+    flowRaw = models(root.lessonFlowPages());
+  }
+  if (unpainted(flowRaw)) {
+    return { ok: false, fatal: 'lt-not-painted', url_page: pageIndex, waited_ms: Math.round(performance.now() - paintStart),
+             reason: 'Lt painted no page within render_wait_ms; nothing was fetched. Navigate to the page again and run the guard.' };
+  }
+  let flowPos = flowRaw.findIndex(isCur);
   if (flowPos < 0) flowPos = flowRaw.findIndex(p => String(U(p.dataKey)) === String(pageIndex));
   if (flowPos < 0) flowPos = pageIndex - 1;
   const flat = flowRaw.map(p => A(p) || p);

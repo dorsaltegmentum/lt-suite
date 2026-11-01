@@ -22,7 +22,7 @@ ARGS = ['-y', 'chrome-devtools-mcp@1.12.0', '--autoConnect',
         '--no-usage-statistics', '--no-performance-crux', '--no-category-input',
         '--no-category-network', '--no-category-memory', '--no-category-performance',
         '--no-category-emulation', '--redact-network-headers']
-KEYS = ('adapter', 'chromium', 'chromium_user_data_dir', 'devtools_url')
+KEYS = ('adapter', 'chromium', 'chromium_user_data_dir', 'devtools_url', 'devtools_socket')
 
 
 @pytest.fixture
@@ -1280,3 +1280,167 @@ def test_windows_node_lookup_ignores_cmd_extension(sandbox, root):
     assert not marker.exists(), 'untrusted NoDe.CMD executed'
     assert result.returncode == 0, result.stderr
     assert Path(result.stdout.strip()).name.lower() == 'node.exe'
+
+
+@pytest.mark.parametrize('adapter, warns', [('auto', True), ('chrome-devtools-mcp', True), ('manual-paste', False)])
+def test_doctor_warns_when_stable_launcher_is_missing(sandbox, setup_module, monkeypatch, adapter, warns):
+    p = plan(sandbox, {'adapter': adapter})
+    monkeypatch.setenv('LT_SUITE_CONFIG', p['config'])
+    stable = Path(p['config_dir']) / 'lt-chrome.cjs'
+    message = 'no stable launcher at %s; run setup.py lt-chrome install' % stable
+    results = setup_module.check_browser({'cfg': config_core().load()})
+    assert any(r.status == 'WARN' and r.text.startswith(message) for r in results) is warns
+    assert setup_module.main(['lt-chrome', 'install']) == 0
+    results = setup_module.check_browser({'cfg': config_core().load()})
+    assert not any('stable launcher' in r.text for r in results)
+
+
+def _free_port():
+    import socket
+    with socket.socket() as s:
+        s.bind(('127.0.0.1', 0))
+        return s.getsockname()[1]
+
+
+def _devtools_handler():
+    from http.server import BaseHTTPRequestHandler
+    class Handler(BaseHTTPRequestHandler):
+        def do_GET(self):
+            body = json.dumps({'webSocketDebuggerUrl': 'ws://%s/devtools/browser/synthetic' % self.headers['Host']}).encode()
+            self.send_response(200 if self.path == '/json/version' else 404)
+            self.send_header('Content-Length', str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+        def address_string(self):
+            return 'synthetic'
+        def log_message(self, *args):
+            pass
+    return Handler
+
+
+@pytest.mark.skipif(not hasattr(__import__('socket'), 'AF_UNIX'), reason='Unix sockets unavailable')
+@pytest.mark.parametrize('state', ['missing', 'file', 'socket', 'direct'])
+def test_doctor_reports_devtools_socket_state(sandbox, setup_module, monkeypatch, state):
+    import socketserver
+    import tempfile
+    import threading
+    from http.server import ThreadingHTTPServer
+    # AF_UNIX paths stay short; pytest's tmp_path can pass the 104-byte limit.
+    folder = Path(tempfile.mkdtemp(prefix='ltc-'))
+    target, servers = folder / 'devtools.sock', []
+    try:
+        port = _free_port()
+        if state == 'file':
+            target.write_text('', encoding='utf-8', newline='\n')
+        if state == 'socket':
+            servers.append(socketserver.ThreadingUnixStreamServer(str(target), _devtools_handler()))
+        if state == 'direct':
+            servers.append(ThreadingHTTPServer(('127.0.0.1', 0), _devtools_handler()))
+            port = servers[-1].server_address[1]
+        for server in servers:
+            threading.Thread(target=server.serve_forever, daemon=True).start()
+        p = plan(sandbox, {'adapter': 'auto', 'devtools_url': 'http://127.0.0.1:%d' % port, 'devtools_socket': str(target)})
+        monkeypatch.setenv('LT_SUITE_CONFIG', p['config'])
+        results = setup_module.check_browser({'cfg': config_core().load()})
+        lines = [(r.status, r.text) for r in results]
+        if state == 'missing':
+            assert ('WARN', 'browser.devtools_socket: no socket at %s; a sandboxed agent reaches the browser only after '
+                    'the host socket proxy creates it and the sandbox mounts it' % target) in lines
+            assert any(s == 'FAIL' and 'no socket exists at' in t for s, t in lines), lines
+        elif state == 'file':
+            assert ('FAIL', 'browser.devtools_socket: %s is not a Unix socket' % target) in lines
+        elif state == 'socket':
+            assert ('PASS', 'browser.devtools_socket %s is a socket' % target) in lines
+            assert p['route'] == 'socket' and p['action'] == 'start'
+            assert any(s == 'PASS' and t.startswith('route socket:') for s, t in lines), lines
+        else:
+            assert ('WARN', 'browser.devtools_socket: no socket at %s; a sandboxed agent reaches the browser only after '
+                    'the host socket proxy creates it and the sandbox mounts it' % target) in lines
+            assert p['route'] == 'direct' and p['action'] == 'start'
+            assert any(s == 'PASS' and t.startswith('route direct:') for s, t in lines), lines
+        if p['action'] == 'start':
+            assert not any('for browser.devtools_socket' in t for _, t in lines), lines
+        assert not any('127.0.0.1:%d' % port in t for _, t in lines)
+    finally:
+        for server in servers:
+            server.shutdown()
+            server.server_close()
+        shutil.rmtree(folder, ignore_errors=True)
+
+
+@pytest.mark.skipif(sys.platform == 'win32', reason='Unix sockets only')
+def test_doctor_accepts_dot_segments_in_a_relative_socket_path(sandbox, setup_module, monkeypatch):
+    # The launcher keeps "./" and "//"; doctor must compare the same file, not the same text.
+    p = plan(sandbox, {'adapter': 'auto', 'devtools_url': 'http://127.0.0.1:%d' % _free_port(), 'devtools_socket': './run//devtools.sock'})
+    monkeypatch.setenv('LT_SUITE_CONFIG', p['config'])
+    lines = [(r.status, r.text) for r in setup_module.check_browser({'cfg': config_core().load()})]
+    assert not any('for browser.devtools_socket' in t for _, t in lines), lines
+
+
+@pytest.mark.skipif(not hasattr(__import__('socket'), 'AF_UNIX'), reason='Unix sockets unavailable')
+@pytest.mark.parametrize('case', ['open-folder', 'open-ancestor', 'long-path'])
+def test_doctor_fails_unsafe_or_long_socket_paths(sandbox, setup_module, monkeypatch, case):
+    import socket as socketmod
+    import tempfile
+    folder = Path(tempfile.mkdtemp(prefix='ltc-'))
+    try:
+        if case in ('open-folder', 'open-ancestor'):
+            inner = folder if case == 'open-folder' else folder / 'in'
+            inner.mkdir(mode=0o700, exist_ok=True)
+            target = inner / 'devtools.sock'
+            server = socketmod.socket(socketmod.AF_UNIX)
+            server.bind(str(target))
+            folder.chmod(0o777)
+        else:
+            target = folder / ('d' * 120) / 'devtools.sock'
+        p = plan(sandbox, {'adapter': 'auto', 'devtools_url': 'http://127.0.0.1:%d' % _free_port(), 'devtools_socket': str(target)})
+        monkeypatch.setenv('LT_SUITE_CONFIG', p['config'])
+        lines = [(r.status, r.text) for r in setup_module.check_browser({'cfg': config_core().load()})]
+        if case in ('open-folder', 'open-ancestor'):
+            assert ('FAIL', 'browser.devtools_socket: %s is writable by other accounts; keep the socket in a folder only your account can change' % folder) in lines
+            server.close()
+        else:
+            assert p['action'] == 'refuse' and p['route'] == 'socket'
+            limit = 103 if sys.platform == 'darwin' else 107
+            assert ('FAIL', 'browser.devtools_socket: %s is longer than a Unix socket path allows (%d bytes)' % (target, limit)) in lines
+    finally:
+        folder.chmod(0o700)
+        shutil.rmtree(folder, ignore_errors=True)
+
+
+def test_doctor_names_route_and_reason_of_a_refused_start(sandbox, setup_module, monkeypatch):
+    p = plan(sandbox, {'adapter': 'auto'})
+    monkeypatch.setenv('LT_SUITE_CONFIG', p['config'])
+    records = Path(p['cache_dir']) / 'lt-chrome'
+    records.mkdir(parents=True, exist_ok=True)
+    (records / 'last-start-codex.json').write_text(json.dumps({
+        'time': '2026-11-01T10:00:00Z', 'via': 'codex', 'config': p['config'], 'action': 'refuse',
+        'route': 'socket', 'reason': 'browser.devtools_socket: the socket does not reach a DevTools listener'}),
+        encoding='utf-8', newline='\n')
+    lines = [(r.status, r.text) for r in setup_module.check_browser({'cfg': config_core().load()})]
+    assert ('WARN', 'lt-chrome last start via codex at 2026-11-01T10:00:00Z: refused on route socket: '
+            'browser.devtools_socket: the socket does not reach a DevTools listener') in lines
+
+
+@pytest.mark.skipif(not hasattr(__import__('socket'), 'AF_UNIX'), reason='Unix sockets unavailable')
+def test_doctor_checks_where_a_symlinked_socket_points(sandbox, setup_module, monkeypatch):
+    import socket as socketmod
+    import tempfile
+    folder = Path(tempfile.mkdtemp(prefix='ltc-'))
+    try:
+        (folder / 'safe').mkdir(mode=0o700)
+        (folder / 'open').mkdir(mode=0o700)
+        real = folder / 'open' / 'real.sock'
+        server = socketmod.socket(socketmod.AF_UNIX)
+        server.bind(str(real))
+        (folder / 'open').chmod(0o777)
+        link = folder / 'safe' / 'devtools.sock'
+        link.symlink_to(real)
+        p = plan(sandbox, {'adapter': 'auto', 'devtools_url': 'http://127.0.0.1:%d' % _free_port(), 'devtools_socket': str(link)})
+        monkeypatch.setenv('LT_SUITE_CONFIG', p['config'])
+        lines = [(r.status, r.text) for r in setup_module.check_browser({'cfg': config_core().load()})]
+        assert ('FAIL', 'browser.devtools_socket: %s is writable by other accounts; keep the socket in a folder only your account can change' % (folder / 'open')) in lines
+        server.close()
+    finally:
+        (folder / 'open').chmod(0o700)
+        shutil.rmtree(folder, ignore_errors=True)

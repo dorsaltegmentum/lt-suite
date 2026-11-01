@@ -18,6 +18,19 @@ A census that looks right proves nothing. A second count made another way does, 
   `page_no` is the number in `/run/page/<n>` and exists for content pages only; report and
   checkpoint pages get `page_no: null` and no `url`. The `index()` of a checkpoint is not part
   of any URL, so capture builds none for it.
+- **A Background page has no number.** Lt serves it at `/run/background` and numbers the
+  content pages after it from `/run/page/1`, so flow page N sits at `/run/page/N-1`. It gets
+  `route: "background"`, `page_no: null` and a `/run/background` url, and it is always the
+  first content page.
+- **Routes are measured, never counted.** The number in `/run/page/<n>` is the page's
+  `dataKey`. Capture checks it against the tab: the page Lt painted (`current()`) must carry
+  the URL's number, and its content ordinal minus that number is the offset (1 after a
+  Background page, 0 without one). A page gets `url` and `page_no` only when its `dataKey`
+  equals its ordinal minus the offset and no other page shares that `dataKey`; otherwise both
+  stay null and `check-url` refuses the page. `route_source: "datakey+location"` marks such a
+  capture. A capture without it numbered by content ordinal, one page late after a Background
+  page, and nothing else in it reliably marks that page, so `check-url` refuses its routes
+  whatever its titles or boundaries. Export and answer drafting still read it.
 - **Committing a checkpoint removes it from the flow.** After the student commits, Lt drops
   the checkpoint from `lessonFlowPages()` and reveals the pages after it; the page walk then
   sees no door. `root.checkpointPageContainer.pages` still lists it.

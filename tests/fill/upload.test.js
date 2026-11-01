@@ -8,6 +8,7 @@ const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('fs');
 const path = require('path');
+const { redactionHits } = require('../browser/redaction_triggers.js');
 const vm = require('vm');
 const crypto = require('crypto');
 const F = require('./fill_env.js');
@@ -88,7 +89,10 @@ test('upload: sets the files of the panel\'s own input and dispatches change', a
   const d = uploadEnv(build);
   const r = await d.run({ panel: '15', file: fileArg() });
   assert.equal(r.ok, true);
-  assert.equal(r.sha256, sha(PNG));
+  // The 16-hex prefix only: an output filter redacts a 64-hex value as base64.
+  assert.equal(r.sha16, sha(PNG).slice(0, 16));
+  assert.equal('sha256' in r, false);
+  assert.deepEqual(redactionHits(r), []);
   assert.equal(r.bytes, PNG.length);
   const inp = inputOf(d, '15');
   assert.equal(inp.files.length, 1);

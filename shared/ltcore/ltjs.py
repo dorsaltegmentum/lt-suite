@@ -17,6 +17,12 @@ Forms:
   --no-compress  use an uncompressed stub when browser gzip decompression is unavailable.
   --chunk-bytes N  emit numbered payload files and snippets for checked inline transfers.
 
+With browser.body_server set, render also writes each cacheable body, and each policy over
+256 characters, to ``<data>/js-bodies/<sha256>.gz.b64``. A --cache loader then fetches a body
+missing from the page cache from that loopback server, checks its sha256 the same way, and
+names such a policy by its sha256 instead of carrying it. ``render cache_status`` reports the
+page cache for this skill's scripts without running them.
+
 A bare name (``capture``, ``fill_lib``, ``guard``, ``ping``, ``upload``) resolves against the
 skill folder this file sits in (``<skill>/scripts/browser/<name>.js``, then
 ``<skill>/scripts/_shared/browser/<name>.js``), never against the working directory.
@@ -34,8 +40,11 @@ model_answer.js while model_answer.read is false. check-url 0 allowed, 1 forbidd
 (also forbids). check-upload 0 allowed, 1 refused, 2 error.
 
 check-url maps URL page numbers to flow positions through the plan's own map (route numbers
-count content pages only). With --from it also refuses a move that would pass a checkpoint
-page or the stop on the way, in either direction.
+count content pages only, and a Background page at /run/background has none). With --from it
+also refuses a move that would pass a checkpoint page or the stop on the way, in either
+direction. A plan from a capture without route_source, or a plan without the route_source
+key (built before measured routes), maps no route: every page URL fails with
+recapture-needed. Two pages on one route make it a bad plan.
 
 Rendered files go to a folder only this user can open: --out-dir, else browser.js_tmp_dir,
 else ``<OS temp>/lt-suite-js-<uid>`` (``lt-suite-js`` where there are no uids). The folder
@@ -68,7 +77,7 @@ from ltcore import config as config_mod  # noqa: E402
 from ltcore import store as store_mod  # noqa: E402
 from ltcore import __version__  # noqa: E402
 
-NEEDS = ["browser/lt_guard.js", "browser/lt_net.js", "browser/guard.js"]
+NEEDS = ["browser/lt_guard.js", "browser/lt_net.js", "browser/guard.js", "browser/cache_status.js"]
 
 SHARED = Path(__file__).resolve().parent.parent
 BROWSER = SHARED / "browser"
@@ -88,8 +97,23 @@ FILL_PREFIXES = ("_fill-", "_verify-", "_check-", "_replace-", "_calibrate-")
 CACHEABLE_BROWSER_NAMES = frozenset({
     "capture.js", "fetch_media.js", "fill_lib.js", "probe_panels.js", "check_answer.js",
     "confirm_dialog.js", "model_answer.js", "upload.js", "ping.js", "guard.js",
-    "lt_guard.js", "lt_net.js", "fill_runner.js",
+    "lt_guard.js", "lt_net.js", "fill_runner.js", "cache_status.js",
 })
+# Scripts cache_status reports by default, when this skill can render them.
+STATUS_NAMES = ("guard", "capture", "fetch_media", "fill_runner", "confirm_dialog", "upload",
+                "model_answer", "ping")
+# Characters of lt-suite entries kept in Lt's localStorage. Lt writes there too, so this stays
+# far below the origin's quota; every shipped body together is about 270,000 characters.
+CACHE_BUDGET = 512 * 1024
+FETCH_MS = 8000                 # the loader's deadline for one body server request
+MAX_SERVED = 1024 * 1024        # longest gzip base64 text the loader accepts from the server
+BODY_DIR = "js-bodies"          # <data>/js-bodies/<sha256>.gz.b64, read by the body server
+BODY_SUFFIX = ".gz.b64"
+SERVER_RE = re.compile(r"^http://127\.0\.0\.1:([0-9]{1,5})/?$")
+# With a body server, a policy longer than this is named by sha256; a shorter one costs fewer
+# loader bytes inline than the lookup that replaces it.
+POLICY_INLINE_MAX = 256
+B64_RE = "/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/"
 RESERVED = {"lt_guard", "lt_net"}
 ADAPTER_FORM = {
     "claude-in-chrome": ("expression", True),
@@ -101,6 +125,20 @@ ADAPTER_FORM = {
 }
 
 EXIT_OK, EXIT_REFUSED, EXIT_USAGE, EXIT_MODEL_ANSWER = 0, 1, 2, 4
+
+# capture.js writes route_source when it measured each page's route from dataKey, location
+# and current(). Captures without it numbered URLs by content ordinal, and nothing in them
+# reliably marks a Background page, so every such capture's routes are refused.
+ROUTE_SOURCES = frozenset({"datakey+location"})
+RECAPTURE = ("Re-capture the module with the current lt-module-capture (one read-only capture "
+             "call with --arg module_only=true), then rebuild the plan.")
+LEGACY_CAPTURE = (
+    "this capture predates measured routes (no route_source). It numbered /run/page/<n> by "
+    "content ordinal, which points one page late after a Background page and can land past a "
+    "Checkpoint. " + RECAPTURE)
+LEGACY_PLAN = (
+    "this plan has no route_source key, so it was built before measured routes and its "
+    "/run/page/<n> URLs may point one page late, past a Checkpoint. " + RECAPTURE)
 
 
 class RenderRefused(Exception):
@@ -301,23 +339,24 @@ def classify(url: str, policy: Mapping[str, Any] | None) -> dict:
         return _no("no-origin")
     if rest in (p.get("never_routes") or []):
         return _no("never-navigated")
-    idx = map_index(path, rest, n, p)
+    idx = map_index(path, n, p)
     if idx is None:
-        # URL page numbers count content pages only and skip checkpoint pages, so without
-        # the plan's own map a number says nothing certain about the flow position.
+        # URL page numbers count content pages only and skip checkpoint and Background pages,
+        # so without the plan's own map a number says nothing certain about the flow position.
+        if p.get("route_refusal"):
+            return _no("recapture-needed")
         return _no("page-not-in-plan" if p.get("mapped") else "plan-has-no-page-map")
     return index_rule(idx, p)
 
 
-def map_index(path: str, rest: str, n: int | None, p: Mapping[str, Any]) -> int | None:
-    """Flow index of a run URL through the plan's map: exact path, then URL page number."""
+def map_index(path: str, n: int | None, p: Mapping[str, Any]) -> int | None:
+    """Flow index of a run URL through the plan's map: exact path, then URL page number.
+    /run/background has no number, so only a captured url maps it."""
     key = path.rstrip("/")
     url_map = p.get("url_map") or {}
     page_map = p.get("page_map") or {}
     if key in url_map:
         return url_map[key]
-    if rest == "background":
-        return 1
     if n is not None and str(n) in page_map:
         return page_map[str(n)]
     return None
@@ -372,7 +411,7 @@ def current_index(url: str, p: Mapping[str, Any]) -> tuple[str, int | None]:
         return "outside", None
     rest = m.group(4).rstrip("/")
     pm = PAGE_RE.match(rest)
-    idx = map_index(u.path, rest, int(pm.group(1)) if pm else None, p)
+    idx = map_index(u.path, int(pm.group(1)) if pm else None, p)
     return ("unmapped", None) if idx is None else ("index", idx)
 
 
@@ -442,13 +481,49 @@ def _list(v: Any, what: str) -> list:
     return v
 
 
+def route_refusal(doc: Mapping[str, Any]) -> str | None:
+    """Why the page routes of ``doc``, a module.json or a plan, may not be used; None when
+    they may.
+
+    capture.js marks measured routes with ``route_source``, and the plan builders copy the
+    mark and any refusal. A capture without the mark numbered its URLs by content ordinal:
+    right without a Background page, one page late after one. Its title, source_url and
+    boundaries do not reliably show a Background page, so every capture without the mark
+    is refused, whatever it holds. Export and answer drafting never read routes and still
+    accept such a capture."""
+    given = doc.get("route_refusal")
+    if isinstance(given, str) and given:
+        return given
+    src = doc.get("route_source")
+    if src is None:
+        return LEGACY_CAPTURE
+    if isinstance(src, str) and src in ROUTE_SOURCES:
+        return None
+    return f"route_source {src!r} is not one this version reads. {RECAPTURE}"
+
+
+def plan_route_refusal(plan: Mapping[str, Any]) -> str | None:
+    """route_refusal() for a plan. The plan builders always write the route_source key, null
+    allowed, so a plan without the key was built before measured routes: it carries neither
+    the mark nor a refusal, and its titles and URLs cannot show a Background page."""
+    if "route_source" not in plan:
+        return LEGACY_PLAN
+    return route_refusal(plan)
+
+
 def policy_from_plan(plan: Mapping[str, Any] | None, origin: str | None = None,
                      instance: str | None = None, *, check_answer_enabled: bool = False) -> dict:
     """Normalize a plan into the policy check-url and lt_guard.js read.
 
     ``origin`` and ``instance`` come from the config (lt.origin, lt.instance); the plan's own
     values win, and a plan origin that differs from a set lt.origin forbids every URL.
-    No plan gives ``{"mode": "block-all"}``: every page change is forbidden."""
+    No plan gives ``{"mode": "block-all"}``: every page change is forbidden.
+
+    Page routes become ``page_map`` and ``url_map`` unless ``plan_route_refusal`` refuses
+    them: a plan without the route_source key, or one from a capture without route_source.
+    Then the policy carries the refusal and maps nothing, so every page URL is refused with
+    recapture-needed. Two pages on one route, one page on two numbers, or a number past the
+    pages before it raise PlanError."""
     cfg_origin = normalize_origin(origin) if origin else None
     if plan is None:
         return {"mode": "block-all", "origin": cfg_origin}
@@ -506,9 +581,25 @@ def policy_from_plan(plan: Mapping[str, Any] | None, origin: str | None = None,
     for i, d in enumerate(doors):
         if isinstance(d, Mapping) and d.get("class") == "checkpoint-page" and d.get("page_index") is not None:
             checkpoints.append(_int(d["page_index"], f"boundary door {i}.page_index", minimum=1))
+    refusal = plan_route_refusal(plan)
     page_map: dict[str, int] = {}
     url_map: dict[str, int] = {}
+    owner: dict[int, int] = {}       # URL number -> page_index, from page_no and url alike
+    number_of: dict[int, int] = {}   # page_index -> URL number
+    backgrounds: set[int] = set()
     mapped = False
+
+    def claim(table: dict, key: Any, idx: int, route: str) -> None:
+        if table.setdefault(key, idx) != idx:
+            raise PlanError(f"page_index {table[key]} and page_index {idx} both claim {route}. "
+                            f"Re-capture the module, then rebuild the plan.")
+
+    def number(idx: int, n: int, what: str) -> None:
+        claim(owner, n, idx, f"/run/page/{n}")
+        if number_of.setdefault(idx, n) != n:
+            raise PlanError(f"{what}: page_index {idx} claims both /run/page/{number_of[idx]} and "
+                            f"/run/page/{n}. Re-capture the module, then rebuild the plan.")
+
     for listname in ("pages", "skipped_pages", "flow_pages"):
         for i, pg in enumerate(_list(plan.get(listname), listname)):
             what = f"{listname}[{i}]"
@@ -521,8 +612,12 @@ def policy_from_plan(plan: Mapping[str, Any] | None, origin: str | None = None,
                 report.append(idx)
             if pg.get("is_checkpoint") is True or pg.get("reason") in ("checkpoint", "checkpoint-page"):
                 checkpoints.append(idx)
+            if refusal:
+                continue
             if pg.get("page_no") is not None:
-                page_map[str(_int(pg["page_no"], f"{what}.page_no", minimum=1))] = idx
+                n = _int(pg["page_no"], f"{what}.page_no", minimum=1)
+                number(idx, n, what)
+                page_map[str(n)] = idx
                 mapped = True
             if pg.get("url"):
                 if not isinstance(pg["url"], str):
@@ -532,13 +627,33 @@ def policy_from_plan(plan: Mapping[str, Any] | None, origin: str | None = None,
                 except ValueError:
                     raise PlanError(f"{what}.url is not a URL") from None
                 if up:
-                    url_map[up] = idx
+                    claim(url_map, up, idx, up)
                     mapped = True
+                    pm = RUN_RE.match(up)
+                    tail = PAGE_RE.match(pm.group(4)) if pm else None
+                    if tail:
+                        number(idx, int(tail.group(1)), what)
+                    elif pm and pm.group(4) == "background":
+                        backgrounds.add(idx)
+    # A URL number counts the content pages up to its own, so it can never exceed the flow
+    # position less the unnumbered checkpoint and Background pages known to come before it.
+    both = sorted(backgrounds & set(number_of))
+    if both:
+        raise PlanError(f"page_index {both[0]} is the Background page and also claims "
+                        f"/run/page/{number_of[both[0]]}. Re-capture the module, then rebuild the plan.")
+    unnumbered = (set(checkpoints) | backgrounds) - set(number_of)
+    for idx, n in sorted(number_of.items()):
+        bound = idx - sum(1 for c in unnumbered if c < idx)
+        if n > bound:
+            raise PlanError(f"page_index {idx} claims /run/page/{n}, but at most {bound} numbered "
+                            f"pages reach it. Re-capture the module, then rebuild the plan.")
     pol.update({
         "never_routes": sorted(set(routes)), "never_indexes": sorted(set(idxs)),
         "report_indexes": sorted(set(report)), "checkpoint_indexes": sorted(set(checkpoints)),
         "page_map": page_map, "url_map": url_map, "mapped": mapped,
     })
+    if refusal:
+        pol["route_refusal"] = refusal
     if check_answer_enabled is True and "check_answer_keys" in plan:
         keys = _list(plan["check_answer_keys"], "check_answer_keys")
         if any(not isinstance(p, list) or len(p) != 2 or not isinstance(p[1], str) for p in keys):
@@ -564,6 +679,8 @@ def check_url(url: str, plan: Mapping[str, Any] | None, *, origin: str | None = 
     if r["reason"] == "bad-from-url":
         r["error"] = f"--from {from_url!r} is not a URL"
         return EXIT_USAGE, r
+    if r["reason"] == "recapture-needed":
+        r["error"] = pol["route_refusal"]
     return (EXIT_OK if r["allowed"] else EXIT_REFUSED), r
 
 
@@ -642,13 +759,48 @@ def _read(p: Path) -> str:
         return fh.read()
 
 
+# Runs first in every parameterized body, so loaders carry no cache code. __ltCache is
+# {budget, use: [[key, gzip base64 or null], ...]} from a loader or a cacheable stub, else null.
+CACHE_UPKEEP = r"""if (__ltCache && Array.isArray(__ltCache.use)) try {
+  /* Page cache upkeep: store the entries this call brought, mark every entry it used as the
+     newest, then drop the least recently used lt-suite entries past __ltCache.budget characters.
+     A failed write ends the upkeep and leaves every stored entry in place. */
+  const s = localStorage, INDEX = 'lt-suite:js:index';
+  const ok = k => typeof k === 'string' && /^lt-suite:js:[a-f0-9]{64}$/.test(k);
+  const use = __ltCache.use.filter(e => Array.isArray(e) && ok(e[0]));
+  for (const [k, v] of use) if (typeof v === 'string') s.setItem(k, v);
+  const vals = new Map();
+  for (let i = 0; i < s.length; i++) {
+    const k = s.key(i);
+    if (ok(k)) { const v = s.getItem(k); if (v !== null) vals.set(k, v); }
+  }
+  const used = [...new Set(use.map(e => e[0]).filter(k => vals.has(k)))];
+  let a; try { a = JSON.parse(s.getItem(INDEX)); } catch (e) {}
+  a = Array.isArray(a) ? [...new Set(a.filter(k => ok(k) && vals.has(k) && !used.includes(k)))] : [];
+  a = [...[...vals.keys()].filter(k => !a.includes(k) && !used.includes(k)).sort(), ...a, ...used];
+  const budget = __ltCache.budget > 0 ? __ltCache.budget : Infinity, keep = new Set(used);
+  let total = 0;
+  for (const k of [...a].reverse()) {
+    total += vals.get(k).length;
+    if (!keep.has(k)) { if (total > budget) break; keep.add(k); }
+  }
+  s.setItem(INDEX, JSON.stringify(a));
+  const drop = a.filter(k => !keep.has(k));
+  for (const k of drop) if (s.getItem(k) === vals.get(k)) s.removeItem(k);
+  if (drop.length) s.setItem(INDEX, JSON.stringify(a.filter(k => s.getItem(k) !== null)));
+} catch (e) {}"""
+
+
 def function_text(body: str, *, name: str, args: Mapping[str, Any] | None,
                   policy: Mapping[str, Any] | None, net: bool,
                   parameterized: bool = False, form: str = "expression") -> str:
-    """The script in function form: ``async () => { prelude; return LtGuard.run(...) }``."""
+    """The script in function form: ``async () => { prelude; return LtGuard.run(...) }``.
+
+    A parameterized body takes ``(args, policy, cache)`` and holds no version string, so its
+    sha256 changes only when its code does."""
     pol = dict(policy or {"mode": "block-all"})
     parts = [
-        "async (__ltArgs, __ltPolicy) => {" if parameterized else "async () => {",
+        "async (__ltArgs, __ltPolicy, __ltCache) => {" if parameterized else "async () => {",
         f"/* lt-suite page script {_safe_name(name)}, rendered by ltcore/ltjs.py. Edit the source,",
         "   not this file. Inputs: __LT_ARGS__ (frozen). Prepended: lt_guard.js"
         + (", lt_net.js. */" if net else ". */"),
@@ -657,6 +809,7 @@ def function_text(body: str, *, name: str, args: Mapping[str, Any] | None,
     ]
     if parameterized:
         parts.append("try {")
+        parts.append(CACHE_UPKEEP)
     parts.append(_read(GUARD_JS).rstrip("\n") + ";")
     if net:
         parts.append(_read(NET_JS).rstrip("\n") + ";")
@@ -664,11 +817,22 @@ def function_text(body: str, *, name: str, args: Mapping[str, Any] | None,
     parts.append(body.rstrip("\n"))
     parts.append("}, { net: " + ("true" if net else "false") + ", render_wait_ms: __LT_ARGS__.cfg?.save_wait?.render_wait_ms ?? __LT_POLICY__.render_wait_ms });")
     if parameterized:
-        parts.append("} finally { __LT_ARGS__ = undefined; __LT_POLICY__ = undefined; __ltArgs = undefined; __ltPolicy = undefined; }")
+        parts.append("} finally { __LT_ARGS__ = undefined; __LT_POLICY__ = undefined; __ltArgs = undefined; __ltPolicy = undefined; __ltCache = undefined; }")
     parts.append("}")
     if parameterized:
-        parts.insert(1, f"/* lt-suite {__version__} {form} parameterized body accepts current frozen inputs. */")
+        parts.insert(1, f"/* lt-suite {form} parameterized body accepts current frozen inputs. */")
     return "\n".join(parts) + "\n"
+
+
+def policy_text(policy: Mapping[str, Any] | None) -> str:
+    """The policy's JSON text: what JSON.parse receives inline, and what a loader names by sha256."""
+    return json.dumps(dict(policy or {"mode": "block-all"}), ensure_ascii=True, sort_keys=True,
+                      allow_nan=False)
+
+
+def policy_by_hash(policy: Mapping[str, Any] | None) -> bool:
+    """With a body server, does the loader name this policy by sha256 instead of carrying it?"""
+    return len(policy_text(policy)) > POLICY_INLINE_MAX
 
 
 def _payload(inner: str, compress: bool = True) -> tuple[str, str]:
@@ -678,57 +842,122 @@ def _payload(inner: str, compress: bool = True) -> tuple[str, str]:
     return base64.b64encode(packed).decode("ascii"), hashlib.sha256(raw).hexdigest()
 
 
+# The loader's verification is the stub's, step for step: base64 shape, gunzip, sha256, strict
+# UTF-8. load() reads the page cache, drops an entry that fails, and with a body server asks
+# GET /b/<sha256> once (FETCH_MS deadline, no cookies, no referrer, no redirects).
+_LOADER_OPEN = [
+    "const open = async (b, w) => { try {",
+    f"  if (!{B64_RE}.test(b)) return null;",
+    "  const s = atob(b); let u = new Uint8Array(s.length);",
+    "  for (let i = 0; i < s.length; i++) u[i] = s.charCodeAt(i);",
+    "  u = new Uint8Array(await new Response(new Blob([u]).stream().pipeThrough(new DecompressionStream('gzip'))).arrayBuffer());",
+    "  const d = Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', u)), x => x.toString(16).padStart(2, '0')).join('');",
+    "  return d === w ? new TextDecoder('utf-8', {fatal:true}).decode(u) : null;",
+    "} catch (e) { return null; } };",
+    "const load = async w => {",
+    "  const k = 'lt-suite:js:' + w; let b = null, why = 'not-cached';",
+    "  try { b = localStorage.getItem(k); } catch (e) { why = 'storage-blocked'; }",
+    "  if (b !== null) {",
+    "    const src = await open(b, w);",
+    "    if (src !== null) return {src, use:[k, null]};",
+    "    try { const s = localStorage; if (s.getItem(k) === b) { s.removeItem(k); const a = JSON.parse(s.getItem(INDEX));",
+    "      if (s.getItem(k) === null && Array.isArray(a)) s.setItem(INDEX, JSON.stringify(a.filter(x => x !== k))); } } catch (e) {}",
+    "    why = 'cache-corrupt';",
+    "  }",
+]
+# A fetch ends as a tagged object: {text} for a 200 reply, else {error} with one of the
+# reasons below. Reply text never reaches a receipt; a status outside HTTP_CODES reads 'other'.
+HTTP_CODES = (400, 403, 404, 405, 409, 413, 421, 500)
+_LOADER_FETCH = [
+    "  let t; const ac = typeof AbortController === 'function' ? new AbortController() : null;",
+    "  const r = await Promise.race([",
+    f"    new Promise(f => {{ t = setTimeout(() => {{ ac?.abort(); f({{error:'server-timeout'}}); }}, {FETCH_MS}); }}),",
+    "    fetch(SERVER + '/b/' + w, {cache:'no-store', credentials:'omit', redirect:'error', referrerPolicy:'no-referrer', signal:ac?.signal})",
+    "      .then(x => x.status === 200 ? x.text().then(text => ({text}))",
+    f"        : {{error:'server-http-' + ({list(HTTP_CODES)}.includes(x.status) ? x.status : 'other')}})",
+    "      .catch(() => ({error:'server-unreachable'}))]);",
+    "  clearTimeout(t);",
+    "  if (typeof r.text !== 'string') return {why: why + ',' + (r.error || 'server-mismatch')};",
+    f"  if (r.text.length > {MAX_SERVED}) return {{why: why + ',server-too-large'}};",
+    "  const src = await open(r.text, w);",
+    "  return src === null ? {why: why + ',server-mismatch'} : {src, use:[k, r.text]};",
+    "};",
+]
+
+
+def _loader_text(want: str, name: str, args_js: str, pol: Mapping[str, Any], *, cacheable: bool,
+                 server: str | None, budget: int) -> str:
+    """The --cache loader: run the cached (or served) body, or reply need:'payload' with a reason."""
+    lines = [
+        "async () => {",
+        f"/* lt-suite loader for {_safe_name(name)}: page cache" + (", then body server" if server else "") + ". */",
+        f"const WANT = \"{want}\";",
+        "const miss = reason => ({ok:false, need:'payload', want:WANT.slice(0,12), reason});",
+    ]
+    if not cacheable:
+        return "\n".join(lines + ["return miss('not-cacheable');", "}"]) + "\n"
+    lines += [
+        "if (typeof DecompressionStream !== 'function') return {ok:false, fatal:'stub-no-decompression'};",
+        "const INDEX = 'lt-suite:js:index'" + (f", SERVER = {json.dumps(server)};" if server else ";"),
+    ]
+    lines += _LOADER_OPEN + (_LOADER_FETCH if server else ["  return {why};", "};"])
+    lines += [
+        "const body = await load(WANT);",
+        "if (body.src === undefined) return miss(body.why);",
+    ]
+    run = "return await (new Function('return (' + body.src + ')'))()(" + args_js + ", "
+    if server and policy_by_hash(pol):
+        _, pwant = _payload(policy_text(pol))
+        lines += [
+            f"const policy = await load(\"{pwant}\");",
+            "if (policy.src === undefined) return miss('policy-' + policy.why);",
+            run + f"JSON.parse(policy.src), {{budget:{int(budget)}, use:[body.use, policy.use]}});",
+        ]
+    else:
+        lines.append(run + f"JSON.parse({_js_string(pol)}), {{budget:{int(budget)}, use:[body.use]}});")
+    lines.append("}")
+    return "\n".join(lines) + "\n"
+
+
 def stub_text(inner: str, name: str, *, args: Mapping[str, Any] | None = None,
               policy: Mapping[str, Any] | None = None, compress: bool = True,
-              cache: bool = False, chunked: bool = False, cacheable: bool = False) -> str:
-    """Verify browser payload bytes before calling their body with fresh frozen inputs."""
+              cache: bool = False, chunked: bool = False, cacheable: bool = False,
+              server: str | None = None, budget: int = CACHE_BUDGET) -> str:
+    """Verify browser payload bytes before calling their body with fresh frozen inputs.
+
+    ``cache`` gives the loader, which carries the sha256 only. With ``server`` the loader also
+    asks the body server on a page-cache miss and names a policy longer than POLICY_INLINE_MAX
+    by its sha256; the stub then carries that policy's gzip base64 too, so the page cache holds
+    it after a fallback."""
     b64, want = _payload(inner, compress)
+    pol = dict(policy or {"mode": "block-all"})
+    args_js = f"JSON.parse({_js_string(dict(args or {}), sort_keys=False)})"
+    if cache:
+        return _loader_text(want, name, args_js, pol, cacheable=cacheable, server=server, budget=budget)
     lines = [
         "async () => {",
         f"/* Verify the {_safe_name(name)} body before running code with current inputs. */",
         f"const WANT = \"{want}\";",
-        "const KEY = 'lt-suite:js:' + WANT, INDEX = 'lt-suite:js:index';",
-        "const miss = () => ({ok:false, need:'payload', want:WANT.slice(0,12)});",
+        "const KEY = 'lt-suite:js:' + WANT;",
+        "const fail = () => ({ok:false, fatal:'stub-hash-mismatch'});",
     ]
-    if cache and not cacheable:
-        return "\n".join(lines + ["return miss();", "}"]) + "\n"
-    if cache:
+    if chunked:
         lines += [
             "let B64;",
-            "try { B64 = localStorage.getItem(KEY); } catch (e) { return miss(); }",
-            "if (B64 === null) return miss();",
-            "const fail = () => {",
-            "  try { const s = localStorage;",
-            "    if (s.getItem(KEY) !== B64) return miss();",
-            "    s.removeItem(KEY);",
-            "    if (s.getItem(KEY) === null) { const a = JSON.parse(s.getItem(INDEX));",
-            "      if (Array.isArray(a)) s.setItem(INDEX, JSON.stringify(a.filter(k => k !== KEY)));",
-            "    }",
-            "  } catch (e) {}",
-            "  return miss();",
-            "};",
+            "try { const p = globalThis.__ltSuitePayload; const a = p && p[WANT];",
+            "  if (p) delete p[WANT];",
+            "  if (!Array.isArray(a) || !a.length || a.some(s => typeof s !== 'string')) return fail();",
+            "  B64 = a.join('');",
+            "} catch (e) { return fail(); }",
         ]
     else:
-        lines += [
-            "const fail = () => ({ok:false, fatal:'stub-hash-mismatch'});",
-        ]
-        if chunked:
-            lines += [
-                "let B64;",
-                "try { const p = globalThis.__ltSuitePayload; const a = p && p[WANT];",
-                "  if (p) delete p[WANT];",
-                "  if (!Array.isArray(a) || !a.length || a.some(s => typeof s !== 'string')) return fail();",
-                "  B64 = a.join('');",
-                "} catch (e) { return fail(); }",
-            ]
-        else:
-            lines.append(f"const B64 = \"{b64}\";")
+        lines.append(f"const B64 = \"{b64}\";")
     if compress:
         lines.append("if (typeof DecompressionStream !== 'function') return {ok:false, fatal:'stub-no-decompression'};")
     lines += [
         "let bytes, src;",
         "try {",
-        "  if (typeof B64 !== 'string' || !/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(B64)) return fail();",
+        f"  if (typeof B64 !== 'string' || !{B64_RE}.test(B64)) return fail();",
         "  const bin = atob(B64);",
         "  bytes = new Uint8Array(bin.length);",
         "  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);",
@@ -742,28 +971,17 @@ def stub_text(inner: str, name: str, *, args: Mapping[str, Any] | None = None,
         "  src = new TextDecoder('utf-8', {fatal:true}).decode(bytes);",
         "} catch (e) { return fail(); }",
     ]
-    if not cache and compress and cacheable:
-        lines += [
-            "try {",
-            "  const s = localStorage, valid = k => /^lt-suite:js:[a-f0-9]{64}$/.test(k);",
-            "  s.setItem(KEY, B64);",
-            "  let a; try { a = JSON.parse(s.getItem(INDEX)); } catch (e) {}",
-            "  const entries = new Map();",
-            "  for (let i = 0; i < s.length; i++) { const k = s.key(i);",
-            "    if (valid(k)) { const v = s.getItem(k); if (v !== null) entries.set(k, v); }",
-            "  }",
-            "  a = Array.isArray(a) ? [...new Set(a.filter(k => typeof k === 'string' && valid(k) && entries.has(k)))] : [];",
-            "  for (const k of [...entries.keys()].sort()) if (!a.includes(k)) a.push(k);",
-            "  const keep = new Set([KEY, ...a.filter(k => k !== KEY).slice(-5)]);",
-            "  s.setItem(INDEX, JSON.stringify(a));",
-            "  const remove = a.filter(k => !keep.has(k));",
-            "  for (const k of remove) if (s.getItem(k) === entries.get(k)) s.removeItem(k);",
-            "  if (remove.length) s.setItem(INDEX, JSON.stringify(a.filter(k => s.getItem(k) !== null)));",
-            "} catch (e) {}",
-        ]
+    cache_arg = "null"
+    if compress and cacheable:
+        use = ["[KEY, B64]"]
+        if server and policy_by_hash(pol):
+            pb64, pwant = _payload(policy_text(pol))
+            lines.append(f"const PWANT = \"{pwant}\", PB64 = \"{pb64}\";")
+            use.append("['lt-suite:js:' + PWANT, PB64]")
+        cache_arg = f"{{budget:{int(budget)}, use:[{', '.join(use)}]}}"
     lines += [
         "return await (new Function('return (' + src + ')'))()("
-        f"JSON.parse({_js_string(dict(args or {}), sort_keys=False)}), JSON.parse({_js_string(dict(policy or {'mode': 'block-all'}))}));",
+        f"{args_js}, JSON.parse({_js_string(pol)}), {cache_arg});",
         "}",
     ]
     return "\n".join(lines) + "\n"
@@ -818,7 +1036,8 @@ def tail_return(body: str) -> str:
 def render_source(body: str, *, name: str, form: str = "expression", stub: bool = False,
                   args: Mapping[str, Any] | None = None, net: bool = False,
                   policy: Mapping[str, Any] | None = None, compress: bool = True,
-                  cache: bool = False, chunked: bool = False, cacheable: bool = False) -> str:
+                  cache: bool = False, chunked: bool = False, cacheable: bool = False,
+                  server: str | None = None, cache_budget: int = CACHE_BUDGET) -> str:
     """Rendered script text for ``body`` (a function body that ends with ``return``)."""
     if form not in FORMS:
         raise RenderRefused(EXIT_USAGE, f"form must be one of {', '.join(FORMS)}, got {form!r}")
@@ -827,7 +1046,7 @@ def render_source(body: str, *, name: str, form: str = "expression", stub: bool 
                            parameterized=stub or cache, form=form)
         if stub or cache:
             fn = stub_text(fn, name, args=args, policy=policy, compress=compress, cache=cache,
-                           chunked=chunked, cacheable=cacheable)
+                           chunked=chunked, cacheable=cacheable, server=server, budget=cache_budget)
     except (TypeError, ValueError) as exc:
         raise RenderRefused(EXIT_USAGE, f"arguments must be plain JSON values: {exc}") from None
     return _form_text(fn, form)
@@ -902,6 +1121,77 @@ def _write(out_dir: Path, name: str, text: str) -> tuple[Path, str]:
     raise RenderRefused(EXIT_USAGE, f"could not create a new file in {out_dir}")
 
 
+def body_server(cfg: "config_mod.Config | None") -> str:
+    """browser.body_server as ``http://127.0.0.1:<port>``, or "" when it is off."""
+    v = cfg.get("browser.body_server", "") if cfg is not None else ""
+    if not v:
+        return ""
+    m = SERVER_RE.match(v) if isinstance(v, str) else None
+    if not m or not 1024 <= int(m.group(1)) <= 65535:
+        raise RenderRefused(EXIT_USAGE, "browser.body_server must be http://127.0.0.1:<port> "
+                                        "with a port from 1024 to 65535")
+    return f"http://127.0.0.1:{int(m.group(1))}"
+
+
+def bodies_dir(cfg: "config_mod.Config | None", data_dir: str | os.PathLike | None = None) -> Path:
+    """``<data>/js-bodies``: the folder the body server reads."""
+    root = Path(data_dir) if data_dir is not None else store_mod.Store(cfg).data_dir
+    return Path(os.path.abspath(os.path.expanduser(str(root)))) / BODY_DIR
+
+
+def publish(directory: Path, b64: str, want: str) -> Path:
+    """Write ``<directory>/<want>.gz.b64`` for the body server and return its path.
+
+    The file holds the gzip base64 text a stub carries; ``want`` is the sha256 of the text it
+    decodes to. A regular file with the same bytes stays; anything else of that name is replaced
+    in one step by a new 0600 file, so a reader never sees half a file."""
+    if not re.fullmatch(r"[0-9a-f]{64}", want):
+        raise RenderRefused(EXIT_USAGE, f"not a sha256: {want!r}")
+    data = b64.encode("ascii")
+    private_dir(directory)
+    path = directory / f"{want}{BODY_SUFFIX}"
+    flags = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_NONBLOCK", 0) | getattr(os, "O_BINARY", 0)
+    try:
+        fd = os.open(path, flags)
+    except OSError:
+        pass
+    else:
+        if not stat.S_ISREG(os.fstat(fd).st_mode):
+            os.close(fd)
+        else:
+            with os.fdopen(fd, "rb") as fh:
+                if os.fstat(fh.fileno()).st_size == len(data) and fh.read(len(data) + 1) == data:
+                    return path
+    tmp, _ = _write(directory, f".{want[:16]}", b64)
+    try:
+        os.replace(tmp, path)
+    except BaseException:
+        try:
+            os.unlink(tmp)
+        except OSError:
+            pass
+        raise
+    return path
+
+
+def status_expect(names: list[str], *, form: str, cfg: "config_mod.Config | None") -> dict[str, str]:
+    """{name: body sha256} for cache_status: what each name's loader in ``form`` asks for."""
+    out: dict[str, str] = {}
+    for n in names:
+        if n == "model_answer" and cfg is not None and cfg.get("model_answer.read", True) is False:
+            continue
+        try:
+            path, name = resolve_target(n)
+        except RenderRefused:
+            continue
+        if not cacheable_target(path):
+            continue
+        inner = function_text(tail_return(browser_body(path)), name=name, args=None, policy=None,
+                              net=wants_net(path, name), parameterized=True, form=form)
+        out[name] = hashlib.sha256(inner.encode("utf-8")).hexdigest()
+    return out
+
+
 def render(target: str, *, form: str | None = None, stub: bool | None = None,
            args: Mapping[str, Any] | None = None, net: bool | None = None,
            plan: Mapping[str, Any] | str | os.PathLike | None = None,
@@ -935,7 +1225,8 @@ def render(target: str, *, form: str | None = None, stub: bool | None = None,
         runner = path.with_name("fill_runner.js")
         if runner.is_file():
             return render(str(runner), args={**dict(args or {}), "method": "probe"}, form=form, stub=True, net=True,
-                          plan=plan, cfg=cfg, out_dir=out_dir, cache=cache, chunk_bytes=chunk_bytes)
+                          plan=plan, cfg=cfg, out_dir=out_dir, data_dir=data_dir, cache=cache,
+                          chunk_bytes=chunk_bytes)
     net = wants_net(path, name) if net is None else bool(net)
     a: dict[str, Any] = dict(args or {})
     for k in a:
@@ -955,11 +1246,28 @@ def render(target: str, *, form: str | None = None, stub: bool | None = None,
     inst = cfg.get("lt.instance", "") if cfg is not None else ""
     policy = policy_from_plan(plan, origin or None, inst or None, check_answer_enabled=cfg.get("fill.check_answer.enabled", False))
     policy["render_wait_ms"] = cfg.get("fill.save_wait.render_wait_ms", 5000)
+    if name == "cache_status":
+        wanted = [n.strip() for n in str(a.get("names") or "").split(",") if n.strip()] or list(STATUS_NAMES)
+        a.update({"expect": status_expect(wanted, form=form, cfg=cfg), "budget": CACHE_BUDGET,
+                  "version": __version__})
     body = browser_body(path)
     cacheable = cacheable_target(path)
+    server = body_server(cfg) if stub and compress and cacheable else ""
+    published: list[str] = []
+    server_error = None
+    if server:
+        # The loader may name the body and the policy only once the server can find them.
+        try:
+            folder = bodies_dir(cfg, data_dir)
+            inner = function_text(tail_return(body), name=name, args=None, policy=None, net=net,
+                                  parameterized=True, form=form)
+            for text_ in [inner] + ([policy_text(policy)] if policy_by_hash(policy) else []):
+                published.append(str(publish(folder, *_payload(text_))))
+        except (OSError, RenderRefused) as exc:
+            server, published, server_error = "", [], str(exc)
     text = render_source(body, name=name, form=form, stub=stub, args=a, net=net, policy=policy,
                          compress=compress, cache=cache, chunked=chunk_bytes is not None,
-                         cacheable=cacheable)
+                         cacheable=cacheable, server=server or None)
     directory = out_dir_for(cfg, out_dir)
     body_hash = None
     chunks = []
@@ -976,10 +1284,14 @@ def render(target: str, *, form: str | None = None, stub: bool | None = None,
                 chunks.append({"i": n, "path": str(snippet_path), "payload_path": str(payload_path),
                                "len": len(part), "sha16": part_hash[:16]})
     out, digest = _write(directory, name, text)
-    return {"path": str(out), "sha256": digest, "form": form, "bytes": len(text.encode("utf-8")),
+    info = {"path": str(out), "sha256": digest, "form": form, "bytes": len(text.encode("utf-8")),
             "name": name, "source": str(path), "stub": stub, "net": net, "guard": policy["mode"],
             "cache": cache, "compression": ("gzip" if compress else "none") if stub else None,
-            "body_sha256": body_hash, "chunks": chunks, "cacheable": cacheable}
+            "body_sha256": body_hash, "chunks": chunks, "cacheable": cacheable,
+            "body_server": server or None, "published": published}
+    if server_error:
+        info["body_server_error"] = server_error
+    return info
 
 
 def _needs_probe() -> None:
@@ -1057,7 +1369,7 @@ def main(argv: list[str] | None = None) -> int:
     r.add_argument("--no-net", dest="net", action="store_false")
     r.add_argument("--out-dir", help="default browser.js_tmp_dir, else <OS temp>/lt-suite-js")
     r.add_argument("--config", help="config file")
-    r.add_argument("--data-dir", help="data folder (for --file)")
+    r.add_argument("--data-dir", help="data folder (for --file, and js-bodies/ with browser.body_server)")
 
     c = sub.add_parser("check-url", help="may the agent navigate to this URL?")
     c.add_argument("url")
@@ -1076,7 +1388,8 @@ def main(argv: list[str] | None = None) -> int:
     if a.cmd == "render":
         try:
             cfg = _load_cfg(a.config)
-            data_dir = store_mod.Store(cfg, data_dir=a.data_dir).data_dir if a.file else None
+            data_dir = (store_mod.Store(cfg, data_dir=a.data_dir).data_dir
+                        if a.file or a.data_dir else None)
             info = render(a.target, form=a.form, stub=a.stub, args=_parse_args(a), net=a.net,
                           plan=a.plan, cfg=cfg, out_dir=a.out_dir, file=a.file, data_dir=data_dir,
                           compress=a.compress, cache=a.cache, chunk_bytes=a.chunk_bytes)
@@ -1112,7 +1425,7 @@ def main(argv: list[str] | None = None) -> int:
         code, res = check_url(a.url, plan, origin=origin or None, instance=inst or None,
                               from_url=a.from_url)
         _emit(res)
-        if code == EXIT_USAGE:
+        if code == EXIT_USAGE or res.get("error"):
             print(f"ltjs check-url: {res.get('error')}", file=sys.stderr)
         return code
 

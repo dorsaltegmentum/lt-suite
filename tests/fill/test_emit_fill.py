@@ -69,7 +69,7 @@ def receipt_payload(kit, ticket=None):
 
 
 def fill_receipt(kit, name: str, pages: list[int], written: list[str], *, signal: str, calibrated: bool,
-                 ticket: str | None = None, doc: str = "a1a1a1a1a1a1a1a1", client: str = "c1-2-0badf00d",
+                 ticket: str | None = None, doc: str = "a1a1a1a1a1a1a1a1", client: str = "c2-2-0badf00d",
                  ack=("net", "PUT", TPL), ok: bool = True, extra_items=None, **kw) -> Path:
     rec = {"ok": ok, "module": "c1-r101", "run": 101, "mode": "fill", "doc_id": doc, "client_sig": client,
            "calibration_stale": False, "ticket": ticket,
@@ -90,7 +90,7 @@ def fill_receipt(kit, name: str, pages: list[int], written: list[str], *, signal
 
 
 def verify_receipt(kit, name: str, rows: dict[str, str], *, doc: str = "b2b2b2b2b2b2b2b2",
-                   client: str = "c1-2-0badf00d", fresh: bool = True, ticket=None) -> Path:
+                   client: str = "c2-2-0badf00d", fresh: bool = True, ticket=None) -> Path:
     return kit.write(name, {"ok": True, "module": "c1-r101", "run": 101, "mode": "fill", "doc_id": doc,
                             "client_sig": client, "fresh_load": fresh, "waited": None,
                             "observed_at": "2000-01-01T00:00:00Z",
@@ -209,6 +209,8 @@ def test_committed_capture_fills_only_the_team_quiz(kit):
                       ("answers.json", FIX / "answers/answers-c1-r104.json"),
                       ("approvals.json", FIX / "approvals/approvals-c1-r104.json")):
         shutil.copy(src, kit.tmp / name)
+    # The fixture predates measured routes; mark it as the current capture.js does.
+    kit.write("module.json", {**kit.read("module.json"), "route_source": "datakey+location"})
     kit.write("answers.json", kit.read("answers.json"))
     for extra in ([], ["--mark", "9=trat", "--answer", "Team test"]):
         r = kit.run("page_kinds.py", "mark" if extra else "classify", "--module", "module.json", "--answers", "answers.json", *extra)
@@ -256,6 +258,104 @@ def test_binding_to_the_capture(kit, emit_mod):
     sm["question_digest"] = emit_mod.question_digest(mod)
     rc, pay, _ = kit.payload(mod, answers([drafted("p4-10")], source_module=sm))
     assert (rc, pay["notes"]) == (0, [])
+
+
+# ---- routes after a Background page ------------------------------------------------------------------
+@pytest.mark.parametrize("measured", [True, False], ids=["measured", "legacy"])
+def test_plan_carries_background_routes_or_refuses_them(kit, measured):
+    # Lt serves the Background page at /run/background and flow page N at /run/page/N-1. A
+    # capture without route_source numbered by content ordinal, so its plan maps nothing.
+    cfg(kit)
+    run = f"{ORIGIN}/i/inst0001/student/courses/1/runs/101/run"
+    mod = module([(1, []), (2, [item("p2-10", "10", "text-response", "text-question")]),
+                  (3, [item("p3-20", "20", "text-response", "text-question")])])
+    mod["pages"][0]["title"] = "Background Information"
+    if measured:
+        mod["route_source"] = "datakey+location"
+        mod["pages"][0].update({"page_no": None, "route": "background", "url": f"{run}/background"})
+        for p in mod["pages"][1:]:
+            p.update({"page_no": p["page_index"] - 1, "url": f"{run}/page/{p['page_index'] - 1}"})
+    rc, _, out = kit.payload(mod, answers([drafted("p2-10"), drafted("p3-20")]))
+    assert rc == 0, out
+    plan = kit.read("out/plan.json")
+    r = kit.run("_shared/ltcore/ltjs.py", "check-url", "--plan", "out/plan.json", f"{run}/page/1")
+    if measured:
+        assert (plan["route_source"], plan["route_refusal"]) == ("datakey+location", None)
+        assert [p["url"] for p in plan["pages"]] == [f"{run}/page/1", f"{run}/page/2"]
+        assert (r.returncode, json.loads(r.stdout)["page_index"]) == (0, 2)
+        man = scripts(kit)
+        header = (kit.tmp / "out" / man["calls"][0]["name"]).read_text(encoding="utf-8")
+        assert f"Run the rendered file on {run}/page/1 " in header, "flow page 2 is /run/page/1"
+    else:
+        assert plan["route_refusal"] and "Re-capture" in plan["route_refusal"]
+        assert all(p["url"] is None and p["page_no"] is None for p in plan["pages"] + plan["flow_pages"])
+        assert (r.returncode, json.loads(r.stdout)["reason"]) == (1, "recapture-needed")
+
+
+def test_a_job_on_the_background_page_names_it_for_the_location_rail(kit, emit_mod):
+    # fill_lib.js accepts /run/background only for the plan's Background page.
+    cfg(kit)
+    run = f"{ORIGIN}/i/inst0001/student/courses/1/runs/101/run"
+    mod = module([(1, [item("p1-10", "10", "text-response", "text-question")]),
+                  (2, [item("p2-20", "20", "text-response", "text-question")])])
+    mod["route_source"] = "datakey+location"
+    mod["pages"][0].update({"page_no": None, "route": "background", "url": f"{run}/background"})
+    mod["pages"][1].update({"page_no": 1, "url": f"{run}/page/1"})
+    rc, pay, out = kit.payload(mod, answers([drafted("p1-10"), drafted("p2-20")]))
+    assert rc == 0, out
+    assert emit_mod.background_page(pay) == 1
+    sw = {"quiet_ms": 300, "max_ms": 20000, "fallback_ms": 4000, "render_wait_ms": 5000, "calibration": None}
+    assert emit_mod.cfg_page(pay, sw, "1", pay["pages"]["1"])["background_page"] == 1
+    assert emit_mod.cfg_page(pay, sw, "2", pay["pages"]["2"])["background_page"] == 1
+    man = scripts(kit)
+    first = (kit.tmp / "out" / man["calls"][0]["name"]).read_text(encoding="utf-8")
+    assert f"Run the rendered file on {run}/background " in first
+    # A refused plan maps no url, so it names no Background page.
+    del mod["route_source"]
+    rc, pay, out = kit.payload(mod, answers([drafted("p1-10"), drafted("p2-20")]), out="legacy")
+    assert rc == 0, out
+    assert emit_mod.background_page(pay) is None
+
+
+@pytest.mark.parametrize("checkpoint", [True, False], ids=["pre-reading-checkpoint", "no-boundary"])
+def test_every_legacy_capture_gets_a_refused_fill_plan(kit, checkpoint):
+    # Without route_source nothing reliably marks a Background page: a first page titled
+    # "Pre-reading" looks like any other. Every such capture's plan maps no route.
+    from ltcore import ltjs
+    cfg(kit)
+    run = f"{ORIGIN}/i/inst0001/student/courses/1/runs/101/run"
+    mod = module([(1, [item("p1-10", "10", "text-response", "text-question")]),
+                  (2, [item("p2-20", "20", "text-response", "text-question")]), (3, [])])
+    mod["pages"][0]["title"] = "Pre-reading"
+    if checkpoint:
+        mod["pages"][2].update({"is_checkpoint": True, "page_no": None, "url": None, "route": "checkpoint",
+                                "checkpoint": {"index": 1, "committed": False}})
+        mod["commit_boundaries"]["checkpoint_pages"] = [3]
+    rc, _, out = kit.payload(mod, answers([drafted("p1-10"), drafted("p2-20")]))
+    assert rc == 0, out
+    plan = kit.read("out/plan.json")
+    assert "route_source" in plan and plan["route_source"] is None
+    assert plan["route_refusal"] == ltjs.LEGACY_CAPTURE
+    assert plan["checkpoint_pages"] == ([3] if checkpoint else [])
+    assert all(p["url"] is None and p["page_no"] is None for p in plan["pages"] + plan["flow_pages"])
+    for frm, to in ((None, "page/1"), ("page/1", "page/2"), (None, "background")):
+        r = kit.run("_shared/ltcore/ltjs.py", "check-url", "--plan", "out/plan.json",
+                    *(["--from", f"{run}/{frm}"] if frm else []), f"{run}/{to}")
+        assert (r.returncode, json.loads(r.stdout)["reason"]) == (1, "recapture-needed"), (frm, to)
+
+
+def test_plan_fields_always_write_route_source(emit_mod):
+    # A plan from before measured routes has no route_source key. Its fill and check plans
+    # carry the key as null and refuse the routes with a rebuild message.
+    from ltcore import ltjs
+    pl = {"module_id": "c1-r101", "boundary_map": {"never_navigated": []}, "stop_before_page": None,
+          "never_navigated": [], "pages": [{"page_index": 1, "page_no": 1, "url": "x"}]}
+    out = emit_mod.plan_fields(pl, {"pages": []})
+    assert (out["route_source"], out["route_refusal"]) == (None, ltjs.LEGACY_PLAN)
+    out = emit_mod.plan_fields({**pl, "route_source": None}, {"pages": []})
+    assert (out["route_source"], out["route_refusal"]) == (None, ltjs.LEGACY_CAPTURE)
+    out = emit_mod.plan_fields({**pl, "route_source": "datakey+location"}, {"pages": []})
+    assert (out["route_source"], out["route_refusal"]) == ("datakey+location", None)
 
 
 # ---- plan, pages and types ---------------------------------------------------------------------------
@@ -365,14 +465,14 @@ def set_calibration(kit, **records) -> None:
 
 
 def test_pages_per_call_gate_with_a_cross_page_record(eight):
-    set_calibration(eight, save={"source": "net", "method": "PUT", "path_template": TPL, "client_sig": "c1-2-0badf00d"},
+    set_calibration(eight, save={"source": "net", "method": "PUT", "path_template": TPL, "client_sig": "c2-2-0badf00d"},
                     cross_page={"ok": True, "pages": [1, 2]})
     man = scripts(eight, "--pages-per-call", "3")
     assert fills(man) == [[str(p) for p in g] for g in (range(1, 4), range(4, 7), range(7, 9))]
     assert man["calibrated"] is True and man["tickets"] == []
     body = (eight.tmp / "out" / "_fill-c1-r101-b1.js").read_text(encoding="utf-8")
     assert "LtFillLib.fillPages(" in body and '"batch_pages": [1, 2, 3]' in body
-    assert '"client_sig": "c1-2-0badf00d"' in body and '"version": 1' in body
+    assert '"client_sig": "c2-2-0badf00d"' in body and '"version": 1' in body
     # No flag: fill.max_pages_per_call, 5 by default.
     assert fills(scripts(eight)) == [[str(p) for p in g] for g in (range(1, 6), range(6, 9))]
 
@@ -403,7 +503,7 @@ def test_auto_calibration_success(eight):
     st = calibration(eight)
     save = st["save"]
     assert {k: save[k] for k in ("version", "source", "method", "path_template", "client_sig", "ticket")} == \
-        {"version": 1, "source": "net", "method": "PUT", "path_template": TPL, "client_sig": "c1-2-0badf00d",
+        {"version": 1, "source": "net", "method": "PUT", "path_template": TPL, "client_sig": "c2-2-0badf00d",
          "ticket": out["ticket"]}
     assert len(save["receipt_sha256"]) == 64
     assert st["pending"] == []
@@ -497,7 +597,7 @@ def test_an_unidentified_save_keeps_the_fallback_and_says_why(eight):
 
 
 def test_a_model_save_record_without_an_endpoint_counts_as_absent(eight):
-    set_calibration(eight, save={"source": "model", "client_sig": "c1-2-0badf00d"},
+    set_calibration(eight, save={"source": "model", "client_sig": "c2-2-0badf00d"},
                     cross_page={"ok": True, "pages": [1, 2]})
     man = scripts(eight, "--pages-per-call", "3")
     assert man["calibrated"] is False and fills(man) == [[str(p)] for p in range(1, 9)]
@@ -506,7 +606,7 @@ def test_a_model_save_record_without_an_endpoint_counts_as_absent(eight):
 
 
 def test_a_batch_refused_for_a_record_without_an_endpoint_drops_it(eight):
-    set_calibration(eight, save={"source": "net", "method": "PUT", "path_template": TPL, "client_sig": "c1-2-0badf00d"},
+    set_calibration(eight, save={"source": "net", "method": "PUT", "path_template": TPL, "client_sig": "c2-2-0badf00d"},
                     cross_page={"ok": True, "pages": [1, 2]})
     f = fill_receipt(eight, "r/fill-b1.json", [1, 2, 3], [], signal=None, calibrated=True, ok=False,
                      fatal="calibration-stale", calibration_stale=True, stale_reason="no-endpoint")
@@ -519,7 +619,7 @@ def test_a_batch_refused_for_a_record_without_an_endpoint_drops_it(eight):
 
 
 def test_a_calibrated_unconfirmed_call_records_the_unidentified_saves(eight):
-    set_calibration(eight, save={"source": "model", "method": "PUT", "path_template": TPL, "client_sig": "c1-2-0badf00d"},
+    set_calibration(eight, save={"source": "model", "method": "PUT", "path_template": TPL, "client_sig": "c2-2-0badf00d"},
                     cross_page={"ok": True, "pages": [1, 2]})
     scripts(eight)
     written = ["p1-10", "p2-20", "p3-30"]
@@ -619,7 +719,7 @@ def test_cross_page_pending_keys_cannot_enable_larger_batches(eight):
 
 
 def test_a_later_calibrated_miss_resets(eight):
-    set_calibration(eight, save={"source": "net", "method": "PUT", "path_template": TPL, "client_sig": "c1-2-0badf00d"},
+    set_calibration(eight, save={"source": "net", "method": "PUT", "path_template": TPL, "client_sig": "c2-2-0badf00d"},
                     cross_page={"ok": True, "pages": [1, 2]})
     scripts(eight)
     f = fill_receipt(eight, "r/fill-b1.json", [1, 2, 3, 4, 5], [f"p{p}-{p * 10}" for p in range(1, 6)],
@@ -634,7 +734,7 @@ def test_a_later_calibrated_miss_resets(eight):
 def test_a_later_pending_key_resets_batching(eight):
     """An incomplete acknowledgement must revoke an existing cross-page approval."""
     set_calibration(eight, save={"source": "model", "method": "PUT", "path_template": TPL,
-                                 "client_sig": "c1-2-0badf00d"}, cross_page={"ok": True, "pages": [1, 2]})
+                                 "client_sig": "c2-2-0badf00d"}, cross_page={"ok": True, "pages": [1, 2]})
     f = fill_receipt(eight, "r/fill-b1.json", [1, 2], ["p1-10", "p2-20"], signal="model",
                      calibrated=True, keys_saved=1, keys_pending=1, model_unidentified=1)
     v = verify_receipt(eight, "r/verify-b1.json", {"p1-10": "ok", "p2-20": "ok"})
@@ -645,11 +745,11 @@ def test_a_later_pending_key_resets_batching(eight):
 
 
 def test_a_changed_client_build_drops_the_records(eight):
-    set_calibration(eight, save={"source": "net", "method": "PUT", "path_template": TPL, "client_sig": "c1-2-0badf00d"},
+    set_calibration(eight, save={"source": "net", "method": "PUT", "path_template": TPL, "client_sig": "c2-2-0badf00d"},
                     cross_page={"ok": True, "pages": [1, 2]})
     f = fill_receipt(eight, "r/fill-p1.json", [1], ["p1-10"], signal="fallback", calibrated=False,
-                     client="c1-2-feedface", calibration_stale=True)
-    v = verify_receipt(eight, "r/verify-p1.json", {"p1-10": "ok"}, client="c1-2-feedface")
+                     client="c2-2-feedface", calibration_stale=True)
+    v = verify_receipt(eight, "r/verify-p1.json", {"p1-10": "ok"}, client="c2-2-feedface")
     record(eight, [f], v)
     st = calibration(eight)
     assert "save" not in st and "cross_page" not in st
@@ -820,10 +920,10 @@ def test_dialog_args_carry_the_config_waits_and_the_dialog_record(eight):
 
 # ---- findings of the second review ------------------------------------------------------------------------
 def test_a_client_build_change_between_fill_and_verify_drops_the_records(eight):
-    set_calibration(eight, save={"source": "net", "method": "PUT", "path_template": TPL, "client_sig": "c1-2-0badf00d"},
+    set_calibration(eight, save={"source": "net", "method": "PUT", "path_template": TPL, "client_sig": "c2-2-0badf00d"},
                     cross_page={"ok": True, "pages": [1, 2]})
     f = fill_receipt(eight, "r/fill-b1.json", [1, 2], ["p1-10", "p2-20"], signal="net", calibrated=True)
-    v = verify_receipt(eight, "r/verify-b1.json", {"p1-10": "ok", "p2-20": "ok"}, client="c1-2-feedface")
+    v = verify_receipt(eight, "r/verify-b1.json", {"p1-10": "ok", "p2-20": "ok"}, client="c2-2-feedface")
     record(eight, [f], v)
     st = calibration(eight)
     assert "save" not in st and "cross_page" not in st
@@ -834,8 +934,8 @@ def test_a_client_change_voids_pending_tickets(eight):
     man = scripts(eight)
     t = ticket_of(man, "save")["ticket"]
     stale = fill_receipt(eight, "r/fill-p2.json", [2], ["p2-20"], signal="fallback", calibrated=False,
-                         client="c1-2-feedface", calibration_stale=True)
-    v2 = verify_receipt(eight, "r/verify-p2.json", {"p2-20": "ok"}, client="c1-2-feedface")
+                         client="c2-2-feedface", calibration_stale=True)
+    v2 = verify_receipt(eight, "r/verify-p2.json", {"p2-20": "ok"}, client="c2-2-feedface")
     record(eight, [stale], v2)
     assert calibration(eight)["pending"] == []
     f = fill_receipt(eight, "r/fill-p1.json", [1], ["p1-10"], signal="fallback", calibrated=False, ticket=t)
@@ -860,7 +960,7 @@ def test_an_incomplete_cross_page_trial_is_inconclusive(eight):
 
 
 def test_an_explicit_calibration_that_fails_drops_save_and_batching(eight):
-    set_calibration(eight, save={"source": "net", "method": "PUT", "path_template": TPL, "client_sig": "c1-2-0badf00d"},
+    set_calibration(eight, save={"source": "net", "method": "PUT", "path_template": TPL, "client_sig": "c2-2-0badf00d"},
                     cross_page={"ok": True, "pages": [1, 2]})
     r = eight.emit("calibrate", "--module", "module.json", "--answers", "answers.json", "--item", "p3-30",
                    "--out", "out", "--no-render")
@@ -879,7 +979,7 @@ def test_an_explicit_calibration_that_fails_drops_save_and_batching(eight):
 
 
 def test_an_uncalibrated_call_that_misses_stops_batching(eight):
-    set_calibration(eight, save={"source": "net", "method": "PUT", "path_template": TPL, "client_sig": "c1-2-0badf00d"},
+    set_calibration(eight, save={"source": "net", "method": "PUT", "path_template": TPL, "client_sig": "c2-2-0badf00d"},
                     cross_page={"ok": True, "pages": [1, 2]})
     # A service worker made LtNet fall back: calibrated false, and the wait ended unconfirmed.
     f = fill_receipt(eight, "r/fill-b1.json", [1, 2], ["p1-10", "p2-20"], signal="unconfirmed", calibrated=False)
@@ -891,7 +991,7 @@ def test_an_uncalibrated_call_that_misses_stops_batching(eight):
 
 
 def test_a_failed_write_that_a_fresh_load_misses_drops_save(eight):
-    set_calibration(eight, save={"source": "net", "method": "PUT", "path_template": TPL, "client_sig": "c1-2-0badf00d"},
+    set_calibration(eight, save={"source": "net", "method": "PUT", "path_template": TPL, "client_sig": "c2-2-0badf00d"},
                     cross_page={"ok": True, "pages": [1, 2]})
     f = fill_receipt(eight, "r/fill-b1.json", [1, 2], ["p1-10"], signal="net", calibrated=True,
                      extra_items=[{"item": "p2-20", "result": "write-mismatch", "page": 2}])
@@ -924,7 +1024,7 @@ def test_inline_fill_and_verify_share_cached_runner_without_payload_data(eight):
     for call in calls:
         loader = Path(call['rendered']).read_text(encoding='utf-8')
         assert len(loader.encode()) < 15000
-        assert 'localStorage.getItem(KEY)' in loader
+        assert "localStorage.getItem(k)" in loader and "need:'payload'" in loader
         fallback = call['runner_payload']
         bodies.add(fallback['body_sha256'])
         packed = ''.join(Path(p['payload_path']).read_text(encoding='utf-8') for p in fallback['chunks'])
@@ -935,3 +1035,103 @@ def test_inline_fill_and_verify_share_cached_runner_without_payload_data(eight):
         assert call.get('ticket', 'T-secret') not in body
         assert not re.search(r'"html"\s*:', body)
     assert len(bodies) == 1
+
+
+# ---- the core-bundle client_sig and the run-data receipts (0.2.3 c1 records, run-data PUT) -------------
+OLD_SIG = "c1-17-86ae930c"
+
+
+def test_scripts_retire_a_save_record_bound_to_the_old_signature_once(eight):
+    set_calibration(eight, save={"source": "net", "method": "PUT", "path_template": TPL, "client_sig": OLD_SIG},
+                    cross_page={"ok": True, "pages": [1, 2], "client_sig": OLD_SIG})
+    man = scripts(eight, "--pages-per-call", "3")
+    st = calibration(eight)
+    assert "save" not in st and "cross_page" not in st
+    assert [h["event"] for h in st["history"]] == ["client-sig-retired"]
+    assert OLD_SIG in st["history"][0]["detail"] and "page chunks" in st["history"][0]["detail"]
+    assert man["calibrated"] is False and ticket_of(man, "save")["pages"] == [1]
+    assert "the save record was dropped" in man["stdout"]
+    scripts(eight, "--pages", "2-8")
+    assert [h["event"] for h in calibration(eight)["history"]] == ["client-sig-retired"]
+
+
+def test_a_save_record_without_a_client_sig_is_retired(eight, emit_mod):
+    state = {"save": {"version": 1, "source": "net", "method": "PUT", "path_template": TPL},
+             "pending": [{"ticket": "T-1", "kind": "cross_page"}, {"ticket": "T-2", "kind": "save"}]}
+    assert "no Lt client build" in emit_mod.retire_old_records(state)
+    assert "save" not in state and state["history"][-1]["event"] == "client-sig-retired"
+    assert [t["ticket"] for t in state["pending"]] == ["T-2"]
+    kept = {"save": {"version": 1, "source": "net", "method": "PUT", "path_template": TPL, "client_sig": "c2-2-0badf00d"}}
+    assert emit_mod.retire_old_records(kept) is None and "history" not in kept
+    assert emit_mod.calibration_state({ORIGIN: {"save": dict(kept["save"], client_sig=OLD_SIG)}}, ORIGIN)[0] is None
+
+
+def test_record_retires_an_old_save_record_before_applying_receipts(eight):
+    set_calibration(eight, save={"source": "net", "method": "PUT", "path_template": TPL, "client_sig": OLD_SIG})
+    f = fill_receipt(eight, "r/fill-p1.json", [1], ["p1-10"], signal="fallback", calibrated=False)
+    v = verify_receipt(eight, "r/verify-p1.json", {"p1-10": "ok"})
+    r = record(eight, [f], v)
+    st = calibration(eight)
+    assert "save" not in st
+    assert [h["event"] for h in st["history"]].count("client-sig-retired") == 1
+    assert "client-changed" not in [h["event"] for h in st["history"]]
+    assert "the save record was dropped" in r.stdout
+
+
+def test_a_save_ticket_on_old_signature_receipts_does_not_calibrate(eight):
+    man = scripts(eight)
+    t = ticket_of(man, "save")["ticket"]
+    f = fill_receipt(eight, "r/fill-p1.json", [1], ["p1-10"], signal="fallback", calibrated=False, ticket=t, client=OLD_SIG)
+    v = verify_receipt(eight, "r/verify-p1.json", {"p1-10": "ok"}, client=OLD_SIG)
+    record(eight, [f], v)
+    st = calibration(eight)
+    assert "save" not in st and st["history"][-1]["event"] == "save-not-calibrated"
+    assert "old client_sig" in st["history"][-1]["detail"]
+
+
+def test_a_fill_page_without_a_build_marker_keeps_the_records(eight):
+    set_calibration(eight, save={"source": "net", "method": "PUT", "path_template": TPL, "client_sig": "c2-2-0badf00d"},
+                    cross_page={"ok": True, "pages": [1, 2], "client_sig": "c2-2-0badf00d"})
+    f = fill_receipt(eight, "r/fill-p1.json", [1], ["p1-10"], signal="fallback", calibrated=False, client=None,
+                     calibration_stale=True, stale_reason="client-unknown")
+    v = verify_receipt(eight, "r/verify-p1.json", {"p1-10": "ok"})
+    r = record(eight, [f], v)
+    st = calibration(eight)
+    assert st["save"]["client_sig"] == "c2-2-0badf00d" and st["cross_page"]["ok"] is True
+    assert "client-changed" not in [h["event"] for h in st.get("history", [])]
+    assert "no Lt build marker" in r.stdout
+
+
+def test_record_keeps_weak_key_counts_and_names_them_in_the_history(eight):
+    man = scripts(eight)
+    t = ticket_of(man, "save")["ticket"]
+    diag = [{"method": "PUT", "path_template": "/i/:id/v/2.0/api/student/courses/:id/runs/:id/data", "status": 200,
+             "count": 1, "model_sync": False}]
+    f = fill_receipt(eight, "r/fill-p1.json", [1], ["p1-10"], signal="fallback", calibrated=False, ticket=t,
+                     ack=(None, None, None), keys_saved=0, keys_pending=1, keys_weak=1, net_matched=0, save_diag=diag)
+    v = verify_receipt(eight, "r/verify-p1.json", {"p1-10": "ok"})
+    record(eight, [f], v)
+    row = json.loads((eight.run_dir() / "save-waits.json").read_text(encoding="utf-8"))["save_waits"][0]
+    assert (row["keys_weak"], row["net_matched"], row["save_diag"]) == (1, 0, diag)
+    detail = calibration(eight)["history"][-1]["detail"]
+    assert "1 key(s) shorter than 6 characters" in detail and "0 request(s) named a key" in detail
+
+
+def test_inline_scripts_publish_the_runner_for_the_body_server_in_the_data_folder(kit):
+    cfg(kit, 'body_server = "http://127.0.0.1:8734"\n')
+    rc, pay, out = kit.payload(module(text_pages(2)), answers([drafted("p1-10"), drafted("p2-20")]))
+    assert rc == 0, out
+    result = kit.emit('scripts', '--out', 'out', '--stub')
+    assert result.returncode == 0, result.stdout + result.stderr
+    folder = kit.data / 'js-bodies'
+    for call in kit.read('out/scripts.json')['calls']:
+        want = call['runner_payload']['body_sha256']
+        assert (folder / f'{want}.gz.b64').is_file()
+        loader = Path(call['rendered']).read_text(encoding='utf-8')
+        assert 'SERVER = "http://127.0.0.1:8734"' in loader and want in loader
+    import base64
+    import gzip
+    for f in folder.iterdir():
+        assert f.name.endswith('.gz.b64')
+        text = gzip.decompress(base64.b64decode(f.read_bytes())).decode()
+        assert 'Draft p1-10' not in text and 'Draft p2-20' not in text

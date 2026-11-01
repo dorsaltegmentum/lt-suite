@@ -59,6 +59,13 @@
    ],
    "default": "view-model"
   },
+  "route_source": {
+   "type": "string",
+   "enum": [
+    "datakey+location"
+   ],
+   "description": "Marks a capture whose page routes capture.js measured: each url and page_no agrees with the page's dataKey and with the URL of the page Lt painted. A capture without it numbered URLs by content ordinal, one page late after a Background page, and nothing else in it reliably marks that page; check-url, the guard and the media and fill plans refuse every such capture's routes (recapture-needed). Export and answer drafting still read it."
+  },
   "lesson": {
    "type": "object",
    "additionalProperties": false,
@@ -299,14 +306,14 @@
       "integer",
       "null"
      ],
-     "description": "URL-addressable page number (\u2026/run/page/<n>). NULL for Report and Checkpoint pages. Lt routes Checkpoint pages as /run/checkpoint/<n>, and the page menu leaves them unnumbered. These numbering schemes differ."
+     "description": "URL-addressable page number (\u2026/run/page/<n>). NULL for Report and Checkpoint pages. Lt routes Checkpoint pages as /run/checkpoint/<n>, and the page menu leaves them unnumbered. These numbering schemes differ. NULL also for a Background page, which Lt serves at /run/background before /run/page/1, and, in a capture with route_source, for a content page whose route capture could not confirm (its url is null too)."
     },
     "route": {
      "type": [
       "string",
       "null"
      ],
-     "description": "Non-null only for pages with their own route: 'complete' for the Report page, 'checkpoint' for a Checkpoint page. Content pages address by /run/page/<n> and carry null."
+     "description": "Non-null only for pages with their own route: 'complete' for the Report page, 'checkpoint' for a Checkpoint page, 'background' for a Background page (first content page, url \u2026/run/background, route_source required). Other content pages address by /run/page/<n> and carry null."
     },
     "url": {
      "type": [

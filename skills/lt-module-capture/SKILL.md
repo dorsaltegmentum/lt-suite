@@ -154,6 +154,15 @@ entry for the reference) and `summary`. How to read `transport[]`:
 | `route: "download"` | the browser received the file as a download; go to step 4 |
 | `route: "skipped"` | `module_only` was set, so the reference was held back on purpose |
 
+`summary.routes` reports the page routes. Lt serves a Background page at `/run/background`
+and numbers the content pages after it from `/run/page/1`, so flow page N sits at
+`/run/page/N-1`. Capture takes each URL number from the page's `dataKey` and checks it against
+the tab's URL and the page Lt painted (`current()`). `offset` is 1 after a Background page and
+0 without one; `background_page` is its `page_index`. A page in `unverified_pages` got no
+`url` and no `page_no`, so `check-url` refuses it. When every page is unverified, the tab's
+URL and the painted page disagree: reload the content page and capture again. The capture
+carries `route_source: "datakey+location"`; tools read routes only from captures with it.
+
 **A call that hangs until the tool times out does not mean the page froze.** Before a public
 site may reach a local address, Chromium browsers ask the user once per site; the prompt
 asks about access to other apps and services. The first request to the sink waits for that
@@ -206,7 +215,9 @@ python3 "$SKILL_DIR/scripts/media_plan.py" <module_id>
 
 This writes `<data>/runs/<module_id>/media-plan.json` and prints the pages to visit: content
 pages ahead of the first live Checkpoint that have an image key in their items or content.
-Visit them in the printed order. On each page:
+Each line carries the captured route, `/run/background` for a Background page. A line with
+`no checked url` has no measured route. A `routes refused:` line means the capture predates
+measured routes (no `route_source`): capture the module again before visiting any page. Visit them in the printed order. On each page:
 
 1. Run `python3 "$SKILL_DIR/scripts/_shared/ltcore/ltjs.py" check-url --plan <media-plan.json> <url>`
    and continue only when it exits 0.
@@ -215,6 +226,9 @@ Visit them in the printed order. On each page:
    Inline tools follow the protocol in `references/_shared/browser-adapters.md` for every guard call.
 3. Render `fetch_media` with the capture's `--arg` pairs plus `--plan <media-plan.json>` and
    run it. The receipt marks each attempted image `saved` or `failed` and lists `keys_not_fetched`.
+   `fatal: lt-not-painted` means Lt painted no page within `fill.save_wait.render_wait_ms`, and
+   nothing was fetched. Stop and report it; when the user agrees, navigate to the page again
+   and run the guard as the next call.
 4. If `pending_keys` contains keys, stay on this page and repeat with `--arg keys=<comma-separated-keys>`.
    Keep the same arguments and plan, replacing `keys` with each new receipt's pending list.
    Continue until `pending_keys` is empty before visiting the next planned page.
@@ -246,8 +260,11 @@ python3 -c "import json,sys,collections as c;d=json.load(open(sys.argv[1]));i=[x
 The report then lists: page count; items per type; answered count; the boundary map;
 `unmapped` items; any page flagged `rat_candidate`; items whose
 `target_geometry.presented_ratio` is null; from the summary, `content_unread`,
-`table_author_grids`, `hotspot_panels` and `notebook_items`; the question digest; and image
+`table_given_grids`, `hotspot_panels` and `notebook_items`; the question digest; and image
 keys still missing. Everything the capture could not read is named in the report.
+`table_given_grids` counts table items by the status of the grid the author supplied.
+Receipts from 0.2.3 and earlier name it `table_author_grids`; read either name. One browser
+tool's output filter blocks values whose field names contain "author", so the new name avoids it.
 
 **Read `checkpoint_pages` together with `checkpoints`.** `checkpoint_pages` holds the doors
 that are still closed. `checkpoints` holds every checkpoint in the module, committed ones
@@ -269,6 +286,9 @@ the model answer when `model_answer.read` in the config allows it.
 | The browser call times out while the page still answers other scripts | The local-network prompt is open and waiting for the user. |
 | `ok: false` with a reason about no Lt lesson | Wrong tab, or Lt's Knockout view model is not ready. The URL should contain `/run/page/<n>`. |
 | `ok: false`, `fatal: "forbidden-route"` | The guard refused a completion, checkpoint, preview or report page. Switch to a content page. |
+| `summary.routes.unverified_pages` lists every content page | The tab's URL and the page Lt painted disagree, or Lt gave no `dataKey`. Reload the content page and capture again; a wrong route can cross a Checkpoint. |
+| `check-url` refuses with `recapture-needed` | The capture has no `route_source`, or the plan has no `route_source` key. Its `/run/page/<n>` URLs are one page late after a Background page, and nothing else marks one. Capture the module again with `--arg module_only=true` (one read-only call), then rebuild the plan. |
+| `check-url` exits 2 with "both claim" or "numbered pages reach it" | Two plan pages claim one URL, or a URL number exceeds the pages before it. Capture again; never edit the routes by hand. |
 | `ok: false`, `fatal: "stub-hash-mismatch"` | The rendered text changed on its way to the page. Render again and pass the file as is. |
 | The recount differs from Lt's page list | Some panel shape is not handled by the walk. Track that down before relying on the rest of the file. |
 | Stimulus text is nearly empty across the module | Author prose sits in `content.theText`; the field `text` is empty, and an empty string raises no error. |

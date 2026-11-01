@@ -14,8 +14,8 @@ CLI:
         [--model-answer-read true|false] [--quiet]
 
 The schema is inferred from the file name when not given:
-    module*.json | answers*.json | reference*.json | fill-report*.json | run*.json |
-    approvals*.json
+    module*.json | answers*.json | reference*.json | fill-report*.json | fill-notes*.json |
+    run*.json | approvals*.json
 
 --module        cross-checks a fill report or an answers file against its capture.
 --approvals     checks approval ids (single-attempt approvals and waivers) against the
@@ -60,6 +60,7 @@ NEEDS = [
     "schemas/reference.schema.json",
     "schemas/run.schema.json",
     "schemas/fill-report.schema.json",
+    "schemas/fill-notes.schema.json",
     "schemas/approvals.schema.json",
     "schemas/page-kinds.schema.json",
     "schemas/reconciled.schema.json",
@@ -71,6 +72,7 @@ SCHEMA_BY_PREFIX = [
     ("reconciled", "reconciled.schema.json"),
     ("page-kinds", "page-kinds.schema.json"),
     ("fill-report", "fill-report.schema.json"),
+    ("fill-notes", "fill-notes.schema.json"),
     ("module", "module.schema.json"),
     ("answers", "answers.schema.json"),
     ("reference", "reference.schema.json"),
@@ -267,12 +269,20 @@ def _policy_error(what: str, ctx: _Ctx) -> str:
 
 # --- module.json ---------------------------------------------------------------------
 
+def _url_path(url) -> str:
+    return url.split("?")[0].split("#")[0].rstrip("/") if isinstance(url, str) else ""
+
+
 def rails_module(doc, ctx: _Ctx | None = None):
     errs = []
     pages = doc.get("pages", [])
     reports = [p for p in pages if p.get("is_report_page")]
     if len(reports) > 1:
         errs.append(f"{len(reports)} pages flagged is_report_page; a run has at most one")
+    # route_source marks routes capture.js measured from dataKey, location and current().
+    # Without it the capture numbered URLs by content ordinal and has no Background route.
+    measured = doc.get("route_source") is not None
+    content_pages = [p for p in pages if not p.get("is_report_page") and not p.get("is_checkpoint")]
     for p in pages:
         tag = f"page_index {p.get('page_index')}"
         if p.get("is_report_page"):
@@ -305,13 +315,51 @@ def rails_module(doc, ctx: _Ctx | None = None):
                 errs.append(f"{tag}: is_checkpoint with no checkpoint.committed boolean; whether "
                             f"the door is already shut tells a reader if the tail of the run "
                             f"is hidden")
-        else:
-            if not isinstance(p.get("page_no"), int):
-                errs.append(f"{tag}: content page has no integer page_no")
-            if p.get("route") is not None:
-                errs.append(f"{tag}: only the report and checkpoint pages have their own route")
+        elif p.get("route") == "background":
+            # Lt serves a Background page at /run/background and gives it no page number;
+            # the content pages after it start at /run/page/1.
+            if not measured:
+                errs.append(f"{tag}: route 'background' in a capture without route_source; only "
+                            f"measured routes can name the Background page")
+            if p.get("page_no") is not None:
+                errs.append(f"{tag}: Background page carries page_no {p['page_no']}; Lt serves "
+                            f"it at /run/background, with no /page/<n> address")
+            if p.get("url") is not None and not _url_path(p["url"]).endswith("/run/background"):
+                errs.append(f"{tag}: Background page url {p['url']!r} is not /run/background")
+            if content_pages[0] is not p:
+                errs.append(f"{tag}: Background page is not the first content page; Lt shows "
+                            f"it before /run/page/1")
             if p.get("checkpoint") is not None:
                 errs.append(f"{tag}: non-checkpoint page carries a checkpoint block")
+        else:
+            if p.get("page_no") is None and measured:
+                # Capture could not confirm this page's route, so it recorded none.
+                if p.get("url") is not None:
+                    errs.append(f"{tag}: content page without page_no carries url {p['url']!r}")
+            elif not isinstance(p.get("page_no"), int):
+                errs.append(f"{tag}: content page has no integer page_no")
+            elif p.get("url") is not None and not _url_path(p["url"]).endswith(f"/run/page/{p['page_no']}"):
+                errs.append(f"{tag}: url {p['url']!r} does not end in /run/page/{p['page_no']}")
+            if p.get("route") is not None:
+                errs.append(f"{tag}: only the report, checkpoint and Background pages have their "
+                            f"own route")
+            if p.get("checkpoint") is not None:
+                errs.append(f"{tag}: non-checkpoint page carries a checkpoint block")
+    # Two pages on one URL, or a number past the numbered pages, send check-url to the wrong
+    # page. Numbers count content pages except the Background page.
+    numbered = len(content_pages) - sum(1 for p in content_pages if p.get("route") == "background")
+    seen: dict = {}
+    for p in content_pages:
+        n = p.get("page_no")
+        if not isinstance(n, int) or isinstance(n, bool):
+            continue
+        if n in seen:
+            errs.append(f"page_index {p.get('page_index')}: page_no {n} is also page_index "
+                        f"{seen[n]}'s; two pages cannot share /run/page/{n}")
+        seen.setdefault(n, p.get("page_index"))
+        if not 1 <= n <= numbered:
+            errs.append(f"page_index {p.get('page_index')}: page_no {n} is outside 1..{numbered}, "
+                        f"the numbered content pages")
     # answered_evidence.filled_map is a second count of the same fact, computed another
     # way. A map with no '#' beside answered:true is a grid nobody opened reading as
     # answered; a '#' beside answered:false is a completed grid reading as empty.
@@ -848,7 +896,9 @@ def _plain_date(v):
 def _receipt_rails(doc):
     """``verified`` is the verdict of a fresh-load hash receipt. Where an item carries one,
     the result and verified flag must be what the receipt says, and the load must fall
-    inside the run. A report built from receipts may not claim ``filled`` without one."""
+    inside the run. A report built from receipts may not claim ``filled`` without one. A
+    receipt with ``binding: unbound-legacy`` is tied to no executed payload, so its equal
+    hashes give ``filled-unverified`` and it never sets ``verified``."""
     errs = []
     start, end = _aware(doc.get("started_at")), _aware(doc.get("ended_at"))
     from_receipts = "source_receipts" in doc
@@ -861,14 +911,17 @@ def _receipt_rails(doc):
                             f"never from a literal")
             continue
         match = str(r.get("expected_hash")) == str(r.get("observed_hash"))
-        want = "filled" if match else "failed"
+        unbound = r.get("binding") == "unbound-legacy"
+        want = ("filled-unverified" if unbound else "filled") if match else "failed"
+        verified = match and not unbound
         if not it.get("attempted"):
             errs.append(f"{iid}: a fresh-load receipt on an item reported attempted=false")
-        if bool(it.get("verified")) != match or it.get("result") != want:
+        if bool(it.get("verified")) != verified or it.get("result") != want:
             errs.append(f"{iid}: result={it.get('result')!r}, verified={it.get('verified')!r}, "
                         f"but the receipt's hashes {'match' if match else 'differ'} (expected "
-                        f"{r.get('expected_hash')}, observed {r.get('observed_hash')}), which "
-                        f"gives result={want!r}, verified={match}; the receipt decides")
+                        f"{r.get('expected_hash')}, observed {r.get('observed_hash')})"
+                        f"{' and it is unbound-legacy' if unbound else ''}, which gives "
+                        f"result={want!r}, verified={verified}; the receipt decides")
         seen = _aware(r.get("observed_at"))
         if seen and start and seen < start:
             errs.append(f"{iid}: receipt observed_at {r['observed_at']} precedes started_at "
@@ -927,9 +980,39 @@ def _apply_waivers(doc, held, module_checked, ctx: _Ctx):
     return errs
 
 
+def _check_plan_errors(doc, ctx: _Ctx) -> list[str]:
+    """A report in a run folder must carry the Check Answer plan beside it.
+
+    make_fill_report.py adds check_answer fields from fill-js/check-plan.json and pins the
+    file as source_check_plan. A plan written after the report, or changed since, leaves the
+    report without those fields, so the report is stale until it is rebuilt.
+    """
+    pin = doc.get("source_check_plan")
+    here = ctx.base_dir / "fill-js" / "check-plan.json"
+    plan = here if here.is_file() else None
+    if plan is None and pin:
+        pinned = Path(pin["path"])
+        pinned = pinned if pinned.is_absolute() else ctx.base_dir / pinned
+        plan = pinned if pinned.is_file() else None
+    if plan is None:
+        return []
+    rebuild = "rebuild it with make_fill_report.py, which adds the Check Answer fields"
+    if not pin:
+        return [f"check-plan-stale: {plan} exists, but the report pins no source_check_plan, so "
+                f"it predates the Check Answer plan; {rebuild}"]
+    try:
+        got = hashlib.sha256(plan.read_bytes()).hexdigest()
+    except OSError:
+        return [f"check-plan-stale: {plan} is unreadable; {rebuild}"]
+    if got != pin.get("sha256"):
+        return [f"check-plan-stale: {plan} differs from the report's source_check_plan "
+                f"({str(pin.get('sha256'))[:16]}, now {got[:16]}); {rebuild}"]
+    return []
+
+
 def rails_fill(doc, ctx: _Ctx):
     module = ctx.module
-    errs = _unique_item_ids(doc)
+    errs = _unique_item_ids(doc) + _check_plan_errors(doc, ctx)
     source = doc.get("source_answers") or {}
     rel, want = source.get("path"), source.get("sha256")
     answers_path = _resolve_source(rel, ctx.base_dir) if rel else None

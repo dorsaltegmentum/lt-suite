@@ -91,6 +91,27 @@ def test_every_fixture_view_model_captures_valid_documents(wrap):
             check(out["reference"], "reference")
 
 
+@pytest.mark.parametrize("rest,painted", [("background", 0), ("page/2", 2)])
+def test_a_background_page_captures_and_validates(tmp_path, rest, painted):
+    # Lt's shape: flow page 1 is a Background page at /run/background, and flow page N sits at
+    # /run/page/N-1. The capture records those routes, and stamping's validator accepts them.
+    spec = json.loads((VIEWMODELS / "c1-r101.json").read_text(encoding="utf-8"))
+    spec["location"]["pathname"] = spec["location"]["pathname"].replace("page/1", rest)
+    content = [p for p in spec["pages"] if "allPanels" in p]
+    for i, p in enumerate(content):
+        p.update({"dataKey": 900 if i == 0 else i, "current": i == painted})
+    fixture = tmp_path / "background-viewmodel.json"
+    fixture.write_text(json.dumps(spec), encoding="utf-8", newline="\n")
+    out = dump("--spec", str(fixture))
+    m = out["module"]
+    run = "https://lt.example.invalid/i/inst0001/student/courses/1/runs/101/run"
+    assert m["route_source"] == "datakey+location"
+    assert [(p["route"], p["page_no"], p["url"]) for p in m["pages"]] == [
+        ("background", None, f"{run}/background"), (None, 1, f"{run}/page/1"), (None, 2, f"{run}/page/2"),
+        (None, 3, f"{run}/page/3"), ("complete", None, None)]
+    check(m, "module")
+
+
 def test_sanitized_items_and_content_pass_the_handoff_schema(tmp_path):
     # Sanitation metadata must survive the same schema boundary stamp_capture.py enforces.
     spec = json.loads((VIEWMODELS / 'c1-r101.json').read_text(encoding="utf-8"))

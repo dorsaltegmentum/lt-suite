@@ -171,6 +171,11 @@ def test_relative_paths_resolve_against_the_config_file(tmp_path, monkeypatch):
     ('[browser]\nchromium = "unknown"\n', "browser.chromium"),
     ('[browser]\ndevtools_url = "http://u:synthetic-password@192.0.2.1:9222"\n', "value hidden"),
     ('[browser]\nchromium = "other"\n', "browser.chromium_user_data_dir"),
+    ('[browser]\ndevtools_socket = "devtools.sock"\n', "browser.devtools_socket: needs browser.devtools_url"),
+    ('[browser]\ndevtools_url = "http://127.0.0.1:9222"\ndevtools_socket = "a%b.sock"\n', "browser.devtools_socket: unsupported"),
+    ('[browser]\ndevtools_url = "http://127.0.0.1:9222"\ndevtools_socket = "a!b.sock"\n', "browser.devtools_socket: unsupported"),
+    ('[browser]\ndevtools_url = "http://127.0.0.1:9222"\ndevtools_socket = "a\\"b.sock"\n', "browser.devtools_socket: unsupported"),
+    ('[browser]\ndevtools_url = "http://127.0.0.1:9222"\ndevtools_socket = "a\\u0007b.sock"\n', "browser.devtools_socket: unsupported"),
 ])
 def test_invalid_configs_fail_with_named_key(tmp_path, text, needle):
     f = write(tmp_path / "bad.toml", text)
@@ -178,6 +183,16 @@ def test_invalid_configs_fail_with_named_key(tmp_path, text, needle):
         config.load(f)
     assert needle in str(ei.value)
     assert str(f) in str(ei.value)
+
+
+def test_devtools_socket_resolves_like_a_config_path(tmp_path, monkeypatch):
+    monkeypatch.setenv("HOME", str(tmp_path / "home"))
+    for raw, want in (("run/devtools.sock", tmp_path / "run" / "devtools.sock"),
+                      ("~/devtools.sock", tmp_path / "home" / "devtools.sock"),
+                      (str(tmp_path / "abs.sock"), tmp_path / "abs.sock")):
+        f = write(tmp_path / "ok.toml", '[browser]\ndevtools_url = "http://127.0.0.1:9222"\n'
+                  'devtools_socket = %s\n' % json.dumps(raw))
+        assert config.load(f).get("browser.devtools_socket") == str(want)
 
 
 def test_bad_toml_is_a_config_error(tmp_path):

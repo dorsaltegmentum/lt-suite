@@ -795,20 +795,66 @@ const captureLtRun = async (opts) => {
   }
   const pages = root.lessonFlowPages();
   const modPages = [];
-  let pno = 0;
+
+  /* Structure, not the title, identifies the report page: its page object owns a
+   * reportInfoPanels property and has no rows/numberOfPanels.
+   * Checkpoint pages are one-way doors without panels. No other page shape has
+   * `committed`/`commitLoading` while lacking `allPanels`, so that test identifies them;
+   * the title "Checkpoint" is never compared. U() unwraps the observables `committed` and
+   * `index`. The four commit FUNCTIONS are plain functions, and U() never calls them. */
+  const kinds = pages.map(pg => ('reportInfoPanels' in pg) ? 'report'
+    : (('committed' in pg && !('allPanels' in pg)) ? 'checkpoint' : 'content'));
+
+  /* ROUTES. Lt serves a Background page at /run/background and numbers the content pages
+   * after it from /run/page/1, so a URL number is not the content ordinal. Two signals give
+   * each content page its route, and a url is recorded only where they agree:
+   *  - dataKey: the n of /run/page/<n> is the page's dataKey (fetch_media.js pairs pages
+   *    by it too);
+   *  - location plus current(): the URL names the page Lt painted, whose own dataKey must
+   *    equal the URL's n. Its content ordinal minus that n is the offset: 1 after a
+   *    Background page, 0 without one. On /run/background the painted page is the
+   *    Background page, content ordinal 1, so the offset is 1.
+   * With offset 1, content ordinal 1 gets url /run/background, route 'background' and
+   * page_no null. Every other content page needs dataKey === ordinal - offset for url
+   * /run/page/<n> and page_no n. A missing signal, a disagreement, or one dataKey on two
+   * pages leaves url and page_no null, and check-url refuses that page: a refusal costs a
+   * re-capture, while a wrong route can carry the tab past a Checkpoint. */
+  const runBase = `${location.origin}${location.pathname.replace(/\/run\/.*$/, '/run')}`;
+  const routes = (() => {
+    const urlNo = v => { const s = String(v ?? ''); return /^[1-9][0-9]{0,5}$/.test(s) ? Number(s) : null; };
+    const content = [];
+    kinds.forEach((k, pi) => {
+      if (k === 'content') content.push({ pi, ord: content.length + 1, key: urlNo(U(pages[pi].dataKey)) });
+    });
+    const painted = pages.map(pg => U(pg.current) === true);
+    const cur = painted.filter(Boolean).length === 1 ? content.find(c => painted[c.pi]) : undefined;
+    const tail = location.pathname.match(/\/run\/(?:page\/(\d+)|(background))\/?$/);
+    let offset = null;
+    if (cur && tail && tail[2]) offset = cur.ord === 1 ? 1 : null;
+    if (cur && tail && tail[1] && cur.key === Number(tail[1])) {
+      const d = cur.ord - Number(tail[1]);
+      offset = (d === 0 || d === 1) ? d : null;
+    }
+    const shared = key => key !== null && content.filter(c => c.key === key).length > 1;
+    const out = new Map();
+    for (const c of content) {
+      const n = offset === null ? null : c.ord - offset;
+      if (n === 0 && !shared(c.key)) {
+        out.set(c.pi, { page_no: null, route: 'background', url: `${runBase}/background` });
+      } else if (n !== null && n > 0 && c.key === n && !shared(c.key)) {
+        out.set(c.pi, { page_no: n, route: null, url: `${runBase}/page/${n}` });
+      }
+    }
+    const bg = content.find(c => (out.get(c.pi) || {}).route === 'background');
+    const summary = { offset, background_page: bg ? bg.pi + 1 : null,
+                      unverified_pages: content.filter(c => !out.has(c.pi)).map(c => c.pi + 1) };
+    return { get: pi => out.get(pi) || { page_no: null, route: null, url: null }, summary };
+  })();
 
   pages.forEach((pg, pi) => {
-    /* Structure, not the title, identifies the report page: its page object owns a
-     * reportInfoPanels property and has no rows/numberOfPanels. */
-    const isReport = 'reportInfoPanels' in pg;
-
-    /* Checkpoint pages are one-way doors without panels. No other page shape has
-     * `committed`/`commitLoading` while lacking `allPanels`, so that test identifies them;
-     * the title "Checkpoint" is never compared. U() unwraps the observables `committed` and
-     * `index`. The four commit FUNCTIONS are plain functions, and U() never calls them. */
-    const isCheckpoint = !isReport && 'committed' in pg && !('allPanels' in pg);
-    const isContent = !isReport && !isCheckpoint;
-    if (isContent) pno++;
+    const isReport = kinds[pi] === 'report';
+    const isCheckpoint = kinds[pi] === 'checkpoint';
+    const isContent = kinds[pi] === 'content';
 
     const out = { content: [], items: [], seen: new Set() };
     if (isContent) (U(pg.allPanels) || []).forEach(p => walk(p, pi + 1, out, null));
@@ -816,11 +862,12 @@ const captureLtRun = async (opts) => {
     /* Checkpoints live at /run/checkpoint/<n> and have no /run/page/<n> address; their
      * index() is a different number again. Like the report page, a checkpoint therefore gets
      * page_no null and no url, since any URL here would be a guess. */
+    const r = isContent ? routes.get(pi) : null;
     const page = {
       page_index: pi + 1,
-      page_no: isContent ? pno : null,
-      route: isReport ? 'complete' : (isCheckpoint ? 'checkpoint' : null),
-      url: isContent ? `${location.origin}${location.pathname.replace(/\/run\/.*$/, '/run')}/page/${pno}` : null,
+      page_no: isContent ? r.page_no : null,
+      route: isReport ? 'complete' : (isCheckpoint ? 'checkpoint' : r.route),
+      url: isContent ? r.url : null,
       title: S(U(pg.title)), is_report_page: isReport, is_checkpoint: isCheckpoint,
       content: out.content, items: out.items   // the report page repeats earlier panels, so its items stay empty
     };
@@ -938,6 +985,10 @@ const captureLtRun = async (opts) => {
     schema_version: 1, module_id: `c${m[2]}-r${m[3]}`, instance: m[1],
     course_id: +m[2], run_id: +m[3], lesson_id: +(G.pageLessonId || 0),
     source_url: location.href.split('?')[0], captured_at: now, capture_method: 'view-model',
+    /* Marks page routes measured from dataKey plus location and current(). A capture without
+     * it numbered URLs by content ordinal, one page late after a Background page, and
+     * check-url refuses such a capture when it holds one. */
+    route_source: 'datakey+location',
     lesson: {
       title: S(U(root.lessonTitleDisplay)),                // lessonTitle holds a React element
       course_title: S(G.pageCourseLongName || G.pageCourseShortName || ''),
@@ -1095,8 +1146,13 @@ const captureLtRun = async (opts) => {
         .slice(0, 20),
       hotspot_panels: modPages.reduce((n, p) => n + p.content.filter(c => c.kind === 'hotspot').length, 0),
       notebook_items: modPages.flatMap(p => p.items).filter(i => i.plugin_key === 'notebook').length,
-      table_author_grids: gridStatus,
-      rat_candidate_page: (modPages.find(p => p.rat_candidate) || {}).page_no ?? null
+      /* One browser tool's output filter redacts values whose field names contain "author"
+       * (lt-module-fill references/failure-modes.md). Readers accept the old name
+       * table_author_grids in receipts from 0.2.3 and earlier. */
+      table_given_grids: gridStatus,
+      rat_candidate_page: (modPages.find(p => p.rat_candidate) || {}).page_no ?? null,
+      // offset 1 after a Background page; unverified pages have no url and check-url refuses them.
+      routes: routes.summary
     }
   };
 };

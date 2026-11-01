@@ -345,7 +345,7 @@
        "observed_hash",
        "observed_at"
       ],
-      "description": "The item's latest fresh-load hash check. Equal hashes require result filled and verified true. Unequal hashes require result failed and verified false. the validator (ltcore.validate) rejects other pairings and observed_at values outside started_at to ended_at.",
+      "description": "The item's latest fresh-load hash check. Equal hashes require result filled and verified true. Unequal hashes require result failed and verified false. With binding unbound-legacy, equal hashes require result filled-unverified and verified false. The validator (ltcore.validate) rejects other pairings and observed_at values outside started_at to ended_at.",
       "properties": {
        "expected_hash": {
         "type": [
@@ -364,6 +364,13 @@
        "observed_at": {
         "type": "string",
         "format": "date-time"
+       },
+       "binding": {
+        "type": "string",
+        "enum": [
+         "unbound-legacy"
+        ],
+        "description": "Present only when the receipt carries no source_payload binding (a receipt recorded before payload binding). Its hash is tied to no executed payload and not to today's draft, so it never verifies the item: equal hashes give filled-unverified, unequal give failed, verified false either way. A receipt bound to an executed payload whose jobs match today's draft omits this field."
        }
       }
      },
@@ -1424,7 +1431,12 @@
         "path_template": {"type": "string"},
         "status": {"type": "integer", "minimum": 0},
         "count": {"type": "integer", "minimum": 1},
-        "model_sync": {"type": "boolean"}
+        "model_sync": {"type": "boolean"},
+        "run_data": {
+         "type": "string",
+         "description": "Counts for Lt's PUT of the current run's data, as 'name=count' pairs: bodies by shape, expected and identified keys, keys seen by typed field kind, as a property name or as a plain value, and replies by shape. No body content.",
+         "pattern": "^requests=[0-9]+ body_json=[0-9]+ body_unparsed=[0-9]+ body_none=[0-9]+ keys_expected=[0-9]+ keys_identified=[0-9]+ as_panel_field=[0-9]+ as_data_field=[0-9]+ as_uuid_field=[0-9]+ as_prop=[0-9]+ as_value=[0-9]+ reply_per_key=[0-9]+ reply_success=[0-9]+ reply_failure=[0-9]+ reply_bare=[0-9]+$"
+        }
        }
       }
      },
@@ -1475,6 +1487,22 @@
       "minimum": 0
      },
      "save_errors": {
+      "type": [
+       "integer",
+       "null"
+      ],
+      "minimum": 0
+     },
+     "keys_weak": {
+      "description": "Keys shorter than 6 characters; only a typed run-data match saves them.",
+      "type": [
+       "integer",
+       "null"
+      ],
+      "minimum": 0
+     },
+     "net_matched": {
+      "description": "Requests that named a key of the document (LtNet net_diag matched).",
       "type": [
        "integer",
        "null"
@@ -1793,6 +1821,32 @@
     "path",
     "sha256"
    ]
+  },
+  "source_check_plan": {
+   "type": "object",
+   "additionalProperties": false,
+   "description": "The fill-js/check-plan.json read by make_fill_report.py. The validator rejects a report in a run folder whose fill-js/check-plan.json is missing from this pin or differs from it: the report predates the Check Answer plan and lacks its fields.",
+   "properties": {
+    "path": {
+     "type": "string"
+    },
+    "sha256": {
+     "type": "string",
+     "pattern": "^[0-9a-f]{64}$"
+    }
+   },
+   "required": [
+    "path",
+    "sha256"
+   ]
+  },
+  "run_notes": {
+   "type": "array",
+   "description": "Free text the operator kept with the run (fill-notes.json run_notes), and the reason for a started_at or ended_at that differs from the payload and receipt times.",
+   "items": {
+    "type": "string",
+    "minLength": 1
+   }
   }
  }
 }

@@ -768,6 +768,12 @@
           "default": 8733,
           "description": "Loopback port of the fill library server."
         },
+        "body_server": {
+          "type": "string",
+          "default": "",
+          "pattern": "^$|^http://127\\.0\\.0\\.1:[0-9]{1,5}/?$",
+          "description": "Empty: off. Set: the loopback body server, http://127.0.0.1:<port> with port 1024 to 65535, that hands page-script bodies to the Lt page by sha256. Inline loaders fetch a body missing from the page cache there and name the policy by its sha256. Render then writes each cacheable body to <data>/js-bodies/. The server runs on the host from tools/install_body_server.py, never inside an agent jail."
+        },
         "js_tmp_dir": {
           "type": "string",
           "x-path": "config",
@@ -802,6 +808,12 @@
           "pattern": "^$|^http://(127\\.0\\.0\\.1|\\[::1\\]):[0-9]{1,5}/?$",
           "x-redact": true,
           "description": "Empty: lt-chrome auto-connects after you turn on remote debugging at chrome://inspect/#remote-debugging. Set: lt-chrome attaches to a browser you started with --remote-debugging-port and its own --user-data-dir. Only http://127.0.0.1:<port> or http://[::1]:<port>, with port 1 to 65535, is accepted."
+        },
+        "devtools_socket": {
+          "type": "string",
+          "default": "",
+          "x-path": "config",
+          "description": "Unix socket that forwards to the browser.devtools_url listener, for agents in a sandbox with its own network. Needs browser.devtools_url. lt-chrome tries the port first; when it does not answer, lt-chrome listens on a free loopback port, gives chrome-devtools-mcp that port and forwards each connection to this socket. The socket must belong to your account, in a folder other accounts cannot change. Linux and macOS only. Relative paths resolve against the config file; ~ expands. Control characters, double quotes, percent and exclamation marks are refused."
         }
       }
     },

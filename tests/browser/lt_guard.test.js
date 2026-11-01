@@ -116,8 +116,9 @@ test('lt_guard: navigate listener with a plan cancels complete, boundary, never-
   assert.equal(env.navigateEvent('https://other.example.invalid' + RUN + '/page/2').canceled, true);
   assert.equal(env.navigateEvent(o + '/i/inst0001/student/courses/1/runs/999/run/page/2').canceled, true);
   assert.equal(env.navigateEvent(o + RUN + '/page/2').canceled, false);
-  assert.equal(env.navigateEvent(o + RUN + '/background').canceled, false);
-  assert.equal(G.trips(), 9);
+  // POLICY plans no page at /run/background, so nothing maps it to a flow page.
+  assert.equal(env.navigateEvent(o + RUN + '/background').canceled, true, 'unplanned Background route');
+  assert.equal(G.trips(), 10);
 });
 
 test('lt_guard: without a plan every page change is cancelled; the same page with a new hash is not', async () => {
@@ -221,6 +222,19 @@ test('lt_guard: classify maps URL page numbers through the plan', () => {
   assert.equal(G.classify(o + RUN + '/page/2', { mode: 'block-all' }).reason, 'no-plan');
   assert.equal(G.classify('javascript:alert(1)', mapped).reason, 'bad-scheme');
   assert.equal(G.classify('https://u:p' + String.fromCharCode(64) + 'lt.example.invalid' + RUN + '/page/1', mapped).reason, 'credentials-in-url');
+});
+
+test('lt_guard: /run/background maps only through a captured url, and a refused plan maps nothing', () => {
+  const { G } = setup();
+  const o = H.DEFAULT_ORIGIN;
+  const base = Object.assign({}, POLICY, { never_indexes: [], report_indexes: [] });
+  // The destination map once sent /run/background to flow 1 whatever the plan said.
+  assert.equal(G.classify(o + RUN + '/background', base).reason, 'page-not-in-plan');
+  const bg = Object.assign({}, base, { page_map: { 1: 2, 2: 3 }, url_map: { [RUN + '/background']: 1 } });
+  assert.equal(G.classify(o + RUN + '/background', bg).page_index, 1);
+  assert.equal(G.classify(o + RUN + '/page/1', bg).page_index, 2);
+  const refused = Object.assign({}, base, { page_map: {}, url_map: {}, mapped: false, route_refusal: 'Re-capture the module.' });
+  for (const rest of ['/page/1', '/background']) assert.equal(G.classify(o + RUN + rest, refused).reason, 'recapture-needed');
 });
 
 test('lt_guard: a commit handler Lt bound before the guard fires 0 times on click and on Enter', () => {
@@ -492,4 +506,200 @@ test('lt_guard: losing the root during a call returns a degraded receipt', async
   assert.equal(result.ok, false);
   assert.equal(result.fatal, 'guard-degraded');
   assert.equal(result.unlocked.length, 4);
+});
+
+// Lt's start-up runs after $root binds and before any flow page reads current(); a live run saw it trip.
+test('lt_guard: Lt start-up mutators run after $root binds and before current() is set; no trip', async () => {
+  const p = H.page({title: 'P1'});
+  const {env, G} = setup({pages: [p]});
+  const t0 = env.clock.now();
+  const before = G.status().mutators;
+  assert.deepEqual([before.commitClicked, before.setCheckpointCommitState], ['locked', 'locked']);
+  assert.deepEqual([before.removeCommittedCheckpoints, before.removePagesAfterUncommittedCheckpoints], ['deferred', 'deferred']);
+  env.after(100, () => {
+    env.root.removeCommittedCheckpoints('startup');
+    env.root.removePagesAfterUncommittedCheckpoints('startup');
+    p.current = H.obs(true);
+  });
+  let ranAt = null;
+  const r = await run(G, null, async () => { ranAt = env.clock.now() - t0; return {ok: true}; }, {render_wait_ms: 5000});
+  assert.equal(r.ok, true);
+  assert.equal(r.guard_trips, 0);
+  assert.ok(ranAt >= 100 && ranAt < 5000, String(ranAt));
+  assert.deepEqual(env.commits, [['removeCommittedCheckpoints', 'startup'], ['removePagesAfterUncommittedCheckpoints', 'startup']]);
+  for (const name of MUTATORS) assert.equal(G.status().mutators[name], 'locked');
+  assert.throws(() => env.root.removeCommittedCheckpoints(), /never-submit/);
+  assert.equal(env.commits.length, 2);
+});
+
+// Locking a page-list mutator Lt had not defined yet dropped Lt's own definition.
+test('lt_guard: mutators Lt defines after $root binds land, run during start-up and lock after paint', async () => {
+  const p = H.page({title: 'P1'});
+  const {env, G} = setup({pages: [p], root: (e, pages) => ({lessonFlowPages: H.obs(pages), commitClicked: e.mutators.commitClicked})});
+  const before = G.status().mutators;
+  assert.deepEqual([before.commitClicked, before.setCheckpointCommitState, before.removeCommittedCheckpoints],
+    ['locked', 'late-define-blocked', 'deferred']);
+  env.after(100, () => {
+    env.root.removeCommittedCheckpoints = env.mutators.removeCommittedCheckpoints;
+    env.root.removePagesAfterUncommittedCheckpoints = env.mutators.removePagesAfterUncommittedCheckpoints;
+    env.root.setCheckpointCommitState = env.mutators.setCheckpointCommitState;
+    env.root.removeCommittedCheckpoints('startup');
+    p.current = H.obs(true);
+  });
+  const r = await run(G, null, undefined, {render_wait_ms: 5000});
+  assert.equal(r.ok, true);
+  assert.equal(r.guard_trips, 0);
+  assert.equal(env.clock.errors.length, 0, String(env.clock.errors[0]));
+  assert.equal(G.status().rebinds_blocked, 0);
+  assert.equal(G.status().late_defined, 1);
+  assert.equal(r.guard_late_define_blocked, 'setCheckpointCommitState');
+  assert.deepEqual(env.commits, [['removeCommittedCheckpoints', 'startup']]);
+  for (const name of MUTATORS) {
+    assert.equal(G.status().mutators[name], 'locked');
+    assert.throws(() => env.root[name](), /never-submit/);
+  }
+  assert.equal(env.commits.length, 1);
+});
+
+// A commit mutator Lt defines during start-up was callable until the next 1 s watch tick.
+test('lt_guard: a commit mutator Lt assigns during start-up throws at once and locks when start-up ends', async () => {
+  const p = H.page({title: 'P1'});
+  const {env, G} = setup({pages: [p], root: (e, pages) => ({lessonFlowPages: H.obs(pages)})});
+  assert.deepEqual([G.status().mutators.commitClicked, G.status().mutators.setCheckpointCommitState],
+    ['late-define-blocked', 'late-define-blocked']);
+  assert.equal(Object.getOwnPropertyDescriptor(env.root, 'commitClicked').configurable, false);
+  assert.throws(() => env.root.commitClicked('before'), /never-submit/);
+  await env.clock.advance(100);
+  // Lt's own assignment lands without throwing, and a raw call right after it still throws.
+  assert.doesNotThrow(() => { env.root.commitClicked = env.mutators.commitClicked; });
+  assert.doesNotThrow(() => { env.root.setCheckpointCommitState = env.mutators.setCheckpointCommitState; });
+  assert.throws(() => env.root.commitClicked('raw'), /never-submit/);
+  assert.throws(() => env.root.setCheckpointCommitState(true), /never-submit/);
+  assert.equal(G.status().mutators.commitClicked, 'late-define-blocked');
+  assert.equal(G.status().late_defined, 2);
+  assert.deepEqual([...G.status().unlocked], ['removeCommittedCheckpoints', 'removePagesAfterUncommittedCheckpoints']);
+  // A script body waits: the deferred page-list mutators stay unlocked until start-up ends.
+  let ran = 0;
+  env.after(200, () => { p.current = H.obs(true); });
+  const r = await run(G, null, async () => { ran++; return {ok: true}; }, {render_wait_ms: 5000});
+  assert.equal(r.ok, true);
+  assert.equal(ran, 1);
+  for (const name of MUTATORS) assert.equal(G.status().mutators[name], 'locked');
+  assert.equal(Object.getOwnPropertyDescriptor(env.root, 'commitClicked').configurable, false);
+  assert.throws(() => env.root.commitClicked('after'), /never-submit/);
+  assert.equal(env.commits.length, 0);
+  assert.equal(r.guard_rebinds_blocked, undefined);
+  assert.equal(r.guard_late_define_blocked, 'commitClicked,setCheckpointCommitState');
+  assert.equal(env.clock.errors.length, 0, String(env.clock.errors[0]));
+  // After start-up a plain assignment is a blocked rebind.
+  env.root.commitClicked = env.mutators.commitClicked;
+  assert.equal(G.status().rebinds_blocked, 1);
+  assert.throws(() => env.root.commitClicked('later'), /never-submit/);
+  assert.equal(env.commits.length, 0);
+});
+
+// A configurable start-up accessor let Lt's defineProperty replace it, and the new function was callable until the next check.
+test('lt_guard: Lt defineProperty on a commit mutator it had not defined throws inside Lt; no call reaches Lt', async () => {
+  const p = H.page({title: 'P1'});
+  const {env, G} = setup({pages: [p], root: (e, pages) => ({lessonFlowPages: H.obs(pages)})});
+  const st = G.status();
+  assert.deepEqual([...st.late_define_blocked], ['commitClicked', 'setCheckpointCommitState']);
+  const raw = [];
+  for (const name of ['commitClicked', 'setCheckpointCommitState']) {
+    assert.throws(() => Object.defineProperty(env.root, name, {value: () => raw.push(name), writable: true, configurable: true}),
+      {name: 'TypeError'});
+    assert.equal(Reflect.defineProperty(env.root, name, {value: () => raw.push(name)}), false);
+    assert.throws(() => env.root[name](), /never-submit/);
+  }
+  assert.deepEqual(raw, []);
+  // Plain assignment still lands without throwing and is recorded.
+  assert.doesNotThrow(() => { env.root.commitClicked = () => raw.push('assigned'); });
+  assert.equal(G.status().late_defined, 1);
+  assert.throws(() => env.root.commitClicked(), /never-submit/);
+  let body = 0;
+  const r = await run(G, null, async () => { body++; return {ok: true}; }, {render_wait_ms: 100});
+  assert.equal(r.ok, true);
+  assert.equal(body, 1);
+  assert.equal(r.guard_late_define_blocked, 'commitClicked,setCheckpointCommitState');
+  for (const name of MUTATORS) assert.equal(G.status().mutators[name], 'locked');
+  assert.deepEqual(raw, []);
+  assert.equal(env.commits.length, 0);
+});
+
+test('lt_guard: before start-up ends only the page-list mutators count as unlocked; render_wait_ms 0 locks all four', async () => {
+  const p = H.page({title: 'P1'});
+  const {G} = setup({pages: [p], root: (e, pages) => ({lessonFlowPages: H.obs(pages)})});
+  const st = G.status();
+  assert.equal(st.ok, false);
+  assert.deepEqual([...st.unlocked], ['removeCommittedCheckpoints', 'removePagesAfterUncommittedCheckpoints']);
+  const r = await run(G, null, async () => ({ok: true}), {render_wait_ms: 0});
+  assert.equal(r.ok, true, 'render_wait_ms 0 ends start-up and locks all four');
+  for (const name of MUTATORS) assert.equal(G.status().mutators[name], 'locked');
+});
+
+test('lt_guard: a mutator Lt never defines locks on $root after start-up; a later definition is dropped and stamped', async () => {
+  const {env, G} = setup({root: (e, pages) => ({lessonFlowPages: H.obs(pages)})});
+  for (const name of MUTATORS) assert.equal(G.status().mutators[name], 'locked');
+  env.root.commitClicked = () => env.commits.push('late');
+  const r = await run(G, null);
+  assert.equal(r.ok, true);
+  assert.equal(r.guard_rebinds_blocked, 1);
+  assert.throws(() => env.root.commitClicked(), /never-submit/);
+  assert.equal(env.commits.length, 0);
+});
+
+test('lt_guard: during the deferral a checkpoint crossing, a commit click and a commit call are refused', async () => {
+  const pages = [1, 2, 3, 4, 5, 6].map(i => H.page({ title: 'P' + i, checkpoint: i === 4 }));
+  const {env, G} = setup({pages, path: RUN + '/page/2'});
+  const pol = Object.assign({}, POLICY, { stop_before_page: 9, never_indexes: [], report_indexes: [], checkpoint_indexes: [4],
+    page_map: { 1: 1, 2: 2, 3: 3, 4: 5, 5: 6, 7: 8 } });
+  let ran = 0;
+  const pending = run(G, pol, async () => { ran++; return {ok: true}; }, {render_wait_ms: 5000});
+  assert.equal(G.status().mutators.removeCommittedCheckpoints, 'deferred');
+  const o = H.DEFAULT_ORIGIN;
+  assert.equal(env.navigateEvent(o + RUN + '/page/4').canceled, true, 'flow 5 is past the checkpoint at 4');
+  assert.equal(env.navigateEvent(o + RUN + '/checkpoint/1').canceled, true);
+  const btn = env.el('button', {text: 'Commit checkpoint', on: {click: () => env.root.setCheckpointCommitState(true)}});
+  btn.click();
+  assert.throws(() => env.root.commitClicked(true), /never-submit/);
+  assert.equal(ran, 0);
+  env.after(200, () => { pages[3].current = H.obs(true); });
+  const r = await pending;
+  assert.equal(r.ok, false);
+  assert.equal(r.fatal, 'forbidden-route');
+  assert.equal(r.route, 'checkpoint', 'Lt painted the checkpoint page during the wait');
+  assert.equal(ran, 0);
+  assert.equal(env.commits.length, 0);
+  assert.equal(r.guard_trips, 4);
+});
+
+test('lt_guard: ready() holds every script body until all four lock; an unpainted page locks them when render_wait_ms runs out', async () => {
+  const {env, G} = setup({pages: [H.page({title: 'P1'})]});
+  const t0 = env.clock.now();
+  let seen = null;
+  const pending = run(G, null, async () => {
+    seen = {t: env.clock.now() - t0, mutators: Object.assign({}, G.status().mutators)};
+    return {ok: true};
+  }, {render_wait_ms: 2000});
+  const st = G.status();
+  assert.equal(st.ok, false);
+  assert.equal(st.fatal, 'guard-degraded');
+  assert.deepEqual([...st.unlocked], ['removeCommittedCheckpoints', 'removePagesAfterUncommittedCheckpoints']);
+  assert.equal(seen, null);
+  const r = await pending;
+  assert.equal(r.ok, true);
+  assert.ok(seen.t >= 2000, String(seen.t));
+  for (const name of MUTATORS) assert.equal(seen.mutators[name], 'locked');
+  assert.throws(() => env.root.removeCommittedCheckpoints(), /never-submit/);
+  assert.equal(env.commits.length, 0);
+});
+
+test('lt_guard: with no script waiting, the deferred mutators lock 5 s after $root binds', async () => {
+  const {env, G} = setup({pages: [H.page({title: 'P1'})]});
+  assert.equal(G.status().mutators.removePagesAfterUncommittedCheckpoints, 'deferred');
+  await env.clock.advance(4000);
+  assert.equal(G.status().mutators.removePagesAfterUncommittedCheckpoints, 'deferred');
+  await env.clock.advance(2000);
+  assert.throws(() => env.root.removePagesAfterUncommittedCheckpoints(), /never-submit/);
+  assert.equal(env.commits.length, 0);
 });

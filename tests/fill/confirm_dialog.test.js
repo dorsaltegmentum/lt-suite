@@ -12,6 +12,7 @@ const fs = require('fs');
 const path = require('path');
 const vm = require('vm');
 const F = require('./fill_env.js');
+const { redactionHits } = require('../browser/redaction_triggers.js');
 
 const SRC = fs.readFileSync(path.join(F.BROWSER, 'confirm_dialog.js'), 'utf8');
 const need = F.harness() ? false : 'needs tests/browser/harness.js';
@@ -147,7 +148,8 @@ test('confirm-dialog: one accepted dialog binds one upload; the next dialog is r
   const env = dialogEnv(['Replace existing picture?', 'Replace existing picture?']);
   const r1 = await env.run({ action: 'accept' });
   assert.equal(r1.accepted, true);
-  assert.deepEqual(JSON.parse(JSON.stringify(r1.upload)), { panel: '15', sha256: 'a'.repeat(64) });
+  assert.deepEqual(JSON.parse(JSON.stringify(r1.upload)), { panel: '15', sha16: 'a'.repeat(16) });
+  assert.deepEqual(redactionHits(r1), []);
   assert.equal(env.ctx.__ltPendingUploads[0].state, 'bound');
   const r2 = await env.run({ action: 'accept' });
   assert.equal(r2.accepted, false);

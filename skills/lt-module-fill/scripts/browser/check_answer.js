@@ -263,8 +263,8 @@ const LtCheck = (function (G) {
     }
     return null;
   }
-  const payloadPin = cfg => cfg.source_payload_sha256 ? {source_payload_sha256: cfg.source_payload_sha256,
-    source_payload_sha16: cfg.source_payload_sha256.slice(0, 16)} : {};
+  // The 16-hex prefix only: an output filter redacts a 64-hex value as base64.
+  const payloadPin = cfg => cfg.source_payload_sha256 ? {source_payload_sha16: cfg.source_payload_sha256.slice(0, 16)} : {};
   async function run(cfg, jobs) {
     const ck=clock(), deadline=ck.now()+CALL_DEADLINE_MS, f=L();
     const out={ok:true, module:cfg.module_id, run:cfg.run_id, page:cfg.page, policy:cfg.policy, rat_page:cfg.rat_page,
@@ -303,7 +303,7 @@ const LtCheck = (function (G) {
         if (trips()!==initialTrips) {row.stop='guard-trip';end('guard-trip');return false;}
         const inp=f.inputOf(check.raw), parent=f.stateModelOf(check.raw), key=f.saveKeyOf(check.raw);
         const w={net:G.LtNet,keys:new Set(),writes:0,threw:0};
-        const write=(model,fn)=>f.write(w,ck,key,model,parent,fn);
+        const sids=f.saveIdsOf(check.raw), write=(model,fn)=>f.write(w,ck,key,model,parent,fn,sids);
         let ok=true;
         if (job.kind==='select') ok=write(inp,()=>inp.set('selectedAnswers',state.slice()));
         else {

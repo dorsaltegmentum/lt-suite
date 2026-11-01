@@ -11,13 +11,14 @@ const assert = require('node:assert/strict');
 const vm = require('node:vm');
 const {createHmac, createHash, webcrypto} = require('node:crypto');
 const H = require('./vm_harness.js');
+const { redactionHits } = require('../browser/redaction_triggers.js');
 const { obs, coll, mdl } = H;
 
 const PNG = Buffer.from('89504e470d0a1a0a0000000d49484452', 'hex');
 const IMG_HOST = 'https://lt.example.invalid/media/';
 
-/* page: { panels: [{ vm, imgs: [{ src, w, h }] }], current } */
-async function runMedia({ panels = [], pathname, args = {}, reply, entry = false, imageReply, helloReply, extraImgs = [], height = 900, afterReturn = 0 } = {}) {
+/* page: { panels: [{ vm, imgs: [{ src, w, h }] }], current }; flow(clock, pageVm) gives another flow list */
+async function runMedia({ panels = [], pathname, args = {}, reply, entry = false, imageReply, helloReply, extraImgs = [], height = 900, afterReturn = 0, flow } = {}) {
   const clock = new (require('../browser/harness.js').Clock)(0);
   const posts = [];
   const requests = [];
@@ -37,7 +38,9 @@ async function runMedia({ panels = [], pathname, args = {}, reply, entry = false
     nodes.push({ src: im.src, currentSrc: im.src, complete: true, naturalWidth: 10, naturalHeight: 10, parentElement: null });
   }
   const pageVm = { current: obs(true), dataKey: obs(1), allPanels: obs(panels.map(p => p.vm)) };
-  const root = { lessonFlowPages: () => [pageVm] };
+  // flow(clock, pageVm) replaces the page list; its first call fixes the list for the run.
+  const flowList = flow ? flow(clock, pageVm) : [pageVm];
+  const root = { lessonFlowPages: () => flowList };
   const sandbox = {
     console, URL, Blob, AbortController, TextEncoder, crypto: webcrypto,
     performance: {now: () => clock.now()},
@@ -125,6 +128,7 @@ describe('fetch-media', () => {
       assert.equal(p.credentials, 'omit');
     }
     assert.deepEqual(r.receipt.summary.keys_not_fetched, []);
+    assert.deepEqual(redactionHits(r.receipt), []);
   });
 
   test('fetch-media: the receipt carries URL shapes, never the signed URL', async () => {
@@ -247,6 +251,42 @@ describe('fetch-media', () => {
     const r = await runMedia({ panels: [author], entry: true });
     assert.equal(r.receipt.ok, true);
     assert.equal(r.receipt.images.length, 1);
+  });
+
+  /* Background shifts the URL: flow page 2 shows at /page/1, and its dataKey is not 1. Before
+   * Lt paints, the fallbacks would pick the Background page and save the image unpaired. */
+  const shifted = at => (clock, vm) => [
+    { current: obs(false), dataKey: obs(814), allPanels: obs([]) },
+    Object.assign(vm, { dataKey: obs(2), current: Object.assign(() => clock.now() >= at, { __obs: true }) })];
+
+  test('fetch-media: waits for Lt to paint a page before it trusts current()', async () => {
+    const r = await runMedia({ panels: [author], flow: shifted(600) });
+    assert.equal(r.receipt.ok, true);
+    assert.equal(r.receipt.page_index, 2);
+    assert.deepEqual(r.receipt.images.map(i => [i.key, i.paired, i.result]), [['30', 'by-key-in-url', 'saved']]);
+    assert.ok(r.elapsed >= 600, String(r.elapsed));
+    assert.equal(r.waits[0], 250, 'the first timer is the paint poll');
+  });
+
+  test('fetch-media: a page Lt never paints is refused as lt-not-painted and nothing is fetched', async () => {
+    const r = await runMedia({ panels: [author], flow: shifted(Infinity), args: { render_wait_ms: 1000 } });
+    assert.equal(r.receipt.ok, false);
+    assert.equal(r.receipt.fatal, 'lt-not-painted');
+    assert.equal(r.receipt.url_page, 1);
+    assert.deepEqual([r.posts, r.requests], [[], []]);
+    assert.ok(r.elapsed >= 1000, String(r.elapsed));
+  });
+
+  test('fetch-media: pages without current flags take the dataKey fallback without a wait', async () => {
+    const painted = await runMedia({ panels: [author] });
+    const unflagged = await runMedia({ panels: [author], flow: (clock, vm) => {
+      delete vm.current;
+      return [{ dataKey: obs(814), allPanels: obs([]) }, vm];
+    } });
+    assert.equal(unflagged.receipt.ok, true);
+    assert.equal(unflagged.receipt.page_index, 2);
+    assert.equal(unflagged.receipt.images[0].paired, 'by-key-in-url');
+    assert.deepEqual([painted.waits[0], unflagged.waits[0]], [20000, 20000], 'the first timer is the sink call budget, not a paint poll');
   });
 });
 

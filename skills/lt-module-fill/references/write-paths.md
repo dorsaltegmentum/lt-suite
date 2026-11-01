@@ -80,7 +80,9 @@ Receipts contain counts, per-item results, hashes and lengths. They never contai
 Named refusals include `refused-single-attempt`, `single-attempt-not-locked` and `no-panel`.
 
 Route refusals include `preview-url`, `wrong-run`, `wrong-page`, `wrong-course`,
-`wrong-instance`, `wrong-origin` and `not-a-run-page`. A fatal receipt writes nothing.
+`wrong-instance`, `wrong-origin`, `not-a-run-page` and `lt-not-painted`. A fatal receipt writes nothing.
+`lt-not-painted` means no flow page read `current()` true within `fill.save_wait.render_wait_ms`;
+see [failure-modes.md](failure-modes.md).
 
 Read-only or locked targets, forbidden pages, changed page titles and failed probes also refuse writes.
 Header geometry, missing cells and unresolved placement pools must not be bypassed.

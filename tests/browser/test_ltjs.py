@@ -33,6 +33,7 @@ SHARED = REPO / "shared"
 PLAN = HERE / "fixtures" / "plan-demo.json"
 ORIGIN = "https://lt.example.invalid"
 RUN = f"{ORIGIN}/i/inst0001/student/courses/1/runs/101/run"
+MEASURED = "datakey+location"   # route_source of a capture whose routes capture.js measured
 PNG = b"\x89PNG\r\n\x1a\n" + b"\x00" * 64
 JPEG = b"\xff\xd8\xff\xe0" + b"\x00" * 64
 
@@ -58,7 +59,6 @@ def node(spec: dict, tmp_path: Path) -> dict:
     (f"{RUN}/page/1", 1),
     (f"{RUN}/page/2", 2),
     (f"{RUN}/page/4/", 4),
-    (f"{RUN}/background", 1),
 ])
 def test_check_url_allows_planned_pages(run_py, url, idx):
     r = cli(run_py, "check-url", "--plan", str(PLAN), url)
@@ -80,6 +80,7 @@ FORBIDDEN = [
     (f"{RUN}/page/5", "at-or-past-stop"),
     (f"{RUN}/page/3", "never-navigated"),
     (f"{RUN}/page/9", "page-not-in-plan"),
+    (f"{RUN}/background", "page-not-in-plan"),   # no planned page has the Background url
     (f"{ORIGIN}/i/inst0001/student/courses/1/runs/102/run/page/1", "wrong-run"),
     (f"{ORIGIN}/i/inst0001/student/courses/2/runs/101/run/page/1", "wrong-course"),
     (f"{ORIGIN}/i/inst0002/student/courses/1/runs/101/run/page/1", "wrong-instance"),
@@ -130,7 +131,7 @@ def test_check_url_bad_plan_is_exit_2(run_py, tmp_path, content, needle):
 
 def test_check_url_plan_without_origin_needs_config(run_py, tmp_path):
     p = tmp_path / "plan.json"
-    p.write_text(json.dumps({"stop_before_page": 4, "pages": [
+    p.write_text(json.dumps({"route_source": MEASURED, "stop_before_page": 4, "pages": [
         {"page_index": i, "page_no": i} for i in (1, 2, 3, 4)]}), encoding="utf-8", newline="\n")
     r = cli(run_py, "check-url", "--plan", str(p), f"{RUN}/page/1")
     assert r.returncode == 2 and "lt.origin" in r.stderr
@@ -152,24 +153,27 @@ def test_check_url_config_origin_conflict_forbids(run_py, tmp_path):
 
 def test_check_url_needs_the_plans_page_map():
     # URL page numbers count content pages only; without the plan's map a number is no position.
-    plan = {"origin": ORIGIN, "stop_before_page": 3, "report_pages": [2]}
+    plan = {"origin": ORIGIN, "route_source": MEASURED, "stop_before_page": 3, "report_pages": [2]}
     assert ltjs.check_url(f"{RUN}/page/1", plan)[1]["reason"] == "plan-has-no-page-map"
     assert ltjs.check_url(f"{RUN}/page/1", plan)[0] == 1
-    assert ltjs.check_url(f"{RUN}/background", plan)[0] == 0
+    # /run/background has no number either; only a captured url maps it.
+    assert ltjs.check_url(f"{RUN}/background", plan)[1]["reason"] == "plan-has-no-page-map"
     plan["flow_pages"] = [{"page_index": 1, "page_no": 1}, {"page_index": 2, "page_no": 2},
                           {"page_index": 3, "page_no": 3}]
     assert ltjs.check_url(f"{RUN}/page/1", plan)[0] == 0
     assert ltjs.check_url(f"{RUN}/page/2", plan)[1]["reason"] == "report-page"
     assert ltjs.check_url(f"{RUN}/page/3", plan)[1]["reason"] == "at-or-past-stop"
     assert ltjs.check_url(f"{RUN}/page/4", plan)[1]["reason"] == "page-not-in-plan"
-    plan = {"origin": ORIGIN, "pages": [{"page_index": 2, "page_no": 2}, {"page_index": 7, "page_no": 7}],
+    plan = {"origin": ORIGIN, "route_source": MEASURED,
+            "pages": [{"page_index": 2, "page_no": 2}, {"page_index": 7, "page_no": 7}],
             "boundary_map": {"never_navigated": [{"route": "/run/page/2"}]}}
     assert ltjs.check_url(f"{RUN}/page/2", plan)[1]["reason"] == "never-navigated"
     assert ltjs.check_url(f"{RUN}/page/7", plan)[0] == 0
 
 
 def test_check_url_refuses_checkpoint_pages_from_every_plan_field():
-    base = {"origin": ORIGIN, "pages": [{"page_index": i, "page_no": i} for i in range(1, 9)]}
+    base = {"origin": ORIGIN, "route_source": MEASURED,
+            "pages": [{"page_index": i, "page_no": i} for i in range(1, 9)]}
     for extra in ({"checkpoint_pages": [4]},
                   {"boundary_map": {"doors": [{"class": "checkpoint-page", "page_index": 4}]}},
                   {"first_boundary": {"class": "checkpoint-page", "page_index": 4}},
@@ -180,7 +184,7 @@ def test_check_url_refuses_checkpoint_pages_from_every_plan_field():
 
 
 CROSS_PLAN = {"origin": ORIGIN, "instance": "inst0001", "course_id": 1, "run_id": 101,
-              "stop_before_page": 9, "checkpoint_pages": [4], "report_pages": [3],
+              "route_source": MEASURED, "stop_before_page": 9, "checkpoint_pages": [4], "report_pages": [3],
               "flow_pages": [{"page_index": i, "page_no": n} for i, n in
                              ((1, 1), (2, 2), (3, 3), (5, 4), (6, 5), (7, 6), (8, 7), (9, 8))]}
 
@@ -220,6 +224,136 @@ def test_check_url_from_stop_and_bad_input(run_py, tmp_path):
     assert r.returncode == 2 and json.loads(r.stdout)["reason"] == "bad-from-url"
 
 
+# Lt serves a Background page at /run/background and flow page N at /run/page/N-1. Flow: 1
+# Background, 2 and 3 content, 4 a live checkpoint (K), 5 and 6 content, 7 the report page.
+BG_ROUTES = ((1, None, "background"), (2, 1, "page/1"), (3, 2, "page/2"), (5, 3, "page/3"), (6, 4, "page/4"))
+BACKGROUND_PLAN = {"origin": ORIGIN, "instance": "inst0001", "course_id": 1, "run_id": 101,
+                   "route_source": "datakey+location", "checkpoint_pages": [4], "report_pages": [7],
+                   "flow_pages": [{"page_index": i, "page_no": n, "url": f"{RUN}/{r}"} for i, n, r in BG_ROUTES]
+                   + [{"page_index": 4, "is_checkpoint": True}, {"page_index": 7, "is_report_page": True}]}
+# The same module as a capture without route_source recorded it: URLs by content ordinal.
+LEGACY_BACKGROUND_PLAN = {**BACKGROUND_PLAN, "route_source": None, "flow_pages": [
+    {"page_index": i, "page_no": n, "url": f"{RUN}/page/{n}", "title": t} for i, n, t in
+    ((1, 1, "Background Information"), (2, 2, "a"), (3, 3, "b"), (5, 4, "c"), (6, 5, "d"))]}
+
+
+def plan_023(checkpoint: bool) -> dict:
+    """A fill plan in the 0.2.3 shape: no route_source key, no titles, no source_url. Flow: 1
+    Background, 2 and 3 content, 4 a live checkpoint (or content), 5 content, 6 the report
+    page. Its URLs count content pages by ordinal, so /run/page/<n> sits one flow page late."""
+    k = 4 if checkpoint else None
+    flow = [{"page_index": i, "page_no": n, "url": f"{RUN}/page/{n}" if n else None,
+             "is_checkpoint": i == k, "is_report_page": i == 6}
+            for i, n in ((1, 1), (2, 2), (3, 3), (4, None if checkpoint else 4),
+                         (5, 4 if checkpoint else 5), (6, None))]
+    return {"module_id": "c1-r101", "origin": ORIGIN, "instance": "inst0001", "course_id": 1,
+            "run_id": 101, "stop_before_page": k, "never_navigated": [{"route": "complete"}],
+            "never_navigated_pages": [6], "report_pages": [6],
+            "checkpoint_pages": [k] if k else [], "flow_pages": flow,
+            "pages": [{"page_index": 3, "page_no": 3, "url": f"{RUN}/page/3"}]}
+
+
+def test_check_url_maps_a_measured_background_route():
+    assert ltjs.check_url(f"{RUN}/background", BACKGROUND_PLAN)[1]["page_index"] == 1
+    assert ltjs.check_url(f"{RUN}/page/1", BACKGROUND_PLAN)[1]["page_index"] == 2
+    assert ltjs.check_url(f"{RUN}/page/2", BACKGROUND_PLAN, from_url=f"{RUN}/background")[0] == 0
+    assert ltjs.check_url(f"{RUN}/page/5", BACKGROUND_PLAN)[1]["reason"] == "page-not-in-plan"
+
+
+def test_background_and_checkpoint_forbid_the_first_page_after_k():
+    # /run/page/3 is flow 5, the first page after the checkpoint at K=4. An ordinal map sent it
+    # to flow 3, before K, and allowed the move.
+    code, r = ltjs.check_url(f"{RUN}/page/3", BACKGROUND_PLAN, from_url=f"{RUN}/page/1")
+    assert (code, r["reason"], r["page_index"]) == (1, "crosses-checkpoint", 4)
+    code, r = ltjs.check_url(f"{RUN}/page/3", {**BACKGROUND_PLAN, "stop_before_page": 4})
+    assert (code, r["reason"], r["page_index"]) == (1, "at-or-past-stop", 5)
+    assert ltjs.check_url(f"{RUN}/page/2", BACKGROUND_PLAN, from_url=f"{RUN}/page/1")[0] == 0
+
+
+def test_legacy_capture_with_a_background_page_gets_no_route_map(run_py, tmp_path):
+    pol = ltjs.policy_from_plan(LEGACY_BACKGROUND_PLAN)
+    assert (pol["page_map"], pol["url_map"], pol["mapped"]) == ({}, {}, False)
+    assert pol["route_refusal"] == ltjs.LEGACY_CAPTURE
+    for rest in ("page/1", "page/3", "background"):
+        code, r = ltjs.check_url(f"{RUN}/{rest}", LEGACY_BACKGROUND_PLAN)
+        assert (code, r["reason"]) == (1, "recapture-needed"), rest
+        assert "Re-capture" in r["error"] and "module_only" in r["error"]
+    p = tmp_path / "legacy.json"
+    p.write_text(json.dumps(LEGACY_BACKGROUND_PLAN), encoding="utf-8", newline="\n")
+    r = cli(run_py, "check-url", "--plan", str(p), f"{RUN}/page/1")
+    assert r.returncode == 1 and json.loads(r.stdout)["reason"] == "recapture-needed"
+    assert "Re-capture the module" in r.stderr
+
+
+def test_every_unmarked_capture_is_refused_whatever_its_titles():
+    # A Background page titled anything, or no Background page at all: without route_source
+    # nothing tells the two apart, so the routes are refused either way.
+    plain = [{"page_index": i, "page_no": i, "url": f"{RUN}/page/{i}", "title": f"p{i}"} for i in (1, 2, 3)]
+    for doc in ({"pages": plain},
+                {"pages": [{**plain[0], "title": "Pre-reading"}] + plain[1:], "checkpoint_pages": [3]},
+                {"pages": plain, "source_url": f"{RUN}/page/1"},
+                {"pages": plain, "route_source": None}):
+        assert ltjs.route_refusal(doc) == ltjs.LEGACY_CAPTURE, doc
+    for doc in ({"pages": plain, "route_refusal": "stop"}, {"pages": plain, "route_source": "ordinal"}):
+        assert ltjs.route_refusal(doc), doc
+    assert ltjs.route_refusal({"pages": plain, "route_source": MEASURED}) is None
+    # A plan carries the key even when it is null; a plan without the key predates the mark.
+    assert ltjs.plan_route_refusal({"pages": plain}) == ltjs.LEGACY_PLAN
+    assert ltjs.plan_route_refusal({"pages": plain, "route_source": None}) == ltjs.LEGACY_CAPTURE
+    assert ltjs.plan_route_refusal({"pages": plain, "route_source": MEASURED}) is None
+
+
+@pytest.mark.parametrize("checkpoint", [True, False], ids=["checkpoint", "no-checkpoint"])
+def test_a_plan_built_before_route_source_is_refused(run_py, tmp_path, checkpoint):
+    plan = plan_023(checkpoint)
+    pol = ltjs.policy_from_plan(plan)
+    assert (pol["page_map"], pol["url_map"], pol["route_refusal"]) == ({}, {}, ltjs.LEGACY_PLAN)
+    assert "rebuild the plan" in pol["route_refusal"]
+    # The checkpoint and report pages still come from page_index, which Lt's own order set.
+    assert pol["checkpoint_indexes"] == ([4] if checkpoint else []) and pol["report_indexes"] == [6]
+    p = tmp_path / "plan.json"
+    p.write_text(json.dumps(plan), encoding="utf-8", newline="\n")
+    for frm, to in (("page/2", "page/3"), (None, "page/3"), (None, "page/1"), (None, "background")):
+        args = ["check-url", "--plan", str(p)] + (["--from", f"{RUN}/{frm}"] if frm else []) + [f"{RUN}/{to}"]
+        r = cli(run_py, *args)
+        assert r.returncode == 1, (frm, to, r.stdout + r.stderr)
+        out = json.loads(r.stdout)
+        assert out["reason"] == "recapture-needed" and out["page_index"] is None, (frm, to)
+        assert "rebuild the plan" in r.stderr
+
+
+@needs_node
+@pytest.mark.parametrize("checkpoint", [True, False], ids=["checkpoint", "no-checkpoint"])
+def test_rendered_guard_refuses_a_plan_built_before_route_source(tmp_path, checkpoint):
+    p = tmp_path / "plan.json"
+    p.write_text(json.dumps(plan_023(checkpoint)), encoding="utf-8", newline="\n")
+    info = ltjs.render("guard", form="function", plan=str(p), out_dir=tmp_path / "o")
+    assert info["guard"] == "plan"
+    out = node({"mode": "run", "file": info["path"], "path": "/i/inst0001/student/courses/1/runs/101/run/page/2",
+                "navigate": [f"{RUN}/page/3", f"{RUN}/page/1", f"{RUN}/background"]}, tmp_path)
+    assert [n["canceled"] for n in out["navigate"]] == [True, True, True]
+    pol = ltjs.policy_from_plan(plan_023(checkpoint))
+    js = node({"mode": "decide", "policy": pol, "from": f"{RUN}/page/2", "urls": [f"{RUN}/page/3"]}, tmp_path)
+    assert (js[0]["allowed"], js[0]["reason"]) == (False, "recapture-needed")
+
+
+@pytest.mark.parametrize("pages,needle", [
+    ([(2, 1, "page/1"), (3, 1, None)], "both claim /run/page/1"),
+    ([(2, None, "page/1"), (3, 1, None)], "both claim /run/page/1"),
+    ([(1, None, "background"), (2, None, "background")], "both claim"),
+    ([(2, 1, "page/2")], "claims both /run/page/1 and /run/page/2"),
+    ([(1, 1, "background")], "is the Background page and also claims"),
+    ([(1, None, "background"), (21, 21, "page/21")], "at most 19 numbered pages"),  # Background and K=3
+    ([(5, 5, None)], "at most 4 numbered pages"),
+])
+def test_conflicting_routes_are_a_bad_plan(pages, needle):
+    plan = {"origin": ORIGIN, "route_source": "datakey+location", "checkpoint_pages": [3],
+            "pages": [{"page_index": i, "page_no": n, "url": f"{RUN}/{r}" if r else None} for i, n, r in pages]}
+    code, r = ltjs.check_url(f"{RUN}/page/1", plan)
+    assert (code, r["reason"]) == (2, "bad-plan")
+    assert needle in r["error"] and "Re-capture" in r["error"]
+
+
 def test_policy_normalizes_plan_fields():
     pol = ltjs.policy_from_plan(json.loads(PLAN.read_text(encoding="utf-8")))
     assert pol["mode"] == "plan" and pol["origin"] == ORIGIN and pol["mapped"] is True
@@ -241,7 +375,7 @@ URL_TABLE = [u for u, _ in FORBIDDEN if "\\" not in u and " " not in u and ".." 
 @needs_node
 def test_python_and_guard_classify_agree(tmp_path):
     plans = [json.loads(PLAN.read_text(encoding="utf-8")), {"origin": ORIGIN, "stop_before_page": 3, "report_pages": [2]},
-             {"origin": ORIGIN}, None, CROSS_PLAN]
+             {"origin": ORIGIN}, None, CROSS_PLAN, BACKGROUND_PLAN, LEGACY_BACKGROUND_PLAN]
     for plan in plans:
         pol = ltjs.policy_from_plan(plan)
         py = [ltjs.classify(u, pol) for u in URL_TABLE]
@@ -251,8 +385,9 @@ def test_python_and_guard_classify_agree(tmp_path):
 
 
 @needs_node
-def test_python_and_guard_agree_on_crossing(tmp_path):
-    pol = ltjs.policy_from_plan(CROSS_PLAN)
+@pytest.mark.parametrize("plan", [CROSS_PLAN, BACKGROUND_PLAN, LEGACY_BACKGROUND_PLAN], ids=["cross", "background", "legacy"])
+def test_python_and_guard_agree_on_crossing(tmp_path, plan):
+    pol = ltjs.policy_from_plan(plan)
     froms = [f"{RUN}/page/{n}" for n in (1, 2, 5, 6, 12)] + [f"{RUN}/background", f"{RUN}/complete",
                                                               f"{ORIGIN}/i/inst0001/student/courses/1"]
     dests = [f"{RUN}/page/{n}" for n in (1, 2, 3, 4, 6, 8, 9)] + [f"{RUN}/background"]
@@ -556,7 +691,8 @@ def test_render_upload_embeds_checked_bytes(run_py, tmp_path, data_dir):
 
 
 def test_module_declares_its_shared_files():
-    assert set(ltjs.NEEDS) == {"browser/lt_guard.js", "browser/lt_net.js", "browser/guard.js"}
+    assert set(ltjs.NEEDS) == {"browser/lt_guard.js", "browser/lt_net.js", "browser/guard.js",
+                               "browser/cache_status.js"}
     ltjs._needs_probe()
 
 
@@ -623,7 +759,7 @@ def test_rendered_files_are_new_private_files(tmp_path):
 
 def test_check_url_checks_second_checkpoint_after_first_is_behind(run_py, tmp_path):
     # Checking only the first checkpoint incorrectly allows this move past flow index 7.
-    plan = {"origin": ORIGIN, "checkpoint_pages": [3, 7], "flow_pages": [
+    plan = {"origin": ORIGIN, "route_source": MEASURED, "checkpoint_pages": [3, 7], "flow_pages": [
         {"page_index": i, "page_no": n} for i, n in ((1, 1), (4, 3), (5, 4), (8, 6))]}
     path = tmp_path / "two-checkpoints.json"
     path.write_text(json.dumps(plan), encoding="utf-8", newline="\n")

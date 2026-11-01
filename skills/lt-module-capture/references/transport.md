@@ -56,6 +56,49 @@ Choose this route explicitly when the sink cannot be reached. Authentication and
   the newest copy of each file, moves or copies it into `<data>/incoming/` according to
   `paths.downloads_mode`, and overwrites nothing.
 
+## Page-script bodies: the body server
+
+The body server carries code into the page; it never receives page content. With
+`browser.body_server` set, a page-cache miss fetches the rendered body from
+`http://127.0.0.1:<port>/b/<sha256>` in place of the chunk fallback
+(`references/_shared/browser-adapters.md`, section Body server).
+
+- **Where it runs.** The Lt page in the user's browser fetches from the host's loopback, so
+  the server runs on the host. An agent jail with its own network namespace cannot reach it
+  and does not need to: the agent only renders and sends the short loader.
+- **What it answers.** `GET /b/<64 lowercase hex>` and the preflight, nothing else: no write,
+  no listing. A Host other than `127.0.0.1:<port>` gets 421. A missing or foreign Origin gets
+  403 and no CORS headers. Only `lt.origin` gets `Access-Control-Allow-Origin` and
+  `Access-Control-Allow-Private-Network: true`. It serves `<data>/js-bodies/<sha256>.gz.b64`
+  only when that is a regular file directly in the folder, opened without following a link,
+  at most 1 MiB, and its text decodes to bytes whose SHA-256 is the name (409 otherwise). The
+  page checks the SHA-256 again before it runs anything, so a planted file cannot run.
+- **The local-network prompt.** Chromium asks once per site, and the answer stays with the
+  site in the browser profile. A long-lived server therefore adds no prompts; restarting it
+  changes nothing. While the prompt waits, the fetch hangs without an error, so the loader
+  gives up after 8 s with `server-timeout` and the chunk fallback runs. After the user allows
+  the site, later loaders fetch normally. A site the user refused, or a page whose
+  Content-Security-Policy blocks `http://127.0.0.1`, fails at once with `server-unreachable`.
+  Earlier runs fetched scripts from the loopback sink on the Lt page itself, so Lt's policy
+  allowed it then.
+- **Stale connections.** A single-threaded loopback server once held a stale connection after
+  hours idle and froze the page's requests. The body server handles each connection in its own
+  thread, closes every connection after one reply and drops a connection idle for 10 s.
+
+## Host helpers run from a host-only copy
+
+`sink.py`, `emit_fill.py serve` and the body server run on the host, outside every agent
+jail. An agent that works in the repository or the data folder can edit files there, and a
+helper started from such a folder would run that edit with the user's full rights.
+
+- Install the body server with `python3 tools/install_body_server.py --dest <folder>`. It
+  checks the server against `packaging/host-files.sha256` (and `--expect-sha256`, taken from a
+  signed release), copies it read-only into a folder outside the repository and the data
+  folder, and writes `lt-body-server.service` beside it. It never enables or starts the unit.
+  The unit runs `python3 -I`, so neither the working folder nor `PYTHON*` variables add code.
+- Start `sink.py` and `emit_fill.py serve` only from a skill folder unpacked on the host from
+  a release archive whose `SHA256SUMS` line you checked, with `python3 -I`.
+
 ## One reference per run
 
 `reference-<id>.json` keeps the student's answers from the FIRST capture of a run. The sink

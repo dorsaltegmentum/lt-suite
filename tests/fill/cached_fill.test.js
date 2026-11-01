@@ -7,6 +7,7 @@ const cp = require('node:child_process');
 const {gzipSync, gunzipSync} = require('node:zlib');
 const vm = require('node:vm');
 const F = require('./fill_env.js');
+const { redactionHits } = require('../browser/redaction_triggers.js');
 const H = F.harness();
 const storage = () => {
   const data = new Map();
@@ -371,11 +372,14 @@ test('cached-fill: probe and check receipts include short payload hashes', async
   const e = env();
   const probe = await fallback(e, render(probeArgs));
   assert.equal(probe.source_payload_sha16, sha.slice(0, 16));
+  assert.equal('source_payload_sha256' in probe, false);
   const C = require('./check_env.js'), c = C.setup();
   c.ctx.localStorage = storage();
   const checked = await fallback(c, render({method: 'check', cfg: {...c.cfg, source_payload_sha256: sha}, jobs: [c.job]}, {...policy(), check_answer_keys: [[1, 'K']]}));
   assert.equal(checked.source_payload_sha16, sha.slice(0, 16));
+  assert.equal('source_payload_sha256' in checked, false);
   const verified = await fallback(c, render({method: 'checkVerify', cfg: {...c.cfg, source_payload_sha256: sha},
     jobs: {1: [{...c.job, final_h: checked.items[0].final_h}]}}));
   assert.equal(verified.source_payload_sha16, sha.slice(0, 16));
+  assert.deepEqual(redactionHits([probe, checked, verified]), []);
 });

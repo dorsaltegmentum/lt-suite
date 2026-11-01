@@ -5,7 +5,7 @@
   {
    "path": "references/_shared/browser-adapters.md",
    "source": "shared/references/browser-adapters.md",
-   "sha256": "6140d5e8ac5e48969b506ce3c913be531367717225fc60991090de6791274e25"
+   "sha256": "d72642b05689488bf8f83a6a95e8cb5655a1fc4efa45fd4400a3f1f147cda6f6"
   },
   {
    "path": "references/_shared/lexicon/answer-provenance-style.md",
@@ -25,7 +25,7 @@
   {
    "path": "scripts/_shared/config.defaults.toml",
    "source": "shared/config.defaults.toml",
-   "sha256": "1cc6c3048c5418970178f8a7f87095b89ef6e8dd6a7bb5fd483948f8b3c8aaae"
+   "sha256": "4eb77f12b11bd13697606312948d5967f9a461bf48c762b2cc42b819fd9fa263"
   },
   {
    "path": "scripts/_shared/ltcore/__init__.py",
@@ -50,7 +50,7 @@
   {
    "path": "scripts/_shared/ltcore/config.py",
    "source": "shared/ltcore/config.py",
-   "sha256": "18cc1b2295be010790baab20e07e5afbdc5882597876b738cd08fb21fbae5e82"
+   "sha256": "7a6934f0e0898095ae8325e261c543bcfde773a8daf8b20012b09137a3fce9f5"
   },
   {
    "path": "scripts/_shared/ltcore/digest.py",
@@ -80,7 +80,7 @@
   {
    "path": "scripts/_shared/ltcore/reconcile.py",
    "source": "shared/ltcore/reconcile.py",
-   "sha256": "d9474b2d3896606985e9a83b35f75095ee0028afed3033b0115b6eb17260a43a"
+   "sha256": "5d59208e7f163cfaa17bd029275432e2cba7001a5a98a450f5525b4c25fe5809"
   },
   {
    "path": "scripts/_shared/ltcore/requirements.py",
@@ -110,7 +110,7 @@
   {
    "path": "scripts/_shared/ltcore/validate.py",
    "source": "shared/ltcore/validate.py",
-   "sha256": "5edb34db2e559a4ca837799e22838cb9f1608a03e2180d12b7b0fcc1adec9955"
+   "sha256": "132baef1479685399fdc79b168804fa856f1e7dad75b8822952fc646200f3b5d"
   },
   {
    "path": "scripts/_shared/schemas/answers.schema.json",
@@ -125,17 +125,22 @@
   {
    "path": "scripts/_shared/schemas/config.schema.json",
    "source": "shared/schemas/config.schema.json",
-   "sha256": "7da03c50240f7a9bb7c2df536fbc9bb43b7837f438fc6409bf6a234d6e6f3d33"
+   "sha256": "83f8aa3fd7a9a775467de6b18d1d3d238a84a8a0dbde2cd5911e01c70d735e46"
+  },
+  {
+   "path": "scripts/_shared/schemas/fill-notes.schema.json",
+   "source": "shared/schemas/fill-notes.schema.json",
+   "sha256": "d96e0fe6be72c63ee2f399facf83cac22eb61cbc86dce9579356eda8ff265de0"
   },
   {
    "path": "scripts/_shared/schemas/fill-report.schema.json",
    "source": "shared/schemas/fill-report.schema.json",
-   "sha256": "5e058dfbc0a8b84a4aac02e4734adb61483151f19bfa04f588eddd5d4cafba92"
+   "sha256": "214610c7076f43d3b05e9edd4831005a830aee0a95f27cfe76aa9188765e021c"
   },
   {
    "path": "scripts/_shared/schemas/module.schema.json",
    "source": "shared/schemas/module.schema.json",
-   "sha256": "cb0c6ee46011c69ec8a5807b022e318173bc0b2605982b203ab8c747b16db8c8"
+   "sha256": "742e609e0cd5aac8bf3c110f1c500e5d5b4540635629577a29feb2e46456d255"
   },
   {
    "path": "scripts/_shared/schemas/page-kinds.schema.json",

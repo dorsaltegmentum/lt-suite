@@ -22,7 +22,7 @@ Run every lt-suite script through its absolute path beneath `SKILL_DIR`.
 
 Lt agents never click, type or press keys in the Lt tab, and never submit, commit or finish.
 Every write runs inside a rendered page script.
-After each navigation, the guard waits for the view model within `fill.save_wait.render_wait_ms`.
+After each navigation, the guard waits for the view model and a painted page within `fill.save_wait.render_wait_ms`.
 A guard receipt with `ok: false` or `fatal: "guard-degraded"` stops subsequent fill calls.
 At login pages or CAPTCHAs, ask the user and wait for the answer.
 
@@ -64,7 +64,7 @@ The renderer uses the page's existing execution realm throughout these operation
 
 1. Render the target with `--cache`, the adapter's form, and every current argument and plan.
    Execute the file's text inline and inspect the awaited JSON receipt.
-2. On `{ok:false, need:'payload', want:<12 hex>}`, render the same target with `--stub` instead of `--cache`.
+2. On `{ok:false, need:'payload', want:<12 hex>, reason}`, render the same target with `--stub` instead of `--cache`.
    Keep the same form, arguments, plan and network flags so `body_sha256` matches.
 3. For large payloads, add `--chunk-bytes 20000` to that stub render command.
    Its JSON lists `chunks` with numbered snippet `path`, `payload_path`, `len` and `sha16` values.
@@ -77,8 +77,12 @@ The renderer uses the page's existing execution realm throughout these operation
    Blocked storage can require another stub on every call; a cache miss executes nothing.
 
 With intact page globals, only verified compressed code enters `localStorage` under `lt-suite:js:<full SHA-256>`.
-The `lt-suite:js:index` key tracks at most 6 entries and prunes the oldest stored bodies.
+The `lt-suite:js:index` key orders entries from least to most recently used.
+Every cache hit moves its entry to the end.
+Entries past 524,288 characters in total are pruned, least recently used first; the entry in use always stays.
+All shipped bodies together measure about 270,000 characters, far below Lt's own `localStorage` quota.
 Each body excludes arguments and policy; every call supplies deeply frozen current inputs.
+Bodies carry no version string, so a release that leaves a script unchanged keeps its cached entry.
 The wrapper clears input bindings after completion so published closures cannot reuse a completed run's token.
 Only allowlisted shipped script names inside bundled browser directories qualify; `cacheable` reports that decision in render metadata.
 Generated filename prefixes remain excluded even when their files appear inside a bundled browser directory.
@@ -91,10 +95,48 @@ Generated answer files remain ineligible for caching, including when placed insi
 With intact page globals, cache writes contain code and exclude tokens, Lt content and receipts.
 Unreadable, corrupt or mismatched entries return `need:'payload'`; cleanup preserves replacements written after the failed read.
 Successful insertion precedes pruning; failed writes preserve existing bodies and leave later calls to repair the index.
-Index repair reserves the current body among 6 survivors and records entries before pruning.
+The verified body itself does this upkeep before its guard installs, so loaders carry no pruning code.
+Index repair places unindexed entries first, keeps the current body and records entries before pruning.
 Browsers without `DecompressionStream` return `fatal:'stub-no-decompression'` and execute no body.
 Use `--stub --no-compress` for legacy browsers; that form bypasses the page cache.
 Never remove the SHA-256 check or replace refused payloads with handwritten page code.
+
+Every `need:'payload'` reply names its `reason`, a comma-separated list:
+
+| Reason | Meaning |
+|---|---|
+| `not-cached` | This origin's page cache holds no entry for the body. |
+| `storage-blocked` | Reading `localStorage` threw. |
+| `cache-corrupt` | The stored entry failed the SHA-256 check and was removed. |
+| `not-cacheable` | The target is generated code, which never enters the cache. |
+| `server-unreachable` | The body server refused the connection, or the page's CSP blocked it. |
+| `server-timeout` | No answer within 8 s, for example while the local-network prompt waits. |
+| `server-http-<status>` | The server answered `404` (unknown body), `409` (stored file fails its hash) or another refusal. A status other than 400, 403, 404, 405, 409, 413, 421 or 500 reads `server-http-other`. |
+| `server-mismatch`, `server-too-large` | The served text failed the SHA-256 check or exceeded 1 MiB; nothing ran. |
+
+A reason comes only from this fixed set. The loader never copies reply text into it, so a process that answers on the server's port cannot put text in a receipt.
+| `policy-<reason>` | The body loaded, but the policy it names did not. |
+
+Run `ltjs.py render cache_status` with the adapter's form to see the cache without spending a loader per script.
+It reports each of this skill's scripts as `present`, `missing` or `corrupt`, with index position and length.
+It also reports the entry count, total characters and whether storage accepts writes.
+It returns 12-hex prefixes only and never returns stored code.
+
+### Body server
+
+With `browser.body_server = "http://127.0.0.1:<port>"`, a cache miss no longer means retyping the body.
+`render` writes each cacheable body to `<data>/js-bodies/<sha256>.gz.b64`, the gzip base64 text the stub carries.
+The loader then asks `GET /b/<sha256>` once, with no cookies, no referrer, no redirects and an 8 s deadline.
+It checks the answer with the same SHA-256 steps as a cached entry, stores it, and runs it.
+A policy longer than 256 characters is named by its SHA-256 and fetched the same way, so the plan is not retyped per call.
+A missing or changed policy returns `need:'payload'`; the loader never falls back to a weaker policy.
+Any failure returns `need:'payload'` with a reason, and the chunk fallback above still applies.
+That fallback stub also stores the named policy, so later loaders work while the server is down.
+Render metadata lists `body_server` and the `published` files; an unwritable folder gives `body_server_error` and an inline loader.
+
+The server runs on the host, outside every agent jail, because the Lt page in the user's browser fetches from the host's loopback.
+Install it with `tools/install_body_server.py`; never start it from the repository or another folder an agent can write.
+See `docs/speed.md` and the transport reference of the capture skill for the security checks and the local-network prompt.
 
 Rendered files go to `browser.js_tmp_dir`, else `<OS temp>/lt-suite-js-<uid>`.
 `render` exits 2 with `unsafe js_tmp_dir` when that folder is a symlink, belongs to another account, or has group or other permissions.
@@ -145,6 +187,8 @@ python3 "$SKILL_DIR/scripts/_shared/ltcore/ltjs.py" check-url --plan plan.json -
 The `check-url` command permits only matching Lt page routes and `/run/background`.
 The plan blocks report pages, checkpoint pages, excluded routes, and flow indexes reaching `stop_before_page`.
 URL page numbers reach a flow position only through the plan's page map; a plan without one forbids every numbered route.
+Lt serves a Background page at `/run/background` and flow page N after it at `/run/page/N-1`; only a planned page's `url` maps `/run/background`.
+A plan from a capture without `route_source`, or a plan with no `route_source` key, maps nothing: every page URL fails with `recapture-needed`. Capture the module again (one read-only capture call with `module_only=true`), then rebuild the plan.
 With `--from`, a move that would pass a checkpoint page or the stop, forward or back, is forbidden (`crosses-checkpoint`, `crosses-stop`).
 Completion, checkpoint, preview, and foreign-origin routes always fail.
 
@@ -235,6 +279,14 @@ Ports range from 1 to 65535; credentials, other hosts and other schemes are refu
 Start that browser yourself with `--remote-debugging-port` and a separate `--user-data-dir`, then sign in to Lt.
 lt-suite creates no browser or profile. Turn remote debugging off after the session.
 
+`browser.devtools_socket` serves an agent sandbox with its own network namespace, whose loopback cannot reach the browser's port.
+It names a Unix socket that a host process forwards to the `browser.devtools_url` listener, for example `systemd-socket-proxyd`.
+lt-chrome tries the port first (route `direct`).
+When the port is silent, lt-chrome checks the socket, then listens on a free loopback port, gives chrome-devtools-mcp that port and forwards to the socket (route `socket`).
+The configured port stays free, so a second lt-chrome in the same sandbox gets its own bridge.
+A missing socket, a non-socket file, a silent listener, another account's socket, a folder other accounts can change, or a path over 107 bytes (103 on macOS) ends with no tools served and a stated reason, never auto-connect.
+Doctor reports the socket's state and the chosen route. Windows does not support the setting.
+
 The loopback rule constrains the configured first hop.
 The pinned server follows the listener's WebSocket address and redirects; auto-connect trusts DevToolsActivePort.
 A local process controlling that listener or profile can redirect the connection.
@@ -274,9 +326,12 @@ Run `lt-chrome install` again after upgrading the skill; doctor warns when the s
 | `fatal: "stub-hash-mismatch"` | The stub detected changed bytes and executed no script body. |
 | `fatal: "stub-no-decompression"` | The browser lacks gzip decompression; use the legacy uncompressed stub. |
 | `fatal: "stub-chunk-mismatch"` | A chunk failed verification or arrived out of order; execute no stub. |
-| `need: "payload"` | The loader executed nothing; continue with the inline protocol's stub step. |
+| `need: "payload"` | The loader executed nothing; `reason` says why. Continue with the inline protocol's stub step. |
 | `fatal: "script-threw"` | The script threw; the receipt includes its error and `guard_trips`. |
 | `guard_trips > 0` | A guard blocked an action; the cumulative count survives within this document. |
+| `guard_rebinds_blocked > 0` | Lt assigned a locked commit mutator again; the guard dropped the assignment. |
+| `guard_late_define_blocked` | These commit mutators were undefined when the guard installed and got a non-configurable placeholder. Lt's own `Object.defineProperty` on them throws inside Lt; a start-up that stops there shows as `lt-not-painted`. |
+| `fatal: "lt-not-painted"` | Lt painted no flow page within `fill.save_wait.render_wait_ms`; nothing was written or fetched. |
 
 For any fatal refusal or positive `guard_trips`, stop and tell the user.
 Ask the user and wait for the answer.

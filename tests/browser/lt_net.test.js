@@ -30,6 +30,12 @@ function setup(o) {
   return { env, N: env.ctx.LtNet, t0: env.clock.now() };
 }
 const put = (env, key, body, o) => env.request('PUT', '/api/panels/' + key + '/state', body, o);
+/* `leaf` under n levels of {details: ...}. */
+function deepNest(n, leaf) {
+  let v = leaf;
+  for (let i = 0; i < n; i++) v = { details: v };
+  return v;
+}
 
 test('lt_net: 1 calibrated XHR save naming the key, 150 to 950 ms, ends ok at 1250 ms with signal net', async () => {
   const { env, N, t0 } = setup();
@@ -519,9 +525,7 @@ test('lt_net: a calibration bound to another Lt client is stale and the old rule
   const scripts = ['/static/app.3f9a1c.js?v=1', 'https://cdn.example.invalid/lib/vendor.js'];
   const { env, N } = setup({ scripts });
   const sig = N.clientSig();
-  assert.match(sig, /^c1-2-[0-9a-f]{8}$/);
-  env.setScripts(['/static/app.3f9a1c.js?v=2', 'https://cdn.example.invalid/lib/vendor.js']);
-  assert.equal(N.clientSig(), sig, 'query strings do not change the client');
+  assert.match(sig, /^c2-2-[0-9a-f]{8}$/);
   const m = env.model(K1, { strategy: 'immediate', latency: 100, events: false });
   N.expect(K1);
   m.set('answer', 'x');
@@ -549,16 +553,69 @@ test('lt_net: a calibration bound to another Lt client is stale and the old rule
   assert.equal(r3.client_sig, null);
 });
 
-test('lt_net: page chunks change signatures while script ordering leaves signatures equal', () => {
+// Dropping the query let /core.js?v=2 keep the calibration made on /core.js?v=1.
+test('lt_net: a core bundle versioned by its query string signs as a new build and drops the calibration', async () => {
+  const v1 = setup({ scripts: ['/core.js?v=1', 'https://cdn.example.invalid/lib/vendor.js'] });
+  const sig = v1.N.clientSig();
+  assert.match(sig, /^c2-2-[0-9a-f]{8}$/);
+  assert.equal(setup({ scripts: ['/core.js?v=1', 'https://cdn.example.invalid/lib/vendor.js'] }).N.clientSig(), sig,
+    'the same query signs the same');
+  const { env, N } = setup({ scripts: ['/core.js?v=2', 'https://cdn.example.invalid/lib/vendor.js'] });
+  assert.notEqual(N.clientSig(), sig);
+  assert.equal(N.scriptsSig(), v1.N.scriptsSig(), 'the diagnostic fingerprint still drops the query');
+  const m = env.model(K1, { strategy: 'immediate', latency: 100, events: false });
+  N.expect(K1);
+  m.set('answer', 'x');
+  const r = await N.waitForSave([K1], cal({ calibration: Object.assign({}, CAL, { client_sig: sig }) }));
+  assert.equal(r.calibration_stale, true);
+  assert.equal(r.calibrated, false);
+  assert.equal(r.save_signal, 'fallback');
+});
+
+test('lt_net: page chunks keep the client signature and change only the script fingerprint', () => {
   const common = ['/static/app.3f9a1c.js', '/static/vendor.123abc.js'];
-  const first = setup({scripts: [...common, '/static/page-a.111aaa.js']});
-  const second = setup({scripts: [...common, '/static/page-b.222bbb.js']});
-  assert.notEqual(first.N.clientSig(), second.N.clientSig());
-  first.env.setScripts(['/static/page-a.111aaa.js', ...common.reverse()]);
-  const ordered = setup({scripts: ['/static/app.3f9a1c.js', '/static/vendor.123abc.js', '/static/page-a.111aaa.js']});
-  assert.equal(first.N.clientSig(), ordered.N.clientSig());
-  first.env.setScripts([...common, '/static/page-a.111aaa.js', '/static/lazy.333ccc.js']);
-  assert.notEqual(first.N.clientSig(), ordered.N.clientSig());
+  const first = setup({scripts: common});
+  const sig = first.N.clientSig();
+  const page = first.N.scriptsSig();
+  assert.match(sig, /^c2-2-[0-9a-f]{8}$/);
+  assert.match(page, /^c1-2-[0-9a-f]{8}$/);
+  first.env.addChunks(['/static/page-a.111aaa.js']);
+  assert.equal(first.N.clientSig(), sig, 'a chunk loaded after DOMContentLoaded is not the build');
+  assert.notEqual(first.N.scriptsSig(), page, 'the diagnostic fingerprint sees the chunk');
+  const second = setup({scripts: common});
+  second.env.addChunks(['/static/page-b.222bbb.js', '/static/lazy.333ccc.js']);
+  assert.equal(second.N.clientSig(), sig, 'another page of the same build signs the same');
+  assert.notEqual(second.N.scriptsSig(), first.N.scriptsSig());
+  const ordered = setup({scripts: [...common].reverse()});
+  assert.equal(ordered.N.clientSig(), sig, 'script order does not matter');
+});
+
+test('lt_net: a changed core bundle changes the client signature', () => {
+  const sig = setup({scripts: ['/static/app.3f9a1c.js', '/static/vendor.123abc.js']}).N.clientSig();
+  const rebuilt = setup({scripts: ['/static/app.77aa01.js', '/static/vendor.123abc.js']});
+  assert.notEqual(rebuilt.N.clientSig(), sig);
+  rebuilt.env.addChunks(['/static/app.3f9a1c.js']);
+  assert.notEqual(rebuilt.N.clientSig(), sig, 'the old bundle loaded late does not restore the old build');
+});
+
+test('lt_net: without navigation timing the page has no client signature', () => {
+  const { N } = setup({scripts: ['/static/app.3f9a1c.js'], timing: false});
+  assert.equal(N.clientSig(), null);
+  assert.match(N.scriptsSig(), /^c1-1-[0-9a-f]{8}$/);
+});
+
+test('lt_net: a calibration record survives page-chunk loads', async () => {
+  const { env, N } = setup({scripts: ['/static/app.3f9a1c.js', 'https://cdn.example.invalid/lib/vendor.js']});
+  const record = Object.assign({}, CAL, { client_sig: N.clientSig() });
+  env.addChunks(['/static/page-7.abc123.js']);
+  const m = env.model(K1, { strategy: 'immediate', latency: 100, events: false });
+  N.expect(K1);
+  m.set('answer', 'x');
+  const r = await N.waitForSave([K1], cal({ calibration: record }));
+  assert.equal(r.calibration_stale, false);
+  assert.equal(r.calibrated, true);
+  assert.equal(r.save_signal, 'net');
+  assert.equal(r.client_sig, record.client_sig);
 });
 
 // Backbone sync must not turn an unvalidated request into permission to navigate.
@@ -699,9 +756,10 @@ test('lt_net: fallback diagnostics aggregate sanitized paths without request con
   const result = await pending;
   assert.equal(result.signal, 'fallback');
   const diag = JSON.parse(JSON.stringify(result.save_diag));
+  // The sync answered no observed request, so no row claims it.
   assert.deepEqual(diag, [
-    {method: 'POST', path_template: '/api/save/:id/:id', status: 200, count: 2, model_sync: true},
-    {method: 'GET', path_template: '/api/read/:id/:id', status: 200, count: 1, model_sync: true}
+    {method: 'POST', path_template: '/api/save/:id/:id', status: 200, count: 2, model_sync: false},
+    {method: 'GET', path_template: '/api/read/:id/:id', status: 200, count: 1, model_sync: false}
   ]);
   assert.ok(!JSON.stringify(diag).includes(secret));
   assert.ok(!JSON.stringify(diag).includes('?'));
@@ -717,4 +775,273 @@ test('lt_net: fallback diagnostics keep at most twenty rows', async () => {
   await env.clock.advance(4500);
   const result = await pending;
   assert.equal(result.save_diag.length, 20);
+});
+
+test('lt_net: save_diag model_sync marks only the row whose request the sync answered', async () => {
+  const { env, N } = setup();
+  const m = env.model(K1, { strategy: 'never' });
+  N.expect(K1, m);
+  const xhr = env.request('PUT', '/api/cells/1', '{}', { latency: 100 });
+  const options = { xhr };
+  m.trigger('request', m, xhr, options);
+  env.request('POST', '/api/telemetry/1', '{}', { latency: 100 });
+  await env.clock.advance(150);
+  m.trigger('sync', m, {}, options);
+  const r = await N.waitForSave([K1], OPTS);
+  assert.equal(r.save_signal, 'fallback');
+  assert.deepEqual(JSON.parse(JSON.stringify(r.save_diag)), [
+    { method: 'PUT', path_template: '/api/cells/:id', status: 200, count: 1, model_sync: true },
+    { method: 'POST', path_template: '/api/telemetry/:id', status: 200, count: 1, model_sync: false }
+  ]);
+});
+
+test('lt_net: a single-key 200 reply of {"success": false} fails the key', async () => {
+  for (const via of ['xhr', 'fetch']) {
+    const { env, N } = setup();
+    N.expect(K1);
+    put(env, K1, JSON.stringify({ uuid: K1, answer: 'x' }), { via, latency: 100, response: JSON.stringify({ success: false }) });
+    const r = await N.waitForSave([K1], cal({ max_ms: 1000 }));
+    assert.equal(r.save_signal, 'error', via);
+    assert.deepEqual([...r.failed_keys], [K1], via);
+  }
+});
+
+test('lt_net: a typed field echoed in a single-key reply leaves the generic rule as it was', async () => {
+  const { env, N } = setup();
+  const m = env.model(K1, { strategy: 'immediate', latency: 100, events: false,
+    response: JSON.stringify({ success: true, panelKey: 4162 }) });
+  N.expect(K1);
+  m.set('answer', 'x');
+  const r = await N.waitForSave([K1], cal());
+  assert.equal(r.save_signal, 'net');
+});
+
+// The generic single-key path returned ok without consulting nested failure markers.
+for (const [name, response] of [
+  ['a nested {"success": false}', { success: true, data: { success: false } }],
+  ['a nested status failed', { success: true, data: { status: 'failed' } }],
+  ['a top-level errors list beside a per-key success', { saved: [K1], errors: [{ code: 1 }] }],
+  ['an error message listed beside a per-key success', { saved: [K1], errors: ['quota exceeded'] }],
+  ['a failure deeper than the inspection limit', { success: true, data: deepNest(40, { success: true }) }]
+]) {
+  test('lt_net: a single-key 200 reply with ' + name + ' leaves the key unconfirmed', async () => {
+    const { env, N } = setup();
+    N.expect(K1);
+    put(env, K1, JSON.stringify({ uuid: K1, answer: 'x' }), { latency: 100, response: JSON.stringify(response) });
+    const r = await N.waitForSave([K1], cal({ max_ms: 1500 }));
+    assert.equal(r.save_confirmed, false);
+    assert.equal(r.keys_saved, 0);
+    assert.notEqual(r.save_signal, 'net');
+  });
+}
+
+test('lt_net: a single-key 200 reply with a nested success still saves', async () => {
+  const { env, N } = setup();
+  N.expect(K1);
+  put(env, K1, JSON.stringify({ uuid: K1, answer: 'x' }), { latency: 100,
+    response: JSON.stringify({ success: true, data: { success: true, error: null, items: deepNest(20, { ok: true }) } }) });
+  const r = await N.waitForSave([K1], cal({ max_ms: 1500 }));
+  assert.equal(r.save_signal, 'net');
+  assert.equal(r.keys_saved, 1);
+});
+
+/* ---- the run-data adapter: Lt's PUT of the current run's data ---- */
+const RD_PATH = '/i/inst0001/v/2.0/api/student/courses/1/runs/101/data';
+const rdCal = (N, extra) => Object.assign({}, OPTS, {
+  calibration: { source: 'net', method: 'PUT', path_template: N.pathTemplate(RD_PATH) } }, extra || {});
+const SUCCESS = JSON.stringify({ success: true });
+// save_diag's run_data string, 'name=count ...', as an object.
+const counts = text => Object.fromEntries(String(text).split(' ').map(p => p.split('=')).map(([k, v]) => [k, Number(v)]));
+const short2 = N => {
+  N.expect('209', null, null, { ids: { panel: '209', data: '208' } });
+  N.expect('2838', null, null, { ids: { panel: '2838' } });
+};
+
+test('lt_net run-data: typed panelKey fields and a success reply save 3- and 4-character keys', async () => {
+  for (const via of ['xhr', 'fetch']) {
+    const { env, N } = setup();
+    short2(N);
+    const body = JSON.stringify({ panels: [{ panelKey: 209, dataKey: 208, state: { answer: 'a' } }, { panel_key: '2838', state: {} }] });
+    env.request('PUT', RD_PATH, body, { via, latency: 100, response: SUCCESS });
+    const r = await N.waitForSave(['209', '2838'], rdCal(N));
+    assert.equal(r.save_signal, 'net', via);
+    assert.equal(r.keys_saved, 2, via);
+    assert.equal(r.keys_weak, 2, via);
+    assert.equal(r.ack_path_template, N.pathTemplate(RD_PATH), via);
+    assert.match(r.net_diag, /matched=1 /);
+    assert.match(r.net_diag, /run_data=1 resp_truncated=0$/);
+  }
+});
+
+test('lt_net run-data: a dataKey or uuid field and a uuid-keyed object identify their own kind', async () => {
+  const { env, N } = setup();
+  N.expect('209', null, null, { ids: { panel: '209', data: '208' } });
+  N.expect(K1, null, null, { ids: { panel: '4162' } });
+  env.request('PUT', RD_PATH, JSON.stringify({ data: [{ dataKey: '208' }], [K1]: { answer: 'b' } }), { latency: 100, response: SUCCESS });
+  const r = await N.waitForSave(['209', K1], rdCal(N));
+  assert.equal(r.save_signal, 'net');
+  assert.equal(r.keys_saved, 2);
+});
+
+for (const [name, o, signal] of [
+  ['an empty reply', { response: '' }, 'unconfirmed'],
+  ['an empty object', { response: '{}' }, 'unconfirmed'],
+  ['a reply that is not JSON', { response: 'OK' }, 'unconfirmed'],
+  ['202 with success', { status: 202, response: SUCCESS }, 'unconfirmed'],
+  ['{"success": false}', { response: JSON.stringify({ success: false }) }, 'error'],
+  ['status 500', { status: 500, response: SUCCESS }, 'error'],
+  ['success with a nested {"success": false}', { response: JSON.stringify({ success: true, data: { success: false } }) }, 'unconfirmed'],
+  ['success with a nested status failed', { response: JSON.stringify({ success: true, result: { status: 'failed' } }) }, 'unconfirmed'],
+  ['success with a nested errors list', { response: JSON.stringify({ success: true, data: { errors: [{ code: 1 }] } }) }, 'unconfirmed']
+]) {
+  test('lt_net run-data: ' + name + ' never acknowledges', async () => {
+    const { env, N } = setup();
+    short2(N);
+    env.request('PUT', RD_PATH, JSON.stringify([{ panelKey: 209 }, { panelKey: 2838 }]), Object.assign({ latency: 100 }, o));
+    const r = await N.waitForSave(['209', '2838'], rdCal(N, { max_ms: 1000 }));
+    assert.equal(r.save_signal, signal);
+    assert.equal(r.keys_saved, 0);
+    assert.equal(r.save_confirmed, false);
+  });
+}
+
+test('lt_net run-data: a nested null error or success status is no failure marker', async () => {
+  for (const response of [{ success: true, data: { error: null, success: true } }, { success: true, result: { status: 'saved' } }]) {
+    const { env, N } = setup();
+    short2(N);
+    env.request('PUT', RD_PATH, JSON.stringify([{ panelKey: 209 }, { panelKey: 2838 }]),
+      { latency: 100, response: JSON.stringify(response) });
+    const r = await N.waitForSave(['209', '2838'], rdCal(N, { max_ms: 1000 }));
+    assert.equal(r.save_signal, 'net', JSON.stringify(response));
+    assert.equal(r.keys_saved, 2);
+  }
+});
+
+test('lt_net run-data: per-key reply outcomes decide each key, errors win', async () => {
+  const { env, N } = setup();
+  short2(N);
+  env.request('PUT', RD_PATH, JSON.stringify([{ panelKey: 209 }, { panelKey: 2838 }]), { latency: 100,
+    response: JSON.stringify({ success: true, results: [{ panelKey: 209, success: true }, { panelKey: 2838, error: 'invalid' }] }) });
+  const r = await N.waitForSave(['209', '2838'], rdCal(N, { max_ms: 1000 }));
+  assert.equal(r.save_signal, 'error');
+  assert.equal(r.keys_saved, 1);
+  assert.deepEqual([...r.failed_keys], ['2838']);
+  const b = setup();
+  short2(b.N);
+  b.env.request('PUT', RD_PATH, JSON.stringify([{ panelKey: 209 }, { panelKey: 2838 }]), { latency: 100,
+    response: JSON.stringify({ saved: [{ panelKey: 209 }] }) });
+  const r2 = await b.N.waitForSave(['209', '2838'], rdCal(b.N, { max_ms: 1000 }));
+  assert.equal(r2.save_signal, 'unconfirmed', 'a per-key reply that omits a key leaves it pending');
+  assert.deepEqual([...r2.pending_keys], ['2838']);
+});
+
+// A failure nested under an item with its own success, or past the depth limit, was confirmed.
+test('lt_net run-data: a failure nested under an item fails that item; its sibling still saves', async () => {
+  const { env, N } = setup();
+  short2(N);
+  env.request('PUT', RD_PATH, JSON.stringify([{ panelKey: 209 }, { panelKey: 2838 }]), { latency: 100,
+    response: JSON.stringify({ results: [{ panelKey: 209, success: true, result: { success: false } },
+      { panelKey: 2838, success: true, result: { success: true } }] }) });
+  const r = await N.waitForSave(['209', '2838'], rdCal(N, { max_ms: 1000 }));
+  assert.equal(r.save_signal, 'error');
+  assert.deepEqual([...r.failed_keys], ['209']);
+  assert.equal(r.keys_saved, 1);
+  const one = setup();
+  one.N.expect('209', null, null, { ids: { panel: '209' } });
+  one.env.request('PUT', RD_PATH, JSON.stringify([{ panelKey: 209 }]), { latency: 100,
+    response: JSON.stringify({ results: [{ panelKey: 209, success: true, result: { success: false } }] }) });
+  const r1 = await one.N.waitForSave(['209'], rdCal(one.N, { max_ms: 1000 }));
+  assert.equal(r1.save_confirmed, false);
+  assert.equal(r1.save_signal, 'error');
+  assert.deepEqual([...r1.failed_keys], ['209']);
+});
+
+test('lt_net run-data: a failure no item owns leaves per-key successes unconfirmed', async () => {
+  const { env, N } = setup();
+  short2(N);
+  env.request('PUT', RD_PATH, JSON.stringify([{ panelKey: 209 }, { panelKey: 2838 }]), { latency: 100,
+    response: JSON.stringify({ results: [{ panelKey: 209, success: true }, { panelKey: 2838, success: true }],
+      warnings: { success: false } }) });
+  const r = await N.waitForSave(['209', '2838'], rdCal(N, { max_ms: 1000 }));
+  assert.equal(r.save_signal, 'unconfirmed');
+  assert.equal(r.keys_saved, 0);
+});
+
+for (const [name, depth] of [['10 levels down', 10], ['past the depth limit', 40]]) {
+  test('lt_net run-data: a success reply with a failure ' + name + ' never acknowledges', async () => {
+    const { env, N } = setup();
+    N.expect('209', null, null, { ids: { panel: '209' } });
+    env.request('PUT', RD_PATH, JSON.stringify([{ panelKey: 209 }]), { latency: 100,
+      response: JSON.stringify({ success: true, data: deepNest(depth, { success: depth > 32 }) }) });
+    const r = await N.waitForSave(['209'], rdCal(N, { max_ms: 1000 }));
+    assert.equal(r.save_confirmed, false);
+    assert.equal(r.keys_saved, 0);
+    assert.equal(r.save_signal, 'unconfirmed');
+    if (depth > 32) assert.match(r.net_diag, /resp_truncated=1$/);
+  });
+}
+
+for (const [name, path, method, body] of [
+  ['the key as a property name only', RD_PATH, 'PUT', { panels: { 209: { answer: 'a' }, 2838: { answer: 'b' } } }],
+  ['the key as a plain value only', RD_PATH, 'PUT', { items: [209, '2838'], key: 209 }],
+  ['a longer key that contains it', RD_PATH, 'PUT', { panels: [{ panelKey: '2090' }, { panelKey: 'x2838' }] }],
+  ['another panel whose dataKey is the key', RD_PATH, 'PUT', { panels: [{ dataKey: 209 }, { dataKey: 2838 }] }],
+  ['another run\'s data', '/i/inst0001/v/2.0/api/student/courses/1/runs/102/data', 'PUT', [{ panelKey: 209 }, { panelKey: 2838 }]],
+  ['another API version', '/i/inst0001/v/3.0/api/student/courses/1/runs/101/data', 'PUT', [{ panelKey: 209 }, { panelKey: 2838 }]],
+  ['a POST to the same path', RD_PATH, 'POST', [{ panelKey: 209 }, { panelKey: 2838 }]]
+]) {
+  test('lt_net run-data: ' + name + ' identifies no short key', async () => {
+    const { env, N } = setup();
+    short2(N);
+    env.request(method, path, JSON.stringify(body), { latency: 100, response: SUCCESS });
+    const calib = { source: 'net', method, path_template: N.pathTemplate(path) };
+    const r = await N.waitForSave(['209', '2838'], Object.assign({}, OPTS, { calibration: calib, max_ms: 1000 }));
+    assert.equal(r.save_signal, 'unconfirmed');
+    assert.equal(r.keys_saved, 0);
+  });
+}
+
+test('lt_net run-data: a request that started before the write identifies nothing', async () => {
+  const { env, N } = setup();
+  env.request('PUT', RD_PATH, JSON.stringify([{ panelKey: 209 }]), { latency: 300, response: SUCCESS });
+  N.expect('209', null, null, { ids: { panel: '209' } });
+  const r = await N.waitForSave(['209'], rdCal(N, { max_ms: 1000 }));
+  assert.equal(r.save_signal, 'unconfirmed');
+  assert.equal(r.keys_saved, 0);
+});
+
+test('lt_net run-data: an unparsed body stays unidentified and the fallback rule runs', async () => {
+  const { env, N } = setup();
+  short2(N);
+  env.request('PUT', RD_PATH, 'panelKey=209&panelKey=2838', { latency: 100, response: SUCCESS });
+  const r = await N.waitForSave(['209', '2838'], OPTS);
+  assert.equal(r.save_signal, 'fallback');
+  assert.equal(r.keys_pending, 2);
+  const rd = counts(r.save_diag.find(row => row.run_data).run_data);
+  assert.equal(rd.body_unparsed, 1);
+  assert.equal(rd.keys_expected, 2);
+  assert.equal(rd.keys_identified, 0);
+});
+
+test('lt_net run-data: fallback diagnostics count identities by kind without body content', async () => {
+  const { env, N } = setup();
+  short2(N);
+  const secret = 'private-answer-secret';
+  const body = { panels: { 209: { panelKey: 209, answer: secret } }, recent: [2838] };
+  env.request('PUT', RD_PATH, JSON.stringify(body), { latency: 100, response: SUCCESS });
+  env.request('POST', '/i/inst0001/v/2.0/api/student/courses/1/runs/101/completed/answerentered', secret, { latency: 50 });
+  const r = await N.waitForSave(['209', '2838'], OPTS);
+  assert.equal(r.save_signal, 'fallback');
+  const diag = JSON.parse(JSON.stringify(r.save_diag));
+  assert.ok(!JSON.stringify(diag).includes(secret));
+  const row = diag.find(d => d.method === 'PUT');
+  assert.equal(row.path_template, '/i/inst0001/v/2.0/api/student/courses/:id/runs/:id/data');
+  assert.equal(row.model_sync, false);
+  assert.equal(row.run_data, 'requests=1 body_json=1 body_unparsed=0 body_none=0 keys_expected=2 keys_identified=1 ' +
+    'as_panel_field=1 as_data_field=0 as_uuid_field=0 as_prop=1 as_value=2 ' +
+    'reply_per_key=0 reply_success=1 reply_failure=0 reply_bare=0');
+  assert.equal(diag.find(d => d.method === 'POST').run_data, undefined);
+  // On the fallback rule the identified key is still recorded for calibration.
+  assert.equal(r.ack_source, 'net');
+  assert.equal(r.ack_path_template, N.pathTemplate(RD_PATH));
 });

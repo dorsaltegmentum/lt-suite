@@ -11,7 +11,7 @@
  *
  *   const H = require('./harness.js');
  *   const env = H.makeEnv({ origin, path, pages, jq, navigationApi, t0, scripts, serviceWorker,
- *                           root, rootReady });
+ *                           root, rootReady, timing });
  *
  * env members:
  *   ctx                 the page global (globalThis inside the scripts)
@@ -24,7 +24,9 @@
  *                       status (200, or null for a request that never ends), method ('PUT'),
  *                       path ('/api/panels/<key>/state'), via 'xhr' | 'fetch' |
  *                       'captured-fetch' (Lt kept the fetch reference from before install) |
- *                       'ws' (WebSocket only, no reply), events (true: request/sync/error)
+ *                       'ws' (WebSocket only, no reply), events (true: request/sync/error),
+ *                       body (m => request body text; default {uuid, value}), response
+ *                       (reply text; default '' for XHR, '{}' for fetch)
  *   request(m, path, body, o)   page request now; o: latency, status, via ('xhr'|'fetch'),
  *                       response (response body text; default '' for XHR, '{}' for fetch)
  *   at(t, fn) / after(ms, fn)   schedule test actions on the fake clock
@@ -46,7 +48,11 @@
  *   setLocation(path)   move the page to another path (same document)
  *   replaceRoot(obj)    Lt swaps its $root for obj (makeEnv({root}) sets the first one)
  *   setHidden(bool)     document.hidden; makeEnv({serviceWorker: true}) adds a controller
- *   setScripts([src])   the page's script tags (makeEnv({scripts}) sets the first list)
+ *   setScripts([src])   the page's script tags (makeEnv({scripts}) sets the first list); each
+ *                       gets a resource timing entry that starts before DOMContentLoaded
+ *   addChunks([src])    script tags a page loads later: resource entries after DOMContentLoaded
+ *   performance         getEntriesByType('navigation' | 'resource') on those entries;
+ *                       makeEnv({timing: false}) leaves the page without navigation timing
  *
  * Fake Backbone models pass one options object to `request` and to the `sync` or `error` that
  * answers it, as Backbone.sync does. Element click() runs the default action of a submit
@@ -316,11 +322,32 @@ function makeEnv(opts) {
   document.querySelector = s => (s === 'div.pageList' ? pageList : null);
   document.querySelectorAll = () => [];
   document.dispatchEvent = ev => fire(document, ev);
+  /* Resource timing, relative to the navigation start: the HTML's scripts start at 10 ms and
+   * on, DOMContentLoaded starts at 500 ms, chunks loaded later start at 2000 ms and on. */
+  const DCL = 500;
+  let resources = [];
+  const scriptEl = src => ({ src: new URL(src, loc.href).href, tagName: 'SCRIPT' });
   const setScripts = list => {
-    document.scripts = (list || []).map(src => ({ src: new URL(src, loc.href).href, tagName: 'SCRIPT' }));
+    document.scripts = (list || []).map(scriptEl);
+    resources = document.scripts.map((s, i) => ({ name: s.src, entryType: 'resource', initiatorType: 'script', startTime: 10 + i }));
   };
   setScripts(o.scripts);
   env.setScripts = setScripts;
+  env.addChunks = list => {
+    for (const src of list || []) {
+      const s = scriptEl(src);
+      document.scripts = document.scripts.concat([s]);
+      resources.push({ name: s.src, entryType: 'resource', initiatorType: 'script', startTime: 2000 + resources.length });
+    }
+  };
+  const performance = {
+    now: () => clock.now(),
+    getEntriesByType: type => {
+      if (type === 'navigation') return o.timing === false ? [] : [{ entryType: 'navigation', domContentLoadedEventStart: DCL }];
+      if (type === 'resource') return resources.slice();
+      return [];
+    }
+  };
 
   env.el = (tag, eo) => {
     const e = eo || {};
@@ -385,7 +412,7 @@ function makeEnv(opts) {
     atob,
     btoa: s => Buffer.from(String(s), 'latin1').toString('base64'),
     crypto: webcrypto,
-    location: loc, document, ko, navigation, HTMLFormElement,
+    location: loc, document, ko, navigation, HTMLFormElement, performance,
     XMLHttpRequest: FakeXHR, fetch: fetch0, WebSocket: FakeWebSocket,
     PerformanceObserver: FakePerformanceObserver,
     navigator: Object.assign({ sendBeacon: (url, data) => { env.requests.push({ kind: 'beacon', method: 'POST', url: String(url), t0: clock.now(), t1: clock.now(), status: 0 }); return true; } },
@@ -493,8 +520,8 @@ function makeEnv(opts) {
   function save(m, after) {
     if (env.navigated) return;
     const carried = m.version;
-    const body = JSON.stringify({ uuid: m.key, value: m.attributes });
-    const plan = { status: m.o.status, latency: m.o.latency };
+    const body = typeof m.o.body === 'function' ? m.o.body(m) : JSON.stringify({ uuid: m.key, value: m.attributes });
+    const plan = { status: m.o.status, latency: m.o.latency, response: m.o.response };
     const url = new URL(m.o.path, loc.origin).href;
     const bb = {};
     let transport = null;

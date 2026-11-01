@@ -5,10 +5,10 @@
   "min_tests": 172,
   "groups": {
     "handlers": 39,
-    "boundaries": 20,
+    "boundaries": 24,
     "transport": 14,
     "mirrors": 10,
-    "fetch-media": 29,
+    "fetch-media": 32,
     "roundtrip": 21,
     "boundary-oracle": 15,
     "sanitize": 11,

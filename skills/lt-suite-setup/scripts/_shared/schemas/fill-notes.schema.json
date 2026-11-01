@@ -1,0 +1,426 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "$id": "https://github.com/dorsaltegmentum/lt-suite/schemas/fill-notes.schema.json",
+ "title": "fill-notes.json: operator notes for make_fill_report.py",
+ "description": "What only the operator saw during one fill run: the browser tool's supervision, notes per item, waivers, events and free-text run notes. make_fill_report.py reads it with receipts.json and writes fill-report.json; `make_fill_report.py --check-notes` lists every problem at once. Shared shapes are copied from fill-report.schema.json, and tests/fill/test_fill_notes.py keeps them equal.",
+ "type": "object",
+ "additionalProperties": false,
+ "required": [
+  "approval_mode"
+ ],
+ "properties": {
+  "started_at": {
+   "type": "string",
+   "format": "date-time",
+   "description": "Optional. The default is the earliest of the bound payloads' generated_at and the first receipt's observed_at. A value that differs from that default needs times_reason."
+  },
+  "ended_at": {
+   "type": [
+    "string",
+    "null"
+   ],
+   "format": "date-time",
+   "description": "Optional. The default is the latest receipt's observed_at. A value that differs from that default needs times_reason; null means the default."
+  },
+  "times_reason": {
+   "type": "string",
+   "minLength": 1,
+   "description": "Why started_at or ended_at differs from the time the payload and receipts give. Copied into the report's run_notes."
+  },
+  "approval_mode": {
+   "type": "string",
+   "enum": [
+    "manual",
+    "auto",
+    "skip-all"
+   ],
+   "description": "Use Manually Approve for the first ten runs and every page containing a commit boundary."
+  },
+  "boundary_reached": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "stopped"
+   ],
+   "properties": {
+    "stopped": {
+     "type": "boolean"
+    },
+    "class": {
+     "type": [
+      "string",
+      "null"
+     ],
+     "enum": [
+      "checkpoint-page",
+      "single-attempt-item",
+      "run-level-commit",
+      "unmapped",
+      null
+     ],
+     "description": "What stopped the run. Only checkpoint-page, single-attempt-item and run-level-commit are one-way doors, so only they are legitimate stopping classes. 'unmapped' still parses so older reports load, but the validator (ltcore.validate) rejects it: an unmapped item type is a gap in this suite, not a door in Lt. It is recorded per item as result=todo and the run continues past it."
+    },
+    "page_index": {
+     "type": [
+      "integer",
+      "null"
+     ]
+    },
+    "item_id": {
+     "type": [
+      "string",
+      "null"
+     ]
+    },
+    "detail": {
+     "type": "string"
+    }
+   },
+   "allOf": [
+    {
+     "if": {
+      "properties": {
+       "stopped": {
+        "const": true
+       }
+      },
+      "required": [
+       "stopped"
+      ]
+     },
+     "then": {
+      "required": [
+       "class",
+       "detail"
+      ]
+     }
+    }
+   ]
+  },
+  "pages_filled": {
+   "type": "array",
+   "items": {
+    "type": "integer"
+   },
+   "description": "page_index values actually visited and written to."
+  },
+  "never_navigated": {
+   "type": "array",
+   "description": "Routes deliberately left unvisited. When lesson.has_completion_page is true, include the completion route here. the validator (ltcore.validate) enforces this. See docs/design-notes.md.",
+   "items": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+     "route",
+     "reason"
+    ],
+    "properties": {
+     "route": {
+      "type": "string"
+     },
+     "reason": {
+      "type": "string"
+     }
+    }
+   }
+  },
+  "items": {
+   "type": "object",
+   "description": "{item_id: note}. A note on an item with a receipt carries only stopped_reason, method, selector_used and lt_conflict. A note on an item with no receipt may also set result (never filled), attempted and todo, and then needs stopped_reason.",
+   "additionalProperties": {
+    "$ref": "#/$defs/item_note"
+   }
+  },
+  "user_decisions": {
+   "type": "array",
+   "description": "Records a waived rail, the approver, time, reason and approval_id from <data>/runs/<module_id>/approvals.json. approval_id must match ^A-[0-9a-f]{8}$. Only the three rails in the enum can be waived. Every other rail remains enforced. the validator (ltcore.validate) accepts a waivable violation only when an entry names its rail and, for a per-item rail, its item. It prints each waiver as a note. It rejects entries without a recorded approval or without a matching violation.",
+   "items": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+     "rail",
+     "who",
+     "when",
+     "why",
+     "approval_id"
+    ],
+    "properties": {
+     "rail": {
+      "type": "string",
+      "enum": [
+       "approval-manual-at-boundary",
+       "write-past-first-door",
+       "passed-single-approval"
+      ],
+      "description": "approval-manual-at-boundary requires manual approval when a run meets a boundary. The first commit boundary limits the pages eligible for this fill operation. write-past-first-door covers attempted items there or later with result filled, filled-unverified or failed. passed-single-approval requires manual approval upon reaching a page containing a submitted single-attempt response."
+     },
+     "item_ids": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+       "type": "string",
+       "minLength": 1
+      },
+      "description": "Per-item rails only: write-past-first-door names the written items, passed-single-approval names the submitted single-attempt item."
+     },
+     "who": {
+      "type": "string",
+      "minLength": 1,
+      "description": "The person who decided, by role: the user, or the unit coordinator."
+     },
+     "when": {
+      "type": "string",
+      "minLength": 10,
+      "description": "YYYY-MM-DD, or an ISO 8601 timestamp with an offset."
+     },
+     "why": {
+      "type": "string",
+      "minLength": 20,
+      "description": "What was decided and why the rail does not apply, as the log records it."
+     },
+     "approval_id": {
+      "type": "string",
+      "pattern": "^A-[0-9a-f]{8}$",
+      "description": "The approval_id identifying the waiver in <data>/runs/<module_id>/approvals.json. Format: A- plus 8 hexadecimal characters, matching ^A-[0-9a-f]{8}$."
+     },
+     "quote": {
+      "type": "string",
+      "minLength": 1,
+      "description": "The user's words verbatim, where the log or the session records them. Never reconstructed."
+     }
+    },
+    "allOf": [
+     {
+      "if": {
+       "properties": {
+        "rail": {
+         "enum": [
+          "write-past-first-door",
+          "passed-single-approval"
+         ]
+        }
+       },
+       "required": [
+        "rail"
+       ]
+      },
+      "then": {
+       "required": [
+        "item_ids"
+       ]
+      }
+     },
+     {
+      "if": {
+       "properties": {
+        "rail": {
+         "const": "approval-manual-at-boundary"
+        }
+       },
+       "required": [
+        "rail"
+       ]
+      },
+      "then": {
+       "not": {
+        "required": [
+         "item_ids"
+        ]
+       }
+      }
+     }
+    ]
+   }
+  },
+  "selector_events": {
+   "type": "array",
+   "description": "Resilience ledger entries produced by this run. Merge into state/ledger.json in the data directory (LT_SUITE_DATA).",
+   "items": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+     "selector",
+     "item_type",
+     "outcome",
+     "recorded_at"
+    ],
+    "properties": {
+     "selector": {
+      "type": "string"
+     },
+     "item_type": {
+      "type": "string"
+     },
+     "outcome": {
+      "type": "string",
+      "enum": [
+       "hit",
+       "miss"
+      ]
+     },
+     "recorded_at": {
+      "type": "string",
+      "format": "date-time"
+     },
+     "replaced_by": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "death_date": {
+      "type": [
+       "string",
+       "null"
+      ],
+      "format": "date"
+     }
+    }
+   }
+  },
+  "connection_events": {
+   "type": "array",
+   "description": "Extension service-worker drops and modal blocks, so a resumed run knows where it lost the page.",
+   "items": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+     "at",
+     "kind"
+    ],
+    "properties": {
+     "at": {
+      "type": "string",
+      "format": "date-time"
+     },
+     "kind": {
+      "type": "string",
+      "enum": [
+       "worker-idle",
+       "modal-block",
+       "navigation-timeout",
+       "screenshot-timeout",
+       "content-filter-block"
+      ]
+     },
+     "detail": {
+      "type": "string"
+     }
+    }
+   }
+  },
+  "run_notes": {
+   "type": "array",
+   "description": "Free text the operator wants kept with the run, one string per note. Copied into the report's run_notes.",
+   "items": {
+    "type": "string",
+    "minLength": 1
+   }
+  }
+ },
+ "$defs": {
+  "item_note": {
+   "type": "object",
+   "additionalProperties": false,
+   "dependentRequired": {
+    "result": [
+     "stopped_reason"
+    ]
+   },
+   "properties": {
+    "stopped_reason": {
+     "type": [
+      "string",
+      "null"
+     ]
+    },
+    "method": {
+     "type": "string",
+     "enum": [
+      "url",
+      "selector",
+      "view-model",
+      "manual-todo",
+      "not-attempted"
+     ]
+    },
+    "selector_used": {
+     "type": [
+      "string",
+      "null"
+     ]
+    },
+    "lt_conflict": {
+     "type": "object",
+     "additionalProperties": false,
+     "required": [
+      "observed_via",
+      "held_answer",
+      "lt_indicated",
+      "draft_ref"
+     ],
+     "description": "Records Lt marking that contradicts a cited answer while the answer remains written on the page. Include the disagreement in the review packet without silently reconciling or dropping it. This differs from answers.conflicts, which pairs cited sources by tier ref. Lt feedback is not a citable tier and must not occupy lower_ref. Record the retained answer and the platform's marking separately. Report the item as filled. Incorrect marking is an outcome rather than a fill failure.",
+     "properties": {
+      "observed_via": {
+       "type": "string",
+       "enum": [
+        "check-answer",
+        "model-answer"
+       ],
+       "description": "Instrument that observed the disagreement. See docs/design-notes.md for instrument behaviour by panel type and the weight of each reading."
+      },
+      "held_answer": {
+       "type": "string",
+       "description": "What stays written in the panel: the researched answer. Never re-pointed onto the key."
+      },
+      "lt_indicated": {
+       "type": "string",
+       "description": "What Lt's marking indicates instead. Recorded as an observation about what the unit will accept, not as a claim about the anatomy."
+      },
+      "draft_ref": {
+       "type": "string",
+       "description": "The provenance ref from answers.json that the held answer rests on. Required: the rule that keeps an answer against the key applies only where the answer is CITED and the citation survives being re-read. An lt_conflict with nothing behind it is not a conflict but an uncorrected wrong answer, check_answer separately records optional retries and their evidence."
+      },
+      "note": {
+       "type": "string",
+       "description": "Why the researched answer was kept, and any sibling items keyed the same way."
+      }
+     }
+    },
+    "result": {
+     "type": "string",
+     "enum": [
+      "failed",
+      "filled-unverified",
+      "skipped",
+      "todo"
+     ],
+     "description": "Only for an item with no receipt. filled needs a fresh-load receipt, so no note sets it."
+    },
+    "attempted": {
+     "type": "boolean"
+    },
+    "todo": {
+     "type": "object",
+     "additionalProperties": false,
+     "required": [
+      "blocker",
+      "placement"
+     ],
+     "properties": {
+      "blocker": {
+       "type": "string"
+      },
+      "placement": {
+       "type": "string"
+      },
+      "artefact_path": {
+       "type": "string"
+      }
+     }
+    }
+   }
+  }
+ }
+}

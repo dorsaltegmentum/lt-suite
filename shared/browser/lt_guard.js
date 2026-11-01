@@ -16,6 +16,18 @@
  *    accessors that return a throwing function, on `$root` and on every prototype that defines
  *    them. Lt's later assignments are ignored and counted. Where an accessor cannot be defined,
  *    a plain throwing function is assigned and re-checked every second and on every run.
+ *    Lt's start-up runs after `$root` binds: it can define mutators late, and it calls
+ *    removeCommittedCheckpoints while it builds the page list, before any flow page reads
+ *    current() true. Until start-up ends (a painted page, a page list without current flags,
+ *    or `render_wait_ms` after `$root` bound), those two page-list mutators stay `deferred`.
+ *    The two commit mutators lock at once: one Lt has defined gets the non-configurable
+ *    accessor, and one Lt has not defined gets a non-configurable placeholder accessor on
+ *    `$root` (state `late-define-blocked`). Its getter returns the throwing function and its
+ *    setter keeps Lt's later plain assignment without throwing, so a raw call always throws.
+ *    Lt's own Object.defineProperty on that name throws inside Lt, which stops that Lt code
+ *    path; `late_define_blocked` in status() and `guard_late_define_blocked` in receipts
+ *    name the mutators that got the placeholder. When start-up ends the placeholder reads
+ *    as `locked`. `deferred` counts as unlocked, so no script body runs until all four lock.
  *  - Capture-phase listeners on window cancel pointer, mouse, touch and click events, and
  *    Enter or Space key events, aimed at a control whose label reads like a commit (submit,
  *    commit, finish, finalise, hand in, complete, checkpoint, final answer) or whose Knockout
@@ -29,7 +41,7 @@
  *    cannot relax an earlier one in the same document.
  *  - `LtGuard.run()` refuses to start a script on a forbidden route, on a painted flow page the
  *    plan forbids, or when a wrapper could not be installed, and adds `guard_trips` to the
- *    receipt.
+ *    receipt. It checks the route again after its wait, because Lt may paint meanwhile.
  *
  * Limit: these guards contain accidents in lt-suite's own scripts and in raw tool calls made
  * in the same document. Code that kept a reference to a mutator before the guard installed,
@@ -47,6 +59,10 @@
   const ERR = 'lt-suite never-submit';
   const MUTATORS = ['commitClicked', 'setCheckpointCommitState',
     'removeCommittedCheckpoints', 'removePagesAfterUncommittedCheckpoints'];
+  /* Lt's start-up calls these while it builds the page list, before it sets current(); they
+   * lock when start-up ends. */
+  const STARTUP_MUTATORS = ['removeCommittedCheckpoints', 'removePagesAfterUncommittedCheckpoints'];
+  const STARTUP_MS = 5000;
   const RUN_RE = /^\/i\/([^/]+)\/student\/courses\/(\d+)\/runs\/(\d+)\/run\/(.*)$/;
   const PAGE_RE = /^page\/([1-9]\d*)$/;
   const RETRY_MS = 250;
@@ -62,7 +78,9 @@
     active: null, token: null, policies: [], mutators: {}, form: 'absent', submit_listener: false,
     events: 'absent', confirm: 'absent',
     navigate: 'absent', uncancelable: 0, retries: 0, watching: false,
-    ours: new WeakSet(), guarded: new WeakSet(), roots: new WeakSet(), originals: new WeakSet()
+    root_at: null, started: false, startup_ms: STARTUP_MS, late_defined: 0, late_define_blocked: [],
+    ours: new WeakSet(), guarded: new WeakSet(), roots: new WeakSet(), originals: new WeakSet(),
+    placeholders: new WeakSet()
   };
   Object.defineProperty(G, '__ltGuard', {
     value: Object.freeze({ installed: true, version: 2 }), enumerable: false, configurable: false, writable: false
@@ -106,6 +124,7 @@
     if (!p) return false;
     try { return U(p.current) === true || (has(A(p), 'current') && U(A(p).current) === true); } catch (e) { return false; }
   };
+  const hasCurrent = p => { try { return has(p, 'current') || has(A(p), 'current'); } catch (e) { return false; } };
 
   /* ---- form wrappers ---- */
   function wrapForm() {
@@ -288,12 +307,53 @@
     const d = Object.getOwnPropertyDescriptor(obj, name);
     return !!d && typeof d.get === 'function' && d.configurable === false && st.ours.has(d.get());
   };
+  /* During start-up, a commit mutator Lt has not defined gets a non-configurable placeholder
+   * accessor on $root at once. Reads return the thrower. A plain assignment keeps Lt's function
+   * (as an original, never callable) without throwing: during start-up it counts as
+   * late_defined, afterwards as rebinds_blocked. Lt's Object.defineProperty on the name throws
+   * inside Lt, so no definition can make the mutator callable between two checks. */
+  const isPlaceholder = (obj, name) => {
+    const d = Object.getOwnPropertyDescriptor(obj, name);
+    return !!d && typeof d.get === 'function' && st.placeholders.has(d.get);
+  };
+  function placeholder(root, name) {
+    if (isPlaceholder(root, name)) return true;
+    const t = thrower('mutator:' + name);
+    const get = () => t;
+    st.placeholders.add(get);
+    try {
+      Object.defineProperty(root, name, {
+        get,
+        set: v => {
+          const fn = typeof v === 'function' && !st.ours.has(v);
+          if (fn) st.originals.add(v);
+          if (st.started) st.rebinds_blocked++;
+          else if (fn) st.late_defined++;
+        },
+        enumerable: false, configurable: false
+      });
+    } catch (e) { return false; }
+    let v;
+    try { v = root[name]; } catch (e) { return false; }
+    if (v !== t) return false;
+    if (st.late_define_blocked.indexOf(name) < 0) st.late_define_blocked.push(name);
+    return true;
+  }
 
-  function guardOne(root, name) {
+  function guardOne(root, name, early) {
     /* every object on the chain that defines the mutator, root first */
     const owners = [];
     for (let o = root; o && o !== Object.prototype; o = Object.getPrototypeOf(o)) {
       if (Object.prototype.hasOwnProperty.call(o, name)) owners.push(o);
+    }
+    /* A commit mutator Lt has not defined gets the placeholder during start-up, so a later
+     * definition by Lt can never make it callable. Afterwards an accessor on $root drops any
+     * later definition. */
+    const real = owners.filter(o => !(o === root && isPlaceholder(root, name)));
+    if (!real.length && early) {
+      if (placeholder(root, name)) return 'late-define-blocked';
+      /* A root that takes no new property: nothing can define the mutator on it. */
+      return Object.isExtensible(root) ? 'failed' : 'absent';
     }
     if (!owners.length) owners.push(root);
     if (owners.indexOf(root) < 0) owners.unshift(root);
@@ -330,8 +390,23 @@
       return false;
     }
     st.roots.add(root);
-    for (const name of MUTATORS) st.mutators[name] = guardOne(root, name);
+    const early = !startupOver(root);
+    for (const name of MUTATORS) {
+      st.mutators[name] = early && STARTUP_MUTATORS.includes(name) ? 'deferred' : guardOne(root, name, early);
+    }
     return true;
+  }
+
+  /* Lt's start-up has ended once a flow page reads current() true, once the page list holds
+   * pages that carry no current flag (nothing to wait for), or `startup_ms` after $root first
+   * bound. It never restarts: a later $root locks all four at once. */
+  function startupOver(root) {
+    if (st.started) return true;
+    if (st.root_at == null) st.root_at = now();
+    const pages = flowPages(root);
+    if (pages.some(isCurrent) || (pages.length && !pages.some(hasCurrent)) ||
+        now() - st.root_at >= st.startup_ms) st.started = true;
+    return st.started;
   }
 
   /* Lt may not have painted when guard.js runs right after a navigation: retry for 10 s, then
@@ -383,16 +458,19 @@
     if (p.mode !== 'plan') return no('no-plan');
     if (!p.origin) return no('no-origin');
     if ((p.never_routes || []).indexOf(rest) >= 0) return no('never-navigated');
-    const idx = mapIndex(u.pathname, rest, n, p);
-    if (idx == null) return no(p.mapped ? 'page-not-in-plan' : 'plan-has-no-page-map');
+    const idx = mapIndex(u.pathname, n, p);
+    if (idx == null) {
+      if (p.route_refusal) return no('recapture-needed');
+      return no(p.mapped ? 'page-not-in-plan' : 'plan-has-no-page-map');
+    }
     return indexRule(idx, p);
   }
   /* Flow index of a run URL through the plan's own map: exact path first, then the URL page
-   * number. URL page numbers count content pages only, so without a map there is no index. */
-  function mapIndex(pathname, rest, n, p) {
+   * number. URL page numbers count content pages only, so without a map there is no index.
+   * /run/background has no number, so only a captured url maps it. */
+  function mapIndex(pathname, n, p) {
     const path = String(pathname).replace(/\/+$/, '');
     if (own(p.url_map, path)) return p.url_map[path];
-    if (rest === 'background') return 1;
     if (n != null && own(p.page_map, String(n))) return p.page_map[String(n)];
     return null;
   }
@@ -427,7 +505,7 @@
         (p.run_id != null && Number(m[3]) !== Number(p.run_id))) return { outside: true };
     const rest = m[4].replace(/\/+$/, '');
     const pm = rest.match(PAGE_RE);
-    return { idx: mapIndex(cur.pathname, rest, pm ? Number(pm[1]) : null, p) };
+    return { idx: mapIndex(cur.pathname, pm ? Number(pm[1]) : null, p) };
   }
 
   const here = () => {
@@ -555,15 +633,23 @@
     return bad;
   };
 
-  const unlocked = () => MUTATORS.filter(n => !['locked', 'wrapped', 'rewrapped'].includes(st.mutators[n]));
+  /* A placeholder is non-configurable and returns the thrower, so it counts as locked. */
+  const LOCKED = ['locked', 'wrapped', 'rewrapped', 'late-define-blocked'];
+  const unlocked = () => MUTATORS.filter(n => !LOCKED.includes(st.mutators[n]));
 
   async function ready(waitMs) {
     const ck = G.__ltClock || {now: () => Date.now(), sleep: ms => new Promise(r => G.setTimeout(r, ms))};
     const limit = Number.isFinite(waitMs) && waitMs >= 0 ? waitMs : 5000;
     const start = ck.now();
+    if (!st.started) st.startup_ms = limit;
     check();
     while (unlocked().length && ck.now() - start < limit) {
       await ck.sleep(Math.min(50, limit - (ck.now() - start)));
+      check();
+    }
+    /* The wait ran out before Lt painted: end start-up and lock all four anyway. */
+    if (unlocked().length && !st.started) {
+      st.started = true;
       check();
     }
     return unlocked();
@@ -573,13 +659,15 @@
     if (!r || typeof r !== 'object' || Array.isArray(r)) return r;
     const out = Object.assign({}, r, { guard_trips: st.trips });
     if (st.trips) out.guard_last = st.last;
+    if (st.rebinds_blocked) out.guard_rebinds_blocked = st.rebinds_blocked;
+    if (st.late_define_blocked.length) out.guard_late_define_blocked = st.late_define_blocked.join(',');
     const degraded = [];
     if (st.navigate !== 'listening') degraded.push(st.navigate);
     if (st.events !== 'listening') degraded.push('events:' + st.events);
     if (st.confirm !== 'answers-no') degraded.push('confirm:' + st.confirm);
     for (const n of MUTATORS) {
       const state = st.mutators[n] || 'no-root';
-      if (!['locked', 'wrapped', 'rewrapped'].includes(state)) degraded.push('mutators:' + n + ':' + state);
+      if (!LOCKED.includes(state)) degraded.push('mutators:' + n + ':' + state);
     }
     if (degraded.length) out.guard_degraded = degraded.join(',');
     const open = unlocked();
@@ -594,6 +682,8 @@
     if (refused) return stamp({ ok: false, fatal: 'forbidden-route', route: refused });
     const bad = await ready(opts?.render_wait_ms ?? policy?.render_wait_ms);
     if (bad.length) return stamp({ok: false, fatal: 'guard-degraded', unlocked: bad});
+    const late = routeRefusal();
+    if (late) return stamp({ ok: false, fatal: 'forbidden-route', route: late });
     if (failedParts().length) return stamp({ok: false, fatal: 'guard-install-failed', detail: failedParts().join(',')});
     if (opts && opts.net) {
       if (!G.LtNet || typeof G.LtNet.install !== 'function') return stamp({ ok: false, fatal: 'net-missing' });
@@ -624,7 +714,9 @@
       mutators: muts, form: st.form, submit_listener: st.submit_listener, navigate: st.navigate,
       events: st.events, confirm: st.confirm,
       policy: blockAll() ? 'block-all' : 'plan', policies: st.policies.length,
-      rewraps: st.rewraps, rebinds_blocked: st.rebinds_blocked, uncancelable: st.uncancelable
+      rewraps: st.rewraps, rebinds_blocked: st.rebinds_blocked, late_defined: st.late_defined,
+      late_define_blocked: st.late_define_blocked.slice(),
+      uncancelable: st.uncancelable
     };
   }
 
@@ -632,6 +724,7 @@
     version: 2, install, check, run, stamp, status, classify, armCheck, commitControl,
     allowed: (href, download) => decideNav(href, !!download),
     trips: () => st.trips,
+    last: () => st.last,
     policies: () => clone(st.policies)
   });
   Object.defineProperty(G, 'LtGuard', { value: api, enumerable: false, configurable: false, writable: false });

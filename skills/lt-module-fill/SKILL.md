@@ -62,7 +62,7 @@ the answer; never guess.
 - Right after every navigation, run the guard alone:
   `python3 "$SKILL_DIR/scripts/_shared/ltcore/ltjs.py" render guard --plan <plan.json>`, then
   run that file as the next call in that tab. Its `ok` must be true before filling.
-  The guard waits up to `fill.save_wait.render_wait_ms` for the view model.
+  The guard waits up to `fill.save_wait.render_wait_ms` for the view model and a painted page.
   A `guard-degraded` receipt stops fill, verify, probe and Check Answer calls.
 - Run each rendered file with your browser tool's evaluate-file action.
   `references/_shared/browser-adapters.md` lists that action per agent and the form
@@ -100,17 +100,20 @@ inline editors attach only on focus. Scripts write the Backbone models (`input.s
 `set`, `addAnswer`), never keystrokes. [references/write-paths.md](references/write-paths.md)
 lists the path per type.
 
-**The save wait proves each write's own save.** Lt starts its save request only after `set`
-has returned. In one measured run, 12 of 20 writes were lost when the script navigated
-straight away. `jQuery.active` idles at 1 on Lt, so network idle proves nothing.
-`LtNet.expect(key, model)` runs before each write and one `LtNet.waitForSave` covers every key
-of the call. A Backbone `sync` counts only when its transport matches an observed write
-request. Each key needs a 2xx response other than 202 on the calibrated endpoint, plus a
-300 ms quiet window. Requests naming several keys require an explicit successful outcome
-for each key. Unidentified transports stay pending and require fresh-load verification.
-An uncalibrated origin keeps the old rule: a 4 s minimum
-counted from the final write, plus `jQuery.active` back at its base. `docs/speed.md` in the
-repository explains the design.
+**The save wait proves each write's own save.** Lt starts its save request only after `set` has
+returned. In one measured run, 12 of 20 writes were lost when the script navigated straight
+away. `jQuery.active` idles at 1 on Lt, so network idle proves nothing. `LtNet.expect(key,
+model)` runs before each write and one `LtNet.waitForSave` covers every key of the call. A
+Backbone `sync` counts only when its transport matches an observed write request. Each key
+needs a 2xx response other than 202 on the calibrated endpoint, plus a 300 ms quiet window.
+Requests naming several keys require an explicit successful outcome for each key. A reply of
+`{"success": false}` fails its keys even with HTTP 200. Lt's `PUT .../runs/<run>/data`
+is matched by a typed adapter: each panel by a `panelKey`, `dataKey` or `uuid` field holding
+exactly its id, so 3- and 4-digit panel keys count, and a key is saved only by a per-key
+success or a top-level `"success": true` reply, never a bare 2xx. Unidentified transports stay
+pending and require fresh-load verification. An uncalibrated origin keeps the old rule: a 4 s
+minimum counted from the final write, plus `jQuery.active` back at its base. `docs/speed.md` in
+the repository explains the design.
 
 ## Workflow
 
@@ -124,6 +127,10 @@ python3 "$SKILL_DIR/scripts/plan_fill.py" <module.json> --answers <answers.json>
 Its output: each one-way door, each TODO item, the routes kept closed, the stop page, and
 the items page by page. Exit 2 means nothing is fillable: a complete answer, reported as
 such. **Show the map to the user and wait for approval of the plan before touching the tab.**
+Each single-attempt item prints its captured state. `answered` alone is not submitted:
+"answered, not submitted (read_only false, commit_state open)" is an open item.
+`MANUAL MODE` lists the planned pages the validator's manual-approval rules cover, or
+`none`; it predicts from the capture, and the report decides.
 
 Show every candidate and source from `page-kinds.json` at plan approval. Ask each open
 question alone through the host's question tool, record with `mark` or `choose`, and re-plan.
@@ -140,7 +147,8 @@ The browser tool's supervision setting is recorded in the report as `approval_mo
 `manual` (a human approved each page-changing action), `auto` (the tool acted without asking
 per action) or `skip-all` (the tool's approvals were switched off). Any page holding a commit
 boundary, or a page at or after a submitted single-attempt item, requires `manual`; the
-validator rejects the report otherwise.
+validator rejects the report otherwise. A submitted item reads `attempts` single, `read_only`
+true and `answered` true, and plan_fill.py lists it under ALREADY COMMITTED.
 
 ### 3. Single-attempt approvals
 
@@ -154,8 +162,10 @@ python3 "$SKILL_DIR/scripts/emit_fill.py" approve --module <module.json> --item 
 
 It appends to `<data>/runs/<module_id>/approvals.json` and prints the `approval_id`. Put
 `"single_attempt_approval": {"approved_by": "user", "approval_id": "A-xxxxxxxx"}` on that
-item in `answers.json`. Without it the item is refused and every other item is still written.
-The approval allows the write only; nothing submits the item.
+item in `answers.json`. Without it the plan holds the item (`single-attempt-unapproved`), the
+payload refuses it, every other item is still written, and the report lists it skipped,
+"yours to check and submit", with no note needed. The approval allows the write only;
+nothing submits the item.
 
 ### 4. The payload
 
@@ -168,8 +178,10 @@ It writes `<data>/runs/<module_id>/fill-js/fill-payload.json` and `plan.json` (t
 `check-url` and the guard read). Only items the plan marks fillable go into it. `--pages` and
 `--exclude` narrow it and are logged; nothing widens it. Exit 3 refuses: answers for another
 module or run, a draft made against an older capture (its `question_digest` differs), a
-missing or mismatched approval. An existing payload is kept unless `--force`, because it is
-the record of what was written.
+missing or mismatched approval, a `page-kinds.json` classified against other `answers.json`
+bytes (run `page_kinds.py classify` again; the report applies the same rule). An existing
+payload is kept unless `--force`, because it is the record of what was written. When the run
+has no `fill-notes.json`, payload writes a template there.
 
 Every config `[[text_cleaners]]` entry with `stage = "fill-text"` runs on the payload, in
 config order, as an argv list with no shell. A cleaner may change `html` strings only; a
@@ -211,16 +223,23 @@ Calibration runs by itself as you fill:
 
 Calibration counts only a call whose ticket items were all written and read `ok` in a fresh
 load of another document on the same Lt client build. A miss after a calibrated wait that
-claimed saved drops the `save` record too. A changed Lt client build drops the `save` record,
-a passed `cross_page` record and every pending ticket; a batch script refuses to run on a
-stale record (`calibration-stale`). `emit_fill.py calibrate --module <m> --answers <a> --item
-<id>` makes an explicit one-item calibration on the fallback wait: success also clears a failed
+claimed saved drops the `save` record too. A changed Lt client build drops the `save` record, a
+passed `cross_page` record and every pending ticket; a batch script refuses to run on a stale
+record (`calibration-stale`). The client build is the core bundles the page loaded before
+`DOMContentLoaded`, query strings included; later page chunks never change it. A save record
+bound to the old `c1-` signature of every script is dropped once, with `client-sig-retired` and
+the reason in the history. `emit_fill.py calibrate --module <m> --answers <a> --item <id>`
+makes an explicit one-item calibration on the fallback wait: success also clears a failed
 `cross_page` record, failure drops the `save` record. Use it when the user names an item for
 that purpose.
 
-Served mode (`--lib-mode served` with `emit_fill.py serve`) keeps each file small; the loader
-checks both library files by sha256 and returns `lib-integrity` on any difference. Inline is
-the default and needs no server.
+Served mode (`--lib-mode served` with `emit_fill.py serve`) moves only `fill_lib.js` and
+`probe_panels.js` out of the script; the loader checks both by sha256 and returns
+`lib-integrity` on any difference. The guard prelude stays inline, so an inline tool still
+sends about 27 KB per call. Inline tools use the cached runner instead, and with
+`browser.body_server` a cache miss fetches the runner from the host's body server
+(`references/_shared/browser-adapters.md`, section Body server). Inline is the default and
+needs no server.
 
 Inline tools receive a loader containing current call data for the shipped cached fill runner.
 `scripts.json` lists `calls[].rendered` plus `runner_payload.path` and numbered `runner_payload.chunks`.
@@ -362,13 +381,30 @@ python3 "$SKILL_DIR/scripts/make_fill_report.py" --module <module.json> --answer
 
 Its inputs include `<run>/receipts.json`, `<run>/save-waits.json`, `<run>/fill-notes.json`,
 `<run>/check-answer.json` and `fill-js/check-plan.json`. `fill-results.json` retains actual
-write results and label index evidence for eligibility. The
-notes file holds what only the operator saw (start and end times, `approval_mode`, notes per
-item, `user_decisions`); `--help` lists its keys. `result` and `verified` come from the
-fresh-load hash receipts only. An item the plan marks fillable that has neither a receipt nor
-a note stops the script with exit 3. Pages whose save wait was `fallback` or `unconfirmed`
-are listed, because the fresh-load receipt is the proof there. The validator runs last; exit
-0 means a valid report.
+write results and label index evidence for eligibility. The notes file holds what only the
+operator saw: `approval_mode`, notes per item, `connection_events`, `user_decisions` and
+free-text `run_notes`. [references/fill-notes.md](references/fill-notes.md) gives a full
+example and the item note rules. `connection_events` kinds: `worker-idle`, `modal-block`,
+`navigation-timeout`, `screenshot-timeout`, `content-filter-block`. `--check-notes` prints
+every problem at once and writes nothing. Run times default from the payloads and receipts (see
+fill-notes.md); a notes value that differs needs `times_reason`. A receipt observed before its
+own payload was built refuses. `result` and `verified` come from the fresh-load hash receipts
+only. A receipt without `source_payload` never verifies (`filled-unverified`, `binding:
+unbound-legacy`). An item the plan marks fillable that has neither a receipt nor a note stops
+the script with exit 3. Pages whose save wait was `fallback` or `unconfirmed` are listed,
+because the fresh-load receipt is the proof there. The validator runs on a temporary file; only
+a valid report replaces `fill-report.json`, and a rejected one goes to
+`fill-report.rejected.json`. The report pins `fill-js/check-plan.json` as `source_check_plan`;
+the validator rejects a report that predates it, so rebuild it after `emit_fill.py check`.
+
+Every bound receipt pins the `answers.json` bytes the payload was built from, on every page.
+Never edit `answers.json` to pass the report. When it changed but no written draft did (a rerun
+builder, a trimmed locator), run `emit_fill.py repin --module <module.json> --answers
+<answers.json>`. It checks the question digest and rebuilds every payload job from the current
+file, comparing job content by sha256; any changed job refuses and needs a new payload, fill
+and fresh-load verify. The report rebuilds every job the same way before it accepts the
+`answers-repin.json` record, so a record written by hand changes nothing. A RAT payload is
+never re-pinned.
 
 Waivers: `passed-single-approval`, `approval-manual-at-boundary` or `write-past-first-door`
 accept one, as a `user_decisions` entry with its `approval_id` from `approvals.json`. No other
@@ -383,8 +419,8 @@ Fill ordinary pages first. Finish their fresh-load verification, Check Answer pa
 available, and reconcile before entering sheets. Retain `fill-report-pre-rat.json` for
 reconcile. RAT scripts use `-rat-pN` names, one page per call, and run last.
 Keep the executed RAT payload and its pinned `page-kinds.json` unchanged until reporting.
-Fill and fresh-load receipts must echo `source_payload_sha256`; `record` pins the
-payload path and hash in each sheet receipt. Missing or changed bindings refuse the
+Fill and fresh-load receipts must echo `source_payload_sha16`; `record` pins the
+payload path and full sha256 in each sheet receipt. Missing or changed bindings refuse the
 report. Reclassifying requires new fill and verification receipts.
 After the RAT verify, rebuild the final report. When reconciliation is installed, run
 `reconcile.py rebind` to refresh only its report pin after its deterministic checks.
@@ -432,13 +468,13 @@ TODO count. Include: "Start a new session for further drafting after RAT entry."
 ## Files
 
 - `scripts/plan_fill.py`: the boundary map and plan.
-- `scripts/emit_fill.py`: payload, scripts, approve, record, calibrate, dialog-args,
+- `scripts/emit_fill.py`: payload, scripts, approve, record, repin, calibrate, dialog-args,
   check, check-verify, save-model-answer, serve, djb2.
 - `scripts/make_fill_report.py`: `fill-report.json` from receipts and notes, then the validator.
 - `scripts/annotate_micrograph.py`, `scripts/gridref.py`: offline image labels and grids.
 - `scripts/browser/`: `fill_lib.js` (the one write path), `probe_panels.js` (live occupancy),
   `upload.js`, `confirm_dialog.js`, `model_answer.js`, `check_answer.js`.
-- `references/`: write paths, placement, micrographs, failure modes; `_shared/` holds the
+- `references/`: write paths, placement, micrographs, failure modes, fill notes; `_shared/` holds the
   safety rules, the browser adapters and the Lt client vocabulary.
 
 ## Out of scope
@@ -452,17 +488,23 @@ Submitting belongs to the user alone.
 `record` binds each fill and verify receipt to the payload it executed.
 It searches default payloads, `--payload` paths and sibling `fill-js*` manifests under the run.
 Every candidate must resolve to an existing file inside the run folder.
+A `--payload` path outside the run or missing refuses, and the refusal names each one.
 Relative manifest paths resolve from the folder containing that manifest file.
-The full `source_payload_sha256` binds first; redacted values use the unique `source_payload_sha16` prefix.
+Receipts return the 16-hex `source_payload_sha16`, because an output filter redacts a full sha256.
+An older receipt's intact `source_payload_sha256` binds first; any `[BLOCKED:` value counts as redacted.
 A missing or ambiguous identity refuses and lists the candidate payloads tried.
-The recorded `payload_binding` names the field used for each receipt.
+The recorded `payload_binding` names the field used for each receipt, and the report prints it.
 
 A conflicting item and observation time refuses before any receipt file changes.
+A row that differs only in its binding stays, and `record` prints "kept the stored row".
 Use `record --supersede` to correct rows from the same verify receipt.
-The command archives replaced rows and their reason in `receipts-superseded.json`.
+The command archives replaced rows in `receipts-superseded.json`, with the fields that changed.
 It keeps the verify receipt hash, so a different observation cannot replace those rows.
+A stored row without `verify_receipt_sha256` is never superseded; record a new fresh-load verify.
 
 Fallback fill receipts include `save_diag` with at most 20 aggregated request rows.
-Each row records method, templated path, status, count and whether a written model fired Backbone sync.
+Each row records method, templated path, status, count and whether a written model's Backbone sync answered a request of that row.
+A run-data row adds `run_data`, a `name=count` string: body shapes, keys identified by typed field kind, as a property name or as a value, and reply shapes.
 Numeric and hex path segments become `:id`; query strings, headers, bodies and answer text remain excluded.
-`record` copies `save_diag` to `save-waits.json` for later transport identification.
+Every fill receipt carries `keys_weak`, `net_matched` and `save_key_source` (`uuids` or `panel_key` writes).
+`record` copies `save_diag`, `keys_weak` and `net_matched` to `save-waits.json` for later transport identification.

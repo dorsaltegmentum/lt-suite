@@ -189,14 +189,15 @@ def sheet_receipts(kit, mod, ans, emit_mod, bound=False):
     rows = []
     for job in pay['pages']['3']['jobs']:
         value = emit_mod.expected_hash(job)
+        # A fresh load at the payload's own time: a receipt may not predate its payload.
         row = dict(item_id=job['item'], expected_hash=value, observed_hash=value,
-                   observed_at='2000-01-01T00:00:00Z')
+                   observed_at=pay['generated_at'])
         if bound:
             row['source_payload'] = {'path': str(payload), 'sha256': hashlib.sha256(payload.read_bytes()).hexdigest()}
         rows.append(row)
     kit.write('receipts.json', {'receipts': rows})
-    kit.write('notes.json', {'approval_mode': 'manual', 'started_at': '2000-01-01T00:00:00Z',
-                             'ended_at': '2000-01-01T00:00:00Z'})
+    kit.write('notes.json', {'approval_mode': 'manual', 'started_at': pay['generated_at'],
+                             'ended_at': pay['generated_at']})
     return rows
 
 
@@ -281,8 +282,9 @@ def test_record_sheet_receipts_bind_browser_payload(rat_run, emit_mod, binding):
     payload_hash = rows[0]['source_payload']['sha256']
     fill = {'ok': True, 'module': mod['module_id'], 'page': 3,
             'items': [{'item': r['item_id'], 'result': 'written'} for r in rows]}
+    built = kit.read(kit.run_dir(mod['module_id']) / 'fill-js/fill-payload.json')['generated_at']
     ver = {'ok': True, 'fresh_load': True, 'module': mod['module_id'],
-           'observed_at': '2000-01-01T00:00:00Z',
+           'observed_at': built,
            'items': [[r['item_id'], 'ok', 1, r['observed_hash']] for r in rows]}
     if binding != 'missing':
         fill['source_payload_sha256'] = ver['source_payload_sha256'] = payload_hash if binding == 'correct' else '0'*64

@@ -48,12 +48,12 @@ test('inline: gzip round trip verifies decompressed bytes and executes both form
   }
 });
 
-test('inline: cache miss and unreadable storage execute nothing', async () => {
+test('inline: cache miss and unreadable storage execute nothing and name the reason', async () => {
   const src = render({ cache: true });
-  for (const store of [storage(), { getItem() { throw Error('blocked'); } }]) {
+  for (const [store, reason] of [[storage(), 'not-cached'], [{ getItem() { throw Error('blocked'); } }, 'storage-blocked']]) {
     const e = env(store);
     const r = await e.runRendered(src);
-    assert.deepEqual(JSON.parse(JSON.stringify(r)), { ok: false, need: 'payload', want: want(src).slice(0, 12) });
+    assert.deepEqual(JSON.parse(JSON.stringify(r)), { ok: false, need: 'payload', want: want(src).slice(0, 12), reason });
     assert.equal(e.ctx.__ran, undefined);
     assert.equal(e.ctx.LtGuard, undefined);
   }
@@ -149,12 +149,13 @@ test('inline: blocked writes and quota errors preserve verified execution', asyn
   assert.equal((await e.runRendered(render({ cache: true }))).need, 'payload');
 });
 
-test('inline: cache pruning tracks six entries across targets and repairs lost index', async () => {
+test('inline: a byte budget of six bodies prunes the oldest across targets and repairs lost index', async () => {
   const e = env();
   e.ctx.localStorage.setItem('unrelated', 'keep');
   const keys = [];
+  const budget = Math.floor(payload(render()).length * 6.5);
   for (let i = 0; i < 8; i++) {
-    const src = render({}, BODY + '\n/* variant ' + i + ' */');
+    const src = render({ cache_budget: budget }, BODY + '\n/* variant ' + i + ' */');
     keys.push(PREFIX + want(src));
     await e.runRendered(src);
     const index = JSON.parse(e.ctx.localStorage.getItem(INDEX));
@@ -166,7 +167,7 @@ test('inline: cache pruning tracks six entries across targets and repairs lost i
   assert.equal(e.ctx.localStorage.getItem(keys[1]), null);
   assert.deepEqual(JSON.parse(e.ctx.localStorage.getItem(INDEX)), keys.slice(2));
   e.ctx.localStorage.setItem(INDEX, 'bad-json');
-  await e.runRendered(render({}, BODY + '\n/* another target */'));
+  await e.runRendered(render({ cache_budget: budget }, BODY + '\n/* another target */'));
   assert.equal(JSON.parse(e.ctx.localStorage.getItem(INDEX)).length, 6);
   assert.equal(e.ctx.localStorage.length, 8);
   assert.equal(e.ctx.localStorage.getItem('unrelated'), 'keep');

@@ -17,6 +17,7 @@
  */
 'use strict';
 const { test } = require('node:test');
+const { redactionHits } = require('../browser/redaction_triggers.js');
 const assert = require('node:assert/strict');
 const fs = require('fs');
 const os = require('os');
@@ -102,6 +103,60 @@ test('rail 1: the URL page number is not the flow position', async t => {
   env = makeEnv(e => { const ps = shifted(e); ps.forEach((p, i) => { p.current = obs(i === 2); }); return ps; }, { location: { pathname: F.RUN_PATH(4) } });
   r = await run(env, {}, [textJob('10', '<p>ours</p>')]);
   await check(t, 'a page whose current() is false is the wrong page, whatever the URL says', [r.fatal, env.writes], ['wrong-page', 0]);
+});
+
+test('rail 1: the plan\'s Background page passes at /run/background, by current()', async t => {
+  // After a re-capture the Background page's url is /run/background. Only the job whose wanted
+  // flow page is the plan's Background page (cfg.background_page) accepts that route.
+  const BG = '/i/inst0001/student/courses/1/runs/101/run/background';
+  const shown = which => e => { const ps = fourPages(e, [textPanel(e, '10', '')]); ps.forEach((p, i) => { p.current = obs(i === which - 1); }); return ps; };
+  let env = makeEnv(shown(4), { location: { pathname: BG } });
+  let r = await run(env, { background_page: 4 }, [textJob('10', '<p>ours</p>')]);
+  await check(t, 'the Background page painted at /run/background: the item is written', [r.ok, byItem(r, 'p4-10').result], [true, 'written']);
+  for (const [label, cfg] of [['no background_page', {}], ['background_page names another flow page', { background_page: 1 }]]) {
+    env = makeEnv(shown(4), { location: { pathname: BG } });
+    r = await run(env, cfg, [textJob('10', '<p>ours</p>')]);
+    await check(t, `${label}: not-a-run-page, nothing written`, [r.fatal, env.writes], ['not-a-run-page', 0]);
+  }
+  env = makeEnv(shown(3), { location: { pathname: BG } });
+  r = await run(env, { background_page: 4 }, [textJob('10', '<p>ours</p>')]);
+  await check(t, 'another page painted: wrong-page, nothing written', [r.fatal, r.page_in_url, env.writes], ['wrong-page', null, 0]);
+});
+
+test('rail 1: before Lt paints a page the location rail waits', async t => {
+  // current() reads true on flow page `which` from `at` ms after the environment is built.
+  const paintAt = (which, at) => e => {
+    const ps = fourPages(e, [textPanel(e, '10', '')]);
+    const from = e.clk.t + at;
+    ps.forEach((p, i) => { p.current = Object.assign(() => i === which - 1 && e.clk.t >= from, { __obs: true }); });
+    return ps;
+  };
+  let env = makeEnv(paintAt(4, 600));
+  let t0 = env.clk.t;
+  let r = await run(env, {}, [textJob('10', '<p>ours</p>')]);
+  await check(t, 'flow page 4 paints after 600 ms: the item is written', [r.ok, byItem(r, 'p4-10').result], [true, 'written']);
+  await check(t, 'the rail waited for the paint and no longer', env.clk.t - t0 >= 600 && env.clk.t - t0 < 5000, true);
+  env = makeEnv(paintAt(0, 0));
+  t0 = env.clk.t;
+  r = await run(env, {}, [textJob('10', '<p>ours</p>')]);
+  await check(t, 'no page ever paints: fatal lt-not-painted, nothing written', [r.ok, r.fatal, r.page_in_url, r.guard_last, env.writes], [false, 'lt-not-painted', 4, null, 0]);
+  await check(t, 'lt-not-painted comes after render_wait_ms', env.clk.t - t0 >= 5000, true);
+  env = makeEnv(paintAt(3, 0));
+  t0 = env.clk.t;
+  r = await run(env, {}, [textJob('10', '<p>ours</p>')]);
+  await check(t, 'another page painted stays wrong-page, at once', [r.fatal, env.writes, env.clk.t - t0], ['wrong-page', 0, 0]);
+});
+
+test('rail 1: a start-up trip after the guard locked leaves lt-not-painted carrying guard_last', { skip: F.haveGuard() && F.haveNet() ? false : 'needs lt_guard.js' }, async t => {
+  const env = F.netEnv({ guard: true, pages: [{ title: 'Page 1', current: false, panels: e => [F.netTextPanel(e, 10, 1)] }] });
+  // Lt's start-up outlasts render_wait_ms: its page-list call meets the locked mutator and aborts before current() is set.
+  env.after(1500, () => { env.root.removeCommittedCheckpoints(); env.pages[0].current = F.obs(true); });
+  const r = await env.ctx.LtGuard.run(null,
+    () => env.L.fillPage(F.netCfg({}, { render_wait_ms: 1000 }), [F.netJob(10, '<p>ours</p>')], F.stubProbe(1)),
+    { render_wait_ms: 1000 });
+  await check(t, 'fatal lt-not-painted with the trip named', [r.ok, r.fatal, r.guard_trips, r.guard_last],
+    [false, 'lt-not-painted', 1, 'mutator:removeCommittedCheckpoints']);
+  await check(t, 'nothing written and no commit reached the page', [r.writes, env.writes.length, env.commits.length], [0, 0, 0]);
 });
 
 test('rail 2: the page', async t => {
@@ -714,8 +769,8 @@ test('batch: refused targets write nothing', { skip: needNet() }, async t => {
 
 test('batch: a stale or missing calibration refuses before any write', { skip: needNet() }, async t => {
   let env = batchEnv({});
-  env.ctx.document.scripts = [{ src: F.ORIGIN + '/static/app.1a2b3c.js' }];
-  const stale = Object.assign({}, F.NET_CAL, { version: 1, client_sig: 'c1-9-ffffffff' });
+  env.setScripts([F.ORIGIN + '/static/app.1a2b3c.js']);
+  const stale = Object.assign({}, F.NET_CAL, { version: 1, client_sig: 'c2-9-ffffffff' });
   let r = await env.L.fillPages(batchCfg([1, 2, 3], { save_wait: Object.assign({}, F.SAVE_WAIT, { calibration: stale }) }), batchPlan([1, 2, 3]), F.stubProbe(1));
   await check(t, 'batch: another client build is refused', [r.ok, r.fatal, r.writes, r.calibration_stale, env.writes.length], [false, 'calibration-stale', 0, true, 0]);
   r = await env.L.fillPages(batchCfg([1, 2, 3], { save_wait: Object.assign({}, F.SAVE_WAIT, { calibration: Object.assign({}, F.NET_CAL, { version: 2 }) }) }), batchPlan([1, 2, 3]), F.stubProbe(1));
@@ -781,7 +836,7 @@ test('verify: an open LtNet ledger prevents a fresh-load claim without fill book
 });
 
 test('calibration identity: document id, ticket echo and the client build', { skip: needNet() }, async t => {
-  const scripts = env => { env.ctx.document.scripts = [{ src: F.ORIGIN + '/static/app.1a2b3c.js' }, { src: 'https://cdn.example.invalid/x.js' }]; };
+  const scripts = env => env.setScripts([F.ORIGIN + '/static/app.1a2b3c.js', 'https://cdn.example.invalid/x.js']);
   const pages = [{ title: 'Page 1', current: true, panels: e => [F.netTextPanel(e, 10, 1)] }];
   const env = F.netEnv({ pages });
   scripts(env);
@@ -799,13 +854,86 @@ test('calibration identity: document id, ticket echo and the client build', { sk
   await check(t, 'identity: the same client build in the fresh load', v.client_sig, fr.client_sig);
   const env2 = F.netEnv({ pages });
   scripts(env2);
-  const cal = Object.assign({}, F.NET_CAL, { version: 1, client_sig: 'c1-9-ffffffff' });
+  const cal = Object.assign({}, F.NET_CAL, { version: 1, client_sig: 'c2-9-ffffffff' });
   const r2 = await env2.L.fillPage(F.netCfg({}, { calibration: cal }), [F.netJob(10, '<p>ours</p>')], F.stubProbe(1));
   await check(t, 'identity: a record from another client build is stale', [r2.calibration_stale, r2.calibrated, r2.save_signal], [true, false, 'fallback']);
   const env3 = F.netEnv({ pages });
   scripts(env3);
   const r3 = await env3.L.fillPage(F.netCfg({}, { calibration: Object.assign({}, F.NET_CAL, { version: 1, client_sig: fr.client_sig }) }), [F.netJob(10, '<p>ours</p>')], F.stubProbe(1));
   await check(t, 'identity: a record from this client build is used', [r3.calibration_stale, r3.calibrated], [false, true]);
+});
+
+test('calibration identity: a save record survives page chunks; a page without timing reads client-unknown', { skip: needNet() }, async t => {
+  const pages = [{ title: 'Page 1', current: true, panels: e => [F.netTextPanel(e, 10, 1)] }];
+  const env = F.netEnv({ pages });
+  env.setScripts([F.ORIGIN + '/static/app.1a2b3c.js', 'https://cdn.example.invalid/x.js']);
+  const sig = env.ctx.LtNet.clientSig();
+  const page0 = env.ctx.LtNet.scriptsSig();
+  env.addChunks([F.ORIGIN + '/static/page-7.c0ffee.js']);
+  const record = Object.assign({}, F.NET_CAL, { version: 1, client_sig: sig });
+  const r = await env.L.fillPage(F.netCfg({}, { calibration: record }), [F.netJob(10, '<p>ours</p>')], F.stubProbe(1));
+  await check(t, 'chunks: the record still applies after a page chunk loaded',
+    [r.client_sig, r.calibration_stale, r.calibrated, r.save_confirmed], [sig, false, true, true]);
+  yes(t, 'chunks: the receipt keeps the page script fingerprint, which saw the chunk', typeof r.scripts_sig === 'string' && r.scripts_sig !== page0);
+  await check(t, 'chunks: a batch accepts the record', env.L.staleReason(record), null);
+  const bare = F.netEnv({ pages });
+  bare.setScripts([F.ORIGIN + '/static/app.1a2b3c.js']);
+  bare.ctx.performance = { now: () => bare.clock.now(), getEntriesByType: () => [] };
+  const r2 = await bare.L.fillPage(F.netCfg({}, { calibration: record }), [F.netJob(10, '<p>ours</p>')], F.stubProbe(1));
+  await check(t, 'no timing: no build marker, the record is set aside as client-unknown',
+    [r2.client_sig, r2.calibration_stale, r2.stale_reason, r2.calibrated, r2.save_signal], [null, true, 'client-unknown', false, 'fallback']);
+});
+
+/* Run-data saves: no panelState.uuids, 3- and 4-character panel keys, one PUT of the run's data whose
+ * body names each panel by a typed panelKey field and whose reply says success. */
+const RD_PATH = '/i/inst0001/v/2.0/api/student/courses/1/runs/101/data';
+function rdEnv(o) {
+  o = o || {};
+  const all = [];
+  const panel = (env, key, dataKey) => {
+    const model = env.model('p' + key, Object.assign({ strategy: 'immediate', latency: 150, events: false, path: RD_PATH,
+      body: () => JSON.stringify({ panels: all.map(p => ({ panelKey: Number(p.key), dataKey: p.dataKey, answer: p.model.attributes.answer })) }),
+      response: o.response === undefined ? JSON.stringify({ success: true }) : o.response }, o.model || {}));
+    model.attributes.answer = '';
+    all.push({ key, dataKey, model });
+    return { p: { attributes: { panelKey: String(key), dataKey, pluginKey: 'text-question', panelState: { content: { question: 'Q' }, input: model } } }, model };
+  };
+  return F.netEnv({ pages: [{ title: 'Page 1', current: true, panels: e => [panel(e, 209, 208), panel(e, 2838, 2837)] }] });
+}
+const rdJobs = () => [F.netJob(209, '<p>first</p>'), F.netJob(2838, '<p>second</p>')];
+
+test('save wait: run-data saves of short panel keys are identified by typed panelKey', { skip: needNet() }, async t => {
+  let env = rdEnv();
+  const tpl = env.ctx.LtNet.pathTemplate(RD_PATH);
+  const rdCal = { version: 1, source: 'net', method: 'PUT', path_template: tpl };
+  let r = await env.L.fillPage(F.netCfg({}, { calibration: rdCal }), rdJobs(), F.stubProbe(1));
+  await check(t, 'run-data: both short keys saved on the calibrated wait',
+    [r.save_signal, r.keys_saved, r.keys_pending, r.ack_net, r.ack_path_template, r.next], ['net', 2, 0, 2, tpl, null]);
+  await check(t, 'run-data: the receipt counts weak keys, matched requests and the save key source',
+    [r.keys_weak, r.net_matched, r.save_key_source], [2, 2, { uuids: 0, panel_key: 2 }]);
+  await check(t, 'run-data: no write lost', env.navigate().lost, 0);
+  env = rdEnv();
+  r = await env.L.fillPage(F.netCfg({}, { calibration: null }), rdJobs(), F.stubProbe(1));
+  await check(t, 'run-data: uncalibrated, the fallback names the endpoint a save ticket calibrates',
+    [r.save_signal, r.keys_saved, r.keys_pending, r.ack_source, r.ack_method, r.ack_path_template, r.ack_endpoints, r.next],
+    ['fallback', 2, 0, 'net', 'PUT', tpl, ['PUT ' + tpl], null]);
+  const row = (r.save_diag || []).find(d => d.run_data);
+  await check(t, 'run-data: save_diag counts the typed identities, never the answers',
+    [row && /\bkeys_identified=4 as_panel_field=4\b/.test(row.run_data), row && /\breply_success=2\b/.test(row.run_data), JSON.stringify(r).includes('first')],
+    [true, true, false]);
+  yes(t, 'run-data: the receipt nests at most 4 levels', maxDepth(r, 1) <= 4);
+});
+
+test('save wait: a run-data bare 200 or {"success": false} reply never confirms', { skip: needNet() }, async t => {
+  const tplOf = env => ({ version: 1, source: 'net', method: 'PUT', path_template: env.ctx.LtNet.pathTemplate(RD_PATH) });
+  let env = rdEnv({ response: '' });
+  let r = await env.L.fillPage(F.netCfg({}, Object.assign({ calibration: tplOf(env) }, { max_ms: 2000 })), rdJobs(), F.stubProbe(1));
+  await check(t, 'bare: unconfirmed, both keys pending, fresh-load verify next',
+    [r.save_signal, r.keys_saved, r.keys_pending, /fresh-load verify/.test(r.next || '')], ['unconfirmed', 0, 2, true]);
+  env = rdEnv({ response: JSON.stringify({ success: false }) });
+  r = await env.L.fillPage(F.netCfg({}, { calibration: tplOf(env) }), rdJobs(), F.stubProbe(1));
+  await check(t, 'failure: error, both writes marked save-error',
+    [r.save_signal, r.save_errors, r.items.map(i => i.result)], ['error', 2, ['save-error', 'save-error']]);
 });
 
 test('guard: a write path that calls a commit mutator is refused', { skip: F.haveGuard() && F.haveNet() ? false : 'needs lt_guard.js' }, async t => {
@@ -1042,13 +1170,18 @@ test('rail RAT sheet occupancy: generated page 3 keeps an existing team selectio
 });
 
 test('RAT receipts echo the executed payload identity', async t => {
+  // Receipts carry the 16-hex prefix only: an output filter redacts a 64-hex value as
+  // base64, and record binds the full sha256 of the payload file on the host.
   const pin = 'a'.repeat(64);
   const env = makeEnv(e => fourPages(e, [textPanel(e, '10', '')]));
   const filled = await run(env, { source_payload_sha256: pin }, [textJob('10', '<p>ours</p>')]);
-  await check(t, 'fill echoes payload hash', filled.source_payload_sha256, pin);
+  await check(t, 'fill echoes payload hash', filled.source_payload_sha16, pin.slice(0, 16));
+  await check(t, 'fill returns no full hash', 'source_payload_sha256' in filled, false);
   const fresh = makeEnv(e => fourPages(e, [textPanel(e, '10', '<p>ours</p>')]));
   const verified = await fresh.L.verify(CFG({ source_payload_sha256: pin }), { 4: [textJob('10', '<p>ours</p>')] });
-  await check(t, 'fresh verification echoes payload hash', verified.source_payload_sha256, pin);
+  await check(t, 'fresh verification echoes payload hash', verified.source_payload_sha16, pin.slice(0, 16));
+  await check(t, 'fresh verification returns no full hash', 'source_payload_sha256' in verified, false);
+  await check(t, 'no returned field trips the output filter', redactionHits([filled, verified]), []);
 });
 
 for (const [name, label, target] of [['authored labels', 'Label', ''], ['occupied target', 'Label', 'Existing'], ['empty table', '', '']]) {

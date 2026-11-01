@@ -7,7 +7,10 @@ fetch_media.js saves the images of the page on screen, so the agent visits the c
 that hold images. Every visit goes through `ltjs.py check-url --plan`, which forbids any page
 URL without a plan. This writes that plan from the captured module:
 
-  * pages: the content pages (page_no and url) before the first live Checkpoint page;
+  * pages: the content pages (page_no, route and url) before the first live Checkpoint page.
+    A Background page keeps its /run/background url; numbered pages keep their /run/page/<n>.
+    When ltjs.route_refusal refuses the capture's routes (any capture without
+    route_source), route_refusal says why and no page carries a url;
   * stop_before_page: that Checkpoint page, from ltcore.boundaries.first_stop_boundary
     (only a checkpoint stops navigation; a single-attempt item does not);
   * never_navigated: the completion route and every report page;
@@ -29,7 +32,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent / "_shared"))
 import ltcore  # noqa: E402
 
 ltcore.bootstrap([])  # standard library only
-from ltcore import boundaries, config, store  # noqa: E402
+from ltcore import boundaries, config, ltjs, store  # noqa: E402
 
 import argparse  # noqa: E402
 import json  # noqa: E402
@@ -48,6 +51,13 @@ def build_plan(module: dict) -> dict:
     stop_before = stop[0] if stop and stop[1] == "checkpoint-page" else None
     parts = urlsplit(module.get("source_url") or "")
     origin = f"{parts.scheme}://{parts.netloc}" if parts.scheme and parts.netloc else None
+    refusal = ltjs.route_refusal(module)
+
+    def route(p: dict) -> dict:
+        if refusal:
+            return {"page_no": None, "route": None, "url": None}
+        return {"page_no": p.get("page_no"), "route": p.get("route"), "url": p.get("url")}
+
     pages, skipped, media_pages = [], [], []
     never = [{"route": "complete", "reason": "completion page: a live Commit button"}]
     for p in module.get("pages", []):
@@ -60,10 +70,9 @@ def build_plan(module: dict) -> dict:
             skipped.append({"page_index": idx, "reason": "checkpoint-page"})
             continue
         if stop_before is not None and idx >= stop_before:
-            skipped.append({"page_index": idx, "page_no": p.get("page_no"), "reason": "at-or-past-first-boundary"})
+            skipped.append({"page_index": idx, "page_no": route(p)["page_no"], "reason": "at-or-past-first-boundary"})
             continue
-        pages.append({"page_index": idx, "page_no": p.get("page_no"), "url": p.get("url"),
-                      "title": p.get("title", "")})
+        pages.append({"page_index": idx, **route(p), "title": p.get("title", "")})
         if has_media(p):
             media_pages.append(idx)
     return {
@@ -73,6 +82,8 @@ def build_plan(module: dict) -> dict:
         "instance": module.get("instance"),
         "course_id": module.get("course_id"),
         "run_id": module.get("run_id"),
+        "route_source": module.get("route_source"),
+        "route_refusal": refusal,
         "stop_before_page": stop_before,
         "never_navigated": never,
         "pages": pages,
@@ -117,6 +128,8 @@ def main(argv: list[str] | None = None) -> int:
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(plan, indent=1, ensure_ascii=False) + "\n", encoding="utf-8", newline="\n")
     print(f"plan: {out}")
+    if plan["route_refusal"]:
+        print(f"routes refused: {plan['route_refusal']}")
     if plan["stop_before_page"] is not None:
         print(f"stop before page_index {plan['stop_before_page']} (a live Checkpoint)")
     by_idx = {p["page_index"]: p for p in plan["pages"]}
@@ -124,7 +137,8 @@ def main(argv: list[str] | None = None) -> int:
         print("no content page before the first boundary holds an image key")
     for idx in plan["media_pages"]:
         p = by_idx[idx]
-        print(f"visit page_index {idx}: {p['url']}  ({p['title']})")
+        # A page without a url has no measured route, and check-url refuses every URL for it.
+        print(f"visit page_index {idx}: {p['url'] or 'no checked url'}  ({p['title']})")
     return 0
 
 

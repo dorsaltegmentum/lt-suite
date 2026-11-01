@@ -12,6 +12,7 @@
 const { describe, test } = require('node:test');
 const assert = require('node:assert/strict');
 const H = require('./vm_harness.js');
+const { redactionHits } = require('../browser/redaction_triggers.js');
 const { obs, coll, mdl, contentPage, reportPage, checkpointPage, panel, baseRoot, runCapture, MODULE_ID } = H;
 
 const env = (pages, container, trips) => ({ root: baseRoot(pages, container, trips) });
@@ -171,7 +172,10 @@ describe('boundaries', () => {
     assert.deepEqual(s.content_unread, ['kcMystery:91']);
     assert.equal(s.hotspot_panels, 1);
     assert.equal(s.notebook_items, 1);
-    assert.deepEqual(s.table_author_grids, { read: 1 });
+    assert.deepEqual(s.table_given_grids, { read: 1 });
+    // One browser tool's output filter redacts values whose field names contain "author".
+    assert.deepEqual(Object.keys(s).filter(k => /author/i.test(k)), []);
+    assert.deepEqual(redactionHits(r.receipt), []);
   });
 
   test('boundaries: an unmapped answerable plugin is a degrade-todo that lifts on capture support', async () => {
@@ -237,10 +241,61 @@ describe('boundaries', () => {
     assert.equal(r.doc.lesson.course_title, 'Test course');
   });
 
-  test('boundaries: a background route still numbers content pages from /run/page/1', async () => {
-    const r = await runCapture(Object.assign(env([contentPage('a'), contentPage('b')], []), {
-      location: { origin: H.ORIGIN, pathname: '/i/inst0001/student/courses/1/runs/101/run/background' } }));
-    assert.equal(r.doc.pages[0].url, 'https://lt.example.invalid/i/inst0001/student/courses/1/runs/101/run/page/1');
+  /* Routes. Lt serves a Background page at /run/background and flow page N at /run/page/N-1.
+   * `routed` builds Background, a, b with Lt's dataKeys and paints flow page `cur`. */
+  const RUN_URL = 'https://lt.example.invalid/i/inst0001/student/courses/1/runs/101/run';
+  const at = rest => ({ origin: H.ORIGIN, pathname: `/i/inst0001/student/courses/1/runs/101/run/${rest}` });
+  const keyed = (page, key, current) => Object.assign(page, { dataKey: obs(key), current: obs(current) });
+  const routed = (cur, keys = [814, 1, 2]) => env(['Background', 'a', 'b'].map((t, i) => keyed(contentPage(t), keys[i], i + 1 === cur)), []);
+  const routesOf = r => r.doc.pages.map(p => [p.url, p.route, p.page_no]);
+  const BACKGROUND_ROUTES = [[`${RUN_URL}/background`, 'background', null], [`${RUN_URL}/page/1`, null, 1],
+                             [`${RUN_URL}/page/2`, null, 2]];
+
+  test('boundaries: a tab on /run/background with flow 1 current gives Background its own route', async () => {
+    const r = await runCapture(Object.assign(routed(1), { location: at('background') }));
+    assert.equal(r.doc.route_source, 'datakey+location');
+    assert.deepEqual(routesOf(r), BACKGROUND_ROUTES);
+    assert.deepEqual(r.receipt.summary.routes, { offset: 1, background_page: 1, unverified_pages: [] });
+  });
+
+  test('boundaries: a tab on /run/page/1 with flow 2 current gives the same routes', async () => {
+    const r = await runCapture(Object.assign(routed(2), { location: at('page/1') }));
+    assert.deepEqual(routesOf(r), BACKGROUND_ROUTES);
+    assert.equal(r.receipt.summary.routes.offset, 1);
+  });
+
+  test('boundaries: after a Background page a checkpoint leaves later pages one number lower', async () => {
+    // Flow: Background, a (/page/1), checkpoint, b (/page/2). An ordinal URL for b would be /page/3.
+    const pages = [keyed(contentPage('Background'), 814, false), keyed(contentPage('a'), 1, true),
+                   checkpointPage(8, false), keyed(contentPage('b'), 2, false)];
+    const r = await runCapture(Object.assign(env(pages, []), { location: at('page/1') }));
+    assert.deepEqual(r.doc.pages.map(p => p.url), [`${RUN_URL}/background`, `${RUN_URL}/page/1`, null, `${RUN_URL}/page/2`]);
+    assert.deepEqual(cb(r).checkpoint_pages, [3]);
+  });
+
+  test('boundaries: CF-1 regression, Background painted under /run/page/1 gets no ordinal URL', async () => {
+    // Codex's reproduction: the URL says /page/1 while the painted page's dataKey is 814. The two
+    // signals disagree, so no page gets a url; before the fix pages[1] got /page/2.
+    const background = keyed(contentPage('Background', []), 814, true);
+    const next = keyed(contentPage('Next', []), 1, false);
+    const r = await runCapture({ root: baseRoot([background, next], []) });
+    assert.notEqual(r.doc.pages[1].url, `${RUN_URL}/page/2`);
+    assert.deepEqual(routesOf(r), [[null, null, null], [null, null, null]]);
+    assert.deepEqual(r.receipt.summary.routes, { offset: null, background_page: null, unverified_pages: [1, 2] });
+  });
+
+  test('boundaries: a stale URL, a missing dataKey or a shared dataKey leaves url null', async () => {
+    // The URL names /page/2, but the painted page's dataKey is 1: every page is unverified.
+    let r = await runCapture(Object.assign(routed(2), { location: at('page/2') }));
+    assert.deepEqual(r.doc.pages.map(p => p.url), [null, null, null]);
+    // Page b has no dataKey: it alone loses its url.
+    const pages = [keyed(contentPage('a'), 1, true), Object.assign(contentPage('b'), { current: obs(false) })];
+    r = await runCapture(Object.assign(env(pages, []), { location: at('page/1') }));
+    assert.deepEqual(routesOf(r), [[`${RUN_URL}/page/1`, null, 1], [null, null, null]]);
+    assert.deepEqual(r.receipt.summary.routes.unverified_pages, [2]);
+    // The Background page and page a both carry dataKey 1: neither is trusted.
+    r = await runCapture(Object.assign(routed(1, [1, 1, 2]), { location: at('background') }));
+    assert.deepEqual(r.doc.pages.map(p => p.url), [null, null, `${RUN_URL}/page/2`]);
   });
 });
 

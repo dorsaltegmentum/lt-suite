@@ -10,6 +10,7 @@ const fs = require('fs');
 const path = require('path');
 const vm = require('vm');
 const F = require('./fill_env.js');
+const { redactionHits } = require('../browser/redaction_triggers.js');
 const { coll, mdl, makeEnv, page, panel, obs } = F;
 
 const SRC = fs.readFileSync(path.join(F.BROWSER, 'model_answer.js'), 'utf8');
@@ -47,6 +48,7 @@ test('model-answer: a text answer comes back in chunks of 800 characters', async
 test('model-answer: a selection names its option text', async () => {
   const r = await runMa(makeEnv(build, { page: 1 }), { keys: ['11'] });
   same(row(r, '11'), ['11', 1, 'select', 'ok', '1: Second']);
+  assert.deepEqual(redactionHits(r), []);
 });
 
 test('model-answer: labels come back as location and label text', async () => {

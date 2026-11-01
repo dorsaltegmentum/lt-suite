@@ -11,6 +11,9 @@
  *   prints [{url, href (the URL as the browser normalizes it), allowed, reason, page_index}]
  * spec.mode "decide":   {policy, from, urls: [...]}: the guard's navigate decision in a tab at
  *   `from` whose painted page is unknown; prints [{url, allowed, reason, page_index}]
+ * spec.mode "sequence": {files: [...], path?, fetch_origin?}: run each file in turn in one page
+ *   with an in-memory localStorage. With fetch_origin, fetch is node's own and carries that
+ *   Origin header, as a browser does on a cross-origin request. Prints {results, keys}.
  */
 'use strict';
 const fs = require('fs');
@@ -37,6 +40,25 @@ async function main() {
     await G.run(spec.policy, async () => ({ ok: true }));
     const out = spec.urls.map(u => Object.assign({ url: u }, JSON.parse(JSON.stringify(G.allowed(u)))));
     process.stdout.write(JSON.stringify(out));
+    return;
+  }
+  if (spec.mode === 'sequence') {
+    const env = H.makeEnv({ path: spec.path });
+    const data = new Map();
+    env.ctx.localStorage = { get length() { return data.size; }, key: i => [...data.keys()][i] ?? null,
+      getItem: k => (data.has(k) ? data.get(k) : null), setItem: (k, v) => { data.set(k, String(v)); },
+      removeItem: k => { data.delete(k); } };
+    if (spec.fetch_origin) {
+      env.ctx.AbortController = AbortController;
+      env.ctx.fetch = (url, init) => fetch(url, { ...init, headers: { Origin: spec.fetch_origin } })
+        .then(r => ({ status: r.status, text: () => r.text() }));
+    }
+    const results = [];
+    for (const f of spec.files) {
+      const r = await env.runRendered(fs.readFileSync(f, 'utf8'));
+      results.push(JSON.parse(JSON.stringify(r === undefined ? null : r)));
+    }
+    process.stdout.write(JSON.stringify({ results, keys: [...data.keys()].sort() }));
     return;
   }
   const pages = spec.pages ? spec.pages.map(p => H.page(p)) : undefined;

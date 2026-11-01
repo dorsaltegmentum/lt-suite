@@ -31,8 +31,8 @@ const probeLtPanels = async (jobs) => {
   const args = typeof __LT_ARGS__ === 'undefined' ? {} : __LT_ARGS__;
   jobs = jobs || args.jobs || [];
   const cfg = args.cfg || args;
-  const pin = cfg.source_payload_sha256 ? {source_payload_sha256: cfg.source_payload_sha256,
-    source_payload_sha16: cfg.source_payload_sha256.slice(0, 16)} : {};
+  // The 16-hex prefix only: an output filter redacts a 64-hex value as base64.
+  const pin = cfg.source_payload_sha256 ? {source_payload_sha16: cfg.source_payload_sha256.slice(0, 16)} : {};
   if (globalThis.LtGuard && globalThis.LtGuard.status().ok !== true) return {ok: false, fatal: 'guard-degraded', ...pin};
   const el = document.querySelector('div.pageList');
   if (!el || typeof ko === 'undefined') {
@@ -70,12 +70,13 @@ const probeLtPanels = async (jobs) => {
     return '';
   };
 
-  const m = location.pathname.match(/\/i\/([^/]+)\/student\/courses\/(\d+)\/runs\/(\d+)\/run\/page\/(\d+)/);
+  /* /run/background serves a Background page with no number: only current() can place it. */
+  const m = location.pathname.match(/\/i\/([^/]+)\/student\/courses\/(\d+)\/runs\/(\d+)\/run\/(?:page\/(\d+)|background\/?$)/);
   if (!m) {
-    return { ok: false, reason: 'Not on a /run/page/<n> URL. The report page and /run/complete are ' +
+    return { ok: false, reason: 'Not on a /run/page/<n> or /run/background URL. The report page and /run/complete are ' +
                                'out of bounds, and a target is (page_index, panel_key).' };
   }
-  let pageIndex = Number(m[4]);
+  let pageIndex = m[4] == null ? null : Number(m[4]);
 
   /* Each plugin needs its own emptiness test.
    * A zero value alone does not establish occupancy.
@@ -208,6 +209,7 @@ const probeLtPanels = async (jobs) => {
    * Use the URL number as fallback. */
   const painted = models(pages).findIndex(p => U(p.current) === true);
   if (painted >= 0) pageIndex = painted + 1;
+  if (pageIndex == null) return { ok: false, reason: 'On /run/background with no painted page: nothing places it in the flow' };
   const page = painted >= 0 ? flat[painted]
     : (flat.find(p => Number(U(p.pageIndex)) === pageIndex) || flat[pageIndex - 1]);
   if (!page) return { ok: false, reason: `page_index ${pageIndex} not found in lessonFlowPages` };

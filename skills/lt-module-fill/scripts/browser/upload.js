@@ -22,7 +22,8 @@
  *      superseded, so at most one per panel waits for a dialog.
  * It never clicks. A filled panel then raises Lt's "Replace existing picture?" dialog;
  * confirm_dialog.js accepts it by its text, once, and binds it to that pending upload. The
- * receipt carries the sha256 of the bytes set, never the bytes.
+ * receipt carries sha16, the first 16 hex digits of the sha256 of the bytes set, never the
+ * bytes: an output filter redacts a 64-hex value as base64.
  *
  * Arguments (__LT_ARGS__): panel; file = {name, type, b64, sha256}, or flat file_name,
  * file_type, file_b64, file_sha256.
@@ -114,7 +115,7 @@ const ltUpload = async (rawArgs) => {
   const dlg = G.document.querySelector('[role=dialog]');
   const dialogOpen = !!(dlg && typeof dlg.getClientRects === 'function' && dlg.getClientRects().length);
   return Object.assign({ ok: true }, head, {
-    set: true, sha256: hex, bytes: bytes.length, files_set: input.files ? input.files.length : 0,
+    set: true, sha16: hex.slice(0, 16), bytes: bytes.length, files_set: input.files ? input.files.length : 0,
     dialog_open: dialogOpen, next: dialogOpen ? 'confirm_dialog action=accept panel=' + a.panel : null
   });
 };

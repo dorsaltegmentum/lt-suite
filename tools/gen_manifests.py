@@ -8,11 +8,13 @@ Plugin manifests run the Node bootstrap. Paste-in examples retain hardened npx.
 The launcher pins block is generated from the same source.
 The portable MCP schema has no tool filters; use the Codex config snippet for
 its allowlist. Gemini and Antigravity receive their native denylist fields.
+packaging/host-files.sha256 lists the sha256 of each host helper in sha256sum format.
 """
 
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -171,6 +173,12 @@ def render(root: Path) -> tuple[dict[str, bytes], str]:
         if count != 1:
             raise ValueError("setup.py must have exactly one lt-chrome host data block")
         output[setup_name] = text.encode("utf-8")
+    # Host helpers run outside every jail; tools/install_body_server.py copies one only when
+    # its sha256 matches this list.
+    host = [name for name in ("tools/host/lt_body_server.py",) if (root / name).is_file()]
+    if host:
+        output["packaging/host-files.sha256"] = "".join(
+            hashlib.sha256((root / name).read_bytes()).hexdigest() + "  " + name + "\n" for name in host).encode()
     return output, source["version"]
 
 

@@ -12,6 +12,7 @@ Each skill hands its work to the next as one JSON file. These schemas define the
 | `module.schema.json` | capture to answer, diagram, fill, export | `lt-module-capture` | `lt-module-answer`, `mechanistic-diagram`, `lt-module-fill`, `lt-module-export` |
 | `answers.schema.json` | answer to fill, diagram, export | `lt-module-answer` | `mechanistic-diagram`, `lt-module-fill`, `lt-module-export` |
 | `fill-report.schema.json` | fill to the human, then the improvement loop | `lt-module-fill` | the human, the run review |
+| `fill-notes.schema.json` | the operator's notes for one fill run | the operator, from the template `emit_fill.py payload` writes | `make_fill_report.py` |
 | `run.schema.json` | every skill to the improvement loop | every skill | the run review in `lt-suite-setup` |
 | `reference.schema.json` | eval ground truth | `lt-module-capture` on a completed module | the eval grader only |
 | `approvals.schema.json` | the user's recorded approvals for one run | `ltcore.approvals` (`emit_fill.py approve`) | `lt-module-fill`, the validator |
@@ -26,7 +27,7 @@ python3 -m ltcore.validate fill-report.json --module module.json --approvals app
 python3 -m ltcore.validate reference.json --model-answer-read false
 ```
 
-Run it from a skill folder as `python3 scripts/_shared/ltcore/validate.py <file.json>`, or from the repository with `PYTHONPATH=shared`. The file name picks the schema: `module*`, `answers*`, `reference*`, `fill-report*`, `run*`, `approvals*`. Exit codes: `0` valid, `1` rail violation, `2` schema violation, `3` usage, file or config error, or `jsonschema` not installed.
+Run it from a skill folder as `python3 scripts/_shared/ltcore/validate.py <file.json>`, or from the repository with `PYTHONPATH=shared`. The file name picks the schema: `module*`, `answers*`, `reference*`, `fill-report*`, `fill-notes*`, `run*`, `approvals*`. Exit codes: `0` valid, `1` rail violation, `2` schema violation, `3` usage, file or config error, or `jsonschema` not installed.
 
 ## Two capture files: `module.json` and `reference.json`
 
@@ -79,6 +80,8 @@ A `subpage` is a container, not a question. Its children are absent from the par
 
 A fill report may stop at any one-way door (`checkpoint-page`, `single-attempt-item`, `run-level-commit`); `unmapped` is never a reason to stop.
 
+Page routes decide where a navigation lands, so a wrong one can cross a Checkpoint. Lt serves a Background page at `/run/background` and flow page N after it at `/run/page/N-1`. `module.json` records each content page's route as capture measured it: `route: "background"` with `page_no: null`, or `page_no` n with a `/run/page/<n>` url, or both null when the page's `dataKey` and the tab disagree. `route_source: "datakey+location"` marks such a capture. `ltjs.py check-url` and the guard map URLs only through these routes. A capture without `route_source` gets no map whatever its titles or boundaries, and every page URL fails with `recapture-needed`; export and answer drafting still read it. Plans always carry the `route_source` key, `null` allowed, and a plan without the key is refused the same way.
+
 ## Approvals
 
 The user's yes is a record in `<data>/runs/<module_id>/approvals.json`, with the reply verbatim. `approval_id` is `"A-" + sha256(module_id + item_id + quote + recorded_at)[:8]`, so an edited record no longer matches its id. Two kinds:
@@ -113,6 +116,9 @@ Schema violations are structural. Rails reject documents that parse but break a 
 | `model-answer-policy` | with `model_answer.read = false`, nothing may cite `lt-model-answer` |
 | Report page has `page_no: null`, `route: "complete"` and no items | `/page/<last>` redirects; its panels are mirrors and would double every count |
 | Checkpoint page has `route: "checkpoint"`, no `page_no`, no `url`, no items, and a `checkpoint.committed` boolean | Lt routes it as `/run/checkpoint/<n>`; its index is not a URL segment |
+| A Background page has `route: "background"`, no `page_no`, a `/run/background` url or none, comes first among content pages, and needs `route_source` | Lt serves it before `/run/page/1`; only measured routes can name it |
+| A content page's url ends in `/run/page/<page_no>`; no two pages share a `page_no`, and none exceeds the numbered content pages | a route pointing at another page carries the tab past a Checkpoint |
+| With `route_source`, a content page may have `page_no: null` only with `url: null`; without it, every non-Background content page has an integer `page_no` | capture records no route it could not confirm |
 | `checkpoint_pages` and the `checkpoints` inventory agree | Lt drops a committed checkpoint from the page flow; the inventory is what remembers it |
 | `census` recomputed from the items | every count is confirmed a second way |
 | Completion page implies `run_level_commit.present` | the run-level Commit is invisible from content pages |
@@ -123,7 +129,7 @@ Schema violations are structural. Rails reject documents that parse but break a 
 | `never_navigated` lists the completion route; `pages_filled` excludes report and policy-skipped pages | the completion page is out of bounds, not merely stop-before-Commit |
 | No `pages_filled` entry or write at or past the first checkpoint | a run never advances through a live checkpoint |
 | A single-attempt item written by automation carries an `approval_id`; never a drag | the user approves each single-attempt write |
-| `result: filled` requires `verified: true`; a receipt decides both | every item is verified by a fresh load before the run moves on |
+| `result: filled` requires `verified: true`; a receipt decides both; a receipt with `binding: unbound-legacy` gives `filled-unverified` at best | every item is verified by a fresh load before the run moves on, against a payload bound to today's draft |
 | Boundary stop implies `approval_mode: manual` | a page with a boundary is filled under manual approval |
 | A waiver rests on a recorded approval and waives a real violation | an idle waiver would pass the next violation unread |
 | Tier-4 `source_id` is a DOI or `PMID:` | an unresolvable identifier is a fabrication |

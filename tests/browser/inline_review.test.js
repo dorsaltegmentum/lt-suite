@@ -28,6 +28,8 @@ function render(options = {}, body = BODY) {
 }
 const want = s => /const WANT = "([a-f0-9]{64})"/.exec(s)[1];
 const payload = s => /const B64 = "([^"]*)"/.exec(s)[1];
+/* A cache budget that holds six test bodies and not seven. */
+const sixBodies = () => Math.floor(payload(render()).length * 6.5);
 function storage() {
   const data = new Map(), writes = [];
   return {data,writes,get length(){return data.size;},key:i=>[...data.keys()][i]??null,
@@ -146,12 +148,12 @@ test('inline review: index write failure must preserve the existing target entry
 });
 
 test('inline review: failed index insertion preserves existing bodies until repair', async()=>{
-  const e=env();
-  for(let i=0;i<6;i++)await e.runRendered(render({},BODY+'\nvoid '+i+';'));
+  const e=env(),cache_budget=sixBodies();
+  for(let i=0;i<6;i++)await e.runRendered(render({cache_budget},BODY+'\nvoid '+i+';'));
   const before=[...e.ctx.localStorage.data.entries()];
   const old=e.ctx.localStorage.setItem;
   e.ctx.localStorage.setItem=(k,v)=>{if(k===INDEX)throw Error('quota');return old(k,v);};
-  const src=render({},BODY+'\nvoid 99;');
+  const src=render({cache_budget},BODY+'\nvoid 99;');
   assert.equal((await e.runRendered(src)).ok,true);
   for(const [k,v] of before)assert.equal(e.ctx.localStorage.getItem(k),v);
   e.ctx.localStorage.setItem=old;
@@ -172,8 +174,8 @@ test('inline review: inventory failure preserves bodies that cannot be accounted
 });
 
 test('inline review: lost index repair must leave at most six body entries', async()=>{
-  const e=env(),sources=[];
-  for(let i=0;i<7;i++){const s=render({},BODY+'\nvoid '+i+';');sources.push(s);e.ctx.localStorage.setItem(PREFIX+want(s),payload(s));}
+  const e=env(),sources=[],cache_budget=sixBodies();
+  for(let i=0;i<7;i++){const s=render({cache_budget},BODY+'\nvoid '+i+';');sources.push(s);e.ctx.localStorage.setItem(PREFIX+want(s),payload(s));}
   sources.sort((a,b)=>want(a).localeCompare(want(b)));
   e.ctx.localStorage.setItem(INDEX,'bad-json');
   await e.runRendered(sources[0]);

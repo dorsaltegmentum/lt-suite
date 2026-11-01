@@ -359,12 +359,24 @@ def _semantic(doc: dict, errors: list[str], warnings: list[str]) -> None:
         if (not match or re.search(r"[\x00-\x1f\x7f-\x9f]", url)
                 or not 1 <= int(match[2]) <= 65535):
             errors.append("browser.devtools_url: value hidden; use a loopback http address with port 1 to 65535")
+    server = browser.get("body_server", "")
+    if server:
+        match = re.fullmatch(r"http://127\.0\.0\.1:([0-9]{1,5})/?", server) if isinstance(server, str) else None
+        if not match or not 1024 <= int(match[1]) <= 65535:
+            errors.append("browser.body_server: use http://127.0.0.1:<port> with a port from 1024 to 65535")
     if re.search(r'[\x00-\x1f\x7f-\x9f"%!]', folder):
         errors.append("browser.chromium_user_data_dir: unsupported folder characters")
     if browser.get("chromium") == "other" and not url and not folder:
         errors.append("browser.chromium_user_data_dir: required for browser.chromium other")
     if url and folder:
         warnings.append("browser.chromium_user_data_dir is ignored when browser.devtools_url is set")
+    socket = browser.get("devtools_socket", "")
+    if re.search(r'[\x00-\x1f\x7f-\x9f"%!]', socket):
+        errors.append("browser.devtools_socket: unsupported path characters")
+    if socket and not url:
+        errors.append("browser.devtools_socket: needs browser.devtools_url; lt-chrome probes that port first and sends its Host to the browser through the socket")
+    if socket and sys.platform == "win32":
+        warnings.append("browser.devtools_socket works on Linux and macOS only; lt-chrome refuses it on Windows")
     for i, c in enumerate(doc.get("text_cleaners") or []):
         if not isinstance(c, dict):
             continue

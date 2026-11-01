@@ -95,6 +95,41 @@ Supported hosts: `codex`, `cursor`, `vscode`, `copilot`, `gemini-settings`, `ant
 Static `examples/mcp/` entries remain a hardened 0.1.0 fallback and ignore browser settings.
 `setup.py lt-chrome plan --json` prints the redacted startup decision.
 Run `lt-chrome install` again after upgrading the skill; doctor warns when the stable copy is stale.
+Doctor also warns when the stable copy is missing and the config serves lt-chrome tools; plugin hosts do not need it.
+
+### Reaching a browser from a sandboxed agent
+
+An agent sandbox with its own network namespace has its own loopback, so the browser's DevTools port is out of reach.
+`browser.devtools_socket` names a Unix socket that forwards to the `browser.devtools_url` listener.
+A host process provides the socket, for example `systemd-socket-proxyd 127.0.0.1:9222` behind a socket unit.
+The sandbox mounts the socket file; a read-only mount still accepts connections.
+Host and sandbox can share one config file:
+
+```toml
+[browser]
+devtools_url = "http://127.0.0.1:9222"
+devtools_socket = "~/.local/state/lt-suite/devtools.sock"
+```
+
+lt-chrome first requests `/json/version` from the `browser.devtools_url` port.
+When the browser answers, lt-chrome connects directly, as without the socket (route `direct`).
+When the port is silent, lt-chrome requests `/json/version` through the socket.
+After a DevTools answer, it listens on a free port of the same loopback address and forwards each connection to the socket (route `socket`).
+chrome-devtools-mcp gets that port as its `--browserUrl`; the browser builds `webSocketDebuggerUrl` from the request's Host header, so the WebSocket also comes back through the bridge.
+Before chrome-devtools-mcp starts, lt-chrome requests `/json/version` through its own bridge, which catches a browser that stopped after the first check.
+A normal close on one side ends the other side after its queued bytes; an error closes both.
+The listener closes when chrome-devtools-mcp exits or lt-chrome receives SIGINT, SIGTERM or SIGHUP.
+
+lt-chrome serves no tools and states the reason when the socket is missing, is not a socket, reaches no DevTools listener, or no loopback port can be bound.
+It never falls back to auto-connect.
+The bridge never holds the `browser.devtools_url` port, so lt-chrome on the host cannot take a stopped browser's port, and two lt-chrome processes in one sandbox each get their own bridge.
+A relative socket path resolves against the config file's folder, and `..` segments stay as written, so the kernel resolves them after any symlink.
+lt-chrome also refuses a socket that belongs to another account, a socket in a folder other accounts can change (unless the folder has the sticky bit), and a path longer than a Unix socket allows (107 bytes on Linux, 103 on macOS).
+Start the browser before the agent session; a refused start needs an lt-chrome restart.
+Any process that can connect to the socket controls that browser profile; keep the socket in a folder only your account can open.
+Inside the sandbox, any local process can use the forwarded port while lt-chrome runs.
+Doctor checks the same socket rules, and reports the route its own probe chooses and the route and refusal reason of each agent's last start.
+Windows does not support `browser.devtools_socket`.
 
 ### `lt-chrome` (chrome-devtools-mcp 1.12.0)
 
@@ -208,7 +243,18 @@ The shared runner uses 63,672 base64 bytes and 4 chunks at 20,000 bytes each.
 The first text call transfers 71,394 bytes across chunk snippets and its 3,810-byte final stub.
 The fixture contains 1 text, table, MCQ, category and labeling item on separate pages.
 
+Every `need:'payload'` reply carries a `reason`, such as `not-cached`, `cache-corrupt` or `not-cached,server-timeout`.
+The page cache keeps entries in least-recently-used order within 524,288 characters; a hit refreshes its entry.
+`ltjs.py render cache_status` reports which of the skill's scripts the cache holds, without running them.
+
+With `browser.body_server` set, `render` also writes each cacheable body to `<data>/js-bodies/`.
+A loader then fetches a body missing from the page cache from that loopback server and checks it with the same SHA-256 steps.
+Loaders name a plan policy longer than 256 characters by its SHA-256 instead of carrying it.
+The server runs on the host from the copy `tools/install_body_server.py` checked, never inside an agent jail.
+The shared reference's Body server section and [speed](speed.md#script-transfer-page-cache-and-body-server) give the rules and measurements.
+
 Only fixed shipped code enters `localStorage`; jobs, expected hashes, tickets and policies remain call arguments.
+With a body server, a policy named by SHA-256 also enters `localStorage`; arguments and tokens never do.
 The wrapper deep-freezes current arguments and policy, then installs the guard before dispatching any write.
 The runner reads its lexical arguments and publishes no callable runner accepting page globals.
 Generated answer files remain ineligible for caching; served mode and `--no-stub` retain their existing scripts.
@@ -259,8 +305,14 @@ It rejects report pages, checkpoint pages, excluded routes, and flow indexes at 
 Numbered page routes fail without `--plan`; automated navigation always supplies the current plan.
 
 URL page numbers count content pages only: checkpoint pages use `/run/checkpoint/<n>` routes and the report page uses `/run/complete`.
+A Background page has no number either: Lt serves it at `/run/background` and flow page N after it at `/run/page/N-1`.
 A URL number is therefore never taken as a flow position.
 `check-url` maps it through the plan's own map, and a plan with no map fails every numbered route with `plan-has-no-page-map`.
+The map comes from the routes capture measured: each page's `dataKey`, checked against the tab's URL and the page Lt painted.
+A plan copies the capture's `route_source` mark, and the plan builders always write the key, `null` allowed.
+A plan from a capture without the mark maps nothing, whatever its titles or boundaries, and every page URL fails with `recapture-needed` until the module is captured again (one read-only capture call with `module_only=true`) and the plan rebuilt.
+A plan without the `route_source` key was built before measured routes and is refused the same way.
+Two pages claiming one route, or a URL number above the pages that come before it, make the plan invalid (exit 2).
 
 With `--from`, `check-url` also checks every flow position strictly between the current page and the destination, in either direction.
 A checkpoint page or a position at or past `stop_before_page` on the way forbids the move.
@@ -271,6 +323,7 @@ Report pages and excluded pages on the way do not, because a direct navigation n
 | `crosses-checkpoint` | A checkpoint page lies between the current page and the destination. |
 | `crosses-stop` | A position at or past `stop_before_page` lies on the way. |
 | `current-not-in-plan` | The tab is on a page of this run that the plan cannot place. |
+| `recapture-needed` | The plan comes from a capture without measured routes, or it has no `route_source` key; `error` says to capture again and rebuild the plan. |
 | `bad-from-url` | The `--from` value is not a URL (exit 2). |
 
 A `--from` URL outside the plan's run skips the crossing check and reports `crossing: "outside-run"`.
@@ -287,11 +340,12 @@ Without `--from`, the result reports `crossing: "not-checked"`.
 | `checkpoint_pages` | Identifies checkpoint pages by their flow indexes. |
 | `boundary_map.doors[*]`, `first_boundary` | A door of class `checkpoint-page` marks its `page_index` as a checkpoint page. |
 | `pages[*]`, `skipped_pages[*]`, `flow_pages[*]` | `page_index` with `page_no` or `url` maps URLs onto flow indexes, exact URL paths first. `is_report_page`, `is_checkpoint`, and `reason` values `report-page` or `checkpoint-page` mark pages. |
+| `route_source`, `route_refusal` | `route_source` copies the capture's mark of measured routes. A `route_refusal` string, a `null` `route_source`, or a plan without the `route_source` key maps no route. |
 | `batch_pages`, `title_hash` | Adds no URL permission; `check-url` ignores these fields. |
 
 `flow_pages` lists every captured page, so the crossing check can place a tab on a page with nothing to fill.
 When any plan page supplies `url` or `page_no`, unmapped numbered URLs fail with `page-not-in-plan`.
-The `/run/background` route uses its listed URL mapping, otherwise flow index `1`.
+The `/run/background` route maps only through a planned page's `url`; without one it fails like any unmapped page (`page-not-in-plan` or `plan-has-no-page-map`).
 
 After every navigation, render `guard` using the selected adapter's form and flags.
 
@@ -315,12 +369,28 @@ Only a document reload removes its wrappers; script completion never restores th
 | Native `submit` events | A capture-phase listener cancels them (Enter in a field, a submit button). |
 | `$root.commitClicked` | Becomes a locked accessor that returns a throwing function; increments `guard_trips`. |
 | `$root.setCheckpointCommitState` | Same. |
-| `$root.removeCommittedCheckpoints` | Same. |
-| `$root.removePagesAfterUncommittedCheckpoints` | Same. |
+| `$root.removeCommittedCheckpoints` | Same, once Lt's start-up ends. |
+| `$root.removePagesAfterUncommittedCheckpoints` | Same, once Lt's start-up ends. |
 | Pointer, mouse, touch and click events, Enter and Space keys | Cancelled before any page handler when the control reads like a commit or its Knockout binding names a commit mutator. |
 | `window.confirm` | Answers No (`false`) and increments `guard_trips`. |
 
 A locked mutator ignores Lt's later assignments and counts them as `rebinds_blocked`.
+Receipts carry that count as `guard_rebinds_blocked` when it is above 0.
+
+Lt's start-up runs after `$root` binds and before any flow page reads `current()` true.
+It calls `removeCommittedCheckpoints` while it builds the page list, and it can define mutators late.
+Start-up ends when a flow page reads `current()` true, or when a waiting script reaches `fill.save_wait.render_wait_ms`.
+With no script waiting it ends that long after `$root` binds (5 s by default).
+Until then the two page-list mutators stay open (`deferred`).
+`commitClicked` and `setCheckpointCommitState` lock at once: when Lt has defined them, with the non-configurable accessor.
+When Lt has not defined one yet, it gets a non-configurable placeholder accessor on `$root` at once (state `late-define-blocked`).
+Reads return the throwing function.
+Lt's later plain assignment is kept without throwing and never becomes callable; `late_defined` in `LtGuard.status()` counts those assignments.
+Lt's own `Object.defineProperty` on that name throws inside Lt, so no definition can make the mutator callable between two checks.
+If Lt's start-up depends on such a definition, that start-up stops and the run fails closed (often as `lt-not-painted`).
+`late_define_blocked` in `LtGuard.status()`, and `guard_late_define_blocked` in each receipt, name the mutators that got the placeholder.
+A placeholder counts as locked; `deferred` counts as unlocked, so no script body runs until all 4 lock, and the navigate, click and key guards apply from the start.
+When start-up ends, a placeholder reads as `locked` and counts a later assignment as a blocked rebind; a page-list mutator Lt never defined locks on `$root`, so a later definition is dropped.
 Where a mutator cannot be locked, the guard assigns a throwing function and re-checks it every second and on every script run.
 
 The event guard stops handlers Lt bound before the guard ran, which the mutator wrappers cannot reach.
@@ -339,6 +409,8 @@ The report-page check detects `reportInfoPanels` on the current flow page.
 
 Every script receipt includes the document's cumulative `guard_trips` count for inspection.
 A positive `guard_trips` receipt also supplies `guard_last`, identifying the last blocked action.
+Fill and media scripts return `fatal: "lt-not-painted"` when no flow page reads `current()` true within `fill.save_wait.render_wait_ms`.
+A fill receipt then carries `guard_last`; a guard trip during Lt's start-up leaves the document in that state until a new navigation.
 A receipt with `guard_degraded` names a guard part that could not install, such as `no-navigation-api`.
 
 | Receipt | Meaning |

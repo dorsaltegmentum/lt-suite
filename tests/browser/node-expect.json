@@ -1,10 +1,13 @@
 {
  "groups": {
   "lt_net": 54,
-  "lt_guard": 36,
+  "lt_guard": 47,
   "inline": 21,
-  "inline review": 19
+  "inline review": 19,
+  "body server": 12,
+  "page cache": 2,
+  "cache status": 1
  },
- "files": 4,
- "min_tests": 130
+ "files": 5,
+ "min_tests": 145
 }

@@ -179,7 +179,7 @@ def rebind_document(doc, previous, final):
         raise ValueError('non-RAT items changed')
     if any(i in covered(previous) or after[i].get('check_answer') for i in rat_ids):
         raise ValueError('RAT fill changes checked items')
-    bookkeeping={'items','rat_pages','pages_filled','source_receipts','source_page_kinds','ended_at','save_waits'}
+    bookkeeping={'items','rat_pages','pages_filled','source_receipts','source_page_kinds','ended_at','save_waits','run_notes'}
     stable=(set(previous)|set(final))-bookkeeping
     if any(previous.get(k)!=final.get(k) for k in stable):
         raise ValueError('report boundary or identity changed')

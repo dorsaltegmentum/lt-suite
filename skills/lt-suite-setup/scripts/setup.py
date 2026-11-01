@@ -63,7 +63,7 @@ MIN_PYTHON = (3, 11)
 GUARD_ENV = "LT_SUITE_BOOTSTRAPPED"
 MCP_PACKAGE = "chrome-devtools-mcp@1.12.0"
 # BEGIN generated lt-chrome host data from packaging/plugin.toml and shared/schemas/config.schema.json
-CHROME_HOST_DATA = {'browser_keys': ['adapter', 'chromium', 'chromium_user_data_dir', 'devtools_url', 'js_tmp_dir', 'lib_mode', 'lib_port', 'sink_port', 'transport'], 'enabled': ['list_pages', 'select_page', 'navigate_page', 'evaluate_script', 'take_screenshot', 'wait_for'], 'disabled': ['new_page', 'click', 'click_at', 'drag', 'fill', 'fill_form', 'hover', 'press_key', 'type_text', 'upload_file', 'handle_dialog'], 'integrity': 'sha512-lAGpH0zXT1ZdaPefP1KK/MvxwihOlu7VGQ7p4wbhD9OhN17vUC4KWk/ImUYR9DE4s+7r4r0ySV4xr2OkTa7ZMA==', 'node_gate': {'min_major': 20, '20': 19, '22': 12}, 'version': '0.2.3', 'fixed_args': ['--no-usage-statistics', '--no-performance-crux', '--no-category-input', '--no-category-network', '--no-category-memory', '--no-category-performance', '--no-category-emulation', '--redact-network-headers']}
+CHROME_HOST_DATA = {'browser_keys': ['adapter', 'body_server', 'chromium', 'chromium_user_data_dir', 'devtools_socket', 'devtools_url', 'js_tmp_dir', 'lib_mode', 'lib_port', 'sink_port', 'transport'], 'enabled': ['list_pages', 'select_page', 'navigate_page', 'evaluate_script', 'take_screenshot', 'wait_for'], 'disabled': ['new_page', 'click', 'click_at', 'drag', 'fill', 'fill_form', 'hover', 'press_key', 'type_text', 'upload_file', 'handle_dialog'], 'integrity': 'sha512-lAGpH0zXT1ZdaPefP1KK/MvxwihOlu7VGQ7p4wbhD9OhN17vUC4KWk/ImUYR9DE4s+7r4r0ySV4xr2OkTa7ZMA==', 'node_gate': {'min_major': 20, '20': 19, '22': 12}, 'version': '0.2.3', 'fixed_args': ['--no-usage-statistics', '--no-performance-crux', '--no-category-input', '--no-category-network', '--no-category-memory', '--no-category-performance', '--no-category-emulation', '--redact-network-headers']}
 # END generated lt-chrome host data
 KNOWN_SKILLS = ("lt-suite-setup", "lt-module-capture", "lt-module-answer",
                 "lt-module-fill", "lt-module-export", "mechanistic-diagram")
@@ -1211,6 +1211,47 @@ def probe_devtools(url):
         return Result("browser", "FAIL", "/json/version on port %d could not be checked" % port)
 
 
+def socket_problem(info: os.stat_result, socket_path: str) -> tuple[str, str] | None:
+    """Apply lt-chrome's socket rules: this account's socket, and every folder up to /
+    (written and resolved) owned by this account or root, writable by others only with
+    the sticky bit. Inside a user namespace root shows as the overflow uid."""
+    import stat
+    if not hasattr(os, "getuid"):
+        return None
+    uid = os.getuid()
+    if info.st_uid != uid:
+        return ("FAIL", "%s belongs to another account (uid %d)" % (socket_path, info.st_uid))
+    try:
+        overflow = int(Path("/proc/sys/kernel/overflowuid").read_text(encoding="utf-8").strip())
+    except (OSError, ValueError):
+        overflow = 65534
+    trusted = {uid, 0, overflow}
+    folders: list[str] = []
+    def walk(folder: str) -> None:
+        while True:
+            if folder not in folders:
+                folders.append(folder)
+            parent = os.path.dirname(folder)
+            if parent == folder:
+                return
+            folder = parent
+    walk(os.path.dirname(socket_path))
+    walk(os.path.realpath(os.path.dirname(socket_path)))
+    # A symlinked socket path points into another folder chain.
+    walk(os.path.dirname(os.path.realpath(socket_path)))
+    for folder in folders:
+        try:
+            folder_info = os.stat(folder)
+        except OSError:
+            return ("WARN", "%s cannot be checked" % folder)
+        if folder_info.st_uid not in trusted:
+            return ("FAIL", "%s belongs to another account (uid %d); keep the socket under folders only your account or root can change"
+                    % (folder, folder_info.st_uid))
+        if folder_info.st_mode & 0o022 and not folder_info.st_mode & stat.S_ISVTX:
+            return ("FAIL", "%s is writable by other accounts; keep the socket in a folder only your account can change" % folder)
+    return None
+
+
 def check_browser(ctx):
     cfg = ctx.get("cfg")
     adapter = cfg.get("browser.adapter", "auto") if cfg is not None else "auto"
@@ -1248,6 +1289,9 @@ def check_browser(ctx):
                 elif key == "chromium_user_data_dir" and value:
                     value = (plan["profile_dir"] if plan["action"] == "start" and plan["route"] == "auto-connect"
                              else paths.expand(value, Path(plan["config"]).parent))
+                elif key == "devtools_socket" and value:
+                    # The launcher keeps "." and "//" segments; Path drops them, as lt-suite's own expand does.
+                    value = str(Path(plan.get("socket_path") or paths.expand(value, Path(plan["config"]).parent)))
                 if value != expected:
                     add("FAIL", "lt-chrome reads %s but lt-suite reads %s for browser.%s" % (value, expected, key))
     quiet = adapter in ("claude-in-chrome", "playwright-mcp", "manual-paste") or (plan and plan["action"] == "serve-none")
@@ -1272,7 +1316,8 @@ def check_browser(ctx):
             records.append(record)
             via, when = record.get("via", "unknown"), record.get("time", "unknown")
             if record.get("action") == "fallback":
-                matches = starts and plan["browser"] == {"adapter":adapter, "chromium":"chrome", "chromium_user_data_dir":"", "devtools_url":""}
+                matches = starts and plan["browser"] == {"adapter":adapter, "chromium":"chrome", "chromium_user_data_dir":"",
+                                                         "devtools_url":"", "devtools_socket":""}
                 if matches:
                     add("PASS", "lt-chrome started the 0.1.0 fallback via %s at %s; that matches your browser settings" % (via, when))
                 else:
@@ -1286,7 +1331,11 @@ def check_browser(ctx):
                         text += "; the plugin folder lacks the launcher: reinstall lt-suite"
                     add("WARN", text)
             else:
-                add("PASS", "lt-chrome last start via %s at %s: %s" % (via, when, record.get("action")))
+                route = record.get("route") or "unknown"
+                if record.get("action") == "refuse":
+                    add("WARN", "lt-chrome last start via %s at %s: refused on route %s: %s" % (via, when, route, record.get("reason") or "no reason recorded"))
+                else:
+                    add("PASS", "lt-chrome last start via %s at %s: %s, route %s" % (via, when, record.get("action"), route))
                 current = str(getattr(cfg, "path", None) or config_path or "")
                 if str(record.get("config") or "") != current:
                     add("WARN", "lt-chrome last started with config %s, but lt-suite reads %s: the agent runs lt-chrome from another folder; set LT_SUITE_CONFIG or use the platform config" % (record.get("config"), current))
@@ -1303,12 +1352,42 @@ def check_browser(ctx):
             url = cfg.get("browser.devtools_url", "") if cfg else ""
             if url:
                 add("PASS", "browser-url on loopback port %d" % urlsplit(url).port)
-                if ctx.get("probe_devtools"):
+                if plan["route"] == "socket":
+                    add("PASS", "route socket: the port does not answer here, so lt-chrome forwards a free loopback port to browser.devtools_socket")
+                elif plan["route"] == "direct":
+                    add("PASS", "route direct: the port answers here; browser.devtools_socket stays unused")
+                # The socket route's plan already read /json/version through the socket.
+                if ctx.get("probe_devtools") and plan["route"] != "socket":
                     out.append(probe_devtools(url))
     if plan and any(r.get("action") == "fallback" for r in records):
         stable = plan["chrome_stable_profile_dir"]
         if not (starts and plan["profile_dir"] == stable):
             out.extend(check_devtools_file(stable, "chrome"))
+    socket_path = cfg.get("browser.devtools_socket", "") if cfg is not None else ""
+    limit = 103 if sys.platform == "darwin" else 107
+    if socket_path and not quiet and sys.platform == "win32":
+        add("FAIL", "browser.devtools_socket works on Linux and macOS only; lt-chrome refuses it here")
+    elif socket_path and not quiet and len(os.fsencode(socket_path)) > limit:
+        add("FAIL", "browser.devtools_socket: %s is longer than a Unix socket path allows (%d bytes)" % (socket_path, limit))
+    elif socket_path and not quiet:
+        import stat
+        try:
+            info = os.stat(socket_path)
+            mode = info.st_mode
+        except FileNotFoundError:
+            add("WARN", "browser.devtools_socket: no socket at %s; a sandboxed agent reaches the browser only after "
+                "the host socket proxy creates it and the sandbox mounts it" % socket_path)
+        except OSError:
+            add("WARN", "browser.devtools_socket: %s cannot be checked" % socket_path)
+        else:
+            if stat.S_ISSOCK(mode):
+                problem = socket_problem(info, socket_path)
+                if problem:
+                    add(problem[0], "browser.devtools_socket: " + problem[1])
+                else:
+                    add("PASS", "browser.devtools_socket %s is a socket" % socket_path)
+            else:
+                add("FAIL", "browser.devtools_socket: %s is not a Unix socket" % socket_path)
     prefetch = not quiet and (adapter in ("chrome-devtools-mcp", "antigravity") or ctx.get("prefetch_mcp"))
     if prefetch and starts:
         # The launcher's command contains the hardened npx prefix, without browser flags.
@@ -1339,6 +1418,11 @@ def check_browser(ctx):
                         "fixed_args": CHROME_HOST_DATA["fixed_args"], "node_gate": CHROME_HOST_DATA["node_gate"]}
             if pins != expected:
                 add("WARN", "stable launcher %s is %s; run setup.py lt-chrome install" % (stable_launcher, pins.get("lt_suite_version", "unknown version")))
+    elif not quiet:
+        # Host configs from setup.py lt-chrome snippet start this copy. Doctor cannot read
+        # those host configs, so any configuration that serves lt-chrome tools gets the warning.
+        add("WARN", "no stable launcher at %s; run setup.py lt-chrome install. Hosts set up with setup.py lt-chrome "
+            "snippet start this copy; plugin hosts do not need it" % stable_launcher)
     from ltcore import ltjs
     tmp = ltjs.out_dir_for(cfg)
     try:

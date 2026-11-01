@@ -42,7 +42,10 @@
  *     A calibrated origin ends the wait on each key's own save plus a quiet window. A save
  *     counts only through a request LtNet observed: a Backbone sync whose request event
  *     names an XHR or fetch LtNet hooked, or a keyed same-origin write, either one with the
- *     record's method and path template and a 2xx status other than 202. A save sent
+ *     record's method and path template and a 2xx status other than 202. Each write passes
+ *     the panel's typed ids (panel key, dataKey, uuid) to LtNet, whose run-data adapter
+ *     acknowledges Lt's PUT .../runs/<run>/data only by a typed identity field and an
+ *     explicit success in the reply (lt_net.js). A save sent
  *     through a transport LtNet cannot identify (a fetch reference Lt kept from before the
  *     hooks, a socket) stays pending, so the call ends `unconfirmed`. An uncalibrated origin
  *     keeps the old rule: at least fallback_ms after the last write and jQuery.active back
@@ -144,6 +147,11 @@ const LtFillLib = (function () {
     if (g && typeof g.guard_trips === 'number') return g.guard_trips;
     return typeof G.__ltGuardTrips === 'number' ? G.__ltGuardTrips : null;
   };
+  /* The guard's last blocked action, or null. */
+  const guardLast = () => {
+    if (G.LtGuard && typeof G.LtGuard.last === 'function') { try { return G.LtGuard.last(); } catch (e) { /* below */ } }
+    return null;
+  };
   /* This document's id: a fresh load gets a new one, so `emit_fill.py record` can tell the
    * filling document from the verifying one. Random, never derived from the page. */
   const docId = () => {
@@ -159,24 +167,33 @@ const LtFillLib = (function () {
     G.__ltFillDocId = hex;
     return hex;
   };
-  /* The Lt client build, as LtNet signs it (origin and path of every script src, hashed);
-   * null without LtNet or without scripts. LtNet sets a save record taken on another build
+  /* The Lt client build, as LtNet signs it (origin and path of the scripts the document loaded
+   * with, before DOMContentLoaded, hashed; page chunks loaded later do not count); null
+   * without LtNet or without that timing. LtNet sets a save record taken on another build
    * aside by itself (calibration_stale). */
   const clientSig = () => {
     const n = G.LtNet;
     if (!n || typeof n.clientSig !== 'function') return null;
     try { return n.clientSig(); } catch (e) { return null; }
   };
+  /* Every script element, page chunks included: a receipt diagnostic only. */
+  const scriptsSig = () => {
+    const n = G.LtNet;
+    if (!n || typeof n.scriptsSig !== 'function') return null;
+    try { return n.scriptsSig(); } catch (e) { return null; }
+  };
   /* Why a save record cannot drive a calibrated wait on this page, by LtNet's own rule:
-   * 'version' (another format version), 'client' (another Lt client build), 'no-endpoint'
-   * (no write method and path template of the request the calibration identified). null
-   * when the record holds. */
+   * 'version' (another format version), 'client' (another Lt client build), 'client-unknown'
+   * (this page shows no build marker, so a signed record cannot apply; the build may well be
+   * the same), 'no-endpoint' (no write method and path template of the request the
+   * calibration identified). null when the record holds. */
   const NON_WRITE = { GET: 1, HEAD: 1, OPTIONS: 1 };
   const staleReason = cal => {
     if (!cal || typeof cal !== 'object') return null;
     const c = (cal.save && typeof cal.save === 'object') ? cal.save : cal;
     if (c.version != null && c.version !== 1) return 'version';
-    if (c.client_sig != null && c.client_sig !== clientSig()) return 'client';
+    const sig = clientSig();
+    if (c.client_sig != null && c.client_sig !== sig) return sig == null ? 'client-unknown' : 'client';
     const m = c.method ? String(c.method).toUpperCase() : '';
     if (!m || NON_WRITE[m] || !c.path_template) return 'no-endpoint';
     return null;
@@ -194,12 +211,16 @@ const LtFillLib = (function () {
       calibration: sw.calibration || null
     };
   };
-  /* Identity fields every receipt carries: the document, the Lt client build, and the
-   * calibration ticket emit_fill.py issued for this call (or null). */
-  const ids = cfg => ({ doc_id: docId(), client_sig: clientSig(), ticket: cfg.ticket || null });
+  /* Identity fields every receipt carries: the document, the Lt client build, the page's
+   * whole script fingerprint (diagnostic), and the calibration ticket emit_fill.py issued for
+   * this call (or null). */
+  const ids = cfg => ({ doc_id: docId(), client_sig: clientSig(), scripts_sig: scriptsSig(), ticket: cfg.ticket || null });
 
   /* ---- location: rail 1 ---- */
-  const RUN_PAGE = /^\/i\/([^/]+)\/student\/courses\/(\d+)\/runs\/(\d+)\/run\/page\/(\d+)\/?$/;
+  /* /run/page/<n>, or /run/background (m[5]): Lt serves a Background page there, with no
+   * number. The Background route is a run page only for the job whose wanted flow page is
+   * the plan's Background page (cfg.background_page); current() then decides the page. */
+  const RUN_PAGE = /^\/i\/([^/]+)\/student\/courses\/(\d+)\/runs\/(\d+)\/run\/(?:page\/(\d+)|(background))\/?$/;
   const checkLocation = (cfg, wantPage) => {
     const loc = G.location || {};
     const path = String(loc.pathname || '');
@@ -208,6 +229,10 @@ const LtFillLib = (function () {
     }
     const m = path.match(RUN_PAGE);
     if (!m) return { fatal: 'not-a-run-page' };
+    const background = m[5] === 'background';
+    if (background && (wantPage == null || cfg.background_page == null ||
+        Number(cfg.background_page) !== Number(wantPage))) return { fatal: 'not-a-run-page' };
+    const inUrl = background ? null : Number(m[4]);
     if (cfg.origin && loc.origin !== cfg.origin) return { fatal: 'wrong-origin' };
     if (cfg.instance && m[1] !== cfg.instance) return { fatal: 'wrong-instance' };
     if (cfg.course_id != null && Number(m[2]) !== Number(cfg.course_id)) return { fatal: 'wrong-course' };
@@ -216,15 +241,35 @@ const LtFillLib = (function () {
       /* The URL can lag behind the page displayed by Lt. Use current() to identify
        * the rendered target. Background routes shift the URL page number relative
        * to the flow index. Require the selected flow page to read current() true;
-       * compare URL position only when the current flag is unavailable. */
+       * compare URL position only when the current flag is unavailable. Before Lt's
+       * start-up ends no page reads current() true: that is lt-not-painted, which
+       * awaitLocation() waits out. */
       const root = rootOf();
-      const raw = root ? models(root.lessonFlowPages())[Number(wantPage) - 1] : null;
+      const raws = root ? models(root.lessonFlowPages()) : [];
+      if (root && !raws.some(r => r && typeof r.current !== 'undefined' && U(r.current) === true) &&
+          (!raws.length || raws.some(r => r && typeof r.current !== 'undefined'))) {
+        return { fatal: 'lt-not-painted', page_in_url: inUrl, want_flow_page: Number(wantPage), guard_last: guardLast() };
+      }
+      const raw = raws[Number(wantPage) - 1];
       const cur = raw && typeof raw.current !== 'undefined' ? U(raw.current) : undefined;
-      if (cur === false || (cur === undefined && Number(m[4]) !== Number(wantPage))) {
-        return { fatal: 'wrong-page', page_in_url: Number(m[4]), want_flow_page: Number(wantPage) };
+      /* Without a current flag, the URL decides: /run/background is the Background page. */
+      if (cur === false || (cur === undefined && !background && inUrl !== Number(wantPage))) {
+        return { fatal: 'wrong-page', page_in_url: inUrl, want_flow_page: Number(wantPage) };
       }
     }
-    return { page: Number(m[4]) };
+    return background ? { page: null, route: 'background' } : { page: inUrl };
+  };
+  /* checkLocation, polled for up to render_wait_ms while Lt has painted no page yet. A guard
+   * trip can abort Lt's start-up, and then no page ever paints in this document: the fatal
+   * carries guard_last, and only a new navigation recovers. */
+  const awaitLocation = async (cfg, wantPage, ck, sw) => {
+    const t0 = ck.now();
+    let loc = checkLocation(cfg, wantPage);
+    while (loc.fatal === 'lt-not-painted' && ck.now() - t0 < sw.render_wait_ms) {
+      await ck.sleep(Math.min(250, sw.render_wait_ms - (ck.now() - t0)));
+      loc = checkLocation(cfg, wantPage);
+    }
+    return loc;
   };
 
   /* ---- pages and panels ---- */
@@ -293,13 +338,26 @@ const LtFillLib = (function () {
   };
   const lockedOf = raw => U((A(inputOf(raw)) || {}).locked) === true;
   /* The key a save request names: panelState.uuids (first non-empty string when it is a
-   * list or an object), else the panel key. */
-  const saveKeyOf = raw => {
+   * list or an object), else the panel key. The receipt's save_key_source counts which. */
+  const uuidOf = raw => {
     const u = U(stateOf(raw).uuids);
     if (typeof u === 'string' && u) return u;
     const vals = Array.isArray(u) ? u : (u && typeof u === 'object' ? Object.values(A(u) || u) : []);
     for (const v of vals) { const s = U(v); if (typeof s === 'string' && s) return s; }
-    return keyOf(raw);
+    return null;
+  };
+  const saveKeyOf = raw => uuidOf(raw) || keyOf(raw);
+  /* The panel's typed ids for LtNet's run-data adapter: panel key, dataKey (as Lt reports
+   * it, never derived) and uuid; absent ones are left out. */
+  const saveIdsOf = raw => {
+    const pa = A(raw) || {};
+    let dk;
+    try { dk = typeof raw.dataKey === 'function' ? raw.dataKey() : U(pa.dataKey); } catch (e) { dk = U(pa.dataKey); }
+    const out = { panel: keyOf(raw) };
+    if (typeof dk === 'string' || (typeof dk === 'number' && isFinite(dk))) out.data = String(dk);
+    const u = uuidOf(raw);
+    if (u) out.uuid = u;
+    return out;
   };
   const gridOf = inp => { const ia = A(inp) || {}; let rows = models(ia.rows); if (!rows.length) rows = models(ia.cells); return rows; };
   const cellsOfRow = row => { const ra = A(row) || {}; let cs = models(ra.cells); if (!cs.length) cs = models(ra.columns); return cs; };
@@ -428,8 +486,11 @@ const LtFillLib = (function () {
         (w.save_confirmed === false || (pending != null && pending > 0) || (saved != null && total != null && saved < total))) {
       sig = 'unconfirmed';
     }
-    // Backbone request events whose transport LtNet could not identify (net_diag counter).
-    const mu = /\bmodel_unidentified=(\d+)/.exec(typeof w.net_diag === 'string' ? w.net_diag : '');
+    // Backbone request events whose transport LtNet could not identify, and requests that
+    // named a key of this document (net_diag counters).
+    const nd = typeof w.net_diag === 'string' ? w.net_diag : '';
+    const mu = /\bmodel_unidentified=(\d+)/.exec(nd);
+    const nm = /\bmatched=(\d+)/.exec(nd);
     // Distinct write endpoints that acknowledged a key, as "METHOD /path/{template}".
     const endpoints = Array.from(new Set((Array.isArray(w.acks) ? w.acks : [])
       .filter(a => a && typeof a.method === 'string' && typeof a.path_template === 'string')
@@ -450,6 +511,9 @@ const LtFillLib = (function () {
       ack_model: num(w.ack_model), ack_net: num(w.ack_net),
       ack_endpoints: endpoints,
       model_unidentified: mu ? Number(mu[1]) : null,
+      // Keys shorter than 6 characters: only the run-data adapter's typed match saves them.
+      keys_weak: num(w.keys_weak),
+      net_matched: nm ? Number(nm[1]) : null,
       calibrated: typeof w.calibrated === 'boolean' ? w.calibrated : null,
       ...(w.save_diag ? {save_diag: w.save_diag} : {}),
       calibration_stale: w.calibration_stale === true
@@ -459,9 +523,9 @@ const LtFillLib = (function () {
   /* ---- the writer shared by fillPage and fillPages: rails 3 to 6 per job ----
    * ctx: {replace, singleKeys, occ (probe entries by key, or null), onPage, ck, sw, w (write
    * state)}. Returns the job's record; a write registers its key and a read-back closure. */
-  const writeModel = (w, ck, key, model, parent, fn) => {
+  const writeModel = (w, ck, key, model, parent, fn, ids) => {
     if (G.LtGuard && G.LtGuard.status().ok !== true) {w.threw++; return false;}
-    if (w.net) w.net.expect(key, model, parent);
+    if (w.net) w.net.expect(key, model, parent, ids ? { ids } : undefined);
     w.keys.add(key);
     w.last = ck.now();
     G.__ltFillLastWrite = w.last;
@@ -505,9 +569,13 @@ const LtFillLib = (function () {
     if (!inp || typeof inp.set !== 'function') { rec.result = 'no-input-model'; return rec; }
     const parent = stateModelOf(raw);
     const skey = saveKeyOf(raw);
+    const sids = saveIdsOf(raw);
     /* Every write goes through here: the ledger entry first, then the write. A throw (a guard
      * refusing a commit mutator, a model rejecting the value) is recorded, never rethrown. */
-    const write = (model, fn) => writeModel(w, ck, skey, model, parent, fn);
+    const write = (model, fn) => {
+      if (w.keyKinds) w.keyKinds.set(skey, sids.uuid ? 'uuids' : 'panel_key');
+      return writeModel(w, ck, skey, model, parent, fn, sids);
+    };
 
     if (job.kind === 'text') {
       const before = pageText(U((A(inp) || {}).answer));
@@ -676,7 +744,7 @@ const LtFillLib = (function () {
   /* Rail 7 over every key of the call, then the read-back. */
   const settle = async (ctx) => {
     const { w, ck, sw } = ctx;
-    let wait = { save_signal: null, save_confirmed: false, waited_ms: 0, keys_total: 0, keys_saved: 0, keys_pending: 0, save_errors: 0, jq: null, ack_source: null, ack_method: null, ack_path_template: null, ack_model: null, ack_net: null, ack_endpoints: [], model_unidentified: null };
+    let wait = { save_signal: null, save_confirmed: false, waited_ms: 0, keys_total: 0, keys_saved: 0, keys_pending: 0, save_errors: 0, jq: null, ack_source: null, ack_method: null, ack_path_template: null, ack_model: null, ack_net: null, ack_endpoints: [], model_unidentified: null, keys_weak: null, net_matched: null };
     if (w.writes) {
       const keys = Array.from(w.keys);
       G.__ltFillKeys = Array.from(new Set((G.__ltFillKeys || []).concat(keys)));
@@ -722,6 +790,12 @@ const LtFillLib = (function () {
   const nextStep = wait => (wait.save_signal === 'unconfirmed' || wait.save_signal === 'error'
     || (wait.save_signal === 'fallback' && wait.keys_pending > 0))
     ? 'fresh-load verify of these pages before any other page' : null;
+  /* Written keys by what names them: panelState.uuids or the panel key. */
+  const keySourceOf = w => {
+    const out = { uuids: 0, panel_key: 0 };
+    for (const k of w.keys) { const kind = w.keyKinds && w.keyKinds.get(k); if (kind) out[kind]++; }
+    return out;
+  };
   /* The receipt's save fields, shared by fillPage and fillPages. */
   const waitFields = (wait, sw, n, w) => ({
     ...(wait.save_signal === 'fallback' ? {save_diag: wait.save_diag || []} : {}),
@@ -732,6 +806,8 @@ const LtFillLib = (function () {
     ack_source: wait.ack_source, ack_method: wait.ack_method, ack_path_template: wait.ack_path_template,
     ack_model: wait.ack_model, ack_net: wait.ack_net, ack_endpoints: wait.ack_endpoints || [],
     model_unidentified: wait.model_unidentified ?? null,
+    keys_weak: wait.keys_weak ?? null, net_matched: wait.net_matched ?? null,
+    save_key_source: keySourceOf(w),
     net: n ? 'ltnet' : 'absent', calibrated: wait.calibrated ?? (!!sw.calibration && !!n),
     calibration_stale: !!wait.calibration_stale,
     stale_reason: wait.calibration_stale ? (staleReason(sw.calibration) || 'unknown') : null,
@@ -746,15 +822,18 @@ const LtFillLib = (function () {
     const ck = clock();
     const sw = saveWaitOf(cfg);
     const head = Object.assign({ module: cfg.module_id, run: cfg.run_id, page: cfg.page, mode: cfg.mode || 'fill' }, ids(cfg));
-    if (cfg.source_payload_sha256) {
-      head.source_payload_sha256 = cfg.source_payload_sha256;
-      head.source_payload_sha16 = cfg.source_payload_sha256.slice(0, 16);
-    }
+    // The 16-hex prefix only: an output filter redacts a 64-hex value as base64. record
+    // binds the full sha256 of the payload file on the host.
+    if (cfg.source_payload_sha256) head.source_payload_sha16 = cfg.source_payload_sha256.slice(0, 16);
     if (G.LtGuard && G.LtGuard.status().ok !== true) return {ok: false, fatal: 'guard-degraded', ...head};
     const fatal = (reason, extra) => Object.assign({ ok: false, fatal: reason }, head, extra || {}, { writes: 0, guard_trips: guardTrips() });
 
-    const loc = checkLocation(cfg, cfg.page);
-    if (loc.fatal) return fatal(loc.fatal, loc.run_in_url != null ? { run_in_url: loc.run_in_url } : (loc.page_in_url != null ? { page_in_url: loc.page_in_url } : {}));
+    const loc = await awaitLocation(cfg, cfg.page, ck, sw);
+    if (loc.fatal) {
+      const extra = loc.run_in_url != null ? { run_in_url: loc.run_in_url } : (loc.page_in_url != null ? { page_in_url: loc.page_in_url } : {});
+      if ('guard_last' in loc) extra.guard_last = loc.guard_last;
+      return fatal(loc.fatal, extra);
+    }
     const root = rootOf();
     if (!root) return fatal('no-lt-client');
     const flat = flatPages(root);
@@ -776,7 +855,7 @@ const LtFillLib = (function () {
     if (passed) return fatal(passed.fatal, { panel_key: passed.panel_key, on_page: passed.on_page });
 
     const n = net();
-    const w = { net: n, keys: new Set(), pending: [], writes: 0, threw: 0, last: null, base: jqActive() };
+    const w = { net: n, keys: new Set(), pending: [], writes: 0, threw: 0, last: null, base: jqActive(), keyKinds: new Map() };
     const ctx = { replace: (cfg.mode || 'fill') === 'replace', singleKeys: new Set((cfg.single_attempt_keys || []).map(String)), occ, onPage: true, ck, sw, w, pageTag: null };
     const byKey = panelsOf(page);
     const records = [];
@@ -805,10 +884,9 @@ const LtFillLib = (function () {
     const sw = saveWaitOf(cfg);
     const pagesWanted = (plan || []).map(e => Number(e.page));
     const head = Object.assign({ module: cfg.module_id, run: cfg.run_id, batch: pagesWanted, mode: cfg.mode || 'fill' }, ids(cfg));
-    if (cfg.source_payload_sha256) {
-      head.source_payload_sha256 = cfg.source_payload_sha256;
-      head.source_payload_sha16 = cfg.source_payload_sha256.slice(0, 16);
-    }
+    // The 16-hex prefix only: an output filter redacts a 64-hex value as base64. record
+    // binds the full sha256 of the payload file on the host.
+    if (cfg.source_payload_sha256) head.source_payload_sha16 = cfg.source_payload_sha256.slice(0, 16);
     if (G.LtGuard && G.LtGuard.status().ok !== true) return {ok: false, fatal: 'guard-degraded', ...head};
     const fatal = (reason, extra) => Object.assign({ ok: false, fatal: reason }, head, extra || {}, { writes: 0, guard_trips: guardTrips() });
 
@@ -863,7 +941,7 @@ const LtFillLib = (function () {
     }
 
     const n = net();
-    const w = { net: n, keys: new Set(), pending: [], writes: 0, threw: 0, last: null, base: jqActive() };
+    const w = { net: n, keys: new Set(), pending: [], writes: 0, threw: 0, last: null, base: jqActive(), keyKinds: new Map() };
     const records = [];
     const perPage = [];
     for (const { e, pg, page } of resolved) {
@@ -904,10 +982,9 @@ const LtFillLib = (function () {
     const ck = clock();
     const sw = saveWaitOf(cfg);
     const head = { module: cfg.module_id, run: cfg.run_id, mode: cfg.mode || 'fill', doc_id: docId(), client_sig: clientSig() };
-    if (cfg.source_payload_sha256) {
-      head.source_payload_sha256 = cfg.source_payload_sha256;
-      head.source_payload_sha16 = cfg.source_payload_sha256.slice(0, 16);
-    }
+    // The 16-hex prefix only: an output filter redacts a 64-hex value as base64. record
+    // binds the full sha256 of the payload file on the host.
+    if (cfg.source_payload_sha256) head.source_payload_sha16 = cfg.source_payload_sha256.slice(0, 16);
     if (G.LtGuard && G.LtGuard.status().ok !== true) return {ok: false, fatal: 'guard-degraded', ...head};
     const loc = checkLocation(cfg, null);
     if (loc.fatal) return Object.assign({ ok: false, fatal: loc.fatal }, head);
@@ -979,7 +1056,7 @@ const LtFillLib = (function () {
     pageText, djb2, canon, checkLocation, titleHash, tableHash,
     write: writeModel, liveSelection, liveLinks, livePlacements, labelPool, liveIndexState,
     rootOf, flatPages, pageAt, panelsOf, inputOf, contentOf, stateOf, stateModelOf,
-    saveKeyOf, addAnswerTarget, liveHash, clientSig, staleReason, ids, models, A, U, checkPassedSingles
+    saveKeyOf, saveIdsOf, addAnswerTarget, liveHash, clientSig, scriptsSig, staleReason, ids, models, A, U, checkPassedSingles
   };
   return LtFillLib;
 })();

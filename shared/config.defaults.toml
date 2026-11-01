@@ -141,10 +141,12 @@ adapter = "auto"
 chromium = "chrome"
 chromium_user_data_dir = ""
 devtools_url = ""
+devtools_socket = ""
 transport = "sink"
 sink_port = 8731
 lib_mode = "inline"
 lib_port = 8733
+body_server = ""
 js_tmp_dir = ""
 
 [fill]

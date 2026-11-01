@@ -42,8 +42,8 @@ export.citations.hidden_skip_reasons pdf.author pdf.strip_metadata style.palette
 style.print_palette style.custom_palettes_file fonts.sans fonts.mono fonts.sans_path
 fonts.system_fallback fonts.pdf.sans fonts.pdf.mono fonts.diagram.sans fonts.diagram.mono
 fonts.labels.sans annotate.palette_copies fonts.mono_path fonts.mono_bold_path fonts.text_px fonts.allow_download fonts.page_fonts
-browser.adapter browser.chromium browser.chromium_user_data_dir browser.devtools_url browser.transport browser.sink_port browser.lib_mode browser.lib_port
-browser.js_tmp_dir fill.check_answer.enabled fill.approval_mode fill.max_pages_per_call fill.save_wait.quiet_ms
+browser.adapter browser.chromium browser.chromium_user_data_dir browser.devtools_url browser.devtools_socket browser.transport browser.sink_port browser.lib_mode browser.lib_port
+browser.js_tmp_dir browser.body_server fill.check_answer.enabled fill.approval_mode fill.max_pages_per_call fill.save_wait.quiet_ms
 fill.save_wait.max_ms fill.save_wait.fallback_ms fill.save_wait.render_wait_ms
 fill.dialog.max_ms fill.dialog.fallback_ms text_cleaners text_cleaners[].name
 text_cleaners[].stage text_cleaners[].argv text_cleaners[].timeout_s annotate.casing

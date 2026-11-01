@@ -287,7 +287,7 @@ const acceptLtDialog = async (opts) => {
   }
   try { if (doc && typeof doc.removeEventListener === 'function') doc.removeEventListener('visibilitychange', onVis); } catch (e) { /* no events */ }
   save.hidden_during_wait = wasHidden;
-  return { accepted: true, text_len: d.body.length, upload: { panel: up.panel, sha256: up.sha256 },
+  return { accepted: true, text_len: d.body.length, upload: { panel: up.panel, sha16: String(up.sha256 || '').slice(0, 16) },
     still_open: ltVisibleDialogs().indexOf(dlg) >= 0, save };
 };
 

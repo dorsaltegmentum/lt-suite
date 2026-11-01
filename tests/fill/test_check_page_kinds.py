@@ -11,11 +11,12 @@ from ltcore import check_answer as ca, page_kinds, rat, config
 from fillkit import item, module, drafted, answers
 
 
-def setup_check(kit, *, pages=1, classify=False):
+def setup_check(kit, *, pages=1, classify=False, **mod_fields):
     kit.config('[fill.check_answer]\nenabled=true\n')
     cap=lambda p,k:item(f'p{p}-{k}',str(k),'multiple-choice','select',assessment_type='instantFeedback',
         options=[{'option_id':'o1','text':'A'},{'option_id':'o2','text':'B'}],constraints={'note':'single-select'})
     mod=module([(p,[cap(p,p*10+k) for k in range(1,4)] if pages>1 else [cap(p,11)]) for p in range(1,pages+1)])
+    mod.update(mod_fields)
     ans=answers([drafted(c['item_id'],proposed_selection=['o1']) for p in mod['pages'] for c in p['items']])
     mpath=kit.write('module.json',mod);ans['source_module']={'path':str(mpath),'sha256':hashlib.sha256(mpath.read_bytes()).hexdigest()}
     apath=kit.write('answers.json',ans)
@@ -72,6 +73,25 @@ def test_three_unflagged_quiz_pages_use_one_store_and_only_not_rat_emits(kit):
     reasons={r['item']:r['reason'] for r in plan['refused']}
     assert reasons['p1-11']=='rat-page' and reasons['p3-31']=='rat-unmarked'
     assert not (kit.run_dir()/'rat-pages.json').exists()
+
+
+@pytest.mark.parametrize('measured',[False,True],ids=['legacy','measured'])
+def test_check_plan_writes_route_source_and_refuses_legacy_routes(kit,measured):
+    from ltcore import ltjs
+    mod,ans=setup_check(kit,pages=3,classify=True,**({'route_source':'datakey+location'} if measured else {}))
+    owned_payload(kit,mod,ans)
+    r=check(kit)
+    assert r.returncode==0,r.stderr
+    plan=kit.read('data/runs/c1-r101/fill-js/check-plan.json')
+    assert 'route_source' in plan
+    url='https://lt.example.invalid/i/inst0001/student/courses/1/runs/101/run/page/2'
+    r=kit.run('_shared/ltcore/ltjs.py','check-url','--plan','data/runs/c1-r101/fill-js/check-plan.json',url)
+    if measured:
+        assert (plan['route_source'],plan['route_refusal'])==('datakey+location',None)
+        assert (r.returncode,json.loads(r.stdout)['page_index'])==(0,2)
+    else:
+        assert (plan['route_source'],plan['route_refusal'])==(None,ltjs.LEGACY_CAPTURE)
+        assert (r.returncode,json.loads(r.stdout)['reason'])==(1,'recapture-needed')
 
 
 @pytest.mark.parametrize('result',['already-new','occupied-skipped','write-mismatch'])
@@ -163,7 +183,8 @@ def test_record_check_requires_ok_status_even_with_matching_hashes(kit, emit_mod
     receipts=kit.read('data/runs/c1-r101/receipts.json')
     latest=receipts['receipts'][-1]
     assert latest['expected_hash']==h and latest['observed_hash']!=h
-    notes={'approval_mode':'manual','started_at':'2000-01-01T00:00:00Z','ended_at':'2000-01-01T00:00:02Z'}
+    notes={'approval_mode':'manual','started_at':'2000-01-01T00:00:00Z','ended_at':'2000-01-01T00:00:02Z',
+           'times_reason':'The check pass ran one second either side of its fresh load.'}
     report,_=make_fill_report.build(mod,ans,receipts,notes,kit.tmp/'answers.json',None,
         cfg=config.load(kit.tmp/'lt-suite.toml'),check_ledger=kit.read('data/runs/c1-r101/check-answer.json'))
     assert report['items'][0]['result']=='failed' and report['items'][0]['verified'] is False
@@ -288,7 +309,7 @@ def test_check_inline_metadata_reuses_runner_and_keeps_direct_output(kit):
     assert metadata['body_sha256'] == metadata['payload']['body_sha256']
     assert metadata['payload']['chunks']
     loader = Path(metadata['path']).read_text(encoding='utf-8')
-    assert 'localStorage.getItem(KEY)' in loader
+    assert "localStorage.getItem(k)" in loader and "need:'payload'" in loader
     direct = kit.emit('check', '--module', 'module.json', '--fill', 'fill.json', '--no-stub')
     assert direct.returncode == 0, direct.stdout + direct.stderr
     assert Path(direct.stdout.splitlines()[0]).is_file()

@@ -14,6 +14,8 @@
  *                                     Backbone model written (or an array of them); `parent`
  *                                     is the panel's panelState model. opts.contains: strings
  *                                     a network save of this key must carry (optional).
+ *                                     opts.ids {panel, data, uuid}: the panel's key, dataKey
+ *                                     and uuid, for the run-data adapter below (optional).
  *   LtNet.waitForSave(keys, opts)     opts {quiet_ms, max_ms, fallback_ms, calibration}; polls
  *                                     every 50 ms through clock() (tests inject a fake clock).
  *
@@ -27,13 +29,43 @@
  * Network acknowledgement: a same-origin write started after the key's last expect must name
  * the key exactly in its URL or body. A 2xx response other than 202 acknowledges a single key.
  * A multi-key response requires an explicit saved outcome for each key; errors override success
- * and absent outcomes remain pending. WebSocket and beacon sends only mark keys sent.
- * Keys shorter than 6 characters are never acknowledged by the network.
+ * and absent outcomes remain pending. A top-level failure in the reply ({"success": false}:
+ * Lt answers HTTP 200 with it and keeps nothing) fails every key the request named. A single
+ * key without a per-key outcome saves only when the reply carries no failure marker at any
+ * depth. On every path (run-data below too), a failure marker inside an item (an object with
+ * an identity field) fails that item and leaves sibling items alone; a failure marker outside
+ * every item, a failed plain value that names no key of the request, or a reply past 32 levels
+ * or 50,000 values (read only in part, `resp_truncated` in net_diag) confirms no key of the
+ * request. WebSocket and beacon sends only mark keys sent. This generic matcher never
+ * acknowledges a key shorter than 6 characters.
  *
- * Calibration binding: a record that carries `client_sig` applies only while the page loads
- * the same Lt scripts (origin and path of every script src, hashed). A record with another
- * signature, a missing write endpoint, or a record `version` other than 1, is stale: the wait runs the fallback rule
- * and the receipt says `calibration_stale: true`.
+ * Run-data adapter: Lt saves every panel of a run through one
+ * PUT /i/<instance>/v/2.0/api/student/courses/<course>/runs/<run>/data. A request counts as
+ * this endpoint only when its instance, course and run are the page's own. Its body is parsed
+ * as JSON and each expected key is identified by a typed identity field holding exactly one of
+ * the ids expect() was given: panelKey or panel_key (the panel key), dataKey or data_key (the
+ * dataKey, panelKey - 1 on Lt, so it is never read as a panel key), uuid, panelUuid or
+ * panel_uuid, or a property name that is the uuid itself. Values elsewhere, substrings and
+ * other property names identify nothing, so 3- and 4-character panel keys can be acknowledged
+ * here. A body that is not JSON, or names no expected key this way, leaves its keys pending:
+ * the call ends on the fallback rule and a fresh-load verify decides. The generic matcher is
+ * not applied to this endpoint. A bare 2xx acknowledges nothing; a key is saved by either
+ *   - an explicit per-key outcome in the reply: success for one of the key's typed ids, or
+ *   - the atomic-snapshot rule: the PUT carries the run's panel data as one document, so a
+ *     reply whose top-level object reads success: true (or ok: true, or status ok, saved or
+ *     success), with no failure marker anywhere, saves every key the body identifies. A
+ *     failure marker at any depth ({success: true, data: {success: false}}, a nested status
+ *     failed, a non-empty errors list) leaves every key pending.
+ * A top-level failure, or an explicit failure for a key, fails the key; 202 leaves it pending.
+ *
+ * Calibration binding: a record that carries `client_sig` applies only while the page runs the
+ * same Lt build: clientSig() hashes the origin, path and query of each script element whose
+ * resource timing entry started before DOMContentLoaded (the HTML's own bundles). Chunks a page
+ * loads later never count. Without navigation and resource timing the page has no signature, and a
+ * signed record does not apply. A record with another signature, a missing write endpoint, or
+ * a record `version` other than 1, is stale: the wait runs the fallback rule and the receipt
+ * says `calibration_stale: true`. scriptsSig() hashes every script element, page chunks
+ * included: a diagnostic, never a binding.
  *
  * End states (`save_signal`; `state` is the same with `model` and `net` reported as `ok`):
  *   error        any key failed
@@ -48,6 +80,12 @@
  *                during a fallback wait (timers stall in hidden tabs). The caller must not
  *                navigate and runs a fresh-load verify next.
  *
+ * A fallback result carries `save_diag`: up to 20 request rows by method, templated path and
+ * status, with `model_sync` true when a written model's Backbone sync answered a request of
+ * that row. A run-data row adds `run_data`, a 'name=count ...' string of counts only: bodies by
+ * shape, expected keys, keys identified, keys seen by kind of typed field, as a property name
+ * or as a plain value, and replies by shape (per-key, success, failure, bare).
+ *
  * Every timeout counts from the latest expect, on performance.now() when the page has it.
  * Request bodies are parsed in memory to match keys and are never stored, logged or returned.
  * Request content, return values and exceptions pass through unchanged.
@@ -61,12 +99,15 @@
   const POLL_MS = 50;
   const KEEP_REQS = 500;
   const MAX_VALUES = 5000;
+  /* Reply inspection limits: a reply deeper or larger than this confirms no key. */
+  const RESP_DEPTH = 32;
+  const RESP_VALUES = 50000;
 
   const st = {
     installed: false, seq: 0, entries: new Map(), lastWrite: null,
     session: { open: false, startSeq: 0, jqBase: 0, jqMax: 0 },
     reqs: [], transports: new WeakMap(), ours: new WeakSet(), subCount: new WeakMap(),
-    diag: { requests: 0, non_get: 0, matched: 0, perf_entries: 0, ws_sends: 0, beacons: 0, model_unidentified: 0, shared_model: 0, multi_key: 0 }
+    diag: { requests: 0, non_get: 0, matched: 0, perf_entries: 0, ws_sends: 0, beacons: 0, model_unidentified: 0, shared_model: 0, multi_key: 0, run_data: 0, resp_truncated: 0 }
   };
   Object.defineProperty(G, '__ltNet', {
     value: Object.freeze({ installed: true, version: 1 }), enumerable: false, configurable: false, writable: false
@@ -94,6 +135,49 @@
     UUID.lastIndex = 0;
     return seg.replace(UUID, '{uuid}').replace(/\d+/g, '{n}');
   }).join('/');
+  const WHOLE_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  const scalar = v => typeof v === 'string' || (typeof v === 'number' && isFinite(v));
+
+  /* ---- the run-data adapter ---- */
+  const RUN_DATA = /^\/i\/([^/]+)\/v\/2\.0\/api\/student\/courses\/(\d+)\/runs\/(\d+)\/data\/?$/;
+  const RUN_PAGE = /^\/i\/([^/]+)\/student\/courses\/(\d+)\/runs\/(\d+)(?:\/|$)/;
+  /* Typed identity fields by kind. A value counts only under its own kind's names. */
+  const ID_FIELDS = { panelKey: 'panel', panel_key: 'panel', dataKey: 'data', data_key: 'data',
+    uuid: 'uuid', panelUuid: 'uuid', panel_uuid: 'uuid' };
+  const ID_KINDS = ['panel', 'data', 'uuid'];
+  const fieldKind = k => (Object.prototype.hasOwnProperty.call(ID_FIELDS, k) ? ID_FIELDS[k] : null);
+  /* The current run's PUT .../runs/<run>/data: same origin, and the page's instance, course
+   * and run. Another run's data, or any other method, goes to the generic matcher. */
+  function isRunData(rec) {
+    if (!rec.same || rec.method !== 'PUT' || !rec.url) return false;
+    const m = RUN_DATA.exec(rec.url.pathname);
+    const h = here();
+    const p = h ? RUN_PAGE.exec(h.pathname) : null;
+    return !!(m && p && m[1] === p[1] && m[2] === p[2] && m[3] === p[3]);
+  }
+  /* What a parsed run-data body says, in memory only: `typed` holds 'kind:value' for each
+   * typed identity field with a scalar value and 'uuid:<name>' for each property name that is
+   * a whole UUID; `props` and `values` (every property name and scalar value) feed the
+   * diagnostic counts and nothing else. */
+  function bodyIdentity(v) {
+    const typed = new Set(), props = new Set(), values = new Set();
+    let n = 0;
+    const walk = (x, depth) => {
+      if (x == null || depth > 8 || ++n > MAX_VALUES) return;
+      if (scalar(x)) { values.add(String(x)); return; }
+      if (Array.isArray(x)) { for (const y of x) walk(y, depth + 1); return; }
+      if (typeof x !== 'object') return;
+      for (const [k, y] of Object.entries(x)) {
+        props.add(k);
+        if (WHOLE_UUID.test(k)) typed.add('uuid:' + k);
+        const kind = fieldKind(k);
+        if (kind && scalar(y)) typed.add(kind + ':' + String(y));
+        walk(y, depth + 1);
+      }
+    };
+    walk(v, 0);
+    return { typed, props, values };
+  }
 
   /* ---- identifiers named by a request, in memory only ---- */
   function collect(v, out, depth) {
@@ -133,41 +217,122 @@
     } catch (e) { return []; }
     return [];
   }
-  /* Retain only explicit per-item outcomes, never arbitrary response values. Errors win. */
+  /* A body as text: a string, a Promise of one (Blob, Request), or null (none, or a form). */
+  function bodyText(body) {
+    if (body == null) return null;
+    if (typeof body === 'string') return body;
+    try {
+      if (G.URLSearchParams && body instanceof G.URLSearchParams) return body.toString();
+      if (G.FormData && body instanceof G.FormData) return null;
+      if (typeof ArrayBuffer !== 'undefined' && (body instanceof ArrayBuffer || ArrayBuffer.isView(body))) return decode(body);
+      if (typeof body.then === 'function') return body.then(t => (typeof t === 'string' ? t : null), () => null);
+      if (typeof body.text === 'function' && typeof body.size === 'number') return body.text().then(t => t, () => null);
+    } catch (e) { return null; }
+    return null;
+  }
+  /* The reply's own verdict, from its top-level object: 'failed' (success or ok false, a
+   * failure status, an error field), 'saved' (success or ok true, a success status), or null.
+   * A per-item `errors` list is not a top-level verdict. Failure wins. */
+  function topVerdict(v) {
+    if (!v || typeof v !== 'object' || Array.isArray(v)) return null;
+    const status = String(v.status || v.outcome || '').toLowerCase();
+    if (v.error || v.success === false || v.ok === false || /^(error|failed|invalid)$/.test(status)) return 'failed';
+    if (v.success === true || v.ok === true || /^(ok|saved|success)$/.test(status)) return 'saved';
+    return null;
+  }
+  /* An object's own verdict marker: error, success or ok false, or a failure status. */
+  const ownMarker = (v, status) => !!v.error || v.success === false || v.ok === false || /^(error|failed|invalid)$/.test(status);
+  /* An object's own failure marker: its own verdict marker, or a non-empty errors list or
+   * object. An empty errors list marks nothing. */
+  function ownFailure(v, status) {
+    const errs = v.errors;
+    const hasErrs = Array.isArray(errs) ? errs.length > 0
+      : (errs && typeof errs === 'object' ? Object.keys(errs).length > 0 : !!errs);
+    return ownMarker(v, status) || hasErrs;
+  }
+  /* Retain only explicit per-item outcomes, never arbitrary response values. Errors win.
+   * An item is an object with an identity field (generic uuid, id, key or panel_key, or a typed
+   * one). A failure marker anywhere inside an item fails that item and every item around it,
+   * whatever the item's own verdict says; sibling items keep their own outcomes.
+   * savedTyped and failedTyped hold 'kind:value' for outcomes named by a typed identity field
+   * (typedExplicit), which only the run-data adapter reads; top is topVerdict(). anyFailed is
+   * true when any object at any depth carries its own failure marker, or any value sits under
+   * a failure field, whether or not it names a key. unattributed is true when an object with
+   * its own verdict marker, or an object under a failure field, sits inside no item; an errors
+   * list is judged by its entries. failedValues holds the plain values listed under a failure
+   * field outside any item: each names a key, and requestOutcome() treats one that names no key
+   * of the request as unattributed. truncated is true when the reply ran past RESP_DEPTH levels
+   * or RESP_VALUES values, so part of it was never read. */
   function responseOutcomes(value) {
-    const saved = new Set(), failed = new Set();
+    const saved = new Set(), failed = new Set(), savedTyped = new Set(), failedTyped = new Set();
+    const failedValues = new Set();
     if (typeof value === 'string') {
-      try { value = JSON.parse(value); } catch (e) { return { saved, failed, explicit: false }; }
+      try { value = JSON.parse(value); } catch (e) {
+        return { saved, failed, savedTyped, failedTyped, failedValues, explicit: false, typedExplicit: false,
+          anyFailed: false, unattributed: false, truncated: false, top: null };
+      }
     }
-    let explicit = false, count = 0;
+    let explicit = false, typedExplicit = false, anyFailed = false, unattributed = false, truncated = false;
+    let count = 0, items = 0;
+    /* Returns true when this value or anything under it carries a failure. */
     function visit(v, context, depth) {
-      if (v == null || depth > 8 || ++count > MAX_VALUES) return;
-      if (Array.isArray(v)) { for (const item of v) visit(item, context, depth + 1); return; }
+      if (v == null) return false;
+      if (depth > RESP_DEPTH || ++count > RESP_VALUES) { truncated = true; return false; }
+      if (Array.isArray(v)) {
+        let bad = false;
+        for (const item of v) bad = visit(item, context, depth + 1) || bad;
+        return bad;
+      }
       if (typeof v === 'string' || typeof v === 'number') {
         if (context) (context === 'failed' ? failed : saved).add(String(v));
-        return;
+        if (context !== 'failed') return false;
+        anyFailed = true;
+        if (!items) failedValues.add(String(v));
+        return true;
       }
-      if (typeof v !== 'object') return;
+      if (typeof v !== 'object') return false;
       const status = String(v.status || v.outcome || '').toLowerCase();
       let result = context;
       if (v.error || v.errors || v.success === false || v.ok === false || /^(error|failed|invalid)$/.test(status)) result = 'failed';
       else if (v.success === true || v.ok === true || /^(ok|saved|success)$/.test(status)) result = 'saved';
-      for (const field of ['uuid', 'id', 'key', 'panel_key']) {
-        if (result && (typeof v[field] === 'string' || typeof v[field] === 'number')) {
-          explicit = true;
-          (result === 'failed' ? failed : saved).add(String(v[field]));
-        }
+      const generic = ['uuid', 'id', 'key', 'panel_key'].filter(f => typeof v[f] === 'string' || typeof v[f] === 'number');
+      const typed = Object.keys(ID_FIELDS).filter(f => scalar(v[f]));
+      const item = generic.length > 0 || typed.length > 0;
+      if (item) items++;
+      let bad = false;
+      if (context === 'failed' || ownFailure(v, status)) {
+        anyFailed = true;
+        bad = true;
+        if (!items && (context === 'failed' || ownMarker(v, status))) unattributed = true;
       }
       for (const [field, child] of Object.entries(v)) {
         let next = null;
         if (/^(saved|successes|successful)$/.test(field)) { next = 'saved'; explicit = true; }
         if (/^(errors|failed|failures)$/.test(field)) { next = 'failed'; explicit = true; }
-        // Identity fields were handled above. Arbitrary payload text never inherits success.
-        if (next || (child && typeof child === 'object')) visit(child, next, depth + 1);
+        // Identity fields are recorded below. Arbitrary payload text never inherits success.
+        if (next || (child && typeof child === 'object')) bad = visit(child, next, depth + 1) || bad;
       }
+      if (item) {
+        items--;
+        const outcome = bad ? 'failed' : result;
+        if (outcome) {
+          for (const field of generic) {
+            explicit = true;
+            (outcome === 'failed' ? failed : saved).add(String(v[field]));
+          }
+          for (const field of typed) {
+            typedExplicit = true;
+            (outcome === 'failed' ? failedTyped : savedTyped).add(ID_FIELDS[field] + ':' + String(v[field]));
+          }
+        }
+      }
+      return bad;
     }
     visit(value, null, 0);
-    return { saved, failed, explicit };
+    for (const k of failed) saved.delete(k);
+    for (const k of failedTyped) savedTyped.delete(k);
+    return { saved, failed, savedTyped, failedTyped, failedValues, explicit, typedExplicit, anyFailed, unattributed,
+      truncated, top: topVerdict(value) };
   }
   function xhrOutcomes(xhr) {
     try {
@@ -190,7 +355,6 @@
   function addSub(e, m, role) {
     if (!m || typeof m.on !== 'function') return;
     const ms = modelState();
-    ms.syncFired = false;
     const onRequest = (a, b, options) => {
       if (st.entries.get(e.key) !== e || !e.subs.has(m)) return;
       if (!options || typeof options !== 'object') { st.diag.model_unidentified++; return; }
@@ -204,9 +368,10 @@
     };
     const onDone = ok => (a, b, options) => {
       if (st.entries.get(e.key) !== e || !e.subs.has(m)) return;
-      if (ok && role !== 'parent') ms.syncFired = true;
-      if ((st.subCount.get(m) || 0) > 1) { st.diag.shared_model++; return; }
       const op = options && typeof options === 'object' ? ms.opts.get(options) : null;
+      // save_diag: a written model's sync marks the request row it answered, and no other.
+      if (ok && op && role !== 'parent') op.rec.modelSync = true;
+      if ((st.subCount.get(m) || 0) > 1) { st.diag.shared_model++; return; }
       if (!op) return;
       if (ok) op.synced = true;
       else op.failed = true;
@@ -228,6 +393,16 @@
     e.subs.delete(m);
   }
 
+  /* A key's typed ids, 'kind:value': opts.ids {panel, data, uuid} with scalar values, and the
+   * key itself as a uuid when it is one. */
+  function idsOf(k, given) {
+    const out = new Set();
+    const g = given && typeof given === 'object' ? given : {};
+    for (const kind of ID_KINDS) if (scalar(g[kind]) && String(g[kind]) !== '') out.add(kind + ':' + String(g[kind]));
+    if (WHOLE_UUID.test(k)) out.add('uuid:' + k);
+    return Array.from(out);
+  }
+
   function expect(key, models, parent, opts) {
     install();
     const k = String(key);
@@ -243,11 +418,12 @@
     if (fresh) {
       if (e) for (const m of Array.from(e.subs.keys())) dropSub(e, m);
       e = { key: k, seq: st.seq, sessionStart: st.session.startSeq, tWrite: t, weak: k.length < WEAK_LEN,
-        net: [], wsSent: false, subs: new Map(), contains: [] };
+        net: [], wsSent: false, subs: new Map(), contains: [], ids: [] };
       st.entries.set(k, e);
     }
     e.seq = st.seq;
     e.tWrite = t;
+    e.ids = idsOf(k, opts && opts.ids);
     const list = Array.isArray(models) ? models : (models ? [models] : []);
     for (const m of list) { dropSub(e, m); addSub(e, m, 'model'); }
     for (const [m, s] of Array.from(e.subs.entries())) if (s.role === 'parent') dropSub(e, m);
@@ -288,11 +464,51 @@
     settle(rec);
   }
 
+  /* The run-data adapter's match: typed identity only, weak keys included. rec.rd keeps the
+   * diagnostic counts; the parsed body is dropped when this returns. */
+  function applyRunData(rec, text, cands) {
+    const t = typeof text === 'string' ? text.trim() : '';
+    let parsed, body = t ? 'unparsed' : 'none';
+    if (t && (t[0] === '{' || t[0] === '[')) {
+      try { parsed = JSON.parse(t); body = 'json'; } catch (e) { /* stays unparsed */ }
+    }
+    const d = { body, keys_expected: 0, keys_identified: 0, as_panel_field: 0, as_data_field: 0,
+      as_uuid_field: 0, as_prop: 0, as_value: 0 };
+    const idn = body === 'json' ? bodyIdentity(parsed) : null;
+    for (const e of cands) {
+      if (st.entries.get(e.key) !== e || e.seq >= rec.seq) continue;
+      d.keys_expected++;
+      if (!idn) continue;
+      const raw = [e.key].concat(e.ids.map(id => id.slice(id.indexOf(':') + 1)));
+      if (raw.some(x => idn.props.has(x))) d.as_prop++;
+      if (raw.some(x => idn.values.has(x))) d.as_value++;
+      for (const kind of ID_KINDS) if (e.ids.some(id => id.startsWith(kind + ':') && idn.typed.has(id))) d['as_' + kind + '_field']++;
+      if (!e.ids.some(id => idn.typed.has(id))) continue;
+      if (e.contains.length && !e.contains.every(c => Array.from(idn.values).some(v => v.indexOf(c) >= 0))) continue;
+      d.keys_identified++;
+      rec.keys.push({ e, gen: e.seq });
+    }
+    if (rec.keys.length) st.diag.matched++;
+    rec.rd = d;
+    rec.matched = true;
+    settle(rec);
+  }
+
   function startRec(rec, body) {
     st.reqs.push(rec);
     if (st.reqs.length > KEEP_REQS) st.reqs.shift();
     if (!counted(rec)) { rec.matched = true; return rec; }
     st.diag.non_get++;
+    if (isRunData(rec)) {
+      rec.adapter = 'run-data';
+      st.diag.run_data++;
+      const all = [];
+      for (const e of st.entries.values()) if (e.seq < rec.seq) all.push(e);
+      const text = bodyText(body);
+      if (text && typeof text.then === 'function') text.then(x => applyRunData(rec, x, all), () => applyRunData(rec, null, all));
+      else applyRunData(rec, text, all);
+      return rec;
+    }
     const cands = [];
     for (const e of st.entries.values()) if (e.seq < rec.seq && !e.weak) cands.push(e);
     if (!cands.length) { rec.matched = true; return rec; }
@@ -330,20 +546,39 @@
     if (!rec.matched || !rec.ended || rec.done || rec.respPending) return;
     rec.done = true;
     if (rec.keys.length > 1) st.diag.multi_key++;
+    if (rec.resp && rec.resp.truncated) st.diag.resp_truncated++;
     for (const { e, gen } of rec.keys) {
       if (st.entries.get(e.key) !== e || e.seq !== gen) continue;
-      e.net.push({ outcome: requestOutcome(rec, e.key), t1: rec.t1, method: rec.method, tpl: rec.tpl, seq: rec.seq });
+      e.net.push({ outcome: requestOutcome(rec, e), t1: rec.t1, method: rec.method, tpl: rec.tpl, seq: rec.seq,
+        typed: rec.adapter === 'run-data' });
     }
   }
-  function requestOutcome(rec, key) {
-    const s = rec.status;
+  /* A plain value listed as failed that names no key of the request: a failure no key owns. */
+  const keyValues = e => [e.key].concat(e.ids.map(id => id.slice(id.indexOf(':') + 1)));
+  const strayFailure = (rec, r) => Array.from(r.failedValues || [])
+    .some(v => !rec.keys.some(({ e }) => keyValues(e).indexOf(v) >= 0));
+  /* One key's outcome on one ended request. A run-data request (rec.adapter) never accepts a
+   * bare 2xx: it needs a per-key success for one of the key's typed ids, or the atomic-snapshot
+   * rule (top-level success and no failure marker at any depth). On every path a failure marker
+   * no item owns, or a reply read only in part, leaves the key pending. */
+  function requestOutcome(rec, e) {
+    const s = rec.status, r = rec.resp;
     if (!(s >= 200 && s < 300)) return 'failed';
-    if (rec.resp && rec.resp.failed.has(key)) return 'failed';
+    if (r && (r.top === 'failed' || r.failed.has(e.key) || e.ids.some(id => r.failedTyped.has(id)))) return 'failed';
     if (s === 202) return 'accepted';
-    if (rec.keys.length > 1 || (rec.resp && rec.resp.explicit)) {
-      return rec.resp && rec.resp.saved.has(key) ? 'ok' : 'accepted';
+    if (r && (r.unattributed || r.truncated || strayFailure(rec, r))) return 'accepted';
+    if (rec.adapter === 'run-data') {
+      if (r && (r.explicit || r.typedExplicit)) {
+        const named = e.ids.some(id => r.savedTyped.has(id) || (id.startsWith('uuid:') && r.saved.has(id.slice(5))));
+        return named ? 'ok' : 'accepted';
+      }
+      return r && r.top === 'saved' && !r.anyFailed && !r.failed.size && !r.failedTyped.size ? 'ok' : 'accepted';
     }
-    return 'ok';
+    if (rec.keys.length > 1 || (r && r.explicit)) {
+      return r && r.saved.has(e.key) ? 'ok' : 'accepted';
+    }
+    /* A single key with no per-key outcome: any failure marker in the reply leaves it pending. */
+    return r && r.anyFailed ? 'accepted' : 'ok';
   }
 
   function markSent(url, data) {
@@ -473,28 +708,58 @@
   }
 
   /* ---- the wait ---- */
-  /* Which Lt client this page runs: origin and path of every script src (queries dropped,
-   * so signed or cache-busting parameters do not change it), sorted and hashed (FNV-1a). */
+  /* Script element URLs in page order: origin and path, plus the query string when `query` is
+   * set. clientSig() keeps the query, so /core.js?v=1 and ?v=2 sign as two builds; a signed or
+   * cache-busting query then drops the record, the safe direction. scriptsSig() drops it. */
+  function scriptPaths(query) {
+    const d = G.document;
+    if (!d) return [];
+    let list = [];
+    if (d.scripts && typeof d.scripts.length === 'number') list = Array.from(d.scripts);
+    else if (typeof d.querySelectorAll === 'function') list = Array.from(d.querySelectorAll('script[src]') || []);
+    const srcs = [];
+    for (const s of list) {
+      const src = s && (s.src || (typeof s.getAttribute === 'function' ? s.getAttribute('src') : ''));
+      const u = src ? parse(src) : null;
+      if (u) srcs.push(u.origin + u.pathname + (query ? u.search : ''));
+    }
+    return srcs;
+  }
+  /* prefix + count + FNV-1a of the sorted list; null for an empty list. */
+  function sigOf(prefix, srcs) {
+    if (!srcs.length) return null;
+    srcs.sort();
+    const text = srcs.join('\n');
+    let h = 0x811c9dc5;
+    for (let i = 0; i < text.length; i++) { h ^= text.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; }
+    return prefix + srcs.length + '-' + h.toString(16).padStart(8, '0');
+  }
+  /* Which Lt build this page runs: the script elements the document loaded with, those whose
+   * resource timing entry started before domContentLoadedEventStart, by origin, path and query.
+   * Lazily loaded page chunks start later and never count. Unique URLs, 'c2-'. null without
+   * navigation or resource timing, before DOMContentLoaded, or with no such script: no build
+   * marker. A page chunk that starts before DOMContentLoaded still counts, so two pages of one
+   * build can sign differently; that only drops a calibration. */
   function clientSig() {
     try {
-      const d = G.document;
-      if (!d) return null;
-      let list = [];
-      if (d.scripts && typeof d.scripts.length === 'number') list = Array.from(d.scripts);
-      else if (typeof d.querySelectorAll === 'function') list = Array.from(d.querySelectorAll('script[src]') || []);
-      const srcs = [];
-      for (const s of list) {
-        const src = s && (s.src || (typeof s.getAttribute === 'function' ? s.getAttribute('src') : ''));
-        const u = src ? parse(src) : null;
-        if (u) srcs.push(u.origin + u.pathname);
+      const P = G.performance;
+      if (!P || typeof P.getEntriesByType !== 'function') return null;
+      const nav = (P.getEntriesByType('navigation') || [])[0];
+      const dcl = nav ? nav.domContentLoadedEventStart : null;
+      if (!(typeof dcl === 'number' && dcl > 0)) return null;
+      const early = new Set();
+      for (const r of P.getEntriesByType('resource') || []) {
+        if (!r || typeof r.startTime !== 'number' || !(r.startTime < dcl)) continue;
+        const u = parse(r.name);
+        if (u) early.add(u.origin + u.pathname + u.search);
       }
-      if (!srcs.length) return null;
-      srcs.sort();
-      const text = srcs.join('\n');
-      let h = 0x811c9dc5;
-      for (let i = 0; i < text.length; i++) { h ^= text.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; }
-      return 'c1-' + srcs.length + '-' + h.toString(16).padStart(8, '0');
+      return sigOf('c2-', Array.from(new Set(scriptPaths(true).filter(s => early.has(s)))));
     } catch (e) { return null; }
+  }
+  /* Every script element, page chunks included ('c1-', the client_sig of 0.2.3 and earlier):
+   * it changes between pages of one build. A receipt diagnostic, never a calibration binding. */
+  function scriptsSig() {
+    try { return sigOf('c1-', scriptPaths()); } catch (e) { return null; }
   }
 
   /* {cal, stale}: the usable save calibration, or null with the reason it is not usable. */
@@ -514,11 +779,11 @@
   function modelPath(e, cal) {
     function outcome(ms) {
       const ops = ms.ops.filter(op => op.rec.done && netAllowed(op.rec, cal));
-      const final = ops.filter(op => requestOutcome(op.rec, e.key) !== 'accepted' && (op.synced || op.failed));
+      const final = ops.filter(op => requestOutcome(op.rec, e) !== 'accepted' && (op.synced || op.failed));
       if (!final.length) return { state: ms.sent ? 'sent' : 'pending' };
       const op = final.reduce((a, b) => b.rec.t1 >= a.rec.t1 ? b : a);
       const r = op.rec;
-      return op.failed || requestOutcome(r, e.key) === 'failed' ? { state: 'failed' } :
+      return op.failed || requestOutcome(r, e) === 'failed' ? { state: 'failed' } :
         { state: 'saved', t: r.t1, method: r.method, tpl: r.tpl };
     }
     let parentSaved = null;
@@ -542,7 +807,8 @@
     const mp = modelPath(e, cal);
     if (mp.state === 'saved') return { state: 'saved', by: 'model', t: mp.t };
     if (mp.state === 'failed') return { state: 'failed', by: 'model' };
-    const acks = e.weak ? [] : e.net.filter(a => a.seq > e.seq && netAllowed(a, cal));
+    // A weak key counts only acknowledgements the run-data adapter made by typed identity.
+    const acks = e.net.filter(a => (a.typed || !e.weak) && a.seq > e.seq && netAllowed(a, cal));
     const final = acks.filter(a => a.outcome !== 'accepted');
     if (final.length) {
       const last = final.reduce((a, b) => (b.t1 >= a.t1 ? b : a));
@@ -575,9 +841,8 @@
         const id = 'model ' + mp.method + ' ' + mp.tpl;
         if (!seen.has(id)) { seen.add(id); out.push({ source: 'model', method: mp.method, path_template: mp.tpl }); }
       }
-      if (e.weak) continue;
       for (const a of e.net) {
-        if (a.outcome !== 'ok' || a.seq <= e.seq) continue;
+        if (a.outcome !== 'ok' || a.seq <= e.seq || (e.weak && !a.typed)) continue;
         if (!first || a.t1 < first.t) first = { source: 'net', method: a.method, path_template: a.tpl, t: a.t1 };
         const id = 'net ' + a.method + ' ' + a.tpl;
         if (!seen.has(id)) { seen.add(id); out.push({ source: 'net', method: a.method, path_template: a.tpl }); }
@@ -586,17 +851,42 @@
     return { first, list: out.slice(0, 5) };
   }
 
-  function saveDiagnostics(entries) {
-    const sync = entries.some(e => e && Array.from(e.subs.values()).some(s => s.ms.syncFired));
+  /* The reply's shape, for run-data rows: per_key, success, failure or bare (none read). */
+  const replyShape = r => (!r ? 'bare' : (r.explicit || r.typedExplicit) ? 'per_key' : r.top === 'saved' ? 'success' : r.top === 'failed' ? 'failure' : 'bare');
+  const RD_COUNTS = ['keys_expected', 'keys_identified', 'as_panel_field', 'as_data_field', 'as_uuid_field', 'as_prop', 'as_value'];
+  /* Rows stay 4 levels deep in the receipt (one browser tool truncates deeper), so a run-data
+   * row's counts are one 'name=count ...' string, as net_diag is. */
+  function saveDiagnostics() {
+    const counts = new Map();
     const rows = new Map();
     for (const request of st.reqs) {
       if (request.seq <= st.session.startSeq) continue;
       const path = request.url?.pathname || '';
       const template = path.split('/').map(segment => /^(?:[0-9a-f]+|[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12})$/i.test(segment) ? ':id' : segment).join('/');
-      const key = request.method + ' ' + template + ' ' + request.status;
-      if (!rows.has(key) && rows.size < 20) rows.set(key, {method: request.method, path_template: template, status: request.status, count: 0, model_sync: sync});
-      if (rows.has(key)) rows.get(key).count++;
+      const key = request.method + ' ' + template + ' ' + request.status + (request.rd ? ' run-data' : '');
+      if (!rows.has(key) && rows.size < 20) {
+        const row = {method: request.method, path_template: template, status: request.status, count: 0, model_sync: false};
+        if (request.rd) {
+          const rd = {requests: 0, body_json: 0, body_unparsed: 0, body_none: 0};
+          for (const c of RD_COUNTS) rd[c] = 0;
+          Object.assign(rd, {reply_per_key: 0, reply_success: 0, reply_failure: 0, reply_bare: 0});
+          counts.set(row, rd);
+        }
+        rows.set(key, row);
+      }
+      const row = rows.get(key);
+      if (!row) continue;
+      row.count++;
+      if (request.modelSync) row.model_sync = true;
+      const rd = request.rd ? counts.get(row) : null;
+      if (rd) {
+        rd.requests++;
+        rd['body_' + request.rd.body]++;
+        rd['reply_' + replyShape(request.resp)]++;
+        for (const c of RD_COUNTS) rd[c] += request.rd[c];
+      }
     }
+    for (const [row, rd] of counts) row.run_data = Object.entries(rd).map(([k, v]) => k + '=' + v).join(' ');
     return Array.from(rows.values());
   }
 
@@ -637,7 +927,7 @@
       const confirmed = signal === 'model' || signal === 'net';
       return {
         save_signal: signal,
-        ...(signal === 'fallback' ? {save_diag: saveDiagnostics(entries)} : {}),
+        ...(signal === 'fallback' ? {save_diag: saveDiagnostics()} : {}),
         signal,
         state: confirmed ? 'ok' : signal,
         save_confirmed: confirmed,
@@ -664,7 +954,7 @@
         net_diag: 'req=' + d.requests + ' nonget=' + d.non_get + ' matched=' + d.matched +
           ' perf=' + d.perf_entries + ' ws=' + d.ws_sends + ' beacon=' + d.beacons +
           ' model_unidentified=' + d.model_unidentified + ' shared_model=' + d.shared_model +
-          ' multi_key=' + d.multi_key
+          ' multi_key=' + d.multi_key + ' run_data=' + d.run_data + ' resp_truncated=' + d.resp_truncated
       };
     };
 
@@ -719,7 +1009,7 @@
   }
 
   const api = Object.freeze({
-    version: 1, install, expect, waitForSave, pendingKeys, state, pathTemplate, clientSig,
+    version: 1, install, expect, waitForSave, pendingKeys, state, pathTemplate, clientSig, scriptsSig,
     lastWrite: () => st.lastWrite
   });
   Object.defineProperty(G, 'LtNet', { value: api, enumerable: false, configurable: false, writable: false });

@@ -18,7 +18,10 @@ validator also uses:
   per-item        single-attempt-item  never written without an approval recorded in the
                                        run's approvals.json, never submitted; later pages
                                        are still planned, because moving between pages
-                                       submits nothing
+                                       submits nothing. A draft with no
+                                       single_attempt_approval is held (skip class
+                                       single-attempt-unapproved): the payload refuses it
+                                       and the report lists it skipped, yours to submit
   per-item        unmapped             the item becomes a TODO and is never written to
   never-navigate  run-level-commit     the completion route is never visited
   never-navigate  report-page          never visited; its panels mirror real ones and its
@@ -35,12 +38,24 @@ need a recorded draft choice. --include-rat is deprecated and changes no decisio
 
 Occupancy is not decided here. A non-empty target is a question for the user, settled
 against the live page at fill time, never against the captured `answered` flag.
+`answered` alone never means submitted: a single-attempt item is submitted only when the
+capture reads it read_only, answered and attempts single (ltcore.boundaries.submitted_single).
+Each single-attempt item prints its captured state, for example "answered, not submitted".
+
+MANUAL MODE lists the pages the validator's three manual-approval rules would cover if the
+run follows this plan: the stop page of a commit boundary, every planned page at or after a
+submitted single-attempt item, and every Check Answer page holding a single-attempt item.
+It is a prediction from the capture; the validator decides from the report.
 
 The JSON plan (--json, --out) carries the fields `ltjs.py check-url --plan` and the
 never-submit guard read: origin, instance, course_id, run_id, stop_before_page,
 never_navigated, report_pages, checkpoint_pages, flow_pages[] (every module page with
 page_index, page_no, url, is_checkpoint and is_report_page) and pages[] with page_index,
-page_no and url.
+page_no and url. route_source copies the capture's mark of measured routes; the key is
+always written, null allowed. When ltjs.route_refusal refuses the capture's routes (any
+capture without route_source), route_refusal says why and no page carries page_no or url,
+so check-url maps nothing.
+manual_mode_pages[] holds {page_index, rule, item_id, detail}.
 """
 from __future__ import annotations
 
@@ -51,7 +66,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent / "_shared"))
 import ltcore  # noqa: E402
 ltcore.bootstrap([])
-from ltcore import boundaries, config, rat as rat_mod, page_kinds  # noqa: E402
+from ltcore import boundaries, config, ltjs, rat as rat_mod, page_kinds  # noqa: E402
 
 import argparse  # noqa: E402
 import hashlib  # noqa: E402
@@ -182,6 +197,12 @@ def _skip_entries(it: dict, p: dict, idx: int, entry: dict, state: str, lock: di
 
 def plan(mod: dict, answers: dict | None, include_rat: bool, cfg=None, *, record=None, data_dir=None, page_kinds_path=None, answers_sha256=None) -> dict:
     bm = boundaries.boundary_map(mod)
+    refusal = ltjs.route_refusal(mod)
+
+    def route(p: dict) -> dict:
+        return ({"page_no": None, "url": None} if refusal
+                else {"page_no": p.get("page_no"), "url": p.get("url")})
+
     # Only a stop-severity door truncates the run. Per-item doors are handled item by item
     # below, and never-navigate doors by skipped_pages.
     first = _first_stop(mod)
@@ -258,6 +279,7 @@ def plan(mod: dict, answers: dict | None, include_rat: bool, cfg=None, *, record
             permanent = (it.get("degrade") or {}).get("class") == "permanent"
             # A mirror re-displays another panel's content and takes no write.
             mirror = bool(it.get("mirror_of"))
+            approved = bool(((a or {}).get("single_attempt_approval") or {}).get("approval_id"))
             entry = {
                 "item_id": it["item_id"],
                 # A target is (page_index, panel_key); panel_key alone is ambiguous.
@@ -272,6 +294,9 @@ def plan(mod: dict, answers: dict | None, include_rat: bool, cfg=None, *, record
                 # The capture never settles occupancy; the live page does.
                 "occupancy": "must-ask" if it.get("answered") else "must-verify-live",
                 "captured_answered": bool(it.get("answered")),
+                "captured_commit_state": it.get("commit_state"),
+                # Submitted needs read_only, answered and single attempts; answered alone is not.
+                "captured_submitted": boundaries.submitted_single(it),
                 "draft_state": state,
                 "fillable": not unmapped and not declined and not read_only
                             and lock is None and not permanent and not mirror,
@@ -303,15 +328,25 @@ def plan(mod: dict, answers: dict | None, include_rat: bool, cfg=None, *, record
             if from_sheet:
                 entry["answer_source"] = "rat-sheet"
             _skip_entries(it, p, idx, entry, state, lock)
+            if (it.get("attempts") == "single" and state in ("drafted", "rat-sheet")
+                    and entry["fillable"] and not approved):
+                # emit_fill.py refuses this write, so the plan holds it too, and the report
+                # lists it skipped instead of asking for a note per item.
+                entry["fillable"] = False
+                entry["skip"] = {"class": "single-attempt-unapproved", "severity": "per-item",
+                                 "skip_reason": "needs-approval",
+                                 "detail": "single-attempt and answers.json carries no "
+                                           "single_attempt_approval. Record the user's approval "
+                                           "with emit_fill.py approve, or leave the item to the "
+                                           "user to check and submit."}
             items.append(entry)
         if items:
-            pages_out.append({"page_index": idx, "page_no": p.get("page_no"),
-                              "url": p.get("url"), "title": p.get("title"), "items": items})
+            pages_out.append({"page_index": idx, **route(p), "title": p.get("title"), "items": items})
 
     never_routes = [dict(n) for n in bm["never_navigated"]]
     never = never_routes + [{"page_index": i, "reason": "report page"} for i in report_idx]
     # Every module page, so check-url can place a tab that rests on a page with no items.
-    flow_pages = [{"page_index": p.get("page_index"), "page_no": p.get("page_no"), "url": p.get("url"),
+    flow_pages = [{"page_index": p.get("page_index"), **route(p),
                    "is_checkpoint": bool(p.get("is_checkpoint")),
                    "is_report_page": bool(p.get("is_report_page"))} for p in mod.get("pages", [])]
     checkpoint_pages = sorted({p["page_index"] for p in flow_pages
@@ -324,6 +359,8 @@ def plan(mod: dict, answers: dict | None, include_rat: bool, cfg=None, *, record
         "instance": mod.get("instance"),
         "course_id": mod.get("course_id"),
         "run_id": mod.get("run_id"),
+        "route_source": mod.get("route_source"),
+        "route_refusal": refusal,
         "boundary_map": bm,
         "stop_before_page": stop_before,
         "first_boundary": first,
@@ -362,11 +399,72 @@ def plan(mod: dict, answers: dict | None, include_rat: bool, cfg=None, *, record
                 reason=ca.eligibility(item,page,result,statuses[page['page_index']],written=True,verified=True,calibrated=True)
                 if reason is None:candidate_items.append({'item_id':item['item_id'],'page':page['page_index']})
         result['check_answer']={'items':candidate_items,'requires_written_verified_calibrated':True}
+    result["held_for_approval"] = sum(1 for p in pages_out for i in p["items"]
+                                      if (i.get("skip") or {}).get("class") == "single-attempt-unapproved")
+    result["manual_mode_pages"] = manual_mode_pages(mod, result)
     return result
+
+
+def manual_mode_pages(mod: dict, pl: dict) -> list[dict]:
+    """The pages the validator's manual-approval rules would cover if the run follows `pl`.
+
+    approval_mode is one value per report, so any page here means manual for the run:
+      commit-boundary       the stop page; the report records boundary_reached.stopped
+      passed-single         a planned page at or after a submitted single-attempt item on a
+                            page the capture reads locked (validate.py passed-single-approval)
+      check-answer-single   a Check Answer page that holds a single-attempt item
+    """
+    out = []
+    first = pl.get("first_boundary")
+    if first:
+        out.append({"page_index": first["page_index"], "rule": "commit-boundary",
+                    "item_id": first.get("item_id"),
+                    "detail": f"the run stops before this {first['class']}, and a report that "
+                              f"stopped at a boundary needs approval_mode manual"})
+    planned = sorted(p["page_index"] for p in pl["pages"] if isinstance(p.get("page_index"), int))
+    passing = boundaries.single_pass_pages(mod)
+    for p in mod.get("pages", []):
+        idx = p.get("page_index")
+        if idx not in passing:
+            continue
+        for it in p.get("items", []):
+            if not boundaries.submitted_single(it):
+                continue
+            for q in (q for q in planned if q >= idx):
+                out.append({"page_index": q, "rule": "passed-single", "item_id": it["item_id"],
+                             "detail": f"at or after page {idx}, which holds the submitted "
+                                       f"single-attempt item {it['item_id']}"})
+    singles = {p.get("page_index") for p in mod.get("pages", [])
+               if any(i.get("attempts") == "single" for i in p.get("items", []))}
+    for row in (pl.get("check_answer") or {}).get("items", []):
+        if row["page"] in singles:
+            out.append({"page_index": row["page"], "rule": "check-answer-single", "item_id": None,
+                        "detail": "Check Answer presses on a page that holds a single-attempt item"})
+    seen, rows = set(), []
+    for r in sorted(out, key=lambda r: (r["page_index"] if r["page_index"] is not None else 10 ** 6,
+                                        r["rule"], r["item_id"] or "")):
+        key = (r["page_index"], r["rule"], r["item_id"])
+        if key not in seen:
+            seen.add(key)
+            rows.append(r)
+    return rows
+
+
+def single_state(it: dict) -> str:
+    """A single-attempt item's captured state in words; answered alone is not submitted."""
+    ro, cs = it.get("read_only"), it.get("captured_commit_state")
+    flags = f"read_only {str(ro).lower() if ro is not None else 'null'}, commit_state {cs or 'unknown'}"
+    if it.get("captured_submitted"):
+        return f"submitted ({flags}, answered true)"
+    if it.get("captured_answered"):
+        return f"answered, not submitted ({flags})"
+    return f"not answered, not submitted ({flags})"
 
 
 def render(pl: dict) -> None:
     print(f"module {pl['module_id']}")
+    if pl.get("route_refusal"):
+        print(f"ROUTES REFUSED: {pl['route_refusal']}")
     if pl.get('check_answer'):
         rows=pl['check_answer']['items']
         print('Check Answer: '+str(len(rows))+' items on pages '+', '.join(map(str,sorted({r['page'] for r in rows})))+'; written, verified drafts and origin calibration required')
@@ -409,6 +507,16 @@ def render(pl: dict) -> None:
         print("\ncheckpoint inventory NOT measured in this capture: an empty door list is not")
         print("  evidence of absence here; capture again with the current capture skill")
 
+    manual = pl.get("manual_mode_pages") or []
+    if not manual:
+        print("\nMANUAL MODE (predicted from the plan): none; the validator's manual-approval "
+              "rules cover no planned page")
+    else:
+        print("\nMANUAL MODE (predicted from the plan): approval_mode must be manual for this "
+              "run, or a recorded waiver")
+        for r in manual:
+            print(f"  page {r['page_index']:<4} {r['rule']:<20} {r['detail']}")
+
     print("\nnever navigated")
     for n in pl["boundary_map"]["never_navigated"]:
         print(f"  {n['route']:<20} {n['reason']}")
@@ -425,7 +533,8 @@ def render(pl: dict) -> None:
 
     print(f"\nfillable: {pl['fillable_items']} item(s) across {len(pl['pages'])} page(s)"
           f"   per-item TODOs: {pl['todo_items']}"
-          f"   declined by the answerer: {pl.get('declined_items', 0)}")
+          f"   declined by the answerer: {pl.get('declined_items', 0)}"
+          f"   held for approval: {pl.get('held_for_approval', 0)}")
     pc = pl.get("placements") or {}
     if pc.get("items"):
         print(f"placement items: {pc['items']}   mapping stated as label_placements: "
@@ -437,6 +546,8 @@ def render(pl: dict) -> None:
             mark = "  " if it["fillable"] else "! "
             print(f"  {mark}{it['item_id']:<12} {it['type']:<22} {it['method']:<12} "
                   f"{it['occupancy']:<18} {it['draft_state']}")
+            if it.get("attempts") == "single":
+                print(f"      single-attempt: {single_state(it)}")
             src = it.get("placements_source")
             if src == "label_placements":
                 pls = it.get("placements") or []
@@ -461,7 +572,8 @@ def render(pl: dict) -> None:
                     sk = it.get("skip") or {}
                     print(f"      SKIP: {sk.get('class', 'unclassified')}: "
                           f"{sk.get('skip_reason', 'no reason recorded')}")
-                    if sk.get("class") in ("read-only-inferred", "lock-unknown"):
+                    if sk.get("class") in ("read-only-inferred", "lock-unknown",
+                                           "single-attempt-unapproved"):
                         print(f"        {sk['detail']}")
     if pl["skipped_pages"]:
         print("\nskipped pages")

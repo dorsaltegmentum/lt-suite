@@ -369,6 +369,74 @@ def m_content_page_carries_checkpoint(d):
     return d
 
 
+RUN_URL = f"{ORIGIN}/i/inst0001/student/courses/1/runs/101/run"
+
+
+def _with_background(d, **over):
+    """Lt's shape with a Background page: page 1 at /run/background, pages 2 to 4 at
+    /run/page/1 to /run/page/3. ``over`` replaces fields of page 1."""
+    d["route_source"] = "datakey+location"
+    for p in d["pages"]:
+        if isinstance(p["page_no"], int):
+            p["page_no"] -= 1
+            p["url"] = f"{RUN_URL}/page/{p['page_no']}"
+    page(d, 1).update({"page_no": None, "route": "background", "url": f"{RUN_URL}/background"}, **over)
+    return d
+
+
+def m_background_without_route_source(d):
+    d = _with_background(d)
+    del d["route_source"]
+    return d
+
+
+def m_background_page_no(d):
+    return _with_background(d, page_no=1)
+
+
+def m_background_wrong_url(d):
+    return _with_background(d, url=f"{RUN_URL}/page/1")
+
+
+def m_background_not_first(d):
+    d = _with_background(d)
+    page(d, 3).update({"page_no": None, "route": "background", "url": f"{RUN_URL}/background"})
+    return d
+
+
+def m_page_no_past_the_numbered_pages(d):
+    d = _with_background(d)
+    page(d, 4).update({"page_no": 4, "url": f"{RUN_URL}/page/4"})
+    return d
+
+
+def m_two_pages_share_a_page_no(d):
+    page(d, 3).update({"page_no": 2, "url": f"{RUN_URL}/page/2"})
+    return d
+
+
+def m_url_disagrees_with_page_no(d):
+    page(d, 2)["url"] = f"{RUN_URL}/page/3"
+    return d
+
+
+def m_unconfirmed_route_keeps_a_url(d):
+    d = _with_background(d)
+    page(d, 3)["page_no"] = None
+    return d
+
+
+def m_background_and_an_unconfirmed_route(d):
+    d = _with_background(d)
+    page(d, 3).update({"page_no": None, "url": None})
+    return d
+
+
+def m_unmarked_content_page_without_page_no(d):
+    page(d, 3).update({"page_no": None, "url": None})
+    return d
+
+
 def m_completion_gone_with_nothing_hiding_it(d):
     d["pages"] = d["pages"][:-1]
     d["lesson"]["page_count"] = 4
@@ -811,6 +879,16 @@ def m_fill_failed_over_matching_hashes(d):
     return d
 
 
+def m_fill_filled_over_an_unbound_receipt(d):
+    fitem(d, "i-text-1")["receipt"] = dict(_receipt(5, 5), binding="unbound-legacy")
+    return d
+
+
+def m_fill_unverified_over_an_unbound_receipt(d):
+    fitem(d, "i-text-2").update(attempted=True, receipt=dict(_receipt(7, 7), binding="unbound-legacy"))
+    return d
+
+
 def m_fill_receipt_before_the_run(d):
     fitem(d, "i-text-1")["receipt"] = _receipt(5, 5, "1999-12-31T23:59:59Z")
     return d
@@ -932,6 +1010,15 @@ CASES = [
     ("checkpoint page carrying items", "module", m_checkpoint_items, RAIL_FAIL, "holds no panels", {}),
     ("checkpoint that will not say whether it is shut", "module", m_checkpoint_no_committed, RAIL_FAIL, "checkpoint.committed", {}),
     ("content page carrying a checkpoint block", "module", m_content_page_carries_checkpoint, RAIL_FAIL, "non-checkpoint page", {}),
+    ("Background route in a capture without route_source", "module", m_background_without_route_source, RAIL_FAIL, "without route_source", {}),
+    ("Background page given a URL page number", "module", m_background_page_no, RAIL_FAIL, "Background page carries page_no", {}),
+    ("Background page on a numbered url", "module", m_background_wrong_url, RAIL_FAIL, "is not /run/background", {}),
+    ("Background page after another content page", "module", m_background_not_first, RAIL_FAIL, "not the first content page", {}),
+    ("page number past the numbered pages", "module", m_page_no_past_the_numbered_pages, RAIL_FAIL, "outside 1..3", {}),
+    ("two pages on one URL page number", "module", m_two_pages_share_a_page_no, RAIL_FAIL, "two pages cannot share /run/page/2", {}),
+    ("url naming another page number", "module", m_url_disagrees_with_page_no, RAIL_FAIL, "does not end in /run/page/2", {}),
+    ("unconfirmed route that keeps its url", "module", m_unconfirmed_route_keeps_a_url, RAIL_FAIL, "without page_no carries url", {}),
+    ("content page without a number in an unmarked capture", "module", m_unmarked_content_page_without_page_no, RAIL_FAIL, "no integer page_no", {}),
     ("report page dropped with nothing hiding it", "module", m_completion_gone_with_nothing_hiding_it, RAIL_FAIL, "no uncommitted checkpoint", {}),
     ("a committed checkpoint hides no report page", "module", m_committed_checkpoint_cannot_hide_the_report, RAIL_FAIL, "no uncommitted checkpoint", {}),
     ("pages remain behind a checkpoint nothing mapped", "module", m_page_menu_remaining_without_a_checkpoint, RAIL_FAIL, "no checkpoint page is mapped", {}),
@@ -1023,6 +1110,7 @@ CASES = [
     ("waiver dated on no calendar day", "fill-report", m_fill_waiver_on_no_calendar_day, RAIL_FAIL, "neither a YYYY-MM-DD date", {}),
     ("verified=true over a receipt whose hashes differ", "fill-report", m_fill_verified_over_differing_hashes, RAIL_FAIL, "the receipt decides", {}),
     ("failed over a receipt whose hashes match", "fill-report", m_fill_failed_over_matching_hashes, RAIL_FAIL, "the receipt decides", {}),
+    ("filled over an unbound-legacy receipt", "fill-report", m_fill_filled_over_an_unbound_receipt, RAIL_FAIL, "unbound-legacy", {}),
     ("receipt from a load before the run", "fill-report", m_fill_receipt_before_the_run, RAIL_FAIL, "precedes started_at", {}),
     ("receipt from a load after the run ended", "fill-report", m_fill_receipt_after_the_run, RAIL_FAIL, "is after ended_at", {}),
     ("receipt on an item never attempted", "fill-report", m_fill_receipt_on_an_unattempted_item, RAIL_FAIL, "reported attempted=false", {}),
@@ -1045,10 +1133,14 @@ PASS_CASES = [
     ("every schema example as shipped: reference", "reference", ident, {}, None),
     ("every schema example as shipped: run", "run", ident, {}, None),
     ("the approvals fixture", "approvals", ident, {}, None),
+    ("filled-unverified over an unbound-legacy receipt with equal hashes", "fill-report",
+     m_fill_unverified_over_an_unbound_receipt, {}, None),
     ("reference built from Lt's model answer while it is on", "reference", m_ref_model_answer, {"read": True}, None),
     ("model answer on by default (no config file)", "reference", m_ref_model_answer, {}, None),
     ("answers citing the model answer while it is on", "answers", a_cites_the_model_answer, {"read": True}, None),
     ("legacy capture carrying the retired permission block", "module", m_legacy_permission, {}, "dropped legacy field(s) permission"),
+    ("measured routes with a Background page first", "module", _with_background, {}, None),
+    ("measured routes with one route capture could not confirm", "module", m_background_and_an_unconfirmed_route, {}, None),
     ("legacy run record carrying permission_check", "run", m_legacy_permission_check, {}, "dropped legacy field(s) permission_check"),
     ("single-attempt approval bound to the supplied variant", "answers", _approved_single, {"module": mod_c1_r104, "approvals": "variant"}, None),
     ("single-attempt write resting on a capture-bound approval", "fill-report",

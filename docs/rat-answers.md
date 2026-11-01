@@ -134,7 +134,8 @@ further drafting. Only you submit in Lt.
 
 
 Sheet receipts pin the executed payload by path and SHA256. Fill and fresh-load
-verification echo that payload hash. The payload also pins the classification hash.
+verification echo the first 16 hex digits of that payload hash. The payload also pins the
+classification hash.
 Keep the payload and `page-kinds.json` unchanged until `make_fill_report.py` succeeds.
 The report refuses missing bindings, changed payloads, changed classifications and
 receipt hashes that differ from the executed jobs. Reclassification requires a new

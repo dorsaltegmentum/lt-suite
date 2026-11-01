@@ -45,7 +45,7 @@ def payload(kit, folder, text):
     return path, pay
 
 
-def receipts(kit, path, pay, *, short=False):
+def receipts(kit, path, pay, *, short=False, at='2000-01-01T00:00:00Z'):
     sha = hashlib.sha256(path.read_bytes()).hexdigest()
     pin = {'source_payload_sha256': '[BLOCKED: Base64 encoded data]',
            'source_payload_sha16': sha[:16]} if short else {'source_payload_sha256': sha}
@@ -53,7 +53,7 @@ def receipts(kit, path, pay, *, short=False):
     kit.write('fill.json', dict(ok=True, module='c1-r101', page=1, save_signal='fallback',
               items=[{'item': j['item'], 'result': 'written', 'h': j['h']} for j in jobs], **pin))
     kit.write('verify.json', dict(ok=True, module='c1-r101', fresh_load=True,
-              observed_at='2000-01-01T00:00:00Z',
+              observed_at=at,
               items=[[j['item'], 'ok', 3, j['h']] for j in jobs], **pin))
 
 
@@ -121,7 +121,8 @@ def test_record_supersede_archives_replaced_rows_with_reason(kit):
     receipts(kit, path, pay)
     run = kit.run_dir().relative_to(kit.tmp).as_posix()
     old = {'item_id': 'p1-10', 'expected_hash': 1, 'observed_hash': 1,
-           'observed_at': '2000-01-01T00:00:00Z'}
+           'observed_at': '2000-01-01T00:00:00Z',
+           'verify_receipt_sha256': hashlib.sha256((kit.tmp / 'verify.json').read_bytes()).hexdigest()}
     kit.write(run + '/receipts.json', {'receipts': [old]})
     result = record(kit, '--payload', str(path), '--supersede')
     assert result.returncode == 0, result.stdout + result.stderr
@@ -129,9 +130,54 @@ def test_record_supersede_archives_replaced_rows_with_reason(kit):
     assert len(rows) == 3 and rows[0]['expected_hash'] != 1
     archive = kit.read(run + '/receipts-superseded.json')['receipts']
     assert archive[0]['replaced'] == old
-    assert archive[0]['reason']
+    # The reason names the fields that changed, here the hashes and the new binding.
+    assert 'expected_hash' in archive[0]['reason'] and 'payload_binding' in archive[0]['reason']
     assert record(kit, '--payload', str(path), '--supersede').returncode == 0
     assert len(kit.read(run + '/receipts-superseded.json')['receipts']) == 1
+
+
+def test_supersede_refuses_a_stored_row_without_a_verify_hash(kit):
+    # A row from before 0.2.3 cannot show it came from this verify receipt.
+    path, pay = payload(kit, 'out', 'Answer.')
+    receipts(kit, path, pay)
+    run = kit.run_dir().relative_to(kit.tmp).as_posix()
+    old = {'item_id': 'p1-10', 'expected_hash': 1, 'observed_hash': 1,
+           'observed_at': '2000-01-01T00:00:00Z'}
+    kit.write(run + '/receipts.json', {'receipts': [old]})
+    result = record(kit, '--payload', str(path), '--supersede')
+    assert result.returncode == 3
+    assert 'no verify_receipt_sha256' in result.stderr and 'new fresh-load verify' in result.stderr
+    assert kit.read(run + '/receipts.json')['receipts'] == [old]
+    assert not (kit.run_dir() / 'receipts-superseded.json').exists()
+
+
+def test_record_names_a_binding_only_change_it_keeps(kit):
+    path, pay = payload(kit, 'out', 'Answer.')
+    receipts(kit, path, pay)
+    assert record(kit, '--payload', str(path)).returncode == 0
+    run = kit.run_dir().relative_to(kit.tmp).as_posix()
+    doc = kit.read(run + '/receipts.json')
+    for row in doc['receipts']:
+        row['payload_binding'] = {'fill': 'source_payload_sha16', 'verify': 'source_payload_sha16'}
+    kit.write(run + '/receipts.json', doc)
+    result = record(kit, '--payload', str(path))
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert '0 receipt(s) added' in result.stdout
+    assert result.stdout.count('kept the stored row, which differs only in payload_binding; '
+                               'pass --supersede') == 3
+    assert kit.read(run + '/receipts.json') == doc
+
+
+def test_record_names_every_payload_path_it_cannot_use(kit):
+    path, pay = payload(kit, 'out', 'Answer.')
+    receipts(kit, path, pay)
+    outside = kit.write('elsewhere/fill-payload.json', pay)
+    missing = kit.run_dir() / 'fill-js-out' / 'gone.json'
+    result = record(kit, '--payload', str(path), str(outside), str(missing))
+    assert result.returncode == 3
+    assert f'{outside} (outside the run folder' in result.stderr
+    assert f'{missing} (not a file)' in result.stderr
+    assert not (kit.run_dir() / 'receipts.json').exists()
 
 
 @pytest.mark.parametrize('phrase', PHRASES)
@@ -199,25 +245,35 @@ def test_record_copies_fallback_save_diagnostics(kit):
     assert waits['save_waits'][0]['save_diag'] == diag
 
 
+RUN_DATA = ('requests=1 body_json=1 body_unparsed=0 body_none=0 keys_expected=2 keys_identified=0 '
+            'as_panel_field=0 as_data_field=0 as_uuid_field=0 as_prop=2 as_value=0 '
+            'reply_per_key=0 reply_success=1 reply_failure=0 reply_bare=0')
+
+
 @pytest.mark.parametrize('diag', [[], [{'method': 'PUT', 'path_template': '/runs/:id/data',
-                           'status': 200, 'count': 1, 'model_sync': False}] * 20])
+                           'status': 200, 'count': 1, 'model_sync': False}] * 20,
+                           [{'method': 'PUT', 'path_template': '/i/:id/v/2.0/api/student/courses/:id/runs/:id/data',
+                             'status': 200, 'count': 1, 'model_sync': False,
+                             'run_data': RUN_DATA}]])
 def test_record_report_export_accept_save_diagnostics(kit, diag):
     import subprocess
     import sys
     from fillkit import REPO
     run = kit.run_dir().relative_to(kit.tmp).as_posix()
     path, pay = payload(kit, run + '/fill-js', 'Answer.')
-    receipts(kit, path, pay, short=True)
+    # A fresh load at the payload's own time: a receipt may not predate its payload.
+    receipts(kit, path, pay, short=True, at=pay['generated_at'])
     fill = kit.read('fill.json')
-    fill.update(save_diag=diag, waited_ms=4000)
+    fill.update(save_diag=diag, waited_ms=4000, keys_weak=2, net_matched=0)
     kit.write('fill.json', fill)
     assert record(kit).returncode == 0
     kit.write(run + '/fill-notes.json', {'approval_mode': 'manual',
-              'started_at': '2000-01-01T00:00:00Z', 'ended_at': '2000-01-01T00:00:00Z'})
+              'started_at': pay['generated_at'], 'ended_at': pay['generated_at']})
     result = kit.run('make_fill_report.py', '--module', 'module.json', '--answers', 'answers.json')
     assert result.returncode == 0, result.stdout + result.stderr
     report = kit.read(run + '/fill-report.json')
     assert report['save_waits'][0]['save_diag'] == diag
+    assert (report['save_waits'][0]['keys_weak'], report['save_waits'][0]['net_matched']) == (2, 0)
     assert all(row['verified'] and row['result'] == 'filled' for row in report['items'])
     script = '''import sys
 from pathlib import Path
@@ -250,7 +306,8 @@ assert doc['save_waits'][0]['save_diag'] == __import__('json').loads(sys.argv[3]
         assert result.returncode == expected, result.stdout + result.stderr
 
 
-@pytest.mark.parametrize('mutation', ['extra', 'missing', 'method', 'path', 'status', 'count', 'sync', 'limit'])
+@pytest.mark.parametrize('mutation', ['extra', 'missing', 'method', 'path', 'status', 'count', 'sync', 'limit',
+                                      'run-data-content', 'run-data-object', 'run-data-negative'])
 def test_save_diagnostic_schema_rejects_invalid_rows(mutation):
     from fillkit import REPO
     import jsonschema
@@ -273,6 +330,12 @@ def test_save_diagnostic_schema_rejects_invalid_rows(mutation):
         row['count'] = 0
     elif mutation == 'sync':
         row['model_sync'] = 'false'
+    elif mutation == 'run-data-content':
+        row['run_data'] = RUN_DATA + ' answer=private'
+    elif mutation == 'run-data-object':
+        row['run_data'] = {'requests': 1}
+    elif mutation == 'run-data-negative':
+        row['run_data'] = RUN_DATA.replace('as_prop=2', 'as_prop=-1')
     rows = [row] * (21 if mutation == 'limit' else 1)
     assert list(jsonschema.Draft202012Validator(diag_schema).iter_errors(rows))
 

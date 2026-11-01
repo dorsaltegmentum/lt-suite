@@ -145,6 +145,23 @@ function fakeNavigation() {
   };
 }
 
+/* Lt gives every flow page a dataKey (the n of /run/page/<n>) and sets current() on the page it
+ * painted. A test that sets neither gets Lt's numbering without a Background page: content
+ * page k has dataKey k, and the page the URL's /page/<n> names is current. Tests of the route
+ * reader set both themselves. */
+function defaultRoutes(root, pathname) {
+  let pages;
+  try { pages = root && root.lessonFlowPages(); } catch (e) { return; }
+  if (!Array.isArray(pages)) return;
+  const content = pages.filter(p => !('reportInfoPanels' in p) && !('committed' in p && !('allPanels' in p)));
+  if (!pages.some(p => 'dataKey' in p)) content.forEach((p, i) => { p.dataKey = obs(i + 1); });
+  if (!pages.some(p => 'current' in p)) {
+    const m = String(pathname).match(/\/run\/page\/(\d+)\/?$/);
+    const val = v => (isObs(v) ? v() : v);
+    pages.forEach(p => { p.current = obs(!!m && content.includes(p) && Number(val(p.dataKey)) === Number(m[1])); });
+  }
+}
+
 async function runCapture(env, opts = {}) {
   const posts = [];
   const hellos = [];
@@ -153,6 +170,7 @@ async function runCapture(env, opts = {}) {
   const docs = {};
   const reply = opts.reply || ((name) => response(200, { ok: true, file: `${name}.json` }));
   const loc = env.location || { origin: ORIGIN, pathname: PAGE_PATH };
+  if (!env.noContext) defaultRoutes(env.root, loc.pathname);
   const nav = fakeNavigation();
   const listEl = { __el: true };
   const sandbox = {

@@ -13,6 +13,7 @@
     emit_fill.py check-verify --module M --check RECEIPT [...]
     emit_fill.py record    --module M --check RECEIPT [...] --verify RECEIPT
     emit_fill.py record    --module M --dialog RECEIPT
+    emit_fill.py repin     --module M --answers A [--payload F] [--anchors F]
     emit_fill.py calibrate --module M --answers A --item ITEM
     emit_fill.py dialog-args --module M --panel KEY
     emit_fill.py save-model-answer --module M --from RESULT
@@ -26,7 +27,10 @@ permanent degrade, an unmapped type, a page at or past the first door, a RAT pag
 emitted. It writes fill-payload.json (the HTML of each target, one <p> per segment or table
 cell) and plan.json (the plan `ltjs.py check-url --plan` reads), then runs every config
 [[text_cleaners]] entry with stage "fill-text" on the payload, so the hashes are taken from
-the text that is actually written. A cleaner may change `html` strings only.
+the text that is actually written. A cleaner may change `html` strings only. A page-kinds.json
+classified against other answers.json bytes refuses the payload, with or without a RAT
+candidate page: make_fill_report.py applies the same rule. When the run has no
+fill-notes.json yet, payload writes a template for make_fill_report.py.
 
 scripts: writes one body per call, `_fill-<module>-p<N>.js` for one page or
 `_fill-<module>-b<K>.js` for a batch, `_verify-<module>-p<N>.js` per call and
@@ -59,9 +63,14 @@ save waits to <run>/save-waits.json, and calibrates the origin:
     failed wait writes cross_page failed (one page per call); unwritten items make the
     trial inconclusive and the next scripts emit another;
   - any miss after a calibrated wait that claimed saved drops `save` too (back to the
-    fallback wait); a changed Lt client build drops the records and every pending ticket.
+    fallback wait); a changed Lt client build drops the records and every pending ticket;
+    a fill page with no build marker (stale_reason client-unknown) ran on the fallback
+    wait and changes no record.
   Records carry a format version; a record of another version, or a save record with no
-  write method and path template, counts as absent. Every
+  write method and path template, counts as absent. A save record bound to the c1
+  client_sig of 0.2.3 and earlier (every loaded script, page chunks included), or to no
+  client_sig, counts as absent too: `scripts` and `record` drop it and its cross_page record
+  once, with the reason in the history, and the origin calibrates again. Every
   change is written to the origin's history with its reason. With --dialog, a
   confirm_dialog.js receipt on the fallback wait whose one file-carrying request answered
   2xx records the dialog method and path template.
@@ -69,6 +78,16 @@ calibrate: an explicit one-item calibration: a payload and a script for that ite
 on the fallback wait whatever is recorded, with a `save` ticket. Success also clears a
 failed cross_page record; failure drops the save record and fails cross_page. Run it,
 verify from a fresh load, then `record`.
+
+repin: after answers.json changed since the payload (a builder rerun, a trimmed locator), checks
+that the capture's question_digest still matches the payload and that every job the payload
+holds rebuilds from the current answers.json to the same job content (job_digest: sha256 of
+the page, panel, text, table cells by row and column, selections and placements), then records the
+current answers.json sha256 in answers-repin.json beside the payload. make_fill_report.py
+accepts that record in place of the payload's answers pin only after it rebuilds every job
+the same way (any agent can write the record), and refuses on any difference. answers.json
+is read, never written. A RAT sheet payload is never re-pinned. Exit 0 re-pinned, 2 nothing changed, 3
+refused (it names each job whose draft changed).
 
 approve: records the user's words for one single-attempt item in the run's approvals.json
 (ltcore.approvals) and prints the approval_id that answers.json's
@@ -79,6 +98,7 @@ Refused before any script exists (exit 3):
   * a single-attempt item without single_attempt_approval, or with an approval that is
     missing from approvals.json, names another item or module, or is not single-attempt
   * answers for another module or run, or a draft whose question_digest no longer matches
+  * a page-kinds.json classified against other answers.json bytes
   * replace mode on anything but text and table items
   * a label placement with no location index, a label or bin that is not in the capture
   * an upload-and-annotate item becomes a TODO record: upload.js writes it, one panel at a time
@@ -290,6 +310,34 @@ def write_json(path: Path, doc) -> None:
         raise
 
 
+# The fill-notes.json payload writes when the run has none (shared/schemas/fill-notes.schema.json).
+# approval_mode stays null until the operator records how the browser tool was supervised;
+# started_at and ended_at default to the payload and receipt times in make_fill_report.py.
+NOTES_TEMPLATE = {"approval_mode": None, "items": {}, "user_decisions": [],
+                  "connection_events": [], "run_notes": []}
+
+
+def stale_page_kinds(path: Path, answers_sha256: str) -> str | None:
+    """The one page-kinds freshness rule for payload and report, or None when fresh.
+
+    A page-kinds.json that exists and was classified against other answers.json bytes is
+    stale, whether or not a page is a RAT candidate: classify runs before the payload, so
+    the report never meets a record the fill did not."""
+    path = Path(path)
+    if not path.is_file():
+        return None
+    fix = "run page_kinds.py classify --module <module.json> --answers <answers.json> --json"
+    try:
+        scan = json.loads(path.read_text(encoding="utf-8")).get("scan") or {}
+        got = scan.get("answers_sha256")
+    except (OSError, ValueError, AttributeError):
+        return f"page-kinds.json is unreadable ({path}); {fix}"
+    if got != answers_sha256:
+        return (f"page-kinds.json is stale for this answers.json; {fix} (classified against "
+                f"{str(got)[:16]}, answers.json is {answers_sha256[:16]})")
+    return None
+
+
 def parse_pages(spec: str | None) -> set[int] | None:
     if not spec:
         return None
@@ -393,6 +441,7 @@ def prior_hashes(path: str) -> tuple[str, dict]:
 
 def plan_fields(pl: dict, mod: dict) -> dict:
     """The plan subset check-url and the guard read, plus the page indexes never visited."""
+    from ltcore import ltjs  # noqa: PLC0415  (plan_fill imports it already)
     routes = {n.get("route") for n in pl["boundary_map"]["never_navigated"] if n.get("route")}
     never_pages = set(pl.get("report_pages") or [])
     for p in mod.get("pages", []):
@@ -402,6 +451,9 @@ def plan_fields(pl: dict, mod: dict) -> dict:
     return {
         "module_id": pl["module_id"], "origin": pl.get("origin"), "instance": pl.get("instance"),
         "course_id": pl.get("course_id"), "run_id": pl.get("run_id"),
+        # check-url and the guard trust page routes only from a capture with route_source.
+        # Both keys are always written, null allowed: a plan without route_source is refused.
+        "route_source": pl.get("route_source"), "route_refusal": ltjs.plan_route_refusal(pl),
         "stop_before_page": pl["stop_before_page"],
         "never_navigated": pl["never_navigated"],
         "never_navigated_pages": sorted(never_pages),
@@ -434,6 +486,9 @@ def build_jobs(mod: dict, ans: dict, args, cfg, *, approvals_path: Path | None,
             notes.append(f"{iid}: single-attempt item approved by the user ({rec['approval_id']}); "
                          f"written through the model only, never submitted")
     answer_hash = sha256(Path(args.answers))
+    stale = stale_page_kinds(_open_store(args, cfg).run_dir(mod["module_id"]) / "page-kinds.json", answer_hash)
+    if stale:
+        raise Refusal(stale)
     record = page_kinds.load_current(mod, cfg, ans, data_dir=getattr(args, "data_dir", None), answers_sha256=answer_hash)
     if record is None and any(page_kinds.is_candidate(p, rat.policy_from_config(cfg)) for p in mod["pages"]):
         raise Refusal("rat-record-stale: run page_kinds.py classify --json")
@@ -879,6 +934,11 @@ def cmd_payload(args, cfg) -> int:
     dest = out / ("replace-payload.json" if pay["mode"] == "replace" else "fill-payload.json")
     _write_payload(pay, dest, cfg, args.force)
     pay = load(dest)
+    notes = st.run_dir(mod["module_id"]) / "fill-notes.json"
+    if not notes.exists():
+        write_json(notes, NOTES_TEMPLATE)
+        print(f"fill notes template: {notes} (set approval_mode; add item notes, connection_events "
+              f"and run_notes as the run goes; make_fill_report.py --check-notes lists problems)")
     n = sum(len(p["jobs"]) for p in pay["pages"].values())
     print(f"{dest}: {n} job(s) on page(s) {', '.join(k for k, v in pay['pages'].items() if v['jobs']) or 'none'}"
           f" | {len(pay['todo'])} todo | {len(pay['refused'])} refused | {len(pay['not_emitted'])} not emitted")
@@ -900,6 +960,9 @@ PASS_RESULTS = {"written", "replaced"}
 FAIL_RESULTS = {"write-mismatch", "partial", "write-not-visible", "write-threw", "save-error"}
 # Methods that never carry a save; a save record naming one has no write endpoint.
 NON_WRITE = {"GET", "HEAD", "OPTIONS"}
+# The client_sig of 0.2.3 and earlier: every script element, page chunks included, so it changed
+# between pages of one Lt build. LtNet now signs the core bundles ("c2-").
+OLD_CLIENT_SIG = re.compile(r"^c1-\d+-[0-9a-f]{8}$")
 
 
 def has_endpoint(method, tpl) -> bool:
@@ -927,11 +990,44 @@ def _history(state: dict, event: str, detail: str) -> None:
     del h[:-20]
 
 
+def old_binding(rec) -> str | None:
+    """Why a save record of this format version predates the core-bundle client_sig, or None
+    when it does not. A record of another version is set aside by its version alone."""
+    if not isinstance(rec, dict) or rec.get("version") != CAL_VERSION:
+        return None
+    sig = rec.get("client_sig")
+    if sig is None:
+        return "it names no Lt client build"
+    if isinstance(sig, str) and OLD_CLIENT_SIG.match(sig):
+        return (f"it is bound to {sig}, the old signature over every loaded script, which page "
+                f"chunks change within one Lt build")
+    return None
+
+
+def retire_old_records(state) -> str | None:
+    """Drop a save record bound to the old client_sig (old_binding), the cross_page record and
+    the pending cross_page tickets that rest on it, once, with the reason in the origin's
+    history. Returns the message, or None when nothing changed."""
+    if not isinstance(state, dict):
+        return None
+    why = old_binding(state.get("save"))
+    if why is None:
+        return None
+    state.pop("save", None)
+    state.pop("cross_page", None)
+    if isinstance(state.get("pending"), list):
+        state["pending"] = [t for t in state["pending"] if not (isinstance(t, dict) and t.get("kind") == "cross_page")]
+    _history(state, "client-sig-retired", f"save record dropped: {why}; the origin calibrates again "
+                                           f"on the core-bundle signature")
+    return f"the save record was dropped ({why}); the origin calibrates again"
+
+
 def calibration_state(cal: dict, origin: str | None) -> tuple[dict | None, dict | None, list[str]]:
     """(save record, cross_page record, notes) for an origin. A record of another format
     version counts as absent, so the origin calibrates again. So does a save record with no
     write endpoint (method and path template): LtNet would run the fallback rule on it, and
-    a batch would refuse it."""
+    a batch would refuse it. So does a save record bound to the old client_sig (old_binding),
+    with the cross_page record proved on it."""
     state = cal.get(origin or "", {}) if isinstance(cal, dict) else {}
     notes, out = [], []
     for name in ("save", "cross_page"):
@@ -944,6 +1040,10 @@ def calibration_state(cal: dict, origin: str | None) -> tuple[dict | None, dict 
             notes.append(f"the save record for {origin} ({rec.get('source')!r}) names no write method and "
                          f"path template; it is ignored and the origin calibrates again")
             rec = None
+        if name == "save" and rec is not None and old_binding(rec):
+            notes.append(f"the save record for {origin} is ignored ({old_binding(rec)}); "
+                         f"the origin calibrates again")
+            return None, None, notes
         out.append(rec)
     return out[0], out[1], notes
 
@@ -1044,11 +1144,21 @@ def cfg_base(pay: dict, sw: dict) -> dict:
             "source_payload_sha16": (pay.get("_source_payload_sha256") or "")[:16]}
 
 
+def background_page(pay: dict) -> int | None:
+    """The plan's Background page: the flow page whose url is /run/background. A plan maps
+    that url only from measured routes, so a refused plan has none."""
+    for fp in (pay.get("plan") or {}).get("flow_pages") or []:
+        url = fp.get("url") if isinstance(fp, dict) else None
+        if isinstance(url, str) and url.split("?")[0].split("#")[0].rstrip("/").endswith("/run/background"):
+            return fp.get("page_index")
+    return None
+
+
 def cfg_page(pay: dict, sw: dict, page: str, pg: dict, ticket: str | None = None) -> dict:
     c = cfg_base(pay, sw)
     if ticket:
         c["ticket"] = ticket
-    c.update({"page": int(page), "title": pg.get("title"),
+    c.update({"page": int(page), "title": pg.get("title"), "background_page": background_page(pay),
               "single_attempt_keys": pg.get("single_attempt_keys", []),
               "single_attempt_locked": pg.get("single_attempt_locked", []),
               "todo": [{"item": t["item"], "kind": t["kind"]} for t in pg.get("todo", [])]})
@@ -1174,8 +1284,10 @@ def group_pages(pay: dict, requested: int, cap: int, save_rec, cross, only_singl
 
 
 def render_script(path: Path, *, form: str | None, stub: bool | None, cfg, plan: dict | None,
-                  out_dir: str | None, runner_args: dict | None = None) -> dict:
-    """Wrap a body with ltjs.py (guard, save watcher, form, stub)."""
+                  out_dir: str | None, runner_args: dict | None = None,
+                  data_dir: str | None = None) -> dict:
+    """Wrap a body with ltjs.py (guard, save watcher, form, stub). ``data_dir`` is where a
+    configured body server finds the runner body (<data>/js-bodies)."""
     try:
         from ltcore import ltjs  # noqa: PLC0415
     except ImportError as e:
@@ -1185,9 +1297,10 @@ def render_script(path: Path, *, form: str | None, stub: bool | None, cfg, plan:
         use_stub = ltjs.default_form(cfg)[1] if stub is None else stub
         if use_stub and runner_args is not None:
             return ltjs.render_fill_call(str(BROWSER / "fill_runner.js"), args=runner_args,
-                                        form=form, net=True, plan=plan, cfg=cfg, out_dir=out_dir)
+                                        form=form, net=True, plan=plan, cfg=cfg, out_dir=out_dir,
+                                        data_dir=data_dir)
         return ltjs.render(str(path), form=form, stub=stub, net=True, plan=plan, cfg=cfg,
-                           out_dir=out_dir)
+                           out_dir=out_dir, data_dir=data_dir)
     except Exception as e:  # ltjs.RenderRefused and anything else
         raise Refusal(f"ltjs.py refused to render {path.name}: {e}")
 
@@ -1208,7 +1321,12 @@ def write_scripts(pay: dict, out: Path, ppath: Path, cfg, st, *, requested: int,
     origin = pay.get("origin")
     prefix = prefix or ("_replace" if pay["mode"] == "replace" else "_fill")
     cal = load_calibration(st.calibration_path)
+    retired = retire_old_records(cal.get(origin)) if origin else None
+    if retired:
+        write_json(st.calibration_path, cal)
     save_rec, cross, notes = calibration_state(cal, origin)
+    if retired:
+        notes.insert(0, f"{origin}: {retired}")
     if force_uncalibrated:
         save_rec, cross = None, None
     sw, swnotes = save_wait(cfg, save_rec)
@@ -1251,7 +1369,8 @@ def write_scripts(pay: dict, out: Path, ppath: Path, cfg, st, *, requested: int,
             rec["ticket"] = ticket
         if render:
             info = render_script(path, form=form, stub=stub, cfg=cfg, plan=plan, out_dir=out_dir,
-                                 runner_args=runner_args if not lib_url else None)
+                                 runner_args=runner_args if not lib_url else None,
+                                 data_dir=str(st.data_dir))
             if info.get("payload"):
                 rec["runner_payload"] = info["payload"]
             rec["rendered"] = info.get("path")
@@ -1512,7 +1631,7 @@ def cmd_check(args,cfg):
         source=out/f'_check-{mid}-p{p}.js'
         source.write_text(LIB.read_text(encoding='utf-8')+ '\n'+ _check_body()+'\nreturn await LtCheck.run('+json.dumps(c)+','+json.dumps(js)+');\n',encoding='utf-8', newline="\n")
         if not args.no_render:
-            r=render_script(source,form=args.form,stub=True if args.stub else False if args.no_stub else None,cfg=cfg,plan=checkplan,out_dir=str(out),runner_args={"method":"check","cfg":c,"jobs":js})
+            r=render_script(source,form=args.form,stub=True if args.stub else False if args.no_stub else None,cfg=cfg,plan=checkplan,out_dir=str(out),runner_args={"method":"check","cfg":c,"jobs":js},data_dir=str(st.data_dir))
             print(json.dumps(r) if r.get("payload") else r["path"] if "path" in r else r)
         else:
             print(source)
@@ -1547,7 +1666,7 @@ def cmd_check_verify(args,cfg):
     if not args.no_render:
         info = render_script(source,form=args.form,stub=True if args.stub else False if args.no_stub else None,
                              cfg=cfg,plan=load(out/'check-plan.json'),out_dir=str(out),
-                             runner_args={"method":"checkVerify","cfg":c,"jobs":pages})
+                             runner_args={"method":"checkVerify","cfg":c,"jobs":pages},data_dir=str(st.data_dir))
         print(json.dumps(info) if info.get("payload") else info)
     else:
         print(source)
@@ -1587,7 +1706,9 @@ def record_check(args,cfg,mod,st):
                 drop=True
     run=st.run_dir(mid)
     _append_unique(run/'check-answer.json','checks',ledger,lambda r:r['receipt_sha256'])
-    save_receipts(run, records, getattr(args, 'supersede', False))
+    _, kept = save_receipts(run, records, getattr(args, 'supersede', False))
+    for line in kept:
+        print(f'  {line}')
     if drop:
         origin=origin_of(mod['source_url']);cal=load_calibration(st.calibration_path);state=cal.get(origin,{})
         state.pop('save',None)
@@ -1651,8 +1772,10 @@ def _payload_jobs(paths: list[Path]) -> dict[str, dict]:
     return jobs
 
 
-def payload_candidates(st, mid, explicit):
-    """Collect existing payload files while keeping every candidate inside this run."""
+def payload_candidates(st, mid, explicit, dropped=None):
+    """Collect existing payload files while keeping every candidate inside this run.
+
+    Each explicit path left out is appended to `dropped` with its reason, when given."""
     run = st.run_dir(mid).resolve()
     folder = st.fill_js_dir(mid)
     paths = [folder / name for name in ("fill-payload.json", "replace-payload.json", "calibrate-payload.json")]
@@ -1667,14 +1790,22 @@ def payload_candidates(st, mid, explicit):
                 paths.append(path if path.is_absolute() else manifest.parent / path)
         except (OSError, ValueError, TypeError, AttributeError, RuntimeError):
             continue
+    named = {str(p) for p in explicit or []}
     candidates = []
     for path in paths:
+        why = None
         try:
             resolved = path.resolve()
-            if resolved.is_relative_to(run) and resolved.is_file() and resolved not in candidates:
+            if not resolved.is_relative_to(run):
+                why = f"outside the run folder {run}"
+            elif not resolved.is_file():
+                why = "not a file"
+            elif resolved not in candidates:
                 candidates.append(resolved)
         except (OSError, RuntimeError):
-            continue
+            why = "unresolvable"
+        if why and dropped is not None and str(path) in named:
+            dropped.append(f"{path} ({why})")
     return candidates
 
 
@@ -1682,7 +1813,9 @@ def bind_payload(receipt, paths, *, rat_receipt=False):
     """Bind one receipt using its full hash or an unambiguous short hash."""
     full = receipt.get("source_payload_sha256")
     short = receipt.get("source_payload_sha16")
-    redacted = full in (None, "", "[BLOCKED: Base64 encoded data]")
+    # Receipts after 0.2.3 return the 16-hex prefix only. An output filter that blocks a value
+    # writes "[BLOCKED: <why>]" over it, whatever the why.
+    redacted = full in (None, "") or (isinstance(full, str) and full.startswith("[BLOCKED:"))
     field = "source_payload_sha16" if redacted else "source_payload_sha256"
     value = short if redacted else full
     matches = {}
@@ -1708,12 +1841,17 @@ def bind_payload(receipt, paths, *, rat_receipt=False):
 
 
 def save_receipts(run_dir, rows, supersede):
-    """Refuse conflicting keys unless replacement preserves the same verification receipt."""
+    """Refuse conflicting keys unless replacement preserves the same verification receipt.
+
+    Returns (added, kept). kept names each stored row that differs from its new row in
+    fields other than the hashes and stays, because --supersede was not given. A stored row
+    without verify_receipt_sha256 is never superseded: nothing shows that it came from
+    the same verify receipt, and a new fresh-load verify gives a later receipt instead."""
     path = run_dir / "receipts.json"
     doc = load(path) if path.is_file() else {"receipts": []}
     key = lambda row: (row["item_id"], row["observed_at"])
     existing = {key(row): index for index, row in enumerate(doc["receipts"])}
-    replaced, added = [], 0
+    replaced, kept, added = [], [], 0
     for row in rows:
         index = existing.get(key(row))
         if index is None:
@@ -1724,15 +1862,24 @@ def save_receipts(run_dir, rows, supersede):
         old = doc["receipts"][index]
         if old == row:
             continue
-        conflict = any(old.get(k) != row.get(k) for k in ("expected_hash", "observed_hash"))
+        changed = sorted(k for k in set(old) | set(row) if old.get(k) != row.get(k))
+        conflict = any(k in changed for k in ("expected_hash", "observed_hash"))
+        prior = old.get("verify_receipt_sha256")
+        legacy = (f"; the stored row has no verify_receipt_sha256, so record a new fresh-load "
+                  f"verify instead (the latest receipt decides the item)" if not prior else "")
         if not supersede:
             if conflict:
-                raise Refusal(f"{row['item_id']}: receipt key clashes with different hashes; use record --supersede")
+                raise Refusal(f"{row['item_id']}: receipt key clashes with different hashes; use record "
+                              f"--supersede for a row from this verify receipt{legacy}")
+            kept.append(f"{row['item_id']} at {row['observed_at']}: kept the stored row, which differs "
+                        f"only in {', '.join(changed)}; pass --supersede to replace it")
             continue
-        prior = old.get("verify_receipt_sha256")
-        if prior and prior != row["verify_receipt_sha256"]:
+        if not prior:
+            raise Refusal(f"{row['item_id']} at {row['observed_at']}: --supersede refused{legacy}")
+        if prior != row["verify_receipt_sha256"]:
             raise Refusal(f"{row['item_id']}: --supersede requires the same verify receipt")
-        replaced.append({"replaced": old, "reason": "record --supersede corrected payload binding for the same verify receipt",
+        replaced.append({"replaced": old, "reason": f"record --supersede changed {', '.join(changed)} "
+                                                    f"for the same verify receipt",
                          "verify_receipt_sha256": row["verify_receipt_sha256"]})
         doc["receipts"][index] = row
         added += 1
@@ -1742,7 +1889,7 @@ def save_receipts(run_dir, rows, supersede):
         archive["receipts"].extend(replaced)
         write_json(archive_path, archive)
     write_json(path, doc)
-    return added
+    return added, kept
 
 
 def _append_unique(path: Path, key: str, rows: list[dict], ident) -> int:
@@ -1829,14 +1976,20 @@ def _num(v) -> int | None:
 
 
 def _unidentified(f: dict) -> str:
-    """'' or why keys of a call had no identified save: pending keys, and the Backbone saves
-    LtNet saw through a transport it could not identify (receipt model_unidentified)."""
+    """'' or why keys of a call had no identified save: pending keys, the Backbone saves
+    LtNet saw through a transport it could not identify (receipt model_unidentified), and the
+    keys shorter than 6 characters, which only LtNet's typed run-data match can save
+    (keys_weak, with net_matched, the requests that named a key)."""
     pend, mu = _num(f.get("keys_pending")), _num(f.get("model_unidentified"))
+    weak, matched = _num(f.get("keys_weak")), _num(f.get("net_matched"))
     if not pend:
         return ""
     s = f"{pend} of {_num(f.get('keys_total')) or '?'} key(s) had no identified save"
     if mu:
         s += f" ({mu} Backbone save(s) through a transport LtNet could not identify)"
+    if weak:
+        s += (f" ({weak} key(s) shorter than 6 characters, saved only by a typed run-data match; "
+              f"{matched if matched is not None else 'unknown'} request(s) named a key)")
     return s
 
 
@@ -1886,11 +2039,14 @@ def calibrate_from(state: dict, pending: dict, fpath: Path, f: dict, vpath: Path
     Returns the messages to print. Rules, in order:
       - a changed Lt client build (the fill ran on a stale record, or the verify saw another
         build) drops the save record, a passed cross_page record and every pending ticket;
+        a fill page without a build marker (stale_reason client-unknown) is not a change:
+        that call ran on the fallback wait and the records stay;
       - a receipt that echoes a pending ticket of this module uses it up;
       - a save record that no longer holds (the fill receipt names stale_reason
         no-endpoint) is dropped with a passed cross_page record and every pending ticket;
       - a `save` ticket proves the save wait only when the call ran on the fallback wait in
-        one document, the verify ran in another document on the same build, every ticket item
+        one document, the verify ran in another document on the same build (both receipts
+        carry the core-bundle client_sig, not the old c1 one), every ticket item
         was written, every written item reads ok, and LtNet identified the save of every key
         of the call on one write endpoint (a Backbone sync on a request LtNet observed, or a
         keyed request). The record keeps that request's source, method and path template.
@@ -1916,6 +2072,8 @@ def calibrate_from(state: dict, pending: dict, fpath: Path, f: dict, vpath: Path
         msg.append(f"ticket {tid} belongs to module {ticket.get('module_id')}; calibration unchanged")
         return msg
     fsig, vsig = f.get("client_sig"), ver.get("client_sig")
+    # No build marker on the fill page: the record was set aside for this call only.
+    unknown = bool(f.get("calibration_stale")) and f.get("stale_reason") == "client-unknown"
     if f.get("calibration_stale") and f.get("stale_reason") == "no-endpoint" and not (fsig and vsig and fsig != vsig):
         state.pop("save", None)
         if (state.get("cross_page") or {}).get("ok"):
@@ -1927,7 +2085,7 @@ def calibrate_from(state: dict, pending: dict, fpath: Path, f: dict, vpath: Path
         msg.append("the save record names no write endpoint: calibration records and pending tickets "
                    "dropped; the next scripts calibrate again")
         return msg
-    if f.get("calibration_stale") or (fsig and vsig and fsig != vsig):
+    if (f.get("calibration_stale") and not unknown) or (fsig and vsig and fsig != vsig):
         state.pop("save", None)
         if (state.get("cross_page") or {}).get("ok"):
             state.pop("cross_page", None)
@@ -1938,6 +2096,9 @@ def calibrate_from(state: dict, pending: dict, fpath: Path, f: dict, vpath: Path
         msg.append("the Lt client build changed: calibration records and pending tickets dropped; "
                    "the next scripts calibrate again")
         return msg
+    if unknown:
+        msg.append(f"{fpath.name}: the fill page showed no Lt build marker (no navigation or resource "
+                   f"timing), so it ran on the fallback wait; calibration records kept")
     if not f.get("ok"):
         _history(state, "receipt-fatal", str(f.get("fatal")))
         msg.append(f"{fpath.name}: the fill did not run ({f.get('fatal')}); calibration unchanged")
@@ -1985,6 +2146,8 @@ def calibrate_from(state: dict, pending: dict, fpath: Path, f: dict, vpath: Path
         hard.append("the verify ran in the document that filled (same doc_id)")
     if not (fsig and vsig):
         hard.append("a receipt carries no client_sig (Lt client build)")
+    elif any(OLD_CLIENT_SIG.match(str(sig)) for sig in (fsig, vsig)):
+        hard.append("a receipt carries the old client_sig over every loaded script; emit the scripts again")
     unwritten = c["unwritten"]
 
     if ticket["kind"] == "save":
@@ -2085,7 +2248,11 @@ def cmd_record(args, cfg) -> int:
         raise Refusal(f"{vpath}: fresh_load is not true. A verify in the document that filled proves "
                       f"nothing about the server; load the page again and run the _verify file there")
 
-    ppaths = payload_candidates(st, mid, args.payload)
+    dropped = []
+    ppaths = payload_candidates(st, mid, args.payload, dropped)
+    if dropped:
+        raise Refusal("--payload path(s) not used: " + "; ".join(dropped) + ". record binds only "
+                      "payload files inside the run folder; nothing recorded")
     if any(rat.within(p, root) for p in ppaths for _, root in rat.effective_roots(rat.policy_from_config(cfg))):
         raise Refusal("RAT receipt binding: payload path is inside a quarantined RAT root")
     rat_pages = {p["page_index"] for p in mod["pages"]
@@ -2109,7 +2276,8 @@ def cmd_record(args, cfg) -> int:
                       "keys_total": f.get("keys_total"), "keys_saved": f.get("keys_saved"),
                       "keys_pending": f.get("keys_pending"), "save_errors": f.get("save_errors"),
                       "calibrated": bool(f.get("calibrated")), "ok": bool(f.get("ok")),
-                      "fatal": f.get("fatal"), **({"save_diag": f["save_diag"]} if "save_diag" in f else {})})
+                      "fatal": f.get("fatal"), **({"save_diag": f["save_diag"]} if "save_diag" in f else {}),
+                      **{k: f[k] for k in ("keys_weak", "net_matched") if _num(f.get(k)) is not None}})
         for rec in f.get("items") or []:
             if rec.get("result") not in WRITE_RESULTS:
                 continue
@@ -2135,13 +2303,15 @@ def cmd_record(args, cfg) -> int:
                                  **metadata})
 
     run_dir = st.run_dir(mid)
-    nr = save_receipts(run_dir, receipts, getattr(args, "supersede", False))
+    nr, kept = save_receipts(run_dir, receipts, getattr(args, "supersede", False))
     nw = _append_unique(run_dir / "save-waits.json", "save_waits", waits,
                         lambda r: r["receipt_sha256"])
     _append_unique(run_dir / 'fill-results.json', 'items',
         [{'item_id':r['item'], 'result':r.get('result'), 'receipt_sha256':sha256(p), **{k:r[k] for k in ('pool_h','index_state') if k in r}} for p,f in fills for r in f.get('items',[])],
         lambda r:(r['item_id'],r['receipt_sha256']))
     print(f"{run_dir / 'receipts.json'}: {nr} receipt(s) added; {run_dir / 'save-waits.json'}: {nw} wait(s) added")
+    for line in kept:
+        print(f"  {line}")
 
     origin = origin_of(mod.get("source_url"))
     if not origin:
@@ -2149,8 +2319,9 @@ def cmd_record(args, cfg) -> int:
     else:
         cal = load_calibration(st.calibration_path)
         state = cal.setdefault(origin, {})
+        retired = retire_old_records(state)
         pending = {t["ticket"]: t for t in state.get("pending", []) if isinstance(t, dict) and t.get("ticket")}
-        msg = []
+        msg = [retired] if retired else []
         for p, f in fills:
             msg += calibrate_from(state, pending, p, f, vpath, ver, vrows, mid, cfg)
         state["pending"] = list(pending.values())
@@ -2159,6 +2330,117 @@ def cmd_record(args, cfg) -> int:
             print(f"{origin}: {m}")
     if misses:
         print("not ok in the fresh load: " + "; ".join(misses))
+    return 0
+
+
+# ---- repin: answers.json changed after the payload, every written draft unchanged ----------------
+REPIN_FILE = "answers-repin.json"
+
+
+def repin_record(payload_path: Path, payload_sha256: str, pinned: str, current: str) -> dict | None:
+    """The answers-repin.json entry beside `payload_path` that moves this payload's answers pin
+    from `pinned` to `current`, or None."""
+    path = Path(payload_path).parent / REPIN_FILE
+    if not path.is_file():
+        return None
+    try:
+        rows = load(path).get("repins") or []
+    except (Refusal, AttributeError):
+        return None
+    return next((r for r in reversed(rows) if isinstance(r, dict)
+                 and (r.get("payload") or {}).get("sha256") == payload_sha256
+                 and r.get("from_answers_sha256") == pinned
+                 and (r.get("to_answers") or {}).get("sha256") == current), None)
+
+
+# Job keys that are not what a script writes: hashes derived from the job, the replace guard
+# and the approval record id.
+_NOT_CONTENT = frozenset({"h", "oh", "approval_id"})
+
+
+def job_content(page, job: dict) -> dict:
+    """What a job writes and where: its page and every job field except derived hashes, the
+    replace guard and the approval id, with table cells ordered by row and column. The text
+    after the configured cleaners, the panel and plugin keys, each cell's row and column,
+    select indexes and texts, and every placement field all take part."""
+    out = {k: v for k, v in job.items() if k not in _NOT_CONTENT}
+    if isinstance(job.get("cells"), list):
+        cells = [{k: v for k, v in c.items() if k not in _NOT_CONTENT} if isinstance(c, dict) else c
+                 for c in job["cells"]]
+        out["cells"] = sorted(cells, key=lambda c: json.dumps([c.get("row"), c.get("col")] if isinstance(c, dict) else [c]))
+    out["page"] = str(page)
+    return out
+
+
+def job_digest(page, job: dict) -> str:
+    """sha256 of job_content() as canonical JSON. repin and the report decide that a rebuilt
+    job equals the written one by this digest, never by expected_hash: that 32-bit djb2 value
+    collides, and a table's hash drops each cell's row and column."""
+    text = json.dumps(job_content(page, job), sort_keys=True, ensure_ascii=False, separators=(",", ":"))
+    return hashlib.sha256(text.encode("utf-8")).hexdigest()
+
+
+def repin_changed(mod: dict, ans: dict, pay: dict, *, module_path, answers_path, cfg,
+                  data_dir=None, anchors=None, approvals=None) -> list[str]:
+    """The items of `pay` whose jobs no longer rebuild from `answers_path` to the same job
+    content: build_jobs on the current answers, the configured text cleaners, then
+    job_digest() per job against the payload's own job. cmd_repin runs it before it records a
+    repin; make_fill_report.py runs it again before it trusts one, because answers-repin.json
+    is a file any agent can write. Raises Refusal when the jobs cannot be rebuilt at all."""
+    want = {j["item"]: job_digest(pk, j) for pk, pg in pay.get("pages", {}).items() for j in pg.get("jobs", [])}
+    again = argparse.Namespace(module=str(module_path), answers=str(answers_path), data_dir=data_dir,
+                               anchors=anchors, approvals=approvals, pages=None, exclude=[],
+                               replace=False, against=None, include_rat=False)
+    fresh = build_jobs(mod, ans, again, cfg, approvals_path=_approvals_path(again, _open_store(again, cfg), mod),
+                       only_items=set(want))
+    with tempfile.TemporaryDirectory(prefix="lt-fill-repin-") as td:
+        fresh, _ = run_text_cleaners(cfg, fresh, Path(td))
+    have = {j["item"]: job_digest(pk, j) for pk, pg in fresh["pages"].items() for j in pg["jobs"]}
+    return sorted(i for i in want if have.get(i) != want[i])
+
+
+def cmd_repin(args, cfg) -> int:
+    mod, ans = load_module(args.module), load(args.answers)
+    st = _open_store(args, cfg)
+    mid = mod["module_id"]
+    ppath = Path(args.payload) if args.payload else st.fill_js_dir(mid) / "fill-payload.json"
+    pay = load(ppath)
+    if pay.get("schema") != PAYLOAD_SCHEMA or pay.get("module_id") != mid or pay.get("run_id") != mod["run_id"]:
+        raise Refusal(f"{ppath}: not a {PAYLOAD_SCHEMA} payload for {mid}")
+    digest = question_digest(mod)
+    if (pay.get("module") or {}).get("question_digest") != digest:
+        raise Refusal("question digest changed since the payload: the receipts verify answers to "
+                      "other questions; capture, draft and fill again")
+    check_binding(mod, ans)
+    jobs = [j for pg in pay.get("pages", {}).values() for j in pg.get("jobs", [])]
+    if pay.get("source_page_kinds") or any(j.get("source") == "rat-sheet" for j in jobs):
+        raise Refusal("a RAT payload is never re-pinned; reclassifying needs new fill and "
+                      "fresh-load receipts")
+    pinned, current = (pay.get("answers") or {}).get("sha256"), sha256(Path(args.answers))
+    if pinned == current:
+        print(f"{ppath}: answers.json is unchanged since the payload ({current[:16]}); nothing to re-pin")
+        return 2
+    approvals = str(Path(args.approvals).resolve()) if getattr(args, "approvals", None) else None
+    anchors = str(Path(args.anchors).resolve()) if args.anchors else None
+    changed = repin_changed(mod, ans, pay, module_path=args.module, answers_path=args.answers, cfg=cfg,
+                            data_dir=args.data_dir, anchors=anchors, approvals=approvals)
+    if changed:
+        raise Refusal(f"{len(changed)} job(s) no longer rebuild to the payload's job content: "
+                      f"{', '.join(changed)}. What they wrote, or where, differs from answers.json; "
+                      f"build a new payload, fill and verify those items from a fresh load. "
+                      f"Nothing re-pinned")
+    dest = ppath.parent / REPIN_FILE
+    doc = load(dest) if dest.is_file() else {"repins": []}
+    doc.setdefault("repins", []).append({
+        "payload": {"path": str(ppath.resolve()), "sha256": sha256(ppath)},
+        "from_answers_sha256": pinned,
+        "to_answers": {"path": str(Path(args.answers).resolve()), "sha256": current},
+        "question_digest": digest, "jobs_checked": len(jobs),
+        # make_fill_report.py rebuilds every job again with these before it trusts the record.
+        "anchors": anchors, "approvals": approvals, "recorded_at": now_utc()})
+    write_json(dest, doc)
+    print(f"{dest}: payload re-pinned from answers {str(pinned)[:16]} to {current[:16]}; "
+          f"{len(jobs)} job(s) rebuild to the same job content; answers.json was not written")
     return 0
 
 
@@ -2397,6 +2679,13 @@ def main(argv=None) -> int:
     r.add_argument("--check", nargs="+", help="check receipt(s), preserving historical policy")
     r.add_argument("--dialog", help="a confirm_dialog.js receipt, to calibrate the dialog wait")
     _common(r)
+    q = sub.add_parser("repin", help="move a payload's answers.json pin when no written draft changed")
+    q.add_argument("--module", required=True)
+    q.add_argument("--answers", required=True, help="the current answers.json; read, never written")
+    q.add_argument("--payload", help="default <data>/runs/<module_id>/fill-js/fill-payload.json")
+    q.add_argument("--anchors", help="the --anchors file the payload used, for labelling items")
+    q.add_argument("--approvals")
+    _common(q)
     c = sub.add_parser("calibrate", help="a one-item payload and script on the fallback wait")
     c.add_argument("--module", required=True)
     c.add_argument("--answers", required=True)
@@ -2431,7 +2720,8 @@ def main(argv=None) -> int:
         return 3
     try:
         return {"check":cmd_check,"check-verify":cmd_check_verify,"payload": cmd_payload, "scripts": cmd_scripts, "approve": cmd_approve,
-                "record": cmd_record, "calibrate": cmd_calibrate, "dialog-args": cmd_dialog_args,
+                "record": cmd_record, "repin": cmd_repin, "calibrate": cmd_calibrate,
+                "dialog-args": cmd_dialog_args,
                 "save-model-answer": cmd_save_model_answer, "serve": cmd_serve,
                 "djb2": cmd_djb2}[args.cmd](args, cfg)
     except ConfigRefusal as e:

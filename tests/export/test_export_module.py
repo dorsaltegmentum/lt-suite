@@ -8,6 +8,7 @@ formats, titles that try to leave the pages folder, the run record and the exit 
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import sys
 from pathlib import Path
@@ -119,6 +120,28 @@ def test_legacy_permission_field_is_dropped_with_one_note(run, args, fixtures, t
     rc, out, err = run(*argv)
     assert rc == 0, err
     assert err.count("dropped legacy field(s): permission") == 1
+
+
+@pytest.mark.parametrize("module_id", ["c1-r106", "c1-r101"], ids=["checkpoint", "no-boundary"])
+def test_a_capture_without_route_source_still_exports(run, args, fixtures, tmp_path, module_id):
+    # Navigation refuses a capture without route_source; export never reads routes. The first
+    # page is titled "Pre-reading", the shape that slipped past the old title heuristic.
+    module = json.loads((fixtures / "modules" / f"module-{module_id}.json").read_text(encoding="utf-8"))
+    assert "route_source" not in module
+    module["pages"][0]["title"] = "Pre-reading"
+    path = tmp_path / "legacy" / "modules" / f"module-{module_id}.json"
+    path.parent.mkdir(parents=True)
+    path.write_text(json.dumps(module), encoding="utf-8", newline="\n")
+    answers = json.loads((fixtures / "answers" / f"answers-{module_id}.json").read_text(encoding="utf-8"))
+    answers["source_module"]["sha256"] = hashlib.sha256(path.read_bytes()).hexdigest()
+    apath = tmp_path / "legacy" / "answers" / f"answers-{module_id}.json"
+    apath.parent.mkdir()
+    apath.write_text(json.dumps(answers), encoding="utf-8", newline="\n")
+    argv = args(module_id, answers=False, fill=False) + ["--answers", apath]
+    argv[argv.index("--module") + 1] = path
+    rc, out, err = run(*argv)
+    assert rc == 0, err
+    assert (tmp_path / "out" / "module-page.md").is_file()
 
 
 # ------------------------------------------------------------------ rails on inputs

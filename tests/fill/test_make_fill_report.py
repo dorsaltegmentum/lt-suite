@@ -57,7 +57,9 @@ def test_a_valid_report_lists_the_weak_pages(rep):
     assert "fallback pages: 2 " in r.stdout
     assert "unconfirmed pages: 3, 4 " in r.stdout
     rows = {row["item_id"]: row for row in doc["items"]}
-    assert rows["p2-11"]["result"] == "filled" and rows["p2-11"]["verified"] is True
+    # The c1-r102 receipts carry no source_payload: legacy receipts never verify.
+    assert (rows["p2-11"]["result"], rows["p2-11"]["verified"]) == ("filled-unverified", False)
+    assert rows["p2-11"]["receipt"]["binding"] == "unbound-legacy"
     assert "fallback wait" in rows["p2-11"]["stopped_reason"]
     assert "unconfirmed" in rows["p4-31"]["stopped_reason"]
     assert [w["save_signal"] for w in doc["save_waits"]] == ["fallback", "unconfirmed"]
@@ -72,11 +74,15 @@ def test_a_receipt_whose_hashes_differ_is_failed(rep):
 
 
 @pytest.mark.parametrize("mode,code", [("manual", 0), ("auto", 1), ("skip-all", 1)])
-def test_approval_mode_values(rep, mode, code):
-    # c1-r102 reaches the run-level commit, so the validator wants manual supervision.
+def test_approval_mode_values(rep, kit, mode, code):
+    # c1-r102 reaches the run-level commit, so the validator wants manual supervision. A
+    # rejected report goes beside the canonical one, which is never written.
     r, doc = rep(notes=notes_doc(approval_mode=mode))
-    assert doc["approval_mode"] == mode
     assert r.returncode == code, r.stdout + r.stderr
+    if code:
+        assert doc is None
+        doc = kit.read("report.rejected.json")
+    assert doc["approval_mode"] == mode
 
 
 @pytest.mark.parametrize("label,notes", [
@@ -98,11 +104,12 @@ def test_refuses_a_planned_item_missing_both_receipt_and_note(rep):
     assert r.returncode == 3 and doc is None
 
 
-def test_no_validator_is_not_validated(rep):
+def test_no_validator_is_not_validated(rep, kit):
     r, doc = rep("--validator", "missing/validate.py")
     assert r.returncode == 1
     assert "NOT VALIDATED" in r.stderr
-    assert doc is not None
+    assert doc is None
+    assert kit.read("report.rejected.json")["module_id"] == "c1-r102"
 
 
 def test_the_validator_comes_from_the_shared_copy():
@@ -121,9 +128,10 @@ def bound_report(kit, fk, emit_mod):
     assert code == 0, output
     path = folder / "fill-payload.json"
     value = emit_mod.expected_hash(payload["pages"]["1"]["jobs"][0])
+    # A fresh load at the payload's own time: a receipt may not predate its payload.
     receipt = {"item_id": "p1-10", "expected_hash": value, "observed_hash": value,
-               "observed_at": "2000-01-01T00:00:00Z"}
-    kit.write("notes.json", {"approval_mode": "manual", "started_at": "2000-01-01T00:00:00Z"})
+               "observed_at": payload["generated_at"]}
+    kit.write("notes.json", {"approval_mode": "manual", "started_at": payload["generated_at"]})
 
     def run(*, update_payload=False, missing=False, changed=False):
         if update_payload:
