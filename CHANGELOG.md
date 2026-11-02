@@ -8,7 +8,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 lt-suite records notable changes using [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/).
 Versions follow [Semantic Versioning 2.0.0](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.2.4] - 2026-11-02
 
 ### Added
 
@@ -76,6 +76,7 @@ Versions follow [Semantic Versioning 2.0.0](https://semver.org/spec/v2.0.0.html)
 - Name a body server miss only from a fixed set of reasons, so reply text never reaches a receipt.
 - Accept `/run/background` in the fill location rail and the panel probe for the plan's Background page, placed by `current()`.
 - List `fill-notes.schema.json` and `references/fill-notes.md` in the release allowlist, so release archives build.
+- Read a `Signed-off-by` written below a `---` line, as Dependabot writes it, in the public history check.
 - Warn in doctor when the stable lt-chrome launcher is missing and the config serves lt-chrome tools.
 
 ## [0.2.3] - 2026-10-26

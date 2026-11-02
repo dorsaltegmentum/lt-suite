@@ -45,7 +45,7 @@
   {
    "path": "scripts/_shared/ltcore/__init__.py",
    "source": "shared/ltcore/__init__.py",
-   "sha256": "20cb715f3f572ea594314b8988726c574bd5208be4118e5e0938df5b1a6291eb"
+   "sha256": "20597ec4cd202aa323be4b85a1e05ff1d6a3c09af77985619d1cc946d8fbd4a9"
   },
   {
    "path": "scripts/_shared/ltcore/approvals.py",
