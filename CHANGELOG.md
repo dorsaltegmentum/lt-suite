@@ -13,6 +13,7 @@ Versions follow [Semantic Versioning 2.0.0](https://semver.org/spec/v2.0.0.html)
 ### Changed
 
 - Update fonttools to 4.68.0 in `uv.lock` and the skill requirements.
+- Update pytest to 9.2.0 in `uv.lock`.
 
 ### Fixed
 
