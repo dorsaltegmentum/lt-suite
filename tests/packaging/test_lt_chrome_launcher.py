@@ -1318,7 +1318,8 @@ def _devtools_handler():
     return Handler
 
 
-@pytest.mark.skipif(not hasattr(__import__('socket'), 'AF_UNIX'), reason='Unix sockets unavailable')
+@pytest.mark.skipif(sys.platform == 'win32' or not hasattr(__import__('socket'), 'AF_UNIX'),
+                    reason='lt-chrome refuses sockets on Windows; Unix sockets unavailable')
 @pytest.mark.parametrize('state', ['missing', 'file', 'socket', 'direct'])
 def test_doctor_reports_devtools_socket_state(sandbox, setup_module, monkeypatch, state):
     import socketserver
@@ -1377,7 +1378,8 @@ def test_doctor_accepts_dot_segments_in_a_relative_socket_path(sandbox, setup_mo
     assert not any('for browser.devtools_socket' in t for _, t in lines), lines
 
 
-@pytest.mark.skipif(not hasattr(__import__('socket'), 'AF_UNIX'), reason='Unix sockets unavailable')
+@pytest.mark.skipif(sys.platform == 'win32' or not hasattr(__import__('socket'), 'AF_UNIX'),
+                    reason='lt-chrome refuses sockets on Windows; Unix sockets unavailable')
 @pytest.mark.parametrize('case', ['open-folder', 'open-ancestor', 'long-path'])
 def test_doctor_fails_unsafe_or_long_socket_paths(sandbox, setup_module, monkeypatch, case):
     import socket as socketmod
@@ -1422,7 +1424,8 @@ def test_doctor_names_route_and_reason_of_a_refused_start(sandbox, setup_module,
             'browser.devtools_socket: the socket does not reach a DevTools listener') in lines
 
 
-@pytest.mark.skipif(not hasattr(__import__('socket'), 'AF_UNIX'), reason='Unix sockets unavailable')
+@pytest.mark.skipif(sys.platform == 'win32' or not hasattr(__import__('socket'), 'AF_UNIX'),
+                    reason='lt-chrome refuses sockets on Windows; Unix sockets unavailable')
 def test_doctor_checks_where_a_symlinked_socket_points(sandbox, setup_module, monkeypatch):
     import socket as socketmod
     import tempfile
@@ -1439,7 +1442,9 @@ def test_doctor_checks_where_a_symlinked_socket_points(sandbox, setup_module, mo
         p = plan(sandbox, {'adapter': 'auto', 'devtools_url': 'http://127.0.0.1:%d' % _free_port(), 'devtools_socket': str(link)})
         monkeypatch.setenv('LT_SUITE_CONFIG', p['config'])
         lines = [(r.status, r.text) for r in setup_module.check_browser({'cfg': config_core().load()})]
-        assert ('FAIL', 'browser.devtools_socket: %s is writable by other accounts; keep the socket in a folder only your account can change' % (folder / 'open')) in lines
+        # The link's target folder is found by resolving it; on macOS that spells /var as /private/var.
+        opened = os.path.realpath(folder / 'open')
+        assert ('FAIL', 'browser.devtools_socket: %s is writable by other accounts; keep the socket in a folder only your account can change' % opened) in lines
         server.close()
     finally:
         (folder / 'open').chmod(0o700)

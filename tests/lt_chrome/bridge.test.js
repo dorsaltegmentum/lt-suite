@@ -340,22 +340,27 @@ test('lt-chrome socket: the bridge drops connections over BRIDGE_MAX and keeps t
   const s = await bridgeSetup(t);
   const plan = planFor(s.dir, await freePort(), s.file);
   const bridge = await chrome.prepare(plan, false);
-  t.after(() => close(bridge));
   const port = bridge.address().port, held = [];
-  t.after(() => held.forEach((c) => c.destroy()));
-  // The bridge's own check has closed once no connection is left.
-  for (let i = 0; i < 50 && await new Promise((r) => bridge.getConnections((e, n) => r(n))) > 0; i++) await new Promise((r) => setTimeout(r, 20));
-  for (let i = 0; i < chrome.BRIDGE_MAX; i++) {
-    const c = net.connect(port, '127.0.0.1');
-    held.push(c);
-    await new Promise((r) => c.once('connect', r));
+  // Node 22 runs t.after hooks in registration order, so bridgeSetup's proxy close would
+  // wait on the held connections. Release them here, before any after hook runs.
+  try {
+    // The bridge's own check has closed once no connection is left.
+    for (let i = 0; i < 50 && await new Promise((r) => bridge.getConnections((e, n) => r(n))) > 0; i++) await new Promise((r) => setTimeout(r, 20));
+    for (let i = 0; i < chrome.BRIDGE_MAX; i++) {
+      const c = net.connect(port, '127.0.0.1');
+      held.push(c);
+      await new Promise((r) => c.once('connect', r));
+    }
+    for (let i = 0; i < 50 && await new Promise((r) => bridge.getConnections((e, n) => r(n))) < chrome.BRIDGE_MAX; i++) await new Promise((r) => setTimeout(r, 20));
+    const extra = net.connect(port, '127.0.0.1');
+    const closed = await Promise.race([new Promise((r) => extra.on('close', () => r(true))), new Promise((r) => setTimeout(() => r(false), 2000))]);
+    extra.destroy();
+    assert.ok(closed, 'connection over the cap stayed open');
+    assert.ok(held.every((c) => !c.destroyed));
+  } finally {
+    held.forEach((c) => c.destroy());
+    await close(bridge);
   }
-  for (let i = 0; i < 50 && await new Promise((r) => bridge.getConnections((e, n) => r(n))) < chrome.BRIDGE_MAX; i++) await new Promise((r) => setTimeout(r, 20));
-  const extra = net.connect(port, '127.0.0.1');
-  const closed = await Promise.race([new Promise((r) => extra.on('close', () => r(true))), new Promise((r) => setTimeout(() => r(false), 2000))]);
-  extra.destroy();
-  assert.ok(closed, 'connection over the cap stayed open');
-  assert.ok(held.every((c) => !c.destroyed));
 });
 test('lt-chrome socket: an upstream that disappears after the route probe closes only that connection', {skip: !unix}, async (t) => {
   const dir = sandbox(t), hosts = [];

@@ -186,7 +186,9 @@ def test_invalid_configs_fail_with_named_key(tmp_path, text, needle):
 
 
 def test_devtools_socket_resolves_like_a_config_path(tmp_path, monkeypatch):
-    monkeypatch.setenv("HOME", str(tmp_path / "home"))
+    # "~" reads HOME on Linux and macOS and USERPROFILE on Windows.
+    for name in ("HOME", "USERPROFILE"):
+        monkeypatch.setenv(name, str(tmp_path / "home"))
     for raw, want in (("run/devtools.sock", tmp_path / "run" / "devtools.sock"),
                       ("~/devtools.sock", tmp_path / "home" / "devtools.sock"),
                       (str(tmp_path / "abs.sock"), tmp_path / "abs.sock")):

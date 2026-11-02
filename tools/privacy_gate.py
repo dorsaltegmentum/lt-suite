@@ -1567,8 +1567,12 @@ def scan_history(gate: Gate, repo: Path, scanned: set[tuple[str, str]], *,
             hits.append(Hit("public", "commit-committer", where, 0, 0))
         if sha in strict and (not ad.endswith(" " + offset) or not cd.endswith(" " + offset)):
             hits.append(Hit("public", "commit-offset", where, 0, 0))
-        trailers = git(repo, "interpret-trailers", "--parse", binary=True, stdin=msg.encode()).stdout
-        parsed = trailers.decode("utf-8", "replace").splitlines()
+        # Git stops at a "---" line by default. Dependabot writes "---" above its
+        # Signed-off-by, and a trailer can also sit above such a line, so read both ways.
+        parsed = []
+        for extra in ((), ("--no-divider",)):
+            out = git(repo, "interpret-trailers", "--parse", *extra, binary=True, stdin=msg.encode()).stdout
+            parsed += [t for t in out.decode("utf-8", "replace").splitlines() if t not in parsed]
         scoped = gate
         rejected = bool(parsed) and sha in strict
         if sha not in strict:

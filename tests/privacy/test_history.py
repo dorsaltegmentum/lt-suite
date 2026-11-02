@@ -99,6 +99,31 @@ def test_public_history_accepts_contributor_identity_offset_and_dco_after_baseli
     assert run_gate('--repo', str(scratch_repo), '--history').returncode == 1
 
 
+DEPENDABOT_MESSAGE = ('Bump fonttools from 4.67.0 to 4.68.0\n\nBumps fonttools.\n\n---\n'
+                      'updated-dependencies:\n- dependency-name: fonttools\n  dependency-version: 4.68.0\n'
+                      '...\n\nSigned-off-by: dependabot[bot] <support@github.com>')
+
+
+def test_public_history_reads_a_signoff_below_a_divider_line(run_gate, scratch_repo):
+    """Dependabot puts "---" above its Signed-off-by; git's default parse stops at that line."""
+    first = object_commit(scratch_repo)
+    git(scratch_repo, 'update-ref', 'refs/tags/v0.1.0', first)
+    bot = 'dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>'
+    last = object_commit(scratch_repo, parent=first, author=bot, committer='GitHub <noreply@github.com>',
+                         author_offset='+0000', committer_offset='+0000', message=DEPENDABOT_MESSAGE)
+    git(scratch_repo, 'update-ref', 'refs/remotes/origin/dependabot/pip/fonttools-4.68.0', last)
+    r = run_gate('--repo', str(scratch_repo), '--public-history')
+    assert r.returncode == 0, r.stdout + r.stderr
+
+
+def test_history_still_rejects_a_trailer_above_a_divider_line(run_gate, scratch_repo):
+    """Reading past "---" must not hide a trailer that git's default parse finds above it."""
+    sha = object_commit(scratch_repo, message='Synthetic change\n\nReviewed-by: Example\n---\nnotes')
+    git(scratch_repo, 'update-ref', 'refs/heads/main', sha)
+    r = run_gate('--repo', str(scratch_repo), '--history')
+    assert r.returncode == 1 and 'commit-trailer' in r.stdout, r.stdout + r.stderr
+
+
 @pytest.mark.parametrize('baseline', [False, True])
 def test_public_history_keeps_initial_identity_strict(run_gate, scratch_repo, baseline):
     first = object_commit(scratch_repo, author='Other <a@example.org>')
