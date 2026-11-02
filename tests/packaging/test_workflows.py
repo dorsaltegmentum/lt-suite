@@ -75,6 +75,7 @@ def test_pr_jobs_run_public_mode_and_dco_only_for_pull_requests():
     assert any('packaging/ci.py dco' in c for _, c in runs(dco))
     assert dco['env']['PR_BASE'] == '${{ github.event.pull_request.base.sha }}'
     assert dco['env']['PR_HEAD'] == '${{ github.event.pull_request.head.sha }}'
+    assert dco['env']['PR_USER'] == '${{ github.event.pull_request.user.login }}'
 
 
 def test_validators_check_blocking_findings_and_gemini():

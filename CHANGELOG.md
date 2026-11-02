@@ -8,6 +8,16 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 lt-suite records notable changes using [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/).
 Versions follow [Semantic Versioning 2.0.0](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+
+- Update fonttools to 4.68.0 in `uv.lock` and the skill requirements.
+
+### Fixed
+
+- Accept Dependabot's sign-off in the pull-request DCO check, only on pull requests that Dependabot opened.
+
 ## [0.2.4] - 2026-11-02
 
 ### Added

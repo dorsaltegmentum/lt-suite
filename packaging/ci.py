@@ -16,6 +16,8 @@ import sys
 import tempfile
 
 ROOT = Path(__file__).resolve().parents[1]
+DEPENDABOT = ('dependabot[bot]', '49699333+dependabot[bot]@users.noreply.github.com')
+DEPENDABOT_SIGNOFF = 'Signed-off-by: dependabot[bot] <support@github.com>'
 
 
 def blocking(value):
@@ -114,6 +116,11 @@ def main(argv=None):
             sha, name, email, body = record.lstrip('\n').split('\x1f', 3)
             # Require a trailer paragraph and the actual commit author's certificate.
             trailer = body.rstrip().split('\n\n')[-1].splitlines()
+            # Dependabot commits under its noreply address and signs off with GitHub's support address.
+            # GitHub sets PR_USER from the account that opened the PR, which commit content cannot change.
+            if (os.environ.get('PR_USER') == DEPENDABOT[0] and (name, email) == DEPENDABOT
+                    and DEPENDABOT_SIGNOFF in trailer):
+                continue
             if f'Signed-off-by: {name} <{email}>' not in trailer:
                 raise ValueError(f'{sha[:12]} lacks its author DCO sign-off')
         print('Pull-request DCO sign-offs passed')

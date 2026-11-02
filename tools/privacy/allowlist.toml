@@ -40,6 +40,12 @@ match = '(@example\.(org|com|net|invalid)|^208164922\+dorsaltegmentum@users\.nor
 reason = "Reserved example domains and the release identity's noreply address (no other noreply address)."
 
 [[allow]]
+path = ["packaging/ci.py", "tests/packaging/test_ci.py"]
+pattern = "email"
+match = '^support@github\.com$'
+reason = "Dependabot's sign-off address, which the pull-request DCO check accepts on Dependabot pull requests."
+
+[[allow]]
 pattern = "lt-tenant-host"
 match = '^example\.lt\.app$'
 reason = "Generic placeholder host used in docs and tests."

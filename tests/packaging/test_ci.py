@@ -64,6 +64,27 @@ def test_dco_requires_each_non_merge_commit_author_signoff(monkeypatch, signed):
     assert m.main(['dco']) == (0 if signed else 1)
 
 
+BOT_EMAIL = '49699333+dependabot[bot]@users.noreply.github.com'
+BOT_SIGNOFF = 'Signed-off-by: dependabot[bot] <support@github.com>'
+
+
+@pytest.mark.parametrize('opener,author,signoff,expected', [
+    ('dependabot[bot]', f'dependabot[bot]\x1f{BOT_EMAIL}', BOT_SIGNOFF, 0),
+    ('someone', f'dependabot[bot]\x1f{BOT_EMAIL}', BOT_SIGNOFF, 1),
+    ('dependabot[bot]', f'dependabot[bot]\x1f{BOT_EMAIL}', '', 1),
+    ('dependabot[bot]', 'Example Contributor\x1fperson@example.org', BOT_SIGNOFF, 1),
+])
+def test_dco_accepts_dependabot_signoff_only_on_dependabot_prs(monkeypatch, opener, author, signoff, expected):
+    # Dependabot signs off with GitHub's support address; the PR opener comes from GitHub, not the commit.
+    m = module()
+    record = 'a' * 40 + f'\x1f{author}\x1fBump fonttools\n\n---\nupdated-dependencies: []\n...\n\n{signoff}\n\x1e'
+    monkeypatch.setenv('PR_BASE', 'b' * 40)
+    monkeypatch.setenv('PR_HEAD', 'c' * 40)
+    monkeypatch.setenv('PR_USER', opener)
+    monkeypatch.setattr(m.subprocess, 'run', lambda *a, **kw: subprocess.CompletedProcess(a, 0, record, ''))
+    assert m.main(['dco']) == expected
+
+
 def test_dco_rejects_absent_range(monkeypatch):
     m = module()
     monkeypatch.delenv('PR_BASE', raising=False)
