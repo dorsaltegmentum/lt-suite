@@ -45,7 +45,7 @@ optional = ["pikepdf>=9.4", "pymupdf>=1.25", "opencv-python-headless>=4.10", "sc
 # Maintainer tools run through uvx in CI; listed here for a local dev environment.
 dev = [
     { include-group = "ci" },
-    "reuse==6.2.0",
+    "reuse==6.3.0",
     "skills-ref==0.1.1",
 ]
 # Everything the test suite needs.
