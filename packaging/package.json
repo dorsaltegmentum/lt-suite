@@ -6,6 +6,6 @@
   "license": "AGPL-3.0-or-later",
   "dependencies": {
     "chrome-devtools-mcp": "1.12.0",
-    "@playwright/mcp": "0.0.83"
+    "@playwright/mcp": "0.0.84"
   }
 }
